@@ -1,7 +1,7 @@
-"""Voice end-to-end test, no human needed: a WAV plays into headless Chrome's fake microphone, goes over WebRTC to
+"""Voice end-to-end test, no human needed: a WAV (the question, then 30 s of silence so Chrome's looping fake mic asks only once) plays into headless Chrome's fake microphone, goes over WebRTC to
 the Pipecat bot, is transcribed (sherpa by default), reaches Barnaby, and Barnaby's answer is spoken by Kokoro.
 
-  .venv/Scripts/python scripts/smoke/voice_e2e.py [--wav .demo/voice-samples/june-question.wav] [--seconds 60]
+  .venv/Scripts/python scripts/smoke/voice_e2e.py [--wav .demo/voice-samples/owner-question.wav] [--seconds 60]
 
 Starts Barnaby's server (:8700) and the voice bot (:7860) if they aren't running, opens the display in
 hands-free mode with the WAV as the mic, then checks the event log for: a turn whose text came from speech,
@@ -44,7 +44,7 @@ def wait(url: str, secs: float = 60) -> bool:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--wav", default=str(ROOT / ".demo" / "voice-samples" / "june-question.wav"))
+    ap.add_argument("--wav", default=str(ROOT / ".demo" / "voice-samples" / "owner-question.wav"))
     ap.add_argument("--seconds", type=int, default=60)
     a = ap.parse_args()
     procs = []

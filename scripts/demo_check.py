@@ -3,7 +3,7 @@
   .venv/Scripts/python scripts/demo_check.py [--until N] [--no-reset]
 
 Resets the demo world, connects Theo's repo through Synapse, then drives the story's beats as typed requests
-in one conversation, auto-approving the gates (as if June clicked), and verifies each outcome against the
+in one conversation, auto-approving the gates (as if Martin clicked), and verifies each outcome against the
 shop's own API and git history. Runs on the local Claude Code login (no API key needed).
 
   1 Arrival   connect: Synapse discovers 23 endpoints, 6 read-only tools exposed

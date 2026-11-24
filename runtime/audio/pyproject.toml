@@ -1,0 +1,10 @@
+# Film soundtrack runtime: compose in code, render through the VST instruments/effects installed on this machine
+# (DawDreamer hosts VST2 + VST3 offline), then mix/master. Separate from the core and voice runtimes.
+[project]
+name = "barnaby-audio"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["dawdreamer>=0.8", "numpy>=2.0", "scipy>=1.13", "soundfile>=0.12", "mido>=1.3", "pyloudnorm>=0.1"]
+
+[tool.uv]
+package = false

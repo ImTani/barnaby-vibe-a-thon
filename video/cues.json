@@ -2,84 +2,419 @@
   "duration": 140,
   "fps": 30,
   "scenes": [
-    {"id": "A", "start": 0, "end": 11, "title": "Nine tabs"},
-    {"id": "B", "start": 11, "end": 27, "title": "Theo's handover"},
-    {"id": "C", "start": 27, "end": 42, "title": "Monday"},
-    {"id": "D", "start": 42, "end": 58, "title": "Unlock"},
-    {"id": "E", "start": 58, "end": 70, "title": "Compose"},
-    {"id": "F", "start": 70, "end": 102, "title": "Build"},
-    {"id": "G", "start": 102, "end": 112, "title": "Priya, day one"},
-    {"id": "H", "start": 112, "end": 127, "title": "Any repo"},
-    {"id": "I", "start": 127, "end": 140, "title": "Close"}
+    {
+      "id": "A",
+      "start": 0,
+      "end": 11,
+      "title": "Nine tabs"
+    },
+    {
+      "id": "B",
+      "start": 11,
+      "end": 27,
+      "title": "Theo's handover"
+    },
+    {
+      "id": "C",
+      "start": 27,
+      "end": 42,
+      "title": "Monday"
+    },
+    {
+      "id": "D",
+      "start": 42,
+      "end": 58,
+      "title": "Unlock"
+    },
+    {
+      "id": "E",
+      "start": 58,
+      "end": 70,
+      "title": "Compose"
+    },
+    {
+      "id": "F",
+      "start": 70,
+      "end": 102,
+      "title": "Build"
+    },
+    {
+      "id": "G",
+      "start": 102,
+      "end": 112,
+      "title": "Priya, day one"
+    },
+    {
+      "id": "H",
+      "start": 112,
+      "end": 127,
+      "title": "Any repo"
+    },
+    {
+      "id": "I",
+      "start": 127,
+      "end": 140,
+      "title": "Close"
+    }
   ],
   "captions": [
-    [4.5, 10.5, "Every small business runs on systems nobody has time to rewrite."],
-    [12.0, 16.8, "Theo wrote the shop's back office in 2009. On Friday, he leaves."],
-    [55.5, 57.8, "Unlock: Synapse had already found it. Barnaby asked, then took it."],
-    [67.2, 69.8, "Compose: one verified skill instead of four steps."],
-    [98.5, 101.8, "Build: the report Theo never wrote. Tested, approved, live."],
-    [109.2, 111.8, "The departing expert's knowledge, kept."],
-    [112.5, 118.5, "Point Barnaby at any repo."],
-    [119.0, 126.5, "Synapse makes it agent-ready. Barnaby makes it grow."]
+    [
+      4.5,
+      10.5,
+      "Every small business runs on systems nobody has time to rewrite."
+    ],
+    [
+      12.0,
+      16.8,
+      "Theo wrote the shop's back office in 2009. On Friday, he leaves."
+    ],
+    [
+      55.5,
+      57.8,
+      "Unlock: Synapse had already found it. Barnaby asked, then took it."
+    ],
+    [
+      67.2,
+      69.8,
+      "Compose: one verified skill instead of four steps."
+    ],
+    [
+      98.5,
+      101.8,
+      "Build: the report Theo never wrote. Tested, approved, live."
+    ],
+    [
+      109.2,
+      111.8,
+      "The departing expert's knowledge, kept."
+    ],
+    [
+      112.5,
+      118.5,
+      "Point Barnaby at any repo."
+    ],
+    [
+      119.0,
+      126.5,
+      "Synapse makes it agent-ready. Barnaby makes it grow."
+    ]
   ],
   "voice": [
-    {"t": 17.5, "who": "Theo", "text": "Barnaby, this is the shop's system. Look after them for me."},
-    {"t": 24.5, "who": "Barnaby", "text": "Twenty-three endpoints, sir. I've started with the six that only read."},
-    {"t": 28.5, "who": "June", "text": "Which repairs are due tomorrow, and are we short on parts?"},
-    {"t": 34.0, "who": "Barnaby", "text": "Five are due tomorrow. Only one is short: Anika's brake job needs two pairs of pads, and we have one."},
-    {"t": 42.5, "who": "June", "text": "Order ten pairs, from the usual supplier."},
-    {"t": 45.0, "who": "Barnaby", "text": "I can't yet, but the system can. There's an ordering endpoint I haven't taken. May I?"},
-    {"t": 53.6, "who": "June", "text": "Yes."},
-    {"t": 61.5, "who": "Barnaby", "text": "You've had me do these four steps four times today. Shall I make it a single motion?"},
-    {"t": 70.5, "who": "June", "text": "Who's overloaded this week?"},
-    {"t": 72.0, "who": "Barnaby", "text": "The system has no notion of workload, ma'am. I can teach it."},
-    {"t": 91.0, "who": "Barnaby", "text": "Dev has thirty-one hours booked against twenty. Shall I move the two wheel builds to Priya?"},
-    {"t": 97.6, "who": "June", "text": "Yes, please."},
-    {"t": 102.5, "who": "Priya", "text": "What can this system actually do?"},
-    {"t": 105.0, "who": "Barnaby", "text": "Twenty-four things. Theo wrote twenty-three; I wrote one more."},
-    {"t": 129.5, "who": "Barnaby", "text": "Every system deserves a butler."},
-    {"t": 132.0, "who": "Barnaby", "text": "Even the old ones."}
+    {
+      "t": 17.5,
+      "who": "Theo",
+      "text": "Barnaby, this is the shop's system. Look after them for me."
+    },
+    {
+      "t": 24.5,
+      "who": "Barnaby",
+      "text": "Twenty-three endpoints, sir. I've started with the six that only read."
+    },
+    {
+      "t": 28.5,
+      "who": "Martin",
+      "text": "Which repairs are due tomorrow, and are we short on parts?"
+    },
+    {
+      "t": 34.0,
+      "who": "Barnaby",
+      "text": "Five are due tomorrow. Only one is short: Anika's brake job needs two pairs of pads, and we have one."
+    },
+    {
+      "t": 42.5,
+      "who": "Martin",
+      "text": "Order ten pairs, from the usual supplier."
+    },
+    {
+      "t": 45.0,
+      "who": "Barnaby",
+      "text": "I can't yet, but the system can. There's an ordering endpoint I haven't taken. May I?"
+    },
+    {
+      "t": 53.6,
+      "who": "Martin",
+      "text": "Yes."
+    },
+    {
+      "t": 61.5,
+      "who": "Barnaby",
+      "text": "You've had me do these four steps four times today. Shall I make it a single motion?"
+    },
+    {
+      "t": 70.5,
+      "who": "Martin",
+      "text": "Who's overloaded this week?"
+    },
+    {
+      "t": 72.0,
+      "who": "Barnaby",
+      "text": "The system has no notion of workload, sir. I can teach it."
+    },
+    {
+      "t": 91.0,
+      "who": "Barnaby",
+      "text": "Dev has thirty-one hours booked against twenty. Shall I move the two wheel builds to Priya?"
+    },
+    {
+      "t": 97.6,
+      "who": "Martin",
+      "text": "Yes, please."
+    },
+    {
+      "t": 102.5,
+      "who": "Priya",
+      "text": "What can this system actually do?"
+    },
+    {
+      "t": 105.0,
+      "who": "Barnaby",
+      "text": "Twenty-four things. Theo wrote twenty-three; I wrote one more."
+    },
+    {
+      "t": 129.5,
+      "who": "Barnaby",
+      "text": "Every system deserves a butler."
+    },
+    {
+      "t": 132.0,
+      "who": "Barnaby",
+      "text": "Even the old ones."
+    }
   ],
-  "voices": {"Barnaby": "bm_george", "Theo": "bm_lewis", "June": "bf_emma", "Priya": "bf_isabella"},
+  "voices": {
+    "Barnaby": "bm_george",
+    "Theo": "bm_lewis",
+    "Martin": "bm_fable",
+    "Priya": "bf_isabella"
+  },
   "sfx": [
-    {"t": 0.6, "type": "bell"},
-    {"t": 1.0, "type": "tab"}, {"t": 1.6, "type": "tab"}, {"t": 2.2, "type": "tab"}, {"t": 2.8, "type": "tab"}, {"t": 3.4, "type": "tab"},
-    {"t": 4.0, "type": "tab"}, {"t": 4.6, "type": "tab"}, {"t": 5.2, "type": "tab"}, {"t": 5.8, "type": "tab"},
-    {"t": 10.4, "type": "whoosh"},
-    {"t": 11.5, "type": "whoosh"},
-    {"t": 20.0, "type": "whoosh"},
-    {"t": 21.5, "type": "shimmer", "dur": 2.0},
-    {"t": 24.0, "type": "chime"},
-    {"t": 28.0, "type": "whoosh"},
-    {"t": 30.0, "type": "tick"}, {"t": 30.6, "type": "tick"}, {"t": 31.2, "type": "tick"}, {"t": 31.8, "type": "tick"}, {"t": 32.4, "type": "tick"}, {"t": 33.0, "type": "tick"},
-    {"t": 44.0, "type": "tick"},
-    {"t": 47.0, "type": "whoosh"},
-    {"t": 49.5, "type": "click"},
-    {"t": 50.5, "type": "chime"},
-    {"t": 52.0, "type": "whoosh"},
-    {"t": 53.8, "type": "click"},
-    {"t": 55.0, "type": "tick"},
-    {"t": 58.5, "type": "tick"}, {"t": 59.1, "type": "tick"}, {"t": 59.7, "type": "tick"}, {"t": 60.3, "type": "tick"},
-    {"t": 65.0, "type": "pop"},
-    {"t": 74.0, "type": "whoosh"},
-    {"t": 74.5, "type": "typing", "dur": 5.5},
-    {"t": 82.0, "type": "success"},
-    {"t": 83.0, "type": "whoosh"},
-    {"t": 86.5, "type": "click"},
-    {"t": 89.5, "type": "pop"}, {"t": 89.5, "type": "chime"},
-    {"t": 90.5, "type": "tick"},
-    {"t": 98.4, "type": "tick"}, {"t": 98.9, "type": "tick"},
-    {"t": 104.0, "type": "shimmer", "dur": 1.5},
-    {"t": 112.5, "type": "whoosh"},
-    {"t": 127.5, "type": "bell"}
+    {
+      "t": 0.6,
+      "type": "bell"
+    },
+    {
+      "t": 1.0,
+      "type": "tab"
+    },
+    {
+      "t": 1.6,
+      "type": "tab"
+    },
+    {
+      "t": 2.2,
+      "type": "tab"
+    },
+    {
+      "t": 2.8,
+      "type": "tab"
+    },
+    {
+      "t": 3.4,
+      "type": "tab"
+    },
+    {
+      "t": 4.0,
+      "type": "tab"
+    },
+    {
+      "t": 4.6,
+      "type": "tab"
+    },
+    {
+      "t": 5.2,
+      "type": "tab"
+    },
+    {
+      "t": 5.8,
+      "type": "tab"
+    },
+    {
+      "t": 10.4,
+      "type": "whoosh"
+    },
+    {
+      "t": 11.5,
+      "type": "whoosh"
+    },
+    {
+      "t": 20.0,
+      "type": "whoosh"
+    },
+    {
+      "t": 21.5,
+      "type": "shimmer",
+      "dur": 2.0
+    },
+    {
+      "t": 24.0,
+      "type": "chime"
+    },
+    {
+      "t": 28.0,
+      "type": "whoosh"
+    },
+    {
+      "t": 30.0,
+      "type": "tick"
+    },
+    {
+      "t": 30.6,
+      "type": "tick"
+    },
+    {
+      "t": 31.2,
+      "type": "tick"
+    },
+    {
+      "t": 31.8,
+      "type": "tick"
+    },
+    {
+      "t": 32.4,
+      "type": "tick"
+    },
+    {
+      "t": 33.0,
+      "type": "tick"
+    },
+    {
+      "t": 44.0,
+      "type": "tick"
+    },
+    {
+      "t": 47.0,
+      "type": "whoosh"
+    },
+    {
+      "t": 49.5,
+      "type": "click"
+    },
+    {
+      "t": 50.5,
+      "type": "chime"
+    },
+    {
+      "t": 52.0,
+      "type": "whoosh"
+    },
+    {
+      "t": 53.8,
+      "type": "click"
+    },
+    {
+      "t": 55.0,
+      "type": "tick"
+    },
+    {
+      "t": 58.5,
+      "type": "tick"
+    },
+    {
+      "t": 59.1,
+      "type": "tick"
+    },
+    {
+      "t": 59.7,
+      "type": "tick"
+    },
+    {
+      "t": 60.3,
+      "type": "tick"
+    },
+    {
+      "t": 65.0,
+      "type": "pop"
+    },
+    {
+      "t": 74.0,
+      "type": "whoosh"
+    },
+    {
+      "t": 74.5,
+      "type": "typing",
+      "dur": 5.5
+    },
+    {
+      "t": 82.0,
+      "type": "success"
+    },
+    {
+      "t": 83.0,
+      "type": "whoosh"
+    },
+    {
+      "t": 86.5,
+      "type": "click"
+    },
+    {
+      "t": 89.5,
+      "type": "pop"
+    },
+    {
+      "t": 89.5,
+      "type": "chime"
+    },
+    {
+      "t": 90.5,
+      "type": "tick"
+    },
+    {
+      "t": 98.4,
+      "type": "tick"
+    },
+    {
+      "t": 98.9,
+      "type": "tick"
+    },
+    {
+      "t": 104.0,
+      "type": "shimmer",
+      "dur": 1.5
+    },
+    {
+      "t": 112.5,
+      "type": "whoosh"
+    },
+    {
+      "t": 127.5,
+      "type": "bell"
+    }
   ],
   "music": [
-    {"t": 0.6, "section": "intro", "mood": "tense, thin, clock-like"},
-    {"t": 11.0, "section": "handover", "mood": "warm, wistful, gentle pulse"},
-    {"t": 27.0, "section": "work", "mood": "light, confident, walking pace"},
-    {"t": 70.0, "section": "build", "mood": "rising, focused, steady build to 89.5"},
-    {"t": 89.5, "section": "lift", "mood": "release, brighter"},
-    {"t": 112.0, "section": "montage", "mood": "fullest, forward"},
-    {"t": 127.0, "section": "close", "mood": "resolve, bell, quiet tail"}
+    {
+      "t": 0.6,
+      "section": "intro",
+      "mood": "tense, thin, clock-like"
+    },
+    {
+      "t": 11.0,
+      "section": "handover",
+      "mood": "warm, wistful, gentle pulse"
+    },
+    {
+      "t": 27.0,
+      "section": "work",
+      "mood": "light, confident, walking pace"
+    },
+    {
+      "t": 70.0,
+      "section": "build",
+      "mood": "rising, focused, steady build to 89.5"
+    },
+    {
+      "t": 89.5,
+      "section": "lift",
+      "mood": "release, brighter"
+    },
+    {
+      "t": 112.0,
+      "section": "montage",
+      "mood": "fullest, forward"
+    },
+    {
+      "t": 127.0,
+      "section": "close",
+      "mood": "resolve, bell, quiet tail"
+    }
   ]
 }

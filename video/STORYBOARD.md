@@ -28,9 +28,9 @@ from `window.DATA` (`data.js`, exported from that run) or from this storyboard. 
 
 ## Cast (voices in `cues.json → voice`)
 - Theo Hartley: the nephew who wrote the system in 2009 and leaves on Friday.
-- June Hartley: the owner.
+- Martin Hartley: the owner, Theo's uncle (voiced by Tani; placeholder Kokoro bm_fable).
 - Priya: the new hire, on her first day.
-- Barnaby: the butler.
+- Barnaby: the butler (always TTS: Kokoro bm_george with misaki input).
 
 ## Scenes
 
@@ -56,11 +56,11 @@ from `window.DATA` (`data.js`, exported from that run) or from this storyboard. 
 - 24.0: the six starter chips (`DATA.starter`) light brass, with a **chime**.
 - 24.5: Barnaby (`hud.say`): *"Twenty-three endpoints, sir. I've started with the six that only read."*
 
-### C · 27–42 · "Monday" (Meet June)
+### C · 27–42 · "Monday" (Meet Martin)
 - 27.3–29: a chapter chip "Monday · 8:52am" (brass, top-left).
 - 27.5: the shop window is visible full-width-ish (x≈80, w≈1100). 28.0: the HUD slides in over its right edge
   (x≈1000, w≈840), state "listening".
-- 28.5: June (`hud.setYou('June', …)`): *"Which repairs are due tomorrow, and are we short on parts?"*
+- 28.5: Martin (`hud.setYou('Martin', …)`): *"Which repairs are due tomorrow, and are we short on parts?"*
 - 30.0–33.5: trace rows (read, blue) slide in 0.6 s apart: `jobs_due {day: tomorrow}`, then
   `job_detail 4471`, `4475`, `4478`, `4485`, `4490`. **Tick** sfx on each. State "thinking".
 - 34.0: Barnaby says *"Five are due tomorrow. Only one is short: Anika's brake job needs two pairs of pads, and we have one."*
@@ -68,7 +68,7 @@ from `window.DATA` (`data.js`, exported from that run) or from this storyboard. 
 - 34–41: in the shop window, row 4478 (index 3) gets a soft yellow highlight from 36.
 
 ### D · 42–58 · "Unlock"
-- 42.5: June: *"Order ten pairs, from the usual supplier."*
+- 42.5: Martin: *"Order ten pairs, from the usual supplier."*
 - 44.0: trace row (grow, brass): `barnaby · capabilities`.
 - 45.0: Barnaby: *"I can't yet, but the system can. There's an ordering endpoint I haven't taken. May I?"*
 - 47.0: `approvalCard({kind:'grow', title:'Unlock POST /api/purchase-orders', detail:'Order more of a part from a supplier.', primary:'Unlock'})`.
@@ -76,7 +76,7 @@ from `window.DATA` (`data.js`, exported from that run) or from this storyboard. 
 - 50.0: a terminal line: `synapse build --auto --local --endpoints "…,POST /api/purchase-orders"` → "rebuilt in 0.38 s".
 - 50.5: the purchase-order chip lights brass, with a **chime**.
 - 52.0: `approvalCard({kind:'write', title:'Order 10 × Brake pads (Shimano resin) from Madison', primary:'Approve'})`.
-- 53.6: June: *"Yes."* 53.8: button press (**click**).
+- 53.6: Martin: *"Yes."* 53.8: button press (**click**).
 - 55.0: the shop window switches to the Purchase Orders tab, and a new row slides in: "3 · Brake pads (Shimano resin, pair) · 10 · Madison · ordered".
 - Caption 55.5–57.8: *"Unlock: Synapse had already found it. Barnaby asked, then took it."*
 
@@ -89,20 +89,20 @@ from `window.DATA` (`data.js`, exported from that run) or from this storyboard. 
 - Caption 67.2–69.8: *"Compose: one verified skill instead of four steps."*
 
 ### F · 70–102 · "Build" (centrepiece)
-- 70.5: June: *"Who's overloaded this week?"*
-- 72.0: Barnaby: *"The system has no notion of workload, ma'am. I can teach it."*
+- 70.5: Martin: *"Who's overloaded this week?"*
+- 72.0: Barnaby: *"The system has no notion of workload, sir. I can teach it."*
 - 74.0: an editor/terminal panel opens, titled `worktree · barnaby/api-reports-workload`.
 - 74.5–80.0: the added lines of the real diff (`DATA.build.diff`, `+` lines of services.py, then routes_reports.py)
   scroll and type in. **Typing** sfx bed.
 - 80.5: a terminal: `python -m pytest -q`. 82.0: `22 passed` in green, with a **success** sfx.
 - 83.0: `approvalCard({kind:'build', title:'Add GET /api/reports/workload/{day} to the shop's back office', diff: DATA.build.diff, primary:'Approve and merge'})`.
   Show 12–14 diff lines.
-- 86.5: June clicks "Approve and merge" (**click**).
+- 86.5: Martin clicks "Approve and merge" (**click**).
 - 87.0–89.0: status lines: "merged into main" → "shop restarted" → `synapse build --discover` → "Extracted 24 endpoint(s)".
 - 89.5: a new violet chip "GET /api/reports/workload/{day}" appears, with **pop** and **chime**. It's endpoint 24.
 - 90.5: trace row (read): `shop · workload {day: today}`.
 - 91.0: Barnaby: *"Dev has thirty-one hours booked against twenty. Shall I move the two wheel builds to Priya?"*
-- 97.6: June: *"Yes, please."*
+- 97.6: Martin: *"Yes, please."*
 - 98.4–99.4: in the shop window, rows 4471 and 4472 (indices 0 and 1), mechanic column (index 1), flip "Dev" → "Priya"
   with a yellow highlight (`shop.set(r, 1, 'Priya', hl)`), with a **tick**.
 - Caption 98.5–101.8: *"Build: the report Theo never wrote. Tested, approved, live."*
@@ -115,10 +115,9 @@ from `window.DATA` (`data.js`, exported from that run) or from this storyboard. 
 - Caption 109.2–111.8: *"The departing expert's knowledge, kept."*
 
 ### H · 112–127 · "Any repo"
-- 112.5: four cards appear in a 2×2 grid, staggered 0.35 s, each with a repo name, a question and a real endpoint count:
+- 112.5: three cards appear, staggered 0.35 s: two repo cards (name, question, real endpoint count) and a wide "Your company" card:
   - "Quorum · offline team memory" · *"Any disputed deadlines?"* · **13 endpoints**
   - "ComfyUI" · *"What GPU is it using, and is anything queued?"* · **28 endpoints**
-  - "clipd · game clipper" · *"Clip that."* · "control API + hosted build"
   - "Your company" · a grid of 40 small system tiles lighting up brass one by one (115–124)
 - Caption 112.5–118.5: *"Point Barnaby at any repo."*
 - Caption 119–126.5: *"Synapse makes it agent-ready. Barnaby makes it grow."*

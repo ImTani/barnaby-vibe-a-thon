@@ -67,7 +67,7 @@ Synaptogenesis already does unlock and compose. We do them *better*, not quieter
 | Persona | Character (names are proposals) | Need |
 |---|---|---|
 | Departing expert | **Theo Hartley**, the nephew. Wrote the back office in 2009 as a teenager; leaves for a job abroad on Friday | His knowledge lives in the code and a README nobody reads |
-| Overloaded ops person | **June Hartley**, the owner. Nine tabs, greasy hands, phone ringing | Can't type mid-repair; can't drive the 2009 interface |
+| Overloaded ops person | **Martin Hartley**, the owner. Nine tabs, greasy hands, phone ringing | Can't type mid-repair; can't drive the 2009 interface |
 | Developer, day one | **Priya**, the new hire. Starts Monday as mechanic and does the shop's IT | Has to operate a system she's never seen |
 
 The 2009 back office covers customers, bikes, repair jobs (with estimated hours and due dates), parts and stock, purchase orders, mechanics and their capacity, and invoices. It looks the part: Verdana tables and bevelled buttons.
@@ -78,7 +78,7 @@ The 2009 back office covers customers, bikes, repair jobs (with estimated hours 
    - Synapse scans the repo live and the endpoints appear in the display.
    - `--smart-names` reads Theo's README, so his notes become Barnaby's understanding of the system.
    - *"Twenty-three endpoints, sir. I've started with the six that only read. Your README was most illuminating."*
-2. **Meet June.** The next Monday: June has nine tabs open and greasy hands. She presses the hotkey and Barnaby's display slides in over the 2009 panel.
+2. **Meet Martin.** The next Monday: Martin has nine tabs open and greasy hands. He presses the hotkey and Barnaby's display slides in over the 2009 panel.
    - *"Which repairs are due tomorrow, and are we short on parts for any?"*
    - The trace shows the calls, then the spoken answer.
 3. **Unlock.**
@@ -87,11 +87,11 @@ The 2009 back office covers customers, bikes, repair jobs (with estimated hours 
    - One click, Synapse rebuilds, the tool appears, then a confirmation card for the order itself.
 4. **Compose.**
    - *"You've had me do 'bike ready → fetch customer → notify → close job' four times today. Shall I make it a single motion?"*
-   - `synapse build --custom` fuses the steps, a replay test verifies the result, and June names the skill by voice.
+   - `synapse build --custom` fuses the steps, a replay test verifies the result, and Martin names the skill by voice.
 5. **Build (the centrepiece).**
    - *"Who's overloaded this week?"*
    - *"The system has no notion of workload. I can teach it."*
-   - Barnaby writes `GET /mechanics/workload` and a test in a git worktree. The display shows the diff; June clicks approve.
+   - Barnaby writes `GET /mechanics/workload` and a test in a git worktree. The display shows the diff; Martin clicks approve.
    - Tests pass, the service reloads, `synapse build --discover` runs.
    - *"Dev has 31 hours booked against 20."* → *"Shall I move the two wheel builds to Priya?"* → approve → the **2009 interface visibly updates**.
    - Rehearsal fallback: "Who hasn't been in for a service in over a year?"
@@ -99,7 +99,6 @@ The 2009 back office covers customers, bikes, repair jobs (with estimated hours 
 7. **Montage, "any repo":**
    - Quorum, our last hackathon project ("Any disputed deadlines?");
    - a well-known open-source app ⏳;
-   - clipd ("clip that");
    - Theo's handover;
    - Priya on day one;
    - "…your company's application estate."
@@ -208,14 +207,14 @@ Source: another team's notes ([Synaptogenesis README](https://github.com/Baqir37
 | 05:00–09:00 | **2. Core** | Synapse driver, MCP manager, worker agent, event stream, approvals, **Unlock**; text chat works end to end |
 | 09:00–12:00 | **3. Display + voice** | Barnaby's display; listening/voice layers; front desk; hotkey; wake word |
 | 12:00–15:00 | **4. Build + Compose** | Centrepiece Build beat works 5/5 rehearsals; Compose works |
-| 15:00–16:30 | **5. Montage + overlay** | Quorum, open-source app, (clipd); overlay window |
+| 15:00–16:30 | **5. Montage + overlay** | Quorum, ComfyUI; overlay window |
 | 16:30–20:00 | **6. Film + docs** | Film rendered; README with a "For judges" table; WRITEUP; MCP_SETUP; real-vs-mocked; tests green; Tani records the walkthrough |
 | 20:00–23:00 | **7. Edit + buffer + submit** | Walkthrough edited; submitted |
 
 ### Priorities (cut from the bottom)
 - **P0:** Spokes & Sprockets · connect any repo · worker + Unlock · Build centrepiece · display · voice (push-to-talk) · README/write-up
 - **P1:** Compose · wake word · Quorum scene · film · fix-up step
-- **P2:** overlay · open-source app scene · clipd (needs a Rust control API + a Synapse console key for a hosted build) · Rust wake word
+- **P2:** overlay · open-source app scene · Rust wake word
 
 ---
 
@@ -273,8 +272,23 @@ Fallbacks:
 
 **Fallback if short on time:** Quorum's simpler v3 film (crossfading scenes, ~2 h of work).
 
+**Sound (decided after storyboard review, 25 Nov):**
+- **Music** is composed in code (Quorum's approach), but **played by Tani's own plugins** through DawDreamer, an offline VST2/VST3 host.
+  - Verified rendering headlessly: Ample Guitar M Lite II, MODO BASS 2, Valhalla VintageVerb, FabFilter Pro-L 2.
+  - Ample needs about 8 s of real time to load its samples.
+  - SSD5 drums would need a saved kit preset.
+  - No synths, so no "tell". Runtime: `runtime/audio`; probe: `video/audio/vst_probe.py`.
+- **Barnaby** is always TTS: Kokoro `bm_george`, fed the way Kokoro v1.0 was trained (`voice/tts.py`).
+  - Input: misaki G2P phonemes (British), one sentence at a time, with natural pauses. Stock espeak phonemisation made him sound flat.
+  - The live bot uses the same pipeline (`voice/barnaby_tts.py`).
+- **Cast:**
+  - **Martin Hartley** (the owner, renamed from June) is voiced by Tani; placeholder `bm_fable`.
+  - Theo (`bm_lewis`) and Priya (`bf_isabella`) keep generated voices unless friends record them.
+- **Compose** stays in the film. Making it real needs a free Synapse console key (hosted Custom mode) or the Claude API key (`--local`). Claude Code's login can't act as Synapse's model provider.
+- clipd is out of the montage.
+
 ## 8. Open questions
 - Product name (parked); character names (proposals above).
 - "Qwen3.5 TTS": couldn't find it; newest found is Qwen3-TTS (Jan 2026).
-- Synapse console key: only needed for clipd.
+- Synapse console key (free tier): Compose via hosted Custom mode, and `--smart-names`.
 - Exact submission cutoff and timezone.

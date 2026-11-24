@@ -36,6 +36,7 @@ from pipecat.transcriptions.language import Language  # noqa: E402
 from pipecat.transports.base_transport import BaseTransport, TransportParams  # noqa: E402
 from pipecat.workers.runner import WorkerRunner  # noqa: E402
 
+from voice.barnaby_tts import BarnabyKokoroTTS  # noqa: E402
 from voice.bridge import BarnabyBridge  # noqa: E402
 from voice.sherpa_stt import SherpaSTTService  # noqa: E402
 
@@ -57,14 +58,15 @@ def make_stt():
     if kind == "groq":
         from pipecat.services.groq.stt import GroqSTTService
         return GroqSTTService(api_key=os.environ["GROQ_API_KEY"])
-    return SherpaSTTService(url=os.environ.get("SHERPA_WS_URL", "ws://192.168.1.68:6007"), user_id="june")
+    return SherpaSTTService(url=os.environ.get("SHERPA_WS_URL", "ws://192.168.1.68:6007"), user_id="martin")
 
 
 def make_tts():
-    return KokoroTTSService(
+    return BarnabyKokoroTTS(
         model_path=str(MODELS / "kokoro" / "kokoro-v1.0.onnx"),
         voices_path=str(MODELS / "kokoro" / "voices-v1.0.bin"),
-        settings=KokoroTTSService.Settings(voice=os.environ.get("BARNABY_KOKORO_VOICE", "bm_george"), language=Language.EN_GB),
+        settings=KokoroTTSService.Settings(voice=os.environ.get("BARNABY_KOKORO_VOICE", "bm_george"), language=Language.EN_GB,
+                                           speed=float(os.environ.get("BARNABY_SPEED", "0.95"))),
     )
 
 

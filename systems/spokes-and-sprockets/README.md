@@ -2,7 +2,7 @@
 
 The shop computer's system. Jobs, customers, parts, ordering, mechanics, invoices.
 Written by me (Theo) in 2009 when I was 16 because the old Access database kept corrupting,
-and patched ever since. Auntie June: this file is for whoever looks after it after me. Sorry in advance.
+and patched ever since. Uncle Martin: this file is for whoever looks after it after me. Sorry in advance.
 
 ## Running it
 
@@ -21,7 +21,7 @@ pytest                            # the tests
   a due date and a status.
 - Job statuses, in order: `booked`, `in progress`, `waiting on parts`, `ready` (fixed, waiting for the
   customer to collect), `collected` (gone home, done). Never delete jobs, mark them collected.
-  (The delete endpoint is for mistakes only. Auntie June, please don't use it.)
+  (The delete endpoint is for mistakes only. Uncle Martin, please don't use it.)
 - The **shop week** is Monday to Saturday. Each mechanic has `weekly_capacity_hours`: how many hours
   of jobs they can do in a week. Dev only does 20 because he does Tuesdays at the other shop.
   Ravi and Priya do 30.

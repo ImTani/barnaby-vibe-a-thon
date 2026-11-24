@@ -12,6 +12,8 @@ dependencies = [
     "httpx>=0.28",
     "httpx-sse>=0.4",
     "python-dotenv>=1.0",
+    "misaki-fork[en]",                  # the G2P Kokoro v1.0 was trained with (kokoro-onnx README recommends it)
+    "soundfile>=0.12",
 ]
 
 [tool.uv]

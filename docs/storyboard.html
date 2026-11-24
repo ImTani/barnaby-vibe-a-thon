@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barnaby: the film · storyboard v1 (for review)</title>
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0e1117; --surface:#161a22; --surface-2:#1b202a; --surface-3:#222834;
+  --ink:#f1ece1; --ink-2:#c2bba9; --muted:#8d8778; --hair:#262b35; --base:#3a404c;
+  --brass:#d4a85a; --brass-mark:#b88a3e;
+  --read:#3987e5; --write:#d95926; --build:#9085e9; --good:#22c55e;
+  --serif:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Cascadia Mono","Cascadia Code",Consolas,monospace;
+  --r:14px; --maxw:1180px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--sans);
+  background-image:radial-gradient(1100px 520px at 80% -10%,rgba(212,168,90,.1),transparent 60%)}
+a{color:var(--brass)}
+:focus-visible{outline:2px solid var(--brass);outline-offset:3px;border-radius:4px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+.eyebrow{font:600 12px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--brass);margin:0 0 14px}
+h1,h2,h3{font-family:var(--serif);font-weight:normal;margin:0}
+h1{font-size:clamp(40px,5.4vw,64px);line-height:1.05}
+h2{font-size:clamp(28px,3vw,38px);margin-bottom:12px}
+h3{font-size:24px}
+.lede{color:var(--ink-2);font-size:18px;max-width:68ch}
+section{padding:64px 0;border-top:1px solid var(--hair)}
+section.first{border-top:0;padding-top:52px}
+.muted{color:var(--muted)}.fine{font-size:13px;color:var(--muted)}
+.mono{font-family:var(--mono);font-size:.9em}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border:1px solid rgba(212,168,90,.35);border-radius:999px;background:rgba(212,168,90,.06);font-size:14px;margin:0 8px 8px 0}
+.pill b{color:var(--brass);font-weight:600}
+.status{display:inline-block;font:600 12px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:#16120a;background:var(--brass);border-radius:999px;padding:4px 10px;margin-left:10px;vertical-align:middle}
+
+/* timeline */
+.tl{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:18px 20px 14px;position:relative}
+.lane{display:grid;grid-template-columns:110px 1fr;align-items:center;min-height:38px}
+.lane-label{font:600 12px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.track{position:relative;height:30px;border-left:1px solid var(--base);
+  background-image:repeating-linear-gradient(to right,var(--hair) 0 1px,transparent 1px calc(1000%/140))}
+.seg{position:absolute;top:3px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;
+  font:600 12px var(--sans);color:var(--ink);overflow:hidden;white-space:nowrap;cursor:default;border:0;padding:0}
+.seg.scene{background:var(--surface-3);border:1px solid var(--base)}
+.seg.scene.star{background:rgba(144,133,233,.18);border-color:var(--build)}
+.seg.voice{top:7px;height:16px;border-radius:3px}
+.seg.voice.b{background:var(--brass-mark)}
+.seg.voice.h{background:#6f7891}
+.seg.cap{top:9px;height:12px;background:rgba(241,236,225,.22);border-radius:3px}
+.tick{position:absolute;top:6px;width:2px;height:18px;border-radius:1px;background:var(--ink-2);opacity:.65}
+.tick.big{background:var(--brass);opacity:1;height:22px;top:4px}
+.axis{position:relative;height:24px;margin-left:110px;border-top:1px solid var(--base)}
+.axis span{position:absolute;top:5px;font-size:12px;color:var(--muted);transform:translateX(-50%);font-variant-numeric:tabular-nums;white-space:nowrap}
+.axis span:last-child{transform:translateX(-100%)}
+.axis span:first-child{transform:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--muted);margin:10px 0 0 110px}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:6px;vertical-align:0}
+.tip{position:absolute;z-index:5;pointer-events:none;max-width:340px;background:var(--surface-3);border:1px solid var(--base);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--ink-2);box-shadow:0 14px 40px rgba(0,0,0,.45);opacity:0;transition:opacity .1s}
+.tip.on{opacity:1}
+.tip b{color:var(--ink)}
+@media (max-width:760px){.lane{grid-template-columns:70px 1fr}.axis,.legend{margin-left:70px}.axis span.o{display:none}}
+
+/* scene cards */
+.scenes{display:grid;gap:18px}
+.sc{display:grid;grid-template-columns:400px 1fr;gap:24px;background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:20px}
+.sc.star{border-color:rgba(144,133,233,.6);box-shadow:0 0 0 1px rgba(144,133,233,.15)}
+@media (max-width:900px){.sc{grid-template-columns:1fr}}
+.sc-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.sc-id{font:600 13px var(--mono);color:var(--brass)}
+.sc-time{font:13px var(--mono);color:var(--muted)}
+.beats{list-style:none;margin:8px 0 0;padding:0;font-size:14.5px;color:var(--ink-2)}
+.beats li{display:grid;grid-template-columns:62px 1fr;gap:8px;padding:5px 0;border-top:1px solid var(--hair)}
+.beats li:first-child{border-top:0}
+.beats .t{font:12.5px var(--mono);color:var(--muted);padding-top:2px}
+.say{font-family:var(--serif);font-style:italic;color:var(--ink)}
+.who{font:600 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;margin-right:6px}
+.who.b{color:var(--brass)}.who.h{color:#9aa3bb}
+.capline{margin-top:10px;font-size:14px;color:var(--ink-2);border-left:2px solid rgba(241,236,225,.4);padding-left:10px}
+
+/* thumbnails (16:9 sketches of each composition) */
+.thumb{position:relative;width:100%;aspect-ratio:16/9;background:#0b0e13;border:1px solid var(--hair);border-radius:10px;overflow:hidden;font-size:9px}
+.thumb *{position:absolute}
+.x-win{background:#ece9d8;border:1px solid #6b6b6b;border-radius:3px;overflow:hidden}
+.x-win .tb{left:0;right:0;top:0;height:8px;background:linear-gradient(#2b7be9,#0a4fc4)}
+.x-win .bn{left:0;right:0;top:8px;height:14px;background:linear-gradient(#3a6ea5,#1d4a77);border-bottom:2px solid #ffcc00;color:#fff;font:italic bold 8px "Trebuchet MS";padding:2px 4px}
+.x-win .rows{left:4px;right:4px;top:28px;bottom:4px;background:repeating-linear-gradient(#fff 0 6px,#eef3fb 6px 12px);border:1px solid #c6c6c6}
+.x-hud{background:rgba(14,17,23,.92);border:1px solid rgba(212,168,90,.7);border-radius:6px}
+.x-hud::before{content:"";position:absolute;left:6px;top:5px;width:9px;height:6px;border-radius:5px 5px 1px 1px;background:var(--brass)}
+.x-row{height:5px;border-radius:2px;left:8px;right:8px;background:var(--read)}
+.x-say{height:3px;border-radius:2px;background:rgba(241,236,225,.65)}
+.x-card{border:1px solid var(--brass);background:#161a22;border-radius:4px}
+.x-btn{width:22px;height:6px;border-radius:2px;background:var(--brass)}
+.x-term{background:#05070a;border:1px solid var(--hair);border-radius:4px}
+.x-code{height:3px;border-radius:1px;background:rgba(34,197,94,.55)}
+.x-chip{width:16px;height:5px;border-radius:2px;border:1px solid #3a404c;background:#0e1117}
+.x-chip.on{border-color:var(--brass);background:rgba(212,168,90,.35)}
+.x-chip.new{border-color:var(--build);background:rgba(144,133,233,.55)}
+.x-tab{height:16px;border-radius:3px 3px 0 0;background:#2a3040;border:1px solid #3a404c}
+.x-cap{left:20%;right:20%;bottom:6%;height:7%;border-radius:4px;background:rgba(10,12,17,.85);border:1px solid rgba(212,168,90,.3)}
+.x-title{font-family:var(--serif);color:var(--ink);left:0;right:0;text-align:center}
+
+/* tables */
+table.t{width:100%;border-collapse:collapse;font-size:14.5px}
+.t th,.t td{padding:9px 12px;border-bottom:1px solid var(--hair);text-align:left;vertical-align:top}
+.t th{font:600 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink-2);font-family:var(--mono);font-size:13px}
+.boxed{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:6px 8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:860px){.two{grid-template-columns:1fr}}
+.st{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.st i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.qs{list-style:none;padding:0;margin:0;display:grid;gap:12px;counter-reset:q}
+.qs li{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:14px 16px 14px 52px;position:relative;counter-increment:q}
+.qs li::before{content:counter(q);position:absolute;left:14px;top:13px;width:26px;height:26px;border-radius:50%;background:var(--brass);color:#16120a;display:grid;place-items:center;font:600 13px var(--sans)}
+.qs b{color:var(--ink)}
+footer{border-top:1px solid var(--hair);padding:28px 0 44px;color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<section class="first">
+  <div class="wrap">
+    <p class="eyebrow">Barnaby · the film · storyboard v1 <span class="status">for your review</span></p>
+    <h1>Nine scenes, 140 seconds, one family.</h1>
+    <p class="lede" style="margin-top:16px">The cinematic cut, rendered from code like Quorum's film. Every number, line of code and test result on
+      screen comes from a real recorded run. Nothing gets written until you approve this.</p>
+    <div style="margin-top:18px">
+      <span class="pill"><b>140 s</b> 1920×1080 · 30 fps</span>
+      <span class="pill"><b>9</b> scenes</span>
+      <span class="pill"><b>16</b> spoken lines</span>
+      <span class="pill"><b>8</b> captions</span>
+      <span class="pill"><b>Real data</b> diff, endpoints, tests, git history</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">At a glance</p>
+    <h2>The timeline</h2>
+    <p class="lede" style="margin-bottom:20px">Hover or tab to any block for details. The soundtrack is cut to these times, so once approved they're frozen.</p>
+    <div class="tl" id="tl">
+      <div class="lane"><span class="lane-label">Scenes</span><div class="track" id="ln-scene"></div></div>
+      <div class="lane"><span class="lane-label">Voices</span><div class="track" id="ln-voice"></div></div>
+      <div class="lane"><span class="lane-label">Captions</span><div class="track" id="ln-cap"></div></div>
+      <div class="lane"><span class="lane-label">Sound</span><div class="track" id="ln-sfx"></div></div>
+      <div class="axis" id="axis" aria-hidden="true"></div>
+      <div class="legend"><span><i style="background:var(--brass-mark)"></i>Barnaby speaks</span><span><i style="background:#6f7891"></i>Theo, June or Priya</span><span><i style="background:rgba(241,236,225,.22)"></i>caption</span><span><i style="background:var(--brass)"></i>bell / click / chime</span><span><i style="background:var(--ink-2)"></i>other sound effect</span></div>
+      <div class="tip" id="tip" role="tooltip"></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Scene by scene</p>
+    <h2>What's on screen, and when</h2>
+    <div class="scenes" id="scenes">
+
+      <article class="sc">
+        <div class="thumb" aria-label="Sketch: browser tabs piling up, a RAM meter climbing in the corner">
+          <div class="x-tab" style="left:8%;top:12%;width:20%"></div><div class="x-tab" style="left:26%;top:12%;width:18%"></div><div class="x-tab" style="left:42%;top:12%;width:16%"></div><div class="x-tab" style="left:56%;top:12%;width:13%"></div><div class="x-tab" style="left:67%;top:12%;width:10%"></div><div class="x-tab" style="left:75%;top:12%;width:7%"></div><div class="x-tab" style="left:80%;top:12%;width:5%"></div>
+          <div style="left:8%;right:8%;top:21%;bottom:22%;background:#1b202a;border:1px solid #3a404c"></div>
+          <div style="right:4%;top:4%;width:16%;height:5%;border:1px solid #3a404c;border-radius:3px"><div style="left:0;top:0;bottom:0;width:90%;background:#e66767;border-radius:2px"></div></div>
+          <div class="x-cap"></div>
+        </div>
+        <div>
+          <div class="sc-head"><span class="sc-id">A</span><h3>Nine tabs</h3><span class="sc-time">0–11 s · cold open</span></div>
+          <ul class="beats">
+            <li><span class="t">0.6</span><span>Black, then a <b>bell</b>. A desk monitor fades in.</span></li>
+            <li><span class="t">1–6.5</span><span>Nine tabs cascade in until their titles are unreadable: Back Office v2.3, Supplier portal, SMS box, workload.xls…</span></li>
+            <li><span class="t">1–9.5</span><span>A RAM meter climbs from 38% to 94%, turning brass and then red.</span></li>
+          </ul>
+          <p class="capline">Caption 4.5–10.5: "Every small business runs on systems nobody has time to rewrite."</p>
+        </div>
+      </article>
+
+      <article class="sc">
+        <div class="thumb" aria-label="Sketch: the 2009 shop window on the left, Barnaby's display on the right with endpoint chips">
+          <div class="x-win" style="left:4%;top:12%;width:52%;height:72%"><div class="tb"></div><div class="bn">Spokes &amp; Sprockets</div><div class="rows"></div></div>
+          <div class="x-hud" style="left:58%;top:8%;width:38%;height:62%">
+            <div class="x-term" style="left:6%;right:6%;top:16%;height:16%"></div>
+            <div class="x-chip on" style="left:6%;top:40%"></div><div class="x-chip on" style="left:24%;top:40%"></div><div class="x-chip on" style="left:42%;top:40%"></div><div class="x-chip" style="left:60%;top:40%"></div><div class="x-chip" style="left:78%;top:40%"></div>
+            <div class="x-chip on" style="left:6%;top:50%"></div><div class="x-chip on" style="left:24%;top:50%"></div><div class="x-chip on" style="left:42%;top:50%"></div><div class="x-chip" style="left:60%;top:50%"></div><div class="x-chip" style="left:78%;top:50%"></div>
+            <div class="x-chip" style="left:6%;top:60%"></div><div class="x-chip" style="left:24%;top:60%"></div><div class="x-chip" style="left:42%;top:60%"></div><div class="x-chip" style="left:60%;top:60%"></div>
+            <div class="x-say" style="left:6%;width:80%;top:76%"></div><div class="x-say" style="left:6%;width:55%;top:84%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="sc-head"><span class="sc-id">B</span><h3>Theo's handover</h3><span class="sc-time">11–27 s · Arrival</span></div>
+          <ul class="beats">
+            <li><span class="t">11.5</span><span>The 2009 back office slides in. A <span class="mono">git log</span> types Theo's real backdated history, from 2009 to "bye x".</span></li>
+            <li><span class="t">17.5</span><span><span class="who h">Theo</span><span class="say">"Barnaby, this is the shop's system. Look after them for me."</span></span></li>
+            <li><span class="t">20–23.5</span><span>Barnaby's display appears and Synapse scans: "Extracted 23 endpoint(s)". All 23 real endpoints bloom as chips.</span></li>
+            <li><span class="t">24.0</span><span>The six starter reads light up brass, with a <b>chime</b>.</span></li>
+            <li><span class="t">24.5</span><span><span class="who b">Barnaby</span><span class="say">"Twenty-three endpoints, sir. I've started with the six that only read."</span></span></li>
+          </ul>
+          <p class="capline">Caption 12–16.8: "Theo wrote the shop's back office in 2009. On Friday, he leaves."</p>
+        </div>
+      </article>
+
+      <article class="sc">
+        <div class="thumb" aria-label="Sketch: the shop window with Barnaby's display overlapping its right side, blue trace rows">
+          <div class="x-win" style="left:3%;top:10%;width:58%;height:78%"><div class="tb"></div><div class="bn">Spokes &amp; Sprockets</div><div class="rows"></div></div>
+          <div style="left:3%;top:3%;width:18%;height:5%;border-radius:8px;border:1px solid var(--brass);background:rgba(212,168,90,.15)"></div>
+          <div class="x-hud" style="left:52%;top:14%;width:44%;height:70%">
+            <div class="x-say" style="left:8%;width:70%;top:16%;background:#8d8778"></div>
+            <div class="x-row" style="top:28%"></div><div class="x-row" style="top:36%"></div><div class="x-row" style="top:44%"></div><div class="x-row" style="top:52%"></div><div class="x-row" style="top:60%"></div>
+            <div class="x-say" style="left:8%;width:82%;top:74%"></div><div class="x-say" style="left:8%;width:60%;top:82%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="sc-head"><span class="sc-id">C</span><h3>Monday</h3><span class="sc-time">27–42 s · Meet June</span></div>
+          <ul class="beats">
+            <li><span class="t">27.3</span><span>A chip: "Monday · 8:52am". Barnaby's display slides in over the 2009 window.</span></li>
+            <li><span class="t">28.5</span><span><span class="who h">June</span><span class="say">"Which repairs are due tomorrow, and are we short on parts?"</span></span></li>
+            <li><span class="t">30–33.5</span><span>Six read calls tick in, blue: <span class="mono">jobs_due</span>, then <span class="mono">job_detail</span> for jobs 4471, 4475, 4478, 4485 and 4490.</span></li>
+            <li><span class="t">34.0</span><span><span class="who b">Barnaby</span><span class="say">"Five are due tomorrow. Only one is short: Anika's brake job needs two pairs of pads, and we have one."</span> Her row highlights in the 2009 table.</span></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="sc">
+        <div class="thumb" aria-label="Sketch: a brass 'grow' card, then an orange 'confirm' card, and a new purchase-order row in the 2009 window">
+          <div class="x-win" style="left:3%;top:10%;width:46%;height:78%"><div class="tb"></div><div class="bn">Purchase Orders</div><div class="rows"></div></div>
+          <div style="left:5%;top:58%;width:42%;height:7%;background:#fff6bf;border:1px solid #c9b45a"></div>
+          <div class="x-card" style="left:53%;top:10%;width:43%;height:34%"><div class="x-say" style="left:8%;top:22%;width:70%"></div><div class="x-btn" style="left:8%;top:68%"></div></div>
+          <div class="x-card" style="left:53%;top:52%;width:43%;height:34%;border-color:var(--write)"><div class="x-say" style="left:8%;top:22%;width:80%"></div><div class="x-btn" style="left:8%;top:68%;background:var(--write)"></div></div>
+        </div>
+        <div>
+          <div class="sc-head"><span class="sc-id">D</span><h3>Unlock</h3><span class="sc-time">42–58 s</span></div>
+          <ul class="beats">
+            <li><span class="t">42.5</span><span><span class="who h">June</span><span class="say">"Order ten pairs, from the usual supplier."</span></span></li>
+            <li><span class="t">45.0</span><span><span class="who b">Barnaby</span><span class="say">"I can't yet, but the system can. There's an ordering endpoint I haven't taken. May I?"</span></span></li>
+            <li><span class="t">47–50.5</span><span>A brass "grow" card: <span class="mono">Unlock POST /api/purchase-orders</span>. Click; "rebuilt in 0.38 s" (real); the chip lights up.</span></li>
+            <li><span class="t">52–53.8</span><span>An orange "confirm" card for the order itself. <span class="who h">June</span><span class="say">"Yes."</span> Click.</span></li>
+            <li><span class="t">55.0</span><span>Purchase order 3 appears in the 2009 Purchase Orders page.</span></li>
+          </ul>
+          <p class="capline">Caption 55.5–57.8: "Unlock: Synapse had already found it. Barnaby asked, then took it."</p>
+        </div>
+      </article>
+
+      <article class="sc">
+        <div class="thumb" aria-label="Sketch: four identical rows of four steps collapsing into one glowing skill row">
+          <div style="left:10%;top:12%;width:62%;height:10%;border:1px solid #3a404c;border-radius:4px;background:#1b202a"></div>
+          <div style="left:10%;top:26%;width:62%;height:10%;border:1px solid #3a404c;border-radius:4px;background:#1b202a"></div>
+          <div style="left:10%;top:40%;width:62%;height:10%;border:1px solid #3a404c;border-radius:4px;background:#1b202a"></div>
+          <div style="left:10%;top:54%;width:62%;height:10%;border:1px solid #3a404c;border-radius:4px;background:#1b202a"></div>
+          <div style="left:76%;top:33%;width:18%;height:12%;border:1px solid var(--build);border-radius:5px;background:rgba(212,168,90,.3);box-shadow:0 0 12px rgba(144,133,233,.6)"></div>
+          <div class="x-cap"></div>
+        </div>
+        <div>
+          <div class="sc-head"><span class="sc-id">E</span><h3>Compose</h3><span class="sc-time">58–70 s</span></div>
+          <ul class="beats">
+            <li><span class="t">58.5–61</span><span>Four identical sequences stack up: <span class="mono">get_job → get_customer → notify → set_status</span>, labelled ×1 to ×4.</span></li>
+            <li><span class="t">61.5</span><span><span class="who b">Barnaby</span><span class="say">"You've had me do these four steps four times today. Shall I make it a single motion?"</span></span></li>
+            <li><span class="t">64–65</span><span><span class="mono">synapse build --custom -q "hand back a finished bike"</span>. The rows fuse into one skill, <span class="mono">hand_back_bike</span>.</span></li>
+          </ul>
+          <p class="capline">Caption 67.2–69.8: "Compose: one verified skill instead of four steps."</p>
+        </div>
+      </article>
+
+      <article class="sc star">
+        <div class="thumb" aria-label="Sketch: a code editor typing green lines, pytest passing, a diff card with Approve and merge, and a new violet chip">
+          <div class="x-term" style="left:3%;top:8%;width:52%;height:56%">
+            <div class="x-code" style="left:6%;top:12%;width:70%"></div><div class="x-code" style="left:10%;top:22%;width:60%"></div><div class="x-code" style="left:10%;top:32%;width:75%"></div><div class="x-code" style="left:10%;top:42%;width:50%"></div><div class="x-code" style="left:10%;top:52%;width:66%"></div><div class="x-code" style="left:6%;top:62%;width:40%"></div>
+          </div>
+          <div class="x-term" style="left:3%;top:68%;width:52%;height:22%"><div style="left:6%;top:38%;width:30%;height:22%;background:var(--good);border-radius:2px"></div></div>
+          <div class="x-card" style="left:58%;top:8%;width:39%;height:64%;border-color:var(--build)">
+            <div class="x-code" style="left:6%;top:18%;width:80%"></div><div class="x-code" style="left:6%;top:28%;width:70%"></div><div class="x-code" style="left:6%;top:38%;width:76%"></div><div class="x-code" style="left:6%;top:48%;width:60%"></div>
+            <div class="x-btn" style="left:6%;top:80%;width:40px"></div>
+          </div>
+          <div class="x-chip new" style="left:66%;top:80%;width:24%;height:8%"></div>
+        </div>
+        <div>
+          <div class="sc-head"><span class="sc-id">F</span><h3>Build</h3><span class="sc-time">70–102 s · centrepiece</span></div>
+          <ul class="beats">
+            <li><span class="t">70.5</span><span><span class="who h">June</span><span class="say">"Who's overloaded this week?"</span></span></li>
+            <li><span class="t">72.0</span><span><span class="who b">Barnaby</span><span class="say">"The system has no notion of workload, ma'am. I can teach it."</span></span></li>
+            <li><span class="t">74–80</span><span>A worktree editor opens; <b>the real added lines</b> type in (<span class="mono">mechanic_workload()</span> and the route).</span></li>
+            <li><span class="t">80.5–82</span><span><span class="mono">python -m pytest -q</span> gives <b style="color:var(--good)">22 passed</b> (the real result).</span></li>
+            <li><span class="t">83–86.5</span><span>A violet "Barnaby wrote new code" card with the real diff. June clicks <b>Approve and merge</b>.</span></li>
+            <li><span class="t">87–89.5</span><span>"merged" → "shop restarted" → <span class="mono">synapse build --discover</span> → endpoint 24 appears as a violet chip.</span></li>
+            <li><span class="t">91.0</span><span><span class="who b">Barnaby</span><span class="say">"Dev has thirty-one hours booked against twenty. Shall I move the two wheel builds to Priya?"</span></span></li>
+            <li><span class="t">97.6–99.4</span><span><span class="who h">June</span><span class="say">"Yes, please."</span> In the 2009 table, Dev flips to Priya on both rows, highlighted yellow.</span></li>
+          </ul>
+          <p class="capline">Caption 98.5–101.8: "Build: the report Theo never wrote. Tested, approved, live."</p>
+        </div>
+      </article>
+
+      <article class="sc">
+        <div class="thumb" aria-label="Sketch: a large map of 24 endpoint chips, some brass, one violet">
+          <div style="left:6%;top:8%;font:600 9px var(--sans);color:#9aa3bb;letter-spacing:.1em">PRIYA</div>
+          <div class="x-say" style="left:6%;top:16%;width:50%;background:#c2bba9"></div>
+          <div class="x-chip on" style="left:6%;top:32%;width:13%"></div><div class="x-chip on" style="left:21%;top:32%;width:13%"></div><div class="x-chip on" style="left:36%;top:32%;width:13%"></div><div class="x-chip" style="left:51%;top:32%;width:13%"></div><div class="x-chip on" style="left:66%;top:32%;width:13%"></div><div class="x-chip" style="left:81%;top:32%;width:13%"></div>
+          <div class="x-chip" style="left:6%;top:44%;width:13%"></div><div class="x-chip on" style="left:21%;top:44%;width:13%"></div><div class="x-chip" style="left:36%;top:44%;width:13%"></div><div class="x-chip on" style="left:51%;top:44%;width:13%"></div><div class="x-chip" style="left:66%;top:44%;width:13%"></div><div class="x-chip on" style="left:81%;top:44%;width:13%"></div>
+          <div class="x-chip" style="left:6%;top:56%;width:13%"></div><div class="x-chip" style="left:21%;top:56%;width:13%"></div><div class="x-chip on" style="left:36%;top:56%;width:13%"></div><div class="x-chip" style="left:51%;top:56%;width:13%"></div><div class="x-chip" style="left:66%;top:56%;width:13%"></div><div class="x-chip new" style="left:81%;top:56%;width:13%"></div>
+          <div class="x-say" style="left:6%;top:76%;width:70%"></div>
+        </div>
+        <div>
+          <div class="sc-head"><span class="sc-id">G</span><h3>Priya, day one</h3><span class="sc-time">102–112 s</span></div>
+          <ul class="beats">
+            <li><span class="t">102.5</span><span><span class="who h">Priya</span><span class="say">"What can this system actually do?"</span></span></li>
+            <li><span class="t">104.0</span><span>The full capability map: 24 chips. Eight are brass (what Barnaby has taken on); one is violet (the one he wrote).</span></li>
+            <li><span class="t">105.0</span><span><span class="who b">Barnaby</span><span class="say">"Twenty-four things. Theo wrote twenty-three; I wrote one more."</span></span></li>
+          </ul>
+          <p class="capline">Caption 109.2–111.8: "The departing expert's knowledge, kept."</p>
+        </div>
+      </article>
+
+      <article class="sc">
+        <div class="thumb" aria-label="Sketch: a 2 by 2 grid of repo cards, the last one a grid of small tiles lighting up">
+          <div class="x-card" style="left:5%;top:8%;width:43%;height:38%;border-color:#3a404c"><div class="x-say" style="left:8%;top:20%;width:50%"></div><div class="x-say" style="left:8%;top:44%;width:70%;background:#8d8778"></div></div>
+          <div class="x-card" style="left:52%;top:8%;width:43%;height:38%;border-color:#3a404c"><div class="x-say" style="left:8%;top:20%;width:40%"></div><div class="x-say" style="left:8%;top:44%;width:76%;background:#8d8778"></div></div>
+          <div class="x-card" style="left:5%;top:50%;width:43%;height:38%;border-color:#3a404c"><div class="x-say" style="left:8%;top:20%;width:46%"></div><div class="x-say" style="left:8%;top:44%;width:30%;background:#8d8778"></div></div>
+          <div class="x-card" style="left:52%;top:50%;width:43%;height:38%;border-color:#3a404c;background:repeating-linear-gradient(90deg,rgba(212,168,90,.35) 0 6px,transparent 6px 9px),#161a22"></div>
+        </div>
+        <div>
+          <div class="sc-head"><span class="sc-id">H</span><h3>Any repo</h3><span class="sc-time">112–127 s · montage</span></div>
+          <ul class="beats">
+            <li><span class="t">112.5</span><span><b>Quorum</b> (offline team memory): "Any disputed deadlines?" · <b>13 endpoints</b> (real Synapse scan)</span></li>
+            <li><span class="t">112.85</span><span><b>ComfyUI</b>: "What GPU is it using, and is anything queued?" · <b>28 endpoints</b> (real scan of its server.py)</span></li>
+            <li><span class="t">113.2</span><span><b>clipd</b> (game clipper): "Clip that." · "control API + hosted build"</span></li>
+            <li><span class="t">113.55–124</span><span><b>Your company</b>: 40 system tiles light up brass, one by one.</span></li>
+          </ul>
+          <p class="capline">Captions 112.5–118.5: "Point Barnaby at any repo." · 119–126.5: "Synapse makes it agent-ready. Barnaby makes it grow."</p>
+        </div>
+      </article>
+
+      <article class="sc">
+        <div class="thumb" aria-label="Sketch: the bell, the wordmark Barnaby, and the tagline centred">
+          <div style="left:46%;top:16%;width:8%;height:10%;border-radius:20px 20px 2px 2px;background:var(--brass)"></div>
+          <div class="x-title" style="top:32%;font-size:22px">Barnaby</div>
+          <div class="x-title" style="top:56%;font-size:11px">Every system deserves a butler.</div>
+          <div class="x-title" style="top:68%;font-size:9px;color:var(--brass);font-style:italic">Even the old ones.</div>
+          <div style="left:3%;bottom:4%;font-size:6px;color:#8d8778">Scenes recreated from a real recorded run…</div>
+        </div>
+        <div>
+          <div class="sc-head"><span class="sc-id">I</span><h3>Close</h3><span class="sc-time">127–140 s</span></div>
+          <ul class="beats">
+            <li><span class="t">127.5</span><span>The <b>bell</b> again. The bell icon and the "Barnaby" wordmark fade in.</span></li>
+            <li><span class="t">129.5</span><span><span class="who b">Barnaby</span><span class="say">"Every system deserves a butler."</span></span></li>
+            <li><span class="t">132.0</span><span><span class="who b">Barnaby</span><span class="say">"Even the old ones."</span></span></li>
+            <li><span class="t">134–140</span><span>"Built on Synapse · 2nd Brain Labs × Geek Room Vibe-a-thon"; a small disclosure line; fade to black.</span></li>
+          </ul>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap two">
+    <div>
+      <p class="eyebrow">Voices and sound</p>
+      <h2>Cast</h2>
+      <div class="boxed">
+        <table class="t">
+          <thead><tr><th scope="col">Who</th><th scope="col">Role</th><th scope="col">Placeholder voice</th></tr></thead>
+          <tbody>
+            <tr><td>Barnaby</td><td>The butler</td><td class="n">Kokoro bm_george</td></tr>
+            <tr><td>Theo Hartley</td><td>Nephew, wrote it in 2009</td><td class="n">Kokoro bm_lewis</td></tr>
+            <tr><td>June Hartley</td><td>The owner</td><td class="n">Kokoro bf_emma</td></tr>
+            <tr><td>Priya</td><td>New hire, day one</td><td class="n">Kokoro bf_isabella</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="fine" style="margin-top:10px">These are placeholder voices generated locally. You can voice-act any of them; I'll swap your takes in at the same times.
+        <b>Music:</b> synthesised in code (Quorum's approach): tense and thin in A, warm in the handover, a walking pace through the work, a steady build into the new tool appearing at 89.5 s, fullest in the montage, then it resolves on the bell.</p>
+    </div>
+    <div>
+      <p class="eyebrow">Honesty</p>
+      <h2>Real vs staged</h2>
+      <div class="boxed">
+        <table class="t">
+          <thead><tr><th scope="col">On screen</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            <tr><td>Endpoints, git history, tool calls, diff, "22 passed", "rebuilt in 0.38 s", 31 h vs 20</td><td><span class="st"><i style="background:var(--good)"></i>Real</span>: from a recorded run</td></tr>
+            <tr><td>Arrival, Ask, Unlock, Build, reassign</td><td><span class="st"><i style="background:var(--good)"></i>Real</span>: <span class="mono">demo_check.py</span> 11/11</td></tr>
+            <tr><td>Quorum 13 and ComfyUI 28 endpoints</td><td><span class="st"><i style="background:var(--good)"></i>Real</span>: Synapse scans</td></tr>
+            <tr><td>Compose (<span class="mono">hand_back_bike</span>)</td><td><span class="st"><i style="background:#fab219"></i>Not built yet</span>: needs a model key for Synapse Custom mode</td></tr>
+            <tr><td>clipd card</td><td><span class="st"><i style="background:#fab219"></i>Staged</span>: no control API yet</td></tr>
+            <tr><td>"Your company": 40 tiles</td><td><span class="st"><i style="background:#8d8778"></i>Illustrative</span></td></tr>
+            <tr><td>Timing, the scenes themselves</td><td><span class="st"><i style="background:#8d8778"></i>Staged recreation</span>, disclosed on screen</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Before I freeze it</p>
+    <h2>Questions for you</h2>
+    <ol class="qs">
+      <li><b>Length:</b> 140 s. Shorter (about 90 s) would mean dropping Compose and Priya, or trimming the montage.</li>
+      <li><b>Compose</b> isn't real yet. Keep the scene (and build it for real once there's a model key), or cut it?</li>
+      <li><b>Voices:</b> placeholder voices now, or will you voice-act some or all of them? Barnaby's two candidates are in <span class="mono">.demo/voice-samples/</span>.</li>
+      <li><b>clipd</b> in the montage: keep it as a staged card, swap it for another real repo, or build its control API so it's real?</li>
+      <li><b>Tone:</b> is Barnaby's wit right ("ma'am", "Look after them for me")? More dry, or warmer?</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">Storyboard v1 · mirrors <span class="mono">video/STORYBOARD.md</span> and <span class="mono">video/cues.json</span> · the plan: <a href="plan.html">plan.html</a></div>
+</footer>
+
+<script>
+(() => {
+  const D = 140;
+  const scenes = [["A",0,11,"Nine tabs"],["B",11,27,"Theo's handover"],["C",27,42,"Monday"],["D",42,58,"Unlock"],["E",58,70,"Compose"],["F",70,102,"Build"],["G",102,112,"Priya, day one"],["H",112,127,"Any repo"],["I",127,140,"Close"]];
+  const voice = [[17.5,"Theo","Barnaby, this is the shop's system. Look after them for me."],[24.5,"Barnaby","Twenty-three endpoints, sir. I've started with the six that only read."],[28.5,"June","Which repairs are due tomorrow, and are we short on parts?"],[34.0,"Barnaby","Five are due tomorrow. Only one is short: Anika's brake job needs two pairs of pads, and we have one."],[42.5,"June","Order ten pairs, from the usual supplier."],[45.0,"Barnaby","I can't yet, but the system can. There's an ordering endpoint I haven't taken. May I?"],[53.6,"June","Yes."],[61.5,"Barnaby","You've had me do these four steps four times today. Shall I make it a single motion?"],[70.5,"June","Who's overloaded this week?"],[72.0,"Barnaby","The system has no notion of workload, ma'am. I can teach it."],[91.0,"Barnaby","Dev has thirty-one hours booked against twenty. Shall I move the two wheel builds to Priya?"],[97.6,"June","Yes, please."],[102.5,"Priya","What can this system actually do?"],[105.0,"Barnaby","Twenty-four things. Theo wrote twenty-three; I wrote one more."],[129.5,"Barnaby","Every system deserves a butler."],[132.0,"Barnaby","Even the old ones."]];
+  const caps = [[4.5,10.5,"Every small business runs on systems nobody has time to rewrite."],[12,16.8,"Theo wrote the shop's back office in 2009. On Friday, he leaves."],[55.5,57.8,"Unlock: Synapse had already found it. Barnaby asked, then took it."],[67.2,69.8,"Compose: one verified skill instead of four steps."],[98.5,101.8,"Build: the report Theo never wrote. Tested, approved, live."],[109.2,111.8,"The departing expert's knowledge, kept."],[112.5,118.5,"Point Barnaby at any repo."],[119,126.5,"Synapse makes it agent-ready. Barnaby makes it grow."]];
+  const sfx = [[0.6,"bell"],[10.4,"whoosh"],[11.5,"whoosh"],[20,"whoosh"],[21.5,"shimmer"],[24,"chime"],[28,"whoosh"],[30,"tick ×6"],[44,"tick"],[47,"whoosh"],[49.5,"click"],[50.5,"chime"],[52,"whoosh"],[53.8,"click"],[55,"tick"],[58.5,"tick ×4"],[65,"pop"],[74,"whoosh"],[74.5,"typing"],[82,"success"],[83,"whoosh"],[86.5,"click"],[89.5,"pop + chime"],[90.5,"tick"],[98.4,"tick ×2"],[104,"shimmer"],[112.5,"whoosh"],[127.5,"bell"]];
+  const big = new Set(["bell","click","chime","pop + chime"]);
+  const pct = t => (t / D * 100) + "%";
+  const speechLen = s => Math.max(1, s.split(" ").length / 2.6);   // ~2.6 words/s spoken
+  const tip = document.getElementById("tip"), tl = document.getElementById("tl");
+  function block(lane, cls, a, b, label, html) {
+    const s = document.createElement("button"); s.type = "button"; s.className = "seg " + cls;
+    s.style.left = pct(a); s.style.width = `calc(${pct(b - a)} - 2px)`; s.textContent = label || "";
+    s.setAttribute("aria-label", html.replace(/<[^>]+>/g, ""));
+    const showTip = () => { tip.innerHTML = html; tip.classList.add("on");
+      const r = s.getBoundingClientRect(), g = tl.getBoundingClientRect();
+      let x = r.left - g.left + r.width / 2 - tip.offsetWidth / 2; x = Math.max(6, Math.min(x, g.width - tip.offsetWidth - 6));
+      tip.style.left = x + "px"; tip.style.top = (r.top - g.top - tip.offsetHeight - 8) + "px"; };
+    s.addEventListener("mouseenter", showTip); s.addEventListener("focus", showTip);
+    s.addEventListener("mouseleave", () => tip.classList.remove("on")); s.addEventListener("blur", () => tip.classList.remove("on"));
+    document.getElementById(lane).append(s);
+  }
+  scenes.forEach(([id, a, b, title]) => block("ln-scene", "scene" + (id === "F" ? " star" : ""), a, b, b - a > 10 ? `${id} · ${title}` : id, `<b>${id} · ${title}</b><br>${a}–${b} s`));
+  voice.forEach(([t, who, text]) => block("ln-voice", "voice " + (who === "Barnaby" ? "b" : "h"), t, Math.min(D, t + speechLen(text)), "", `<b>${who}</b> · ${t} s<br>“${text}”`));
+  caps.forEach(([a, b, text]) => block("ln-cap", "cap", a, b, "", `<b>Caption</b> · ${a}–${b} s<br>${text}`));
+  sfx.forEach(([t, kind]) => {
+    const k = document.createElement("span"); k.className = "tick" + (big.has(kind) ? " big" : ""); k.style.left = pct(t);
+    k.title = `${kind} · ${t} s`; document.getElementById("ln-sfx").append(k);
+  });
+  const axis = document.getElementById("axis");
+  for (let t = 0; t <= D; t += 10) { const s = document.createElement("span"); s.textContent = t + " s"; s.style.left = pct(t); if (t % 20) s.className = "o"; axis.append(s); }
+  document.addEventListener("keydown", e => { if (e.key === "Escape") tip.classList.remove("on"); });
+})();
+</script>
+</body>
+</html>

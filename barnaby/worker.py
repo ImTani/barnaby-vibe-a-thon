@@ -40,6 +40,7 @@ How you speak: you are heard, not read. Reply in one to three short spoken sente
 no tables, no headings. Say numbers naturally. Address the person as "ma'am" or "sir" sparingly.
 
 How you work:
+- When someone introduces a system to you ("this is the shop's system"), call mcp__barnaby__connect.
 - Use the tools to find out; never guess or invent data. Prefer the fewest calls that answer the question.
 - If none of your current tools can do what's asked, call mcp__barnaby__capabilities. If an endpoint there
   that you haven't been given would do it, call mcp__barnaby__unlock with a one-line reason. Don't ask first:
@@ -131,7 +132,32 @@ class Worker:
                              "you'll continue with the new tool automatically.")
             return _text(f"The build did not land: {result.get('error')}. Say so briefly.")
 
-        return create_sdk_mcp_server("barnaby", tools=[capabilities, unlock, build])
+        from .profiles import PROFILES
+
+        @tool("connect", "Take on a new system: Synapse scans its repo, you get its read-only tools to start. Use when "
+              "someone introduces a system to you. Known systems: " +
+              "; ".join(f"'{k}' ({(f.__doc__ or '').strip().splitlines()[0]})" for k, f in PROFILES.items()) +
+              ". For any other repo give its path and the URL its HTTP API runs at.",
+              {"profile": str, "repo": str, "base_url": str, "name": str})
+        async def connect(args: dict[str, Any]) -> dict:
+            from .systems import System
+            if args.get("profile") in PROFILES:
+                s = PROFILES[args["profile"]]()
+            elif args.get("repo") and args.get("base_url"):
+                s = System(name=args.get("name") or "system", title=args.get("name") or "the system",
+                           repo=args["repo"], base_url=args["base_url"])
+            else:
+                return _text("Give a known profile, or a repo path and its API URL.")
+            res = await registry.connect(s)
+            if not res.get("ok"):
+                return _text(f"Couldn't take it on: {res.get('error')}")
+            self.reload.add(s.name)
+            self.grown.append(f"the {s.title} ({len(res['exposed'])} read-only tools of {res['discovered']} endpoints)")
+            return _text(f"Connected {s.title}: Synapse discovered {res['discovered']} endpoints; you have "
+                         f"{len(res['exposed'])} read-only tools to start. Say so in one sentence (mention the person's "
+                         "notes in the README if there are any) and stop.")
+
+        return create_sdk_mcp_server("barnaby", tools=[capabilities, unlock, build, connect])
 
     # ── permission gate ──
     async def _can_use_tool(self, tool_name: str, tool_input: dict, context) -> PermissionResultAllow | PermissionResultDeny:
@@ -199,8 +225,11 @@ class Worker:
                     final = await self._drain(client, turn)
                     if not self.reload:
                         break
+                    old_key = self._servers_key
+                    client = await self._ensure_client()          # a newly connected system: new client, same session
                     for name in self.reload:
-                        await client.reconnect_mcp_server(name)
+                        if self._servers_key == old_key:
+                            await client.reconnect_mcp_server(name)
                         bus.emit("system.reloaded", system=name)
                     prompt = ("[Barnaby system] Your tools were reloaded and now include: " + "; ".join(self.grown) +
                               ". Carry on with the person's request using them.")

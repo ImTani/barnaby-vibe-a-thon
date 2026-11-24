@@ -67,9 +67,12 @@ async def main() -> int:
     shop_url = "http://127.0.0.1:8101"
 
     t0 = time.perf_counter()
-    res = await registry.connect(profiles.shop())
-    check("1 Arrival: Synapse discovers 23 endpoints", res.get("discovered") == 23, f"{res.get('discovered')} in {time.perf_counter() - t0:.1f}s")
-    check("1 Arrival: 6 read-only tools exposed", len(res.get("exposed", [])) == 6)
+    said = await worker.ask("Barnaby, this is the shop's system. Look after them for me.")   # Theo, his last week
+    shop = registry.systems.get("shop")
+    n = len(shop.endpoints()) if shop else 0
+    check("1 Arrival: Barnaby connects the shop when introduced", shop is not None, f"{time.perf_counter() - t0:.1f}s: {said[:140]}")
+    check("1 Arrival: Synapse discovers 23 endpoints", n == 23, str(n))
+    check("1 Arrival: 6 read-only tools exposed", bool(shop) and len(shop.exposed) == 6)
     if a.until < 2:
         return report()
 

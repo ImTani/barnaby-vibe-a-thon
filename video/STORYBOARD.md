@@ -1,4 +1,4 @@
-# Barnaby: the film (storyboard + style bible) — FROZEN v1
+# Barnaby: the film (storyboard + style bible) — FROZEN v1, approved by Tani 2026-11-25
 
 140 s · 1920×1080 · 30 fps. Every key time below is also in `cues.json`. The soundtrack (music, sound effects,
 voice lines) is cut to these times, so **don't move key events**. If you must, list the actual times in your report.

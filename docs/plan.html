@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barnaby: the plan · Every system deserves a butler</title>
+<meta name="description" content="Barnaby: a voice-first butler for any codebase, built on Synapse. The plan for the 2nd Brain Labs × Geek Room Vibe-a-thon, Track 4.">
+<style>
+/* ───────────────────────── tokens ───────────────────────── */
+:root{
+  color-scheme: dark;
+  --bg:#0e1117;
+  --surface:#161a22;
+  --surface-2:#1b202a;
+  --surface-3:#222834;
+  --ink:#f1ece1;
+  --ink-2:#c2bba9;
+  --muted:#8d8778;
+  --hair:#262b35;
+  --base:#3a404c;
+  --brass:#d4a85a;          /* decorative accent + accent text */
+  --brass-mark:#b88a3e;     /* chart marks (validated: L band, chroma, ≥3:1 on --surface) */
+  --brass-glow:rgba(212,168,90,.16);
+  --good:#0ca30c;           /* status: good */
+  --warn:#fab219;           /* status: warning */
+  --serif:"Palatino Linotype","Book Antiqua",Palatino,"URW Palladio L",Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Cascadia Mono","Cascadia Code",Consolas,"SFMono-Regular",Menlo,monospace;
+  --r:14px;
+  --maxw:1160px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.65 var(--sans);-webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(1200px 600px at 78% -10%, rgba(212,168,90,.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, rgba(80,110,170,.07), transparent 60%);
+  background-attachment:fixed;
+}
+a{color:var(--brass);text-underline-offset:3px}
+a:hover{color:#e8c27c}
+:focus-visible{outline:2px solid var(--brass);outline-offset:3px;border-radius:4px}
+code,kbd,.mono{font-family:var(--mono);font-size:.88em}
+.skip{position:absolute;left:-999px;top:8px;background:var(--brass);color:#111;padding:8px 12px;border-radius:8px;z-index:100}
+.skip:focus{left:12px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+
+/* ───────────────────────── nav ───────────────────────── */
+.nav{position:sticky;top:0;z-index:50;background:rgba(14,17,23,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--hair)}
+.nav .wrap{display:flex;align-items:center;gap:22px;height:58px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:20px;color:var(--ink);text-decoration:none;letter-spacing:.3px}
+.brand svg{width:26px;height:26px}
+.nav ul{display:flex;gap:18px;list-style:none;margin:0 0 0 auto;padding:0;font-size:14px}
+.nav ul a{color:var(--ink-2);text-decoration:none}
+.nav ul a:hover{color:var(--ink)}
+@media (max-width:900px){.nav ul{display:none}}
+
+/* ───────────────────────── type ───────────────────────── */
+.eyebrow{font:600 12px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--brass);margin:0 0 14px}
+h1,h2,h3{font-family:var(--serif);font-weight:normal;letter-spacing:.2px;margin:0}
+h1{font-size:clamp(42px,6.2vw,76px);line-height:1.04}
+h2{font-size:clamp(30px,3.6vw,44px);line-height:1.12;margin-bottom:14px}
+h3{font-size:22px;line-height:1.25}
+.lede{font-size:clamp(17px,1.6vw,20px);color:var(--ink-2);max-width:62ch}
+.lede em,.em{font-style:normal;color:var(--ink);border-bottom:1px solid rgba(212,168,90,.55)}
+section{padding:96px 0;border-top:1px solid var(--hair)}
+section.first{border-top:0;padding-top:56px}
+.section-intro{max-width:70ch;color:var(--ink-2);font-size:17.5px;margin:0 0 36px}
+.quote{font-family:var(--serif);font-style:italic;color:var(--ink)}
+.fine{font-size:13px;color:var(--muted)}
+
+/* ───────────────────────── reveal ───────────────────────── */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .7s ease, transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none;transition:none}
+  *{animation:none!important}
+}
+
+/* ───────────────────────── hero ───────────────────────── */
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center}
+@media (max-width:980px){.hero{grid-template-columns:1fr;gap:64px}}
+.hero > *{min-width:0}
+main{overflow-x:clip}
+.legacy-body,.legacy-nav{overflow:hidden;white-space:nowrap}
+.pills{display:flex;flex-wrap:wrap;gap:10px;margin:26px 0 24px;padding:0;list-style:none}
+.pills li{display:flex;align-items:center;gap:8px;padding:7px 14px;border:1px solid rgba(212,168,90,.35);border-radius:999px;background:rgba(212,168,90,.06);font-size:14px;color:var(--ink)}
+.pills li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--brass)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:var(--muted);margin:0;padding:0;list-style:none}
+.meta b{color:var(--ink-2);font-weight:600}
+
+/* the 2009 back office mock */
+.stage{position:relative;padding:0 18px 150px 0}
+.legacy{position:relative;font:11px/1.35 Verdana,Tahoma,Geneva,sans-serif;color:#000;background:#ece9d8;border:1px solid #6b6b6b;border-radius:7px 7px 3px 3px;overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.6);transform:rotate(-1.4deg)}
+.legacy-title{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(#2b7be9,#0a4fc4 60%,#0a46b0);color:#fff;font:bold 11px Tahoma,Verdana,sans-serif;padding:5px 7px 5px 9px}
+.legacy-title .btns{display:flex;gap:2px}
+.legacy-title .btns span{width:15px;height:14px;border-radius:3px;background:linear-gradient(#5d97f2,#2766d6);border:1px solid #fff;display:grid;place-items:center;font:bold 9px Tahoma;line-height:1}
+.legacy-title .btns span:last-child{background:linear-gradient(#e9775a,#c2361b)}
+.legacy-banner{background:linear-gradient(#3a6ea5,#1d4a77);color:#fff;padding:9px 11px 8px;border-bottom:3px solid #ffcc00}
+.legacy-banner b{display:block;font:italic bold 20px "Trebuchet MS",Verdana,sans-serif;letter-spacing:.5px;text-shadow:1px 1px 0 #0b2a4a}
+.legacy-banner span{font-size:10px;color:#ffe680}
+.legacy-nav{padding:3px 6px;background:#d4d0c8;border-bottom:1px solid #808080}
+.legacy-nav a{display:inline-block;color:#00e;text-decoration:underline;padding:1px 6px;margin:2px 1px;background:linear-gradient(#fff,#e3e0d8);border:2px outset #f4f4f4;font-size:10.5px}
+.legacy-nav a.on{border-style:inset;background:#ece9d8;color:#551a8b}
+.legacy-body{padding:7px 8px 4px;background:#fff}
+.legacy-body h4{margin:0 0 5px;font:bold 12px Verdana;color:#1d4a77}
+.legacy table{border-collapse:collapse;width:100%;font-size:10.5px}
+.legacy th{background:#d4d0c8;border:1px solid #808080;text-align:left;padding:2px 4px;font-weight:bold}
+.legacy td{border:1px solid #c6c6c6;padding:2px 4px;white-space:nowrap}
+.legacy tr:nth-child(even) td{background:#eef3fb}
+.legacy .late{color:#c00;font-weight:bold}
+.legacy .moved{background:#fff6bf!important;transition:background .6s}
+.legacy-foot{display:flex;justify-content:space-between;font-size:9px;color:#555;padding:5px 8px;background:#ece9d8;border-top:1px solid #c0c0c0}
+.legacy-foot .ctr{font-family:"Courier New",monospace;background:#000;color:#3f3;padding:0 4px;letter-spacing:1px}
+
+/* Barnaby's display */
+.hud{position:absolute;right:-6px;bottom:6px;width:min(330px,80%);background:rgba(14,17,23,.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(212,168,90,.5);border-radius:18px;padding:14px 16px 16px;color:var(--ink);font-family:var(--sans);box-shadow:0 30px 70px rgba(0,0,0,.55),0 0 40px rgba(212,168,90,.12)}
+.hud-head{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.hud-head svg{width:22px;height:22px}
+.hud-name{font-family:var(--serif);font-size:18px}
+.wave{margin-left:auto;display:flex;align-items:center;gap:3px;height:18px;padding:0 9px;border-radius:999px;background:rgba(212,168,90,.1);border:1px solid rgba(212,168,90,.3)}
+.wave i{display:block;width:3px;height:6px;border-radius:2px;background:var(--brass);animation:wave 1.1s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:.12s}.wave i:nth-child(3){animation-delay:.24s}.wave i:nth-child(4){animation-delay:.36s}.wave i:nth-child(5){animation-delay:.48s}
+.wave small{font-size:10.5px;color:var(--ink-2);margin-left:5px;letter-spacing:.06em;text-transform:uppercase}
+@keyframes wave{0%,100%{height:4px}50%{height:14px}}
+.hud-you{font-size:13px;color:var(--ink-2);margin:0 0 9px}
+.hud-you b{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-right:6px}
+.trace{list-style:none;margin:0 0 11px;padding:0;display:grid;gap:5px}
+.trace li{display:flex;align-items:center;gap:8px;font:12px/1.3 var(--mono);color:var(--ink-2);background:var(--surface-2);border:1px solid var(--hair);border-radius:8px;padding:5px 8px}
+.trace li .dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none}
+.trace li.build{border-color:rgba(212,168,90,.55);background:rgba(212,168,90,.08);color:var(--ink)}
+.trace li.build .dot{background:var(--brass)}
+.trace li .tag{margin-left:auto;font:600 9.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--brass)}
+.hud-say{font-family:var(--serif);font-style:italic;font-size:15.5px;line-height:1.45;margin:0 0 12px}
+.hud-actions{display:flex;gap:8px}
+.btn{font:600 13px var(--sans);border-radius:10px;padding:8px 14px;border:1px solid var(--base);background:var(--surface-2);color:var(--ink);cursor:pointer}
+.btn.primary{background:linear-gradient(#d9b06a,#b88a3e);color:#16120a;border-color:#e0bd7d}
+.btn:hover{filter:brightness(1.08)}
+.stage-caption{margin:16px 0 0;font-size:12.5px;color:var(--muted);text-align:right;padding-right:6px}
+
+/* ───────────────────────── stat tiles ───────────────────────── */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0 0 14px}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.tile{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:20px 20px 18px}
+.tile .label{font-size:14px;color:var(--ink-2);margin:0 0 6px}
+.tile .value{font:600 46px/1.05 var(--sans);color:var(--ink);margin:0}
+.tile .note{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.tile.accent{border-color:rgba(212,168,90,.45);background:linear-gradient(180deg,rgba(212,168,90,.07),transparent 70%),var(--surface)}
+
+/* ───────────────────────── matrix ───────────────────────── */
+.table-wrap{overflow-x:auto;border:1px solid var(--hair);border-radius:var(--r);background:var(--surface)}
+table.matrix{width:100%;border-collapse:collapse;min-width:760px;font-size:14.5px}
+.matrix th,.matrix td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--hair);vertical-align:middle}
+.matrix thead th{font:600 12.5px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);background:var(--surface-2)}
+.matrix thead th.us{color:var(--brass)}
+.matrix tbody th{font-weight:500;color:var(--ink)}
+.matrix tbody th small{display:block;color:var(--muted);font-size:12.5px;font-weight:400}
+.matrix td.us{background:rgba(212,168,90,.05)}
+.matrix tr:last-child th,.matrix tr:last-child td{border-bottom:0}
+.st{display:inline-flex;align-items:center;gap:7px;color:var(--ink-2);white-space:nowrap}
+.st svg{width:16px;height:16px;flex:none}
+.st.yes{color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:12px 2px 0;font-size:12.5px;color:var(--muted)}
+.callout{margin:28px 0 0;padding:20px 22px;border-left:3px solid var(--brass);background:linear-gradient(90deg,rgba(212,168,90,.07),transparent);border-radius:0 var(--r) var(--r) 0;color:var(--ink-2);max-width:86ch}
+.callout b{color:var(--ink)}
+
+/* ───────────────────────── story ───────────────────────── */
+.shop{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;margin:0 0 28px}
+.shop .name{font:italic bold 30px "Trebuchet MS",Verdana,sans-serif;color:#ffe08a;text-shadow:2px 2px 0 #1d4a77}
+.shop .sub{color:var(--ink-2);font-size:15px}
+.cast{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:44px}
+@media (max-width:900px){.cast{grid-template-columns:1fr}}
+.person{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:20px}
+.person .role{font:600 11.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--brass);margin:0 0 6px}
+.person h3{margin-bottom:8px}
+.person p{margin:0;color:var(--ink-2);font-size:15px}
+.person .persona{margin-top:12px;font-size:12.5px;color:var(--muted)}
+.beats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;list-style:none;margin:0;padding:0;counter-reset:beat}
+@media (max-width:1050px){.beats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:620px){.beats{grid-template-columns:1fr}}
+.beat{position:relative;background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:18px 18px 16px;display:flex;flex-direction:column;gap:9px}
+.beat .n{font:600 12px var(--mono);color:var(--muted)}
+.beat h3{font-size:20px}
+.beat p{margin:0;font-size:14.5px;color:var(--ink-2)}
+.beat .line{font-family:var(--serif);font-style:italic;color:var(--ink);font-size:15.5px;line-height:1.45}
+.beat .by{margin-top:auto;padding-top:8px;border-top:1px solid var(--hair);font:12px/1.4 var(--mono);color:var(--muted)}
+.beat .by b{font:600 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-right:6px}
+.beat.star{grid-column:span 2;border-color:rgba(212,168,90,.55);background:linear-gradient(160deg,rgba(212,168,90,.10),transparent 55%),var(--surface);box-shadow:0 0 0 1px rgba(212,168,90,.12),0 20px 50px rgba(0,0,0,.35)}
+@media (max-width:620px){.beat.star{grid-column:auto}}
+.badge{display:inline-block;font:600 10.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:#16120a;background:var(--brass);border-radius:999px;padding:3px 9px;vertical-align:middle;margin-left:8px}
+
+/* ───────────────────────── synapse ladder ───────────────────────── */
+.ladder{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;list-style:none;margin:0;padding:0;position:relative}
+@media (max-width:1000px){.ladder{grid-template-columns:1fr 1fr}}
+@media (max-width:620px){.ladder{grid-template-columns:1fr}}
+.rung{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:10px}
+.rung .tier{display:flex;align-items:center;gap:10px}
+.rung .num{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid rgba(212,168,90,.6);color:var(--brass);font:600 13px var(--sans)}
+.rung p{margin:0;color:var(--ink-2);font-size:14.5px}
+.rung pre{margin:auto 0 0;padding:11px 12px;background:#0b0e13;border:1px solid var(--hair);border-radius:10px;font:12px/1.5 var(--mono);color:#e9dcc0;white-space:pre-wrap;word-break:break-word}
+.rung.new{border-color:rgba(212,168,90,.55)}
+.rung .only{font:600 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--brass)}
+
+/* ───────────────────────── rubric ───────────────────────── */
+.rubric{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media (max-width:800px){.rubric{grid-template-columns:1fr}}
+.crit{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:22px 22px 20px}
+.crit .k{font:600 11.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.crit h3{margin-bottom:10px}
+.crit ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:15px}
+.crit li{margin:4px 0}
+
+/* ───────────────────────── architecture ───────────────────────── */
+.arch{display:grid;grid-template-columns:1.6fr 1fr;gap:22px;align-items:start}
+@media (max-width:980px){.arch{grid-template-columns:1fr}}
+.stack{display:grid;gap:8px}
+.layer{display:grid;grid-template-columns:170px 1fr;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:12px 14px}
+@media (max-width:620px){.layer{grid-template-columns:1fr;gap:8px}}
+.layer .lname{font:600 13px var(--sans);color:var(--ink)}
+.layer .lname small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:12.5px/1 var(--sans);padding:6px 9px;border-radius:8px;background:var(--surface-3);border:1px solid var(--hair);color:var(--ink-2);white-space:nowrap}
+.chip.k{border-color:rgba(212,168,90,.45);color:var(--ink)}
+.layer.core{border-color:rgba(212,168,90,.55);background:linear-gradient(90deg,rgba(212,168,90,.08),transparent 60%),var(--surface)}
+.core-brace{display:flex;align-items:center;gap:10px;margin:4px 2px;font:600 11.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--brass)}
+.core-brace::before,.core-brace::after{content:"";flex:1;height:1px;background:rgba(212,168,90,.35)}
+.side{display:grid;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:18px 18px 16px}
+.panel h3{font-size:19px;margin-bottom:8px}
+.panel p{margin:0 0 10px;color:var(--ink-2);font-size:14.5px}
+.panel p:last-child{margin-bottom:0}
+.panel ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:14.5px}
+
+/* ───────────────────────── safety ───────────────────────── */
+.gates{display:grid;gap:10px;max-width:900px}
+.gate{display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:center;background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:14px 18px}
+@media (max-width:640px){.gate{grid-template-columns:1fr;gap:6px}}
+.gate .what{font-weight:600}
+.gate .what small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+.gate .how{color:var(--ink-2);font-size:15px;display:flex;align-items:center;gap:12px}
+.locks{display:flex;gap:3px;flex:none}
+.locks i{width:8px;height:16px;border-radius:2px;background:var(--surface-3);border:1px solid var(--base)}
+.locks i.on{background:var(--brass-mark);border-color:var(--brass-mark)}
+.gate.top{border-color:rgba(212,168,90,.55)}
+
+/* ───────────────────────── pitfalls ───────────────────────── */
+.pit-grid{display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start}
+@media (max-width:860px){.pit-grid{grid-template-columns:1fr}}
+details.drawer{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r)}
+details.drawer summary{cursor:pointer;padding:16px 18px;font-weight:600;list-style:none;display:flex;align-items:center;gap:10px}
+details.drawer summary::-webkit-details-marker{display:none}
+details.drawer summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--brass);border-bottom:2px solid var(--brass);transform:rotate(-45deg);transition:transform .2s}
+details.drawer[open] summary::before{transform:rotate(45deg)}
+.pits{margin:0;padding:0 18px 16px;list-style:none;display:grid;gap:0}
+.pits li{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:10px 0;border-top:1px solid var(--hair);font-size:14px}
+@media (max-width:640px){.pits li{grid-template-columns:1fr;gap:4px}}
+.pits .bug{color:var(--ink-2)}
+.pits .rule{color:var(--ink)}
+.pits .rule::before{content:"→ ";color:var(--brass)}
+
+/* ───────────────────────── gantt ───────────────────────── */
+.gantt{--lw:250px;position:relative;background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:18px 20px 14px}
+@media (max-width:700px){.gantt{--lw:118px;padding:14px 12px 12px}}
+.g-rows{position:relative}
+.g-row{display:grid;grid-template-columns:var(--lw) 1fr;align-items:center;min-height:42px}
+.g-label{padding-right:14px;line-height:1.25}
+.g-label b{display:block;font-weight:600;font-size:14px;color:var(--ink)}
+.g-label span{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+@media (max-width:700px){.g-label b{font-size:12.5px}.g-label .long{display:none}}
+.g-track{position:relative;height:42px;
+  background-image:repeating-linear-gradient(to right,var(--hair) 0 1px,transparent 1px calc(200% / 21));
+  border-left:1px solid var(--base)}
+.g-bar{position:absolute;top:50%;transform:translateY(-50%);height:22px;
+  left:calc((var(--s) - 2) / 21 * 100% + 1px);
+  width:calc((var(--e) - var(--s)) / 21 * 100% - 2px);
+  background:var(--brass-mark);border:0;border-radius:4px;padding:0;cursor:pointer}
+.g-bar::after{content:"";position:absolute;inset:-9px -1px}  /* larger hit target */
+.g-bar:hover,.g-bar:focus-visible{filter:brightness(1.15)}
+.g-bar:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.g-axis{position:relative;height:26px;margin-left:var(--lw);border-top:1px solid var(--base)}
+.g-axis span{position:absolute;top:6px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;transform:translateX(-50%)}
+.g-axis span:first-child{transform:none}
+.g-axis span:last-child{transform:translateX(-100%)}
+.g-now{position:absolute;top:-6px;bottom:0;width:0;border-left:2px solid var(--ink);pointer-events:none;display:none}
+.g-now span{position:absolute;top:-16px;left:-14px;font:600 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:var(--surface);padding:0 3px}
+.g-tip{position:absolute;z-index:5;pointer-events:none;min-width:220px;max-width:300px;background:var(--surface-3);border:1px solid var(--base);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--ink-2);box-shadow:0 14px 40px rgba(0,0,0,.45);opacity:0;transition:opacity .12s}
+.g-tip.show{opacity:1}
+.g-tip b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px}
+.g-tip .t{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px;margin-bottom:6px;display:block}
+details.tv{margin-top:12px}
+details.tv summary{cursor:pointer;font-size:13.5px;color:var(--ink-2)}
+table.plain{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
+.plain th,.plain td{padding:9px 12px;border-bottom:1px solid var(--hair);text-align:left;vertical-align:top}
+.plain th{font:600 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.plain td.t{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink-2)}
+.cut{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+@media (max-width:860px){.cut{grid-template-columns:1fr}}
+.tier-card{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:18px}
+.tier-card h3{font-size:19px;margin-bottom:4px}
+.tier-card .k{font:600 11.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.tier-card ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:14.5px}
+.tier-card.p0{border-color:rgba(212,168,90,.55)}
+.tier-card.p0 .k{color:var(--brass)}
+.tier-card.p2 h3,.tier-card.p2 ul{color:var(--muted)}
+.kpis .tile .label{min-height:3.2em}
+.crit code{white-space:nowrap}
+.beat.wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:24px}
+.beat.wide .line{font-size:20px}
+.beat.wide .by{margin:0 0 0 auto;border-top:0;padding-top:0}
+@media (max-width:620px){.beat.wide{flex-direction:column;align-items:flex-start}.beat.wide .by{margin:0}}
+
+/* ───────────────────────── cost / risks ───────────────────────── */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.boxed{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:6px 6px 4px}
+.boxed table{margin:0}
+.big-zero{display:flex;align-items:baseline;gap:12px;margin:0 0 14px}
+.big-zero .v{font:600 54px/1 var(--sans)}
+.big-zero .l{color:var(--ink-2)}
+
+/* ───────────────────────── ask ───────────────────────── */
+.asks{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;list-style:none;margin:0;padding:0;counter-reset:ask}
+@media (max-width:1000px){.asks{grid-template-columns:1fr 1fr}}
+@media (max-width:600px){.asks{grid-template-columns:1fr}}
+.asks li{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:20px;counter-increment:ask}
+.asks li::before{content:counter(ask);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--brass);color:#16120a;font:600 14px var(--sans);margin-bottom:12px}
+.asks h3{font-size:19px;margin-bottom:6px}
+.asks p{margin:0;color:var(--ink-2);font-size:14.5px}
+.asks li.go{border-color:rgba(212,168,90,.55)}
+
+.finale{text-align:center;padding:120px 0 110px}
+.finale h2{font-size:clamp(36px,5vw,64px);margin:0}
+.finale .kick{font-family:var(--serif);font-style:italic;font-size:clamp(22px,2.6vw,32px);color:var(--brass);margin:10px 0 0}
+.finale svg{width:64px;height:64px;margin-bottom:24px}
+
+footer{border-top:1px solid var(--hair);padding:32px 0 48px;color:var(--muted);font-size:13px}
+footer ul{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-wrap:wrap;gap:6px 18px}
+
+/* ───────── narrow-screen overrides: kept last so they win over the base rules above ───────── */
+@media (max-width:700px){.g-axis span:not(.m){display:none}}
+@media (max-width:520px){
+  .kpis{grid-template-columns:1fr}
+  .stage{padding:0}
+  .legacy{transform:none}
+  .hud{position:relative;right:auto;bottom:auto;width:auto;margin:-28px 0 0 12%}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- service-bell mark, reused -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="brassG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f0cf8f"/><stop offset=".55" stop-color="#d4a85a"/><stop offset="1" stop-color="#9c7232"/>
+    </linearGradient>
+    <symbol id="bell" viewBox="0 0 64 64">
+      <circle cx="32" cy="13" r="3.6" fill="url(#brassG)"/>
+      <rect x="30.4" y="15.5" width="3.2" height="6" rx="1.2" fill="url(#brassG)"/>
+      <path d="M9 45 A23 23 0 0 1 55 45 Z" fill="url(#brassG)"/>
+      <path d="M17 38 A16 16 0 0 1 27 26" fill="none" stroke="#fff3d6" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round"/>
+      <rect x="5" y="46" width="54" height="5.5" rx="2.75" fill="url(#brassG)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<nav class="nav" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top"><svg aria-hidden="true"><use href="#bell"/></svg>Barnaby</a>
+    <ul>
+      <li><a href="#gap">The gap</a></li>
+      <li><a href="#story">The story</a></li>
+      <li><a href="#synapse">Synapse</a></li>
+      <li><a href="#rubric">Rubric</a></li>
+      <li><a href="#build">How it's built</a></li>
+      <li><a href="#schedule">Schedule</a></li>
+      <li><a href="#risks">Risks</a></li>
+      <li><a href="#go">What I need</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- ═════════════════ HERO ═════════════════ -->
+<section class="first" id="top">
+  <div class="wrap hero">
+    <div class="reveal">
+      <p class="eyebrow">Vibe-a-thon · Track 4 · Open innovation · Plan v0.2</p>
+      <h1>Every system deserves a butler.</h1>
+      <p class="lede" style="margin-top:22px">
+        Barnaby is a voice-first butler for any codebase. Point him at a repo and Synapse makes it
+        agent-ready in seconds. When he can't do what you ask, he grows: he <em>unlocks</em> endpoints
+        the code already has, <em>composes</em> your habits into skills, and <em>builds</em> the endpoint
+        nobody ever wrote.
+      </p>
+      <ul class="pills" aria-label="What makes it different">
+        <li>Speaks and listens</li>
+        <li>Any repo, live</li>
+        <li>Grows his own tools</li>
+        <li>Any model</li>
+      </ul>
+      <ul class="meta">
+        <li><b>Submit</b> 25 Nov, end of day (IST)</li>
+        <li><b>Judging</b> 30 Nov</li>
+        <li><b>Status</b> Phase 0 done: smoke tests pass</li>
+      </ul>
+    </div>
+
+    <figure class="stage reveal" style="margin:0" aria-label="Mock-up of the demo's centrepiece: a 2009-era bike shop back office with Barnaby's display over it, proposing to rebalance mechanic workload.">
+      <div class="legacy" aria-hidden="true">
+        <div class="legacy-title"><span>Spokes &amp; Sprockets Back Office v2.3 - Windows Internet Explorer</span><span class="btns"><span>_</span><span>□</span><span>×</span></span></div>
+        <div class="legacy-banner"><b>Spokes &amp; Sprockets</b><span>A Hartley family workshop · est. 1987</span></div>
+        <div class="legacy-nav"><a class="on">Jobs</a><a>Customers</a><a>Parts</a><a>Purchase Orders</a><a>Mechanics</a><a>Invoices</a></div>
+        <div class="legacy-body">
+          <h4>Open repair jobs - week 48</h4>
+          <table>
+            <tr><th>Job #</th><th>Mechanic</th><th>Work</th><th>Customer</th><th>Hrs</th><th>Due</th></tr>
+            <tr><td>4471</td><td id="m1">Dev</td><td>Wheel build (front)</td><td>R. Okafor</td><td>6.0</td><td class="late">Thu</td></tr>
+            <tr><td>4472</td><td id="m2">Dev</td><td>Wheel build (rear)</td><td>M. Lindqvist</td><td>5.5</td><td>Fri</td></tr>
+            <tr><td>4475</td><td>Ravi</td><td>Full service</td><td>S. Ferreira</td><td>3.0</td><td>Thu</td></tr>
+            <tr><td>4478</td><td>Dev</td><td>Brake bleed + pads</td><td>A. Banerjee</td><td>1.5</td><td>Wed</td></tr>
+            <tr><td>4480</td><td>Ravi</td><td>Headset swap</td><td>T. Nguyen</td><td>2.0</td><td>Sat</td></tr>
+          </table>
+        </div>
+        <div class="legacy-foot"><span>Best viewed in Internet Explorer 7 at 1024×768 · © 2009 Theo H.</span><span>Visitor <span class="ctr">004127</span></span></div>
+      </div>
+
+      <div class="hud" role="group" aria-label="Barnaby's display: after building a workload endpoint, he proposes moving two wheel builds from Dev to Priya.">
+        <div class="hud-head">
+          <svg aria-hidden="true"><use href="#bell"/></svg>
+          <span class="hud-name">Barnaby</span>
+          <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><small>speaking</small></span>
+        </div>
+        <p class="hud-you"><b>June</b>"Who's overloaded this week?"</p>
+        <ul class="trace">
+          <li><span class="dot"></span>GET /mechanics</li>
+          <li><span class="dot"></span>GET /jobs/open</li>
+          <li class="build" title="Written by Barnaby, approved, tests passed"><span class="dot"></span>GET /mechanics/workload<span class="tag">new</span></li>
+        </ul>
+        <p class="hud-say">"Dev has thirty-one hours booked against twenty, ma'am. Shall I move the two wheel builds to Priya?"</p>
+        <div class="hud-actions"><button class="btn primary" type="button" id="approve">Approve</button><button class="btn" type="button">Not now</button></div>
+      </div>
+      <figcaption class="stage-caption">The centrepiece beat, mocked. Try "Approve".</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ═════════════════ THE GAP ═════════════════ -->
+<section id="gap">
+  <div class="wrap">
+    <p class="eyebrow reveal">Why this wins</p>
+    <h2 class="reveal">The space nobody is standing in</h2>
+    <p class="section-intro reveal">
+      Before choosing, I read the README of every public Vibe-a-thon submission I could find. The crowded
+      corners are obvious: order and inventory copilots, refunds behind a confirm button, healthcare.
+      The empty corners are more interesting.
+    </p>
+
+    <div class="kpis reveal" role="list">
+      <div class="tile" role="listitem"><p class="label">Public submissions surveyed</p><p class="value">20</p><p class="note">README reads, 24 Nov</p></div>
+      <div class="tile accent" role="listitem"><p class="label">With voice input</p><p class="value">0</p><p class="note">One speaks reminders; none listen</p></div>
+      <div class="tile accent" role="listitem"><p class="label">Making an unseen repo agent-ready live</p><p class="value">0</p><p class="note">Closest is an offline CLI step</p></div>
+      <div class="tile accent" role="listitem"><p class="label">Agents that write their own endpoint</p><p class="value">0</p><p class="note">The closest has a developer script add them</p></div>
+    </div>
+
+    <div class="table-wrap reveal">
+      <table class="matrix">
+        <caption class="fine" style="caption-side:bottom;text-align:left;padding:12px 16px">Compared from public READMEs. "Not seen" means no evidence in the README, not proof of absence. Barnaby's column is the plan.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Capability</th>
+            <th scope="col" class="us">Barnaby (plan)</th>
+            <th scope="col">Synaptogenesis</th>
+            <th scope="col">Rehearsal</th>
+            <th scope="col">Typical Track 3 copilot</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Talk to it<small>Voice in, voice out</small></th>
+            <td class="us" data-s="yes"></td><td data-s="no"></td><td data-s="no"></td><td data-s="no"></td></tr>
+          <tr><th scope="row">Any repo, live<small>Point at an unseen codebase on camera</small></th>
+            <td class="us" data-s="yes"></td><td data-s="no"></td><td data-s="part">Offline CLI step</td><td data-s="no"></td></tr>
+          <tr><th scope="row">Unlock<small>Expose a discovered endpoint on demand</small></th>
+            <td class="us" data-s="yes"></td><td data-s="yes"></td><td data-s="no"></td><td data-s="no"></td></tr>
+          <tr><th scope="row">Compose<small>Fuse a habit into one tool (Custom mode)</small></th>
+            <td class="us" data-s="yes"></td><td data-s="yes"></td><td data-s="no"></td><td data-s="no"></td></tr>
+          <tr><th scope="row">Build<small>Writes the missing endpoint itself</small></th>
+            <td class="us" data-s="yes"></td><td data-s="no">a dev script adds them</td><td data-s="no"></td><td data-s="no"></td></tr>
+          <tr><th scope="row">Live <code>--discover</code> update</th>
+            <td class="us" data-s="yes"></td><td data-s="yes"></td><td data-s="no"></td><td data-s="part">Most</td></tr>
+          <tr><th scope="row">Human approvals</th>
+            <td class="us" data-s="yes">Tiered</td><td data-s="yes"></td><td data-s="yes">Row-level diff</td><td data-s="part">Some</td></tr>
+          <tr><th scope="row">Film + real walkthrough</th>
+            <td class="us" data-s="yes"></td><td data-s="no"></td><td data-s="yes">48 s + 2 min</td><td data-s="part">Some</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout reveal">
+      <b>Synaptogenesis already grows tools with Synapse, and does it well.</b> We don't go quiet on Unlock and
+      Compose because of that. We do them better: on repos Barnaby has never seen, with his reasoning said out loud,
+      with skills he proposes himself, and with a live counter of turns and tokens saved. Then we go one tier
+      further than anyone: <b>Build</b>. The bar for presentation is Rehearsal, with a film, a walkthrough and a
+      "for judges" table. We match all three.
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ STORY ═════════════════ -->
+<section id="story">
+  <div class="wrap">
+    <p class="eyebrow reveal">The demo</p>
+    <h2 class="reveal">One family, one workshop, every persona</h2>
+    <div class="shop reveal"><span class="name">Spokes &amp; Sprockets</span><span class="sub">A Hartley family workshop · est. 1987 · back office written in 2009</span></div>
+
+    <div class="cast">
+      <article class="person reveal">
+        <p class="role">The owner</p><h3>June Hartley</h3>
+        <p>Nine tabs, greasy hands, phone ringing. She can't type mid-repair and can't drive a 2009 interface.</p>
+        <p class="persona">Persona: the overloaded ops person</p>
+      </article>
+      <article class="person reveal">
+        <p class="role">The nephew</p><h3>Theo Hartley</h3>
+        <p>Wrote the back office as a teenager. Leaves on Friday. His knowledge lives in the code and a README nobody reads.</p>
+        <p class="persona">Persona: the departing expert</p>
+      </article>
+      <article class="person reveal">
+        <p class="role">The new hire</p><h3>Priya</h3>
+        <p>Starts Monday as mechanic and shop IT. Has to operate a system she has never seen.</p>
+        <p class="persona">Persona: the developer on day one</p>
+      </article>
+    </div>
+
+    <ol class="beats">
+      <li class="beat reveal"><span class="n">01</span><h3>Arrival</h3>
+        <p>Theo's last week. Nobody else understands his 2009 system, so his handover is a butler. He points Barnaby at the repo.</p>
+        <p class="line">"Barnaby, this is the shop's system. Look after them for me."</p>
+        <p>Synapse scans it live; endpoints bloom on the display; Theo's README becomes Barnaby's notes.</p>
+        <p class="line">"Twenty-three endpoints, sir. I've started with the six that only read."</p>
+        <p class="by"><b>Synapse</b>build --auto --local --smart-names</p></li>
+      <li class="beat reveal"><span class="n">02</span><h3>Meet June</h3>
+        <p>Monday. Nine tabs, greasy hands. June presses the hotkey; Barnaby's display slides in over the 2009 panel.</p>
+        <p class="line">"Which repairs are due tomorrow, and are we short on parts?"</p>
+        <p>The trace lights up call by call; the answer is spoken.</p>
+        <p class="by"><b>Synapse</b>generated MCP tools</p></li>
+      <li class="beat reveal"><span class="n">03</span><h3>Unlock</h3>
+        <p class="line">"Order the brake pads." / "I can't yet, but the system can. There's a purchase-order endpoint I haven't taken. May I?"</p>
+        <p>One click, rebuild, then a confirmation card for the order itself.</p>
+        <p class="by"><b>Synapse</b>rebuild with the endpoint added</p></li>
+      <li class="beat reveal"><span class="n">04</span><h3>Compose</h3>
+        <p class="line">"You've had me do the same four steps four times today. Shall I make it a single motion?"</p>
+        <p>A verified new skill, named by voice.</p>
+        <p class="by"><b>Synapse</b>build --custom</p></li>
+      <li class="beat star reveal"><span class="n">05</span><h3>Build <span class="badge">Centrepiece</span></h3>
+        <p class="line">"Who's overloaded this week?" / "The system has no notion of workload, ma'am. I can teach it."</p>
+        <p>Barnaby writes <code>GET /mechanics/workload</code> and a test in a git worktree. The diff appears; June
+          clicks approve; tests pass; the service reloads; Synapse rediscovers it. Then the answer, a proposal, an
+          approval, and the <b>2009 screen visibly changes</b>.</p>
+        <p class="by"><b>Synapse</b>build --discover · <b>Code</b>Claude Agent SDK in a worktree</p></li>
+      <li class="beat reveal"><span class="n">06</span><h3>Priya, day one</h3>
+        <p class="line">"What can this system actually do?"</p>
+        <p>Barnaby gives the tour from Theo's notes and his own tool map, including what he grew last week.</p>
+        <p class="by"><b>Shows</b>the departing expert's knowledge, kept</p></li>
+      <li class="beat reveal"><span class="n">07</span><h3>Any repo</h3>
+        <p>Montage: Quorum (our last hackathon project), ComfyUI ("What GPU is it using, and is anything queued?"), clipd, an enterprise estate.</p>
+        <p class="by"><b>Shows</b>it isn't staged</p></li>
+      <li class="beat wide reveal"><span class="n">08</span><h3>Close</h3>
+        <p class="line">"Every system deserves a butler. Even the old ones."</p>
+        <p class="by"><b>Title card</b>Barnaby</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═════════════════ SYNAPSE ═════════════════ -->
+<section id="synapse">
+  <div class="wrap">
+    <p class="eyebrow reveal">How central Synapse is</p>
+    <h2 class="reveal">Synapse isn't the setup step. It's the engine.</h2>
+    <p class="section-intro reveal">
+      Judges score how central Synapse is. In Barnaby, every growth moment is a Synapse command. Even the departing
+      expert's README matters: <code>--smart-names</code> reads it, so Theo's notes become Barnaby's understanding of the system.
+    </p>
+    <ol class="ladder">
+      <li class="rung reveal"><div class="tier"><span class="num">1</span><h3>Connect</h3></div>
+        <p>Scan any repo; expose the read-only tools first.</p>
+        <pre>synapse build --auto --local --endpoints "GET /jobs/open,…"</pre></li>
+      <li class="rung reveal"><div class="tier"><span class="num">2</span><h3>Unlock</h3></div>
+        <p>Expose an endpoint Synapse already discovered, on request, after one click.</p>
+        <pre>synapse build --auto --local --endpoints "…,POST /purchase-orders"</pre></li>
+      <li class="rung reveal"><div class="tier"><span class="num">3</span><h3>Compose</h3></div>
+        <p>Fuse a repeated chain of calls into one skill, verified by replaying it.</p>
+        <pre>synapse build --custom --local -q "hand back a finished bike"</pre></li>
+      <li class="rung new reveal"><div class="tier"><span class="num">4</span><h3>Build</h3></div>
+        <p class="only">Nobody else does this</p>
+        <p>Barnaby writes the missing endpoint; you approve the diff; Synapse rescans and serves it.</p>
+        <pre>synapse build --discover</pre></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═════════════════ RUBRIC ═════════════════ -->
+<section id="rubric">
+  <div class="wrap">
+    <p class="eyebrow reveal">Built against the rubric</p>
+    <h2 class="reveal">Four criteria, four answers</h2>
+    <p class="section-intro reveal">The guide lists exactly how Track 4 is judged. Each criterion has a concrete answer in the plan, not a hope.</p>
+    <div class="rubric">
+      <article class="crit reveal"><p class="k">Criterion 1</p><h3>Originality and real-world value</h3>
+        <ul><li>Voice-first operation of systems nobody wants to rewrite.</li>
+            <li>One product, four real needs: greasy hands, a departing expert, a new hire, an enterprise estate.</li>
+            <li>Growth tiers nobody else reaches (Build).</li></ul></article>
+      <article class="crit reveal"><p class="k">Criterion 2</p><h3>How central Synapse is</h3>
+        <ul><li>Four Synapse modes in one demo: Auto, Custom, <code>--discover</code>, <code>--smart-names</code>.</li>
+            <li>Remove Synapse and Barnaby can't connect, unlock, compose or grow.</li>
+            <li>Works on any repo Synapse can scan, shown on several in the montage.</li></ul></article>
+      <article class="crit reveal"><p class="k">Criterion 3</p><h3>Technical execution</h3>
+        <ul><li>Maintained libraries where it counts: Pydantic AI, Pipecat, Claude Agent SDK, MCP.</li>
+            <li>Code changes in a git worktree, gated by your eyes and by tests.</li>
+            <li>18 Synapse pitfalls designed around before line one, confirmed in a smoke test.</li></ul></article>
+      <article class="crit reveal"><p class="k">Criterion 4</p><h3>Quality of the demo</h3>
+        <ul><li>A cinematic film rendered from code, as with Quorum.</li>
+            <li>A real walkthrough you record, which I edit.</li>
+            <li>A "for judges" table and an honest real-vs-mocked list in the README.</li></ul></article>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ BUILD / ARCHITECTURE ═════════════════ -->
+<section id="build">
+  <div class="wrap">
+    <p class="eyebrow reveal">How it's built</p>
+    <h2 class="reveal">Layers that plug in, a core that stands alone</h2>
+    <p class="section-intro reveal">
+      The core is the submission and works by text alone. Listening, voice and even the model are layers chosen by
+      whoever runs it. Every piece is a maintained library unless nothing exists.
+    </p>
+    <div class="arch">
+      <div class="stack reveal" aria-label="Architecture, top to bottom">
+        <div class="layer"><div class="lname">Listening<small>pluggable</small></div><div class="chips"><span class="chip">sherpa streaming (your server)</span><span class="chip">faster-whisper (local GPU)</span><span class="chip">Groq Whisper (free)</span></div></div>
+        <div class="layer"><div class="lname">Voice<small>pluggable</small></div><div class="chips"><span class="chip">Kokoro · bm_george (CPU)</span><span class="chip">Qwen3-TTS · designed butler voice (GPU)</span></div></div>
+        <div class="layer"><div class="lname">Summon</div><div class="chips"><span class="chip">Hotkey</span><span class="chip">"Hey Barnaby" (no training)</span><span class="chip">Tauri overlay</span></div></div>
+        <div class="layer"><div class="lname">Front desk<small>talks while work runs</small></div><div class="chips"><span class="chip k">Pipecat</span><span class="chip">Claude Haiku 5.5 (default)</span><span class="chip">spoken progress from the worker</span></div></div>
+        <div class="core-brace">The submission · works text-only</div>
+        <div class="layer core"><div class="lname">Core<small>heavy thinking</small></div><div class="chips"><span class="chip k">Claude Agent SDK worker · your Claude Code</span><span class="chip">Pydantic AI backend · any model</span><span class="chip">approvals</span><span class="chip">event stream</span><span class="chip">the display</span></div></div>
+        <div class="layer core"><div class="lname">Growth</div><div class="chips"><span class="chip k">Synapse</span><span class="chip">Unlock</span><span class="chip">Compose</span><span class="chip">Build · Claude Agent SDK + git worktree</span></div></div>
+        <div class="layer core"><div class="lname">Systems</div><div class="chips"><span class="chip">Spokes &amp; Sprockets</span><span class="chip">Quorum</span><span class="chip">ComfyUI</span><span class="chip">clipd</span></div></div>
+      </div>
+      <div class="side">
+        <div class="panel reveal"><h3>Bring your own model</h3>
+          <p>Change one string to switch provider:</p>
+          <div class="chips" style="margin-bottom:10px"><span class="chip">Anthropic</span><span class="chip">OpenAI</span><span class="chip">Gemini</span><span class="chip">Groq</span><span class="chip">OpenRouter</span><span class="chip">Bedrock</span><span class="chip">Vertex</span><span class="chip k">Ollama · local, free</span></div>
+          <p class="fine">Our runs: heavy thinking and code writing on your local Claude Code, at no extra cost. The Claude API is only for the split-second front desk and for recording. The Build tier's code writer is Claude-only.</p></div>
+        <div class="panel reveal"><h3>Hand-rolled, on purpose</h3>
+          <ul><li>sherpa listening adapter, ~100 lines (no integration exists)</li>
+              <li>wake-word gate, ~40 lines</li>
+              <li>the glue between layers</li></ul></div>
+        <div class="panel reveal"><h3>Delete the folder, nothing remains</h3>
+          <p>Every venv, cache, model and config lives in the repo. Your <code>~/.claude</code> settings and plugins never leak into the code writer.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ SAFETY ═════════════════ -->
+<section id="safety">
+  <div class="wrap">
+    <p class="eyebrow reveal">Safety</p>
+    <h2 class="reveal">Voice can ask. Only eyes and a click can approve code.</h2>
+    <p class="section-intro reveal">The gate rises with what's at stake. A misheard "yes" can never change code.</p>
+    <div class="gates">
+      <div class="gate reveal"><div class="what">Read<small>any read-only call</small></div><div class="how"><span class="locks" aria-hidden="true"><i></i><i></i><i></i><i></i></span>No gate. Ask away.</div></div>
+      <div class="gate reveal"><div class="what">Change data<small>POST · PUT · PATCH · DELETE</small></div><div class="how"><span class="locks" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></span>A spoken "yes" and a visible confirmation card.</div></div>
+      <div class="gate reveal"><div class="what">Unlock / Compose<small>Barnaby grows a tool</small></div><div class="how"><span class="locks" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i><i></i></span>One click on the display.</div></div>
+      <div class="gate top reveal"><div class="what">Build<small>Barnaby writes code</small></div><div class="how"><span class="locks" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span>Read the diff, then click. In a git worktree, tests must pass, and it can be reverted.</div></div>
+      <div class="gate reveal"><div class="what">Deny-list<small>policy</small></div><div class="how"><span class="locks" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span>Endpoints that can never be exposed, whoever asks.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ PITFALLS ═════════════════ -->
+<section id="pitfalls">
+  <div class="wrap">
+    <p class="eyebrow reveal">De-risked</p>
+    <h2 class="reveal">We already know where Synapse bites</h2>
+    <div class="pit-grid">
+      <div class="tile accent reveal"><p class="label">Synapse 0.1.9 pitfalls mapped to design rules</p><p class="value">18</p>
+        <p class="note">Another team published a dozen with reproductions; reading Synapse's own source found more.</p></div>
+      <details class="drawer reveal">
+        <summary>See all 18, each with the rule it becomes</summary>
+        <ul class="pits">
+          <li><span class="bug">Local Auto mode drops query parameters</span><span class="rule">Path params and JSON bodies only</span></li>
+          <li><span class="bug">Router and blueprint prefixes are dropped</span><span class="rule">Full paths in every decorator, including code Barnaby writes</span></li>
+          <li><span class="bug">POST bodies only work if the model is in the route's file</span><span class="rule">Models live beside their routes</span></li>
+          <li><span class="bug">No auth headers are ever sent</span><span class="rule">The shop app runs without login (local, single shop), disclosed</span></li>
+          <li><span class="bug"><code>Literal</code> body fields are dropped (confirmed)</span><span class="rule">Plain <code>str</code> with validation in the handler</span></li>
+          <li><span class="bug">Every tool parameter is typed <code>Any</code>, none required (found in smoke test)</span><span class="rule">Fix-up step restores types and required flags</span></li>
+          <li><span class="bug">Generated servers need <code>mcp==1.30</code></span><span class="rule">A separate, pinned venv for generated servers</span></li>
+          <li><span class="bug"><code>raise_for_status</code> hides API error bodies</span><span class="rule">Disclosed fix-up step on generated servers</span></li>
+          <li><span class="bug">Repeated local builds write <code>_2.py</code>, <code>_3.py</code></span><span class="rule">The driver renames output after every build</span></li>
+          <li><span class="bug">Local Auto asks for a model key it doesn't use</span><span class="rule">Set the provider for the run</span></li>
+          <li><span class="bug">Custom mode scans its own earlier outputs</span><span class="rule">Park outputs before each Compose build</span></li>
+          <li><span class="bug">Custom code generation invents undocumented keys</span><span class="rule">Docstrings document every returned dict</span></li>
+          <li><span class="bug">Empty route paths are skipped</span><span class="rule">Never use <code>""</code> as a path</span></li>
+          <li><span class="bug">Flask <code>&lt;int:id&gt;</code> params are pasted literally</span><span class="rule">FastAPI <code>{id}</code> style only</span></li>
+          <li><span class="bug">Language = most source files among languages with a root marker file</span><span class="rule">Keep Python dominant in scanned dirs</span></li>
+          <li><span class="bug">Routes must appear in a file's first 64 KB</span><span class="rule">Small route files</span></li>
+          <li><span class="bug">Hosted Express/TypeScript builds are broken</span><span class="rule">Only Python systems in the hero demo</span></li>
+          <li><span class="bug">Writes <code>~/.synapse</code> even with telemetry off (confirmed)</span><span class="rule">Synapse runs with its home redirected into the repo (verified)</span></li>
+        </ul>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ SCHEDULE ═════════════════ -->
+<section id="schedule">
+  <div class="wrap">
+    <p class="eyebrow reveal">Today</p>
+    <h2 class="reveal">Hour by hour, 25 November (IST)</h2>
+    <p class="section-intro reveal">Eight phases from the first smoke test to submission. Hover or tab to any bar for what "done" means. Times assume no sleep; tell me your window and I'll re-time it.</p>
+
+    <div class="gantt reveal" id="gantt">
+      <div class="g-rows" id="g-rows">
+        <!-- rows rendered from data below -->
+        <div class="g-now" id="g-now"><span>now</span></div>
+      </div>
+      <div class="g-axis" id="g-axis" aria-hidden="true"></div>
+      <div class="g-tip" id="g-tip" role="tooltip"></div>
+    </div>
+    <details class="tv reveal">
+      <summary>Show the schedule as a table</summary>
+      <table class="plain" id="g-table"><thead><tr><th scope="col">Window</th><th scope="col">Phase</th><th scope="col">Done when</th></tr></thead><tbody></tbody></table>
+    </details>
+
+    <div class="cut">
+      <article class="tier-card p0 reveal"><p class="k">P0 · must ship</p><h3>A complete submission on its own</h3>
+        <ul><li>Spokes &amp; Sprockets</li><li>Connect any repo</li><li>Worker + Unlock</li><li>Build centrepiece</li><li>Display + push-to-talk voice</li><li>README + write-up</li></ul></article>
+      <article class="tier-card reveal"><p class="k">P1 · should ship</p><h3>What makes it memorable</h3>
+        <ul><li>Compose</li><li>"Hey Barnaby" wake word</li><li>Quorum scene</li><li>Cinematic film</li><li>Fix-up step on generated servers</li></ul></article>
+      <article class="tier-card p2 reveal"><p class="k">P2 · if time allows</p><h3>Polish and reach</h3>
+        <ul><li>Hotkey overlay</li><li>ComfyUI scene</li><li>clipd (needs a Rust control API + Synapse key)</li><li>Your trained Rust wake word</li></ul></article>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ COST + RISKS ═════════════════ -->
+<section id="risks">
+  <div class="wrap">
+    <p class="eyebrow reveal">Eyes open</p>
+    <h2 class="reveal">What it costs, and what could go wrong</h2>
+    <div class="two" style="margin-top:28px">
+      <div class="reveal">
+        <div class="big-zero"><span class="v">$0</span><span class="l">extra spend planned</span></div>
+        <div class="boxed">
+          <table class="plain">
+            <thead><tr><th scope="col">Piece</th><th scope="col">Cost</th></tr></thead>
+            <tbody>
+              <tr><td>Synapse</td><td>Free: local builds never count against the quota</td></tr>
+              <tr><td>Listening + voice</td><td>Free: your sherpa server, local Kokoro/Qwen, Groq free tier</td></tr>
+              <tr><td>Heavy thinking + code</td><td>Your local Claude Code: no extra cost, speed doesn't matter</td></tr>
+              <tr><td>Front desk</td><td>Claude API startup credits. Haiku 5.5 $0.10 / $0.50 per million tokens in/out</td></tr>
+              <tr><td>Build tier</td><td>Capped per run (<code>max_budget_usd</code>)</td></tr>
+              <tr><td>Your users</td><td>Any provider, including free local Ollama</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="boxed reveal">
+        <table class="plain">
+          <thead><tr><th scope="col">Risk</th><th scope="col">What we do</th></tr></thead>
+          <tbody>
+            <tr><td>Pydantic AI's MCP client vs Synapse's mcp 1.30 servers</td><td>First smoke test. Fallback: official MCP client + Anthropic tool runner</td></tr>
+            <tr><td>Live code generation flakes</td><td>The film is staged and edited, as with Quorum; the real path is proven by a demo-check script and disclosed in a real-vs-mocked table</td></tr>
+            <tr><td>Synapse output quirks</td><td>18 design rules; disclosed fix-up step</td></tr>
+            <tr><td>6 GB GPU</td><td>One GPU model at a time: sherpa + Qwen, or Whisper + Kokoro</td></tr>
+            <tr><td>Voice latency</td><td>Haiku 5.5, streaming, spoken progress while work runs</td></tr>
+            <tr><td>Untrained wake word misses</td><td>Tuned threshold, variants, hotkey always works</td></tr>
+            <tr><td>The clock</td><td>P0 alone is a complete submission; cut from the bottom</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════════ ASK ═════════════════ -->
+<section id="go">
+  <div class="wrap">
+    <p class="eyebrow reveal">To start</p>
+    <h2 class="reveal">What I need from you</h2>
+    <ol class="asks" style="margin-top:28px">
+      <li class="go reveal"><h3>Say go</h3><p>Phase 0: repo-local installs and the smoke tests. Nothing global.</p></li>
+      <li class="reveal"><h3>A fresh Claude key</h3><p>From your startup credits, pasted into <code>.env</code> yourself. I never handle it.</p></li>
+      <li class="reveal"><h3>Your sleep window</h3><p>I'll re-time the schedule around it.</p></li>
+      <li class="reveal"><h3>A product name</h3><p>Parked. "Barnaby" until you decide.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="finale">
+  <div class="wrap reveal">
+    <svg aria-hidden="true"><use href="#bell"/></svg>
+    <h2>Every system deserves a butler.</h2>
+    <p class="kick">Even the old ones.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Plan v0.2 · 25 Nov 2026 · mirrors <code>docs/PLAN.md</code>. Sources:
+    <ul>
+      <li><a href="https://github.com/2ndbrainlabs-ai/synapse-cli-ts">Synapse CLI</a></li>
+      <li><a href="https://github.com/Baqir376/Vibe-a-thon">Synaptogenesis</a></li>
+      <li><a href="https://github.com/hamzaishtiaq0318-bit/rehearsal">Rehearsal</a></li>
+      <li><a href="https://ai.pydantic.dev/mcp/client/">Pydantic AI MCP client</a></li>
+      <li><a href="https://docs.pipecat.ai/server/services/supported-services">Pipecat services</a></li>
+      <li><a href="https://code.claude.com/docs/en/agent-sdk/overview">Claude Agent SDK</a></li>
+      <li><a href="https://k2-fsa.github.io/sherpa/onnx/kws/index.html">sherpa-onnx keyword spotting</a></li>
+      <li><a href="https://github.com/Comfy-Org/ComfyUI">ComfyUI</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+(() => {
+  // ── status cells in the matrix: icon + label, never colour alone ──
+  const ICON = {
+    yes:  '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#0ca30c"/><path d="M4.6 8.3l2.2 2.2 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    part: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.7" fill="none" stroke="#fab219" stroke-width="1.6"/><path d="M8 1.3a6.7 6.7 0 0 1 0 13.4z" fill="#fab219"/></svg>',
+    no:   '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.7" fill="none" stroke="#8d8778" stroke-width="1.4"/><path d="M5 8h6" stroke="#8d8778" stroke-width="1.6" stroke-linecap="round"/></svg>'
+  };
+  const WORD = { yes: 'Yes', part: 'Partial', no: 'Not seen' };
+  document.querySelectorAll('td[data-s]').forEach(td => {
+    const s = td.dataset.s, extra = td.textContent.trim();
+    td.innerHTML = `<span class="st ${s}">${ICON[s]}${WORD[s]}${extra ? ' · ' + extra : ''}</span>`;
+  });
+
+  // ── the mock's Approve button: the 2009 screen visibly changes ──
+  const approve = document.getElementById('approve');
+  approve.addEventListener('click', () => {
+    ['m1', 'm2'].forEach(id => { const c = document.getElementById(id); c.textContent = 'Priya'; c.classList.add('moved'); });
+    approve.textContent = 'Done';
+    approve.disabled = true;
+    document.querySelector('.hud-say').textContent = '"Done, ma’am. Both wheel builds are with Priya; Dev is down to nineteen and a half hours."';
+  });
+
+  // ── schedule (IST hours, 25 Nov) ──
+  const PHASES = [
+    { n: 0, name: 'Scaffold + smoke tests', s: 2,    e: 3,    done: 'Repo-local envs; Synapse via local npx on a tiny app; pitfalls confirmed; MCP client ↔ server; keyword spotter checked' },
+    { n: 1, name: 'Spokes & Sprockets',      s: 3,    e: 5,    done: 'FastAPI + SQLite + 2009 interface + demo-tuned seed data + pytest' },
+    { n: 2, name: 'Core',                    s: 5,    e: 9,    done: 'Synapse driver, MCP toolsets, worker agent, event stream, approvals, Unlock; text chat works end to end' },
+    { n: 3, name: 'Display + voice',         s: 9,    e: 12,   done: "Barnaby's display; listening and voice layers; front desk; hotkey; wake word" },
+    { n: 4, name: 'Build + Compose',         s: 12,   e: 15,   done: 'Centrepiece Build beat passes 5 of 5 rehearsals; Compose works' },
+    { n: 5, name: 'Montage + overlay',       s: 15,   e: 16.5, done: 'Quorum, ComfyUI, (clipd); overlay window' },
+    { n: 6, name: 'Film + docs',             s: 16.5, e: 20,   done: 'Film rendered; README with the judges table; write-up; MCP setup; real-vs-mocked; tests green; you record the walkthrough' },
+    { n: 7, name: 'Edit + buffer + submit',  s: 20,   e: 23,   done: 'Walkthrough edited; submitted' }
+  ];
+  const T0 = 2, T1 = 23, SPAN = T1 - T0;
+  const fmt = h => `${String(Math.floor(h)).padStart(2, '0')}:${h % 1 ? '30' : '00'}`;
+  const rows = document.getElementById('g-rows');
+  const nowEl = document.getElementById('g-now');
+  PHASES.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'g-row';
+    row.innerHTML = `
+      <div class="g-label"><b>${p.n}. ${p.name}</b><span>${fmt(p.s)}–${fmt(p.e)}<span class="long"> · ${(p.e - p.s).toString().replace('.5', '½')} h</span></span></div>
+      <div class="g-track"><button class="g-bar" type="button" style="--s:${p.s};--e:${p.e}"
+        aria-label="Phase ${p.n}, ${p.name}, ${fmt(p.s)} to ${fmt(p.e)}. Done when: ${p.done.replace(/"/g, '&quot;')}"
+        data-n="${p.n}"></button></div>`;
+    rows.insertBefore(row, nowEl);
+  });
+  // axis ticks every 2 hours, plus the end
+  const axis = document.getElementById('g-axis');
+  const ticks = [];
+  for (let h = T0; h <= 22; h += 2) ticks.push(h);   // 23:00 is the track's end; its label would collide with 22:00
+  ticks.forEach((h, i) => {
+    const t = document.createElement('span');
+    t.textContent = fmt(h);
+    t.style.left = ((h - T0) / SPAN * 100) + '%';
+    if ((h - T0) % 10 === 0) t.classList.add('m');   // the only ticks kept on narrow screens: 02, 12, 22
+    axis.appendChild(t);
+  });
+  // table view
+  const tb = document.querySelector('#g-table tbody');
+  PHASES.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="t">${fmt(p.s)}–${fmt(p.e)}</td><td>${p.n}. ${p.name}</td><td>${p.done}</td>`;
+    tb.appendChild(tr);
+  });
+  // tooltip (hover + keyboard focus show the same thing)
+  const gantt = document.getElementById('gantt');
+  const tip = document.getElementById('g-tip');
+  const show = bar => {
+    const p = PHASES[+bar.dataset.n];
+    tip.innerHTML = `<b>${p.n}. ${p.name}</b><span class="t">${fmt(p.s)}–${fmt(p.e)} IST</span>${p.done}`;
+    const g = gantt.getBoundingClientRect(), b = bar.getBoundingClientRect();
+    tip.classList.add('show');
+    let x = b.left - g.left + b.width / 2 - tip.offsetWidth / 2;
+    x = Math.max(8, Math.min(x, g.width - tip.offsetWidth - 8));
+    let y = b.top - g.top - tip.offsetHeight - 10;
+    if (y < 4) y = b.bottom - g.top + 10;
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  };
+  const hide = () => tip.classList.remove('show');
+  gantt.querySelectorAll('.g-bar').forEach(bar => {
+    bar.addEventListener('mouseenter', () => show(bar));
+    bar.addEventListener('focus', () => show(bar));
+    bar.addEventListener('mouseleave', hide);
+    bar.addEventListener('blur', hide);
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+  // "now" marker, only while today's window is live (IST = UTC+5:30)
+  const placeNow = () => {
+    const ist = new Date(Date.now() + 330 * 60000);
+    const isToday = ist.getUTCFullYear() === 2026 && ist.getUTCMonth() === 10 && ist.getUTCDate() === 25;
+    const h = ist.getUTCHours() + ist.getUTCMinutes() / 60;
+    if (!isToday || h < T0 || h > T1) { nowEl.style.display = 'none'; return; }
+    nowEl.style.display = 'block';
+    nowEl.style.left = `calc(var(--lw) + (100% - var(--lw)) * ${(h - T0) / SPAN})`;
+  };
+  placeNow();
+  setInterval(placeNow, 60000);
+
+  // ── reveal on scroll ──
+  const els = document.querySelectorAll('.reveal');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+    els.forEach(el => el.classList.add('in'));
+  } else {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
+    els.forEach(el => io.observe(el));
+  }
+})();
+</script>
+</body>
+</html>

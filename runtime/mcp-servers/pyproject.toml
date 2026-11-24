@@ -1,0 +1,14 @@
+# Runtime for the MCP servers Synapse generates (synapse_auto_server.py / <tool>_server.py).
+# Pinned: Synapse 0.1.9 output imports `mcp.server.fastmcp` and uses `from __future__ import annotations`
+# with `Any` hints, which breaks on mcp 2.x and on 1.12 but works on 1.30 (reported by another team; verified in smoke test).
+[project]
+name = "barnaby-mcp-runtime"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp==1.30.0",
+    "requests>=2.32",
+]
+
+[tool.uv]
+package = false

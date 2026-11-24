@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Unpaid invoices</h2>
+<table class="grid">
+  <tr><th>Invoice #</th><th>Job #</th><th>Customer</th><th>Amount</th><th>Raised</th></tr>
+  {% for i in invoices %}
+  <tr><td>{{ i.id }}</td><td>{{ i.job_id }}</td><td>{{ i.customer }}</td><td>&pound;{{ '%.2f' % i.amount }}</td><td>{{ i.created }}</td></tr>
+  {% else %}
+  <tr><td colspan="5"><i>everyone has paid!! :)</i></td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

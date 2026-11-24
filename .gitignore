@@ -1,0 +1,41 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Repo-local environments and caches (delete the folder and nothing remains)
+.venv/
+venv/
+**/.venv/
+node_modules/
+.cache/
+.uv-cache/
+.npm-cache/
+.hf-home/
+.claude-config/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Synapse local state (may hold provider config); generated servers are kept per system as needed
+.synapse/
+
+# Models and large media
+models/
+*.onnx
+*.bin
+video/out/
+*.mp4
+*.wav
+
+# Third-party document — not ours to redistribute
+Vibe-a-thon-Participant-Guide-2nd-Brain-Labs-x-Geek-Room.pdf
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Demo world (Theo's repo copy, worktrees, demo date) - recreated by scripts/demo_reset.py
+.demo/

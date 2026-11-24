@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Reports</h2>
+<p class="soon-big">Coming soon!! <span class="blink">&#9733;</span></p>
+<p>Theo is working on loads of reports (mechanic workload, best customers, lapsed customers...). For now:</p>
+<div class="box stats">
+  <span><b>Taken today:</b> &pound;{{ '%.2f' % takings.total }} ({{ takings.invoices }} invoices)</span>
+  <span><b>Open jobs:</b> {{ stats.open_jobs }}</span>
+  <span><b>Ready to collect:</b> {{ stats.ready_to_collect }}</span>
+</div>
+<p style="color:#888;font-size:10px">last updated: march 2011</p>
+{% endblock %}

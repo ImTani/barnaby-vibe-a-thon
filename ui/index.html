@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barnaby</title>
+<link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="brassG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f0cf8f"/><stop offset=".55" stop-color="#d4a85a"/><stop offset="1" stop-color="#9c7232"/>
+    </linearGradient>
+    <symbol id="bell" viewBox="0 0 64 64">
+      <circle cx="32" cy="13" r="3.6" fill="url(#brassG)"/>
+      <rect x="30.4" y="15.5" width="3.2" height="6" rx="1.2" fill="url(#brassG)"/>
+      <path d="M9 45 A23 23 0 0 1 55 45 Z" fill="url(#brassG)"/>
+      <path d="M17 38 A16 16 0 0 1 27 26" fill="none" stroke="#fff3d6" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round"/>
+      <rect x="5" y="46" width="54" height="5.5" rx="2.75" fill="url(#brassG)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="top">
+  <div class="brand"><svg aria-hidden="true"><use href="#bell"/></svg><span>Barnaby</span></div>
+  <div class="status" id="status" aria-live="polite"><span class="dot"></span><span id="status-text">at your service</span></div>
+  <div class="systems-chips" id="systems-chips"></div>
+  <button class="ghost" id="toggle-map" type="button" aria-expanded="false" aria-controls="map">Capabilities</button>
+</header>
+
+<main class="grid">
+  <section class="convo" aria-label="Conversation">
+    <ol id="messages" class="messages"></ol>
+    <div id="cards" class="cards" aria-live="assertive"></div>
+  </section>
+  <section class="trace" aria-label="Live trace">
+    <div class="panel-head"><h2>Live trace</h2><span id="trace-meta" class="muted"></span></div>
+    <ol id="trace" class="trace-list"></ol>
+  </section>
+  <aside class="map" id="map" hidden aria-label="Capabilities">
+    <div class="panel-head"><h2>Capabilities</h2><button class="ghost" id="close-map" type="button">Close</button></div>
+    <div id="map-body"></div>
+    <form id="connect-form" class="connect">
+      <h3>Point Barnaby at a repo</h3>
+      <label>Name <input name="name" placeholder="quorum" required></label>
+      <label>Repo path <input name="repo" placeholder="X:\path\to\repo" required></label>
+      <label>API base URL <input name="base_url" placeholder="http://127.0.0.1:8000" required></label>
+      <button type="submit">Connect</button>
+    </form>
+  </aside>
+</main>
+
+<footer class="input">
+  <button id="talk" class="talk" type="button" title="Hold to talk (or hold Space)">
+    <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="label">Hold to talk</span>
+  </button>
+  <form id="ask-form" class="ask">
+    <input id="ask-input" autocomplete="off" placeholder="Ask Barnaby…" aria-label="Ask Barnaby">
+    <button type="submit">Ask</button>
+  </form>
+</footer>
+
+<script src="/ui/app.js"></script>
+<script src="/ui/voice.js"></script>
+</body>
+</html>

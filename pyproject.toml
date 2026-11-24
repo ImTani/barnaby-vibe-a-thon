@@ -1,0 +1,30 @@
+[project]
+name = "barnaby"
+version = "0.1.0"
+description = "Every system deserves a butler: a voice-first agent that makes any codebase agent-ready with Synapse, and grows its own tools."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sse-starlette>=2.1",
+    "httpx>=0.28",
+    "python-dotenv>=1.0",
+    "pydantic>=2.9",
+    "claude-agent-sdk>=0.2.188",          # worker + Build tier (local Claude Code login or API key)
+    "anthropic>=0.40",                     # front desk (latency-critical), when a key is present
+    "pydantic-ai-slim[anthropic,mcp]",     # bring-your-own-model backend (P1) + MCP client
+    "psutil>=6.0",
+    "gitpython>=3.1",
+    "websockets>=13",
+    "numpy>=2.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.24"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

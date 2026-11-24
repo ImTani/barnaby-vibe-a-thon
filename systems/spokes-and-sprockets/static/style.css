@@ -1,0 +1,35 @@
+/* style.css - Theo H 2009. dont touch the yellow line, mum likes it */
+body { margin: 0; background: #d9e4f2 url() repeat; font: 12px/1.4 Verdana, Tahoma, Geneva, sans-serif; color: #000; }
+#page { width: 980px; margin: 12px auto; background: #ece9d8; border: 1px solid #6b6b6b; box-shadow: 3px 3px 0 #9aa9bd; }
+#banner { background: linear-gradient(#3a6ea5, #1d4a77); color: #fff; padding: 12px 14px 10px; border-bottom: 4px solid #ffcc00; position: relative; }
+#banner h1 { margin: 0; font: italic bold 28px "Trebuchet MS", Verdana, sans-serif; letter-spacing: .5px; text-shadow: 2px 2px 0 #0b2a4a; }
+#banner .sub { color: #ffe680; font-size: 11px; }
+#banner .date { position: absolute; right: 14px; top: 14px; font-size: 11px; color: #cfe0f5; }
+marquee { background: #fffbd0; color: #8a4b00; border-bottom: 1px solid #c9b45a; font: bold 11px Verdana; padding: 2px 0; }
+#nav { background: #d4d0c8; border-bottom: 1px solid #808080; padding: 4px 8px; }
+#nav a { display: inline-block; color: #00e; text-decoration: underline; padding: 2px 9px; margin: 1px 1px; background: linear-gradient(#fff, #e3e0d8); border: 2px outset #f4f4f4; font-size: 11px; }
+#nav a.on { border-style: inset; background: #ece9d8; color: #551a8b; font-weight: bold; }
+#nav a.soon { color: #888; }
+#content { padding: 10px 12px 14px; background: #fff; min-height: 380px; }
+h2 { margin: 0 0 8px; font: bold 15px Verdana; color: #1d4a77; border-bottom: 1px dotted #1d4a77; padding-bottom: 3px; }
+h3 { margin: 14px 0 6px; font: bold 12px Verdana; color: #1d4a77; }
+table.grid { border-collapse: collapse; width: 100%; font-size: 11px; }
+table.grid th { background: #d4d0c8; border: 1px solid #808080; text-align: left; padding: 3px 5px; }
+table.grid td { border: 1px solid #c6c6c6; padding: 3px 5px; vertical-align: top; }
+table.grid tr:nth-child(even) td { background: #eef3fb; }
+table.grid tr:hover td { background: #ffffcc; }
+.late { color: #c00; font-weight: bold; }
+.low { color: #c00; font-weight: bold; }
+.ok { color: #060; }
+.status { font-weight: bold; }
+.status-ready { color: #060; }
+.status-waiting { color: #b35900; }
+.box { border: 1px solid #9aa9bd; background: #f4f7fc; padding: 6px 8px; margin: 0 0 10px; font-size: 11px; }
+.box b { color: #1d4a77; }
+.stats span { display: inline-block; margin-right: 16px; }
+.soon-big { font: bold 22px "Comic Sans MS", "Trebuchet MS", sans-serif; color: #c60; margin: 30px 0 6px; }
+img.uc { vertical-align: middle; }
+#foot { display: flex; justify-content: space-between; font-size: 10px; color: #555; padding: 6px 10px; border-top: 1px solid #c0c0c0; }
+#foot .ctr { font-family: "Courier New", monospace; background: #000; color: #3f3; padding: 0 5px; letter-spacing: 1px; }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { visibility: hidden; } }

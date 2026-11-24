@@ -1,0 +1,11 @@
+{
+  "name": "barnaby",
+  "private": true,
+  "description": "Every system deserves a butler. Node tooling only (Synapse CLI); the app itself is Python.",
+  "scripts": {
+    "synapse": "synapse"
+  },
+  "devDependencies": {
+    "@2ndbrainlabs-ai/synapse-cli": "0.1.9"
+  }
+}

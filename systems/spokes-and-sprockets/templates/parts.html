@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block refresh %}<meta http-equiv="refresh" content="6" />{% endblock %}
+{% block content %}
+<h2>Parts &amp; stock</h2>
+<div class="box">Red = at or below reorder level. To order more go to <a href="/purchase-orders">Purchase Orders</a> (ring the supplier first!!)</div>
+<table class="grid">
+  <tr><th>#</th><th>SKU</th><th>Part</th><th>In stock</th><th>Reorder at</th><th>Supplier</th><th>Unit cost</th></tr>
+  {% for p in parts %}
+  <tr><td>{{ p.id }}</td><td>{{ p.sku }}</td><td>{{ p.name }}</td>
+      <td class="{{ 'low' if p.stock <= p.reorder_level else 'ok' }}">{{ p.stock }}</td>
+      <td>{{ p.reorder_level }}</td><td>{{ p.supplier }}</td><td>&pound;{{ '%.2f' % p.unit_cost }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

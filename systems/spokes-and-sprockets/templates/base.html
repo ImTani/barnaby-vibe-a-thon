@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+{% block refresh %}{% endblock %}
+<title>Spokes &amp; Sprockets - Back Office v2.3</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<div id="page">
+  <div id="banner">
+    <h1>Spokes &amp; Sprockets</h1>
+    <div class="sub">A Hartley family workshop &middot; est. 1987</div>
+    <div class="date">{{ today }}</div>
+  </div>
+  <marquee scrollamount="3">*** SPRING TUNE-UP SPECIAL: full service just &pound;49.99!! *** Wheel builds done in house *** Ask about our loyalty card ***</marquee>
+  <div id="nav">
+    <a href="/jobs" class="{{ 'on' if active == 'jobs' }}">Jobs</a>
+    <a href="/customers" class="{{ 'on' if active == 'customers' }}">Customers</a>
+    <a href="/parts" class="{{ 'on' if active == 'parts' }}">Parts</a>
+    <a href="/purchase-orders" class="{{ 'on' if active == 'purchase-orders' }}">Purchase Orders</a>
+    <a href="/mechanics" class="{{ 'on' if active == 'mechanics' }}">Mechanics</a>
+    <a href="/invoices" class="{{ 'on' if active == 'invoices' }}">Invoices</a>
+    <a href="/reports" class="{{ 'on' if active == 'reports' }} soon">Reports (coming soon!!)</a>
+  </div>
+  <div id="content">
+{% block content %}{% endblock %}
+  </div>
+  <div id="foot">
+    <span>Best viewed in Internet Explorer 7 at 1024&times;768 &middot; &copy; 2009 Theo H. &middot; <a href="mailto:theo@spokesandsprockets.co.uk">webmaster</a></span>
+    <span>You are visitor No. <span class="ctr">004127</span></span>
+  </div>
+</div>
+</body>
+</html>

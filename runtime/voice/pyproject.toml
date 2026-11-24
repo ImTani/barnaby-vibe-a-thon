@@ -1,0 +1,18 @@
+# Voice layer runtime (Pipecat), separate from the core because Pipecat pins its own dependency ranges
+# (e.g. anthropic<2). Listening: sherpa (Tani's server, custom service), Whisper (local) or Groq.
+# Voice: Kokoro (kokoro-onnx, CPU). Front desk LLM (Claude Haiku) plugs in when an API key is present.
+[project]
+name = "barnaby-voice"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pipecat-ai[webrtc,silero,kokoro,whisper,groq,anthropic,runner]>=1.17",
+    "websockets>=13",
+    "numpy>=2.0",
+    "httpx>=0.28",
+    "httpx-sse>=0.4",
+    "python-dotenv>=1.0",
+]
+
+[tool.uv]
+package = false

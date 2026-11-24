@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block refresh %}<meta http-equiv="refresh" content="6" />{% endblock %}
+{% block content %}
+<h2>Purchase orders</h2>
+<table class="grid">
+  <tr><th>PO #</th><th>Part</th><th>Qty</th><th>Supplier</th><th>Status</th><th>Created</th></tr>
+  {% for o in orders %}
+  <tr><td>{{ o.id }}</td><td>{{ o.part }}</td><td>{{ o.quantity }}</td><td>{{ o.supplier }}</td>
+      <td class="status {{ 'status-waiting' if o.status == 'ordered' }}">{{ o.status }}</td><td>{{ o.created }}</td></tr>
+  {% else %}
+  <tr><td colspan="6"><i>no orders</i></td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Mechanics</h2>
+<table class="grid">
+  <tr><th>#</th><th>Name</th><th>Hours per week</th><th>Started</th></tr>
+  {% for m in mechanics %}
+  <tr><td>{{ m.id }}</td><td>{{ m.name }}</td><td>{{ '%.0f' % m.weekly_capacity_hours }}</td><td>{{ m.started }}</td></tr>
+  {% endfor %}
+</table>
+<p class="box">TODO (Theo, 2012): show how busy everyone is this week. need to add up the job hours somehow</p>
+{% endblock %}

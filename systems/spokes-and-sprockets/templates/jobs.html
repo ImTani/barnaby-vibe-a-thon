@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block refresh %}<meta http-equiv="refresh" content="4" />{% endblock %}
+{% block content %}
+<div class="box stats">
+  <span><b>Open jobs:</b> {{ stats.open_jobs }}</span>
+  <span><b>Due today:</b> {{ stats.due_today }}</span>
+  <span><b>Ready to collect:</b> {{ stats.ready_to_collect }}</span>
+  <span><b>Parts low:</b> <span class="{{ 'low' if stats.low_stock_parts }}">{{ stats.low_stock_parts }}</span></span>
+  <span><b>Unpaid invoices:</b> {{ stats.unpaid_invoices }}</span>
+</div>
+<h2>Open repair jobs &ndash; week of {{ week_start }}</h2>
+<table class="grid">
+  <tr><th>Job #</th><th>Mechanic</th><th>Work</th><th>Customer</th><th>Bike</th><th>Hrs</th><th>Due</th><th>Status</th></tr>
+  {% for j in jobs %}
+  <tr>
+    <td>{{ j.job_id }}</td>
+    <td>{{ j.mechanic or '-' }}</td>
+    <td>{{ j.work }}</td>
+    <td>{{ j.customer }}</td>
+    <td>{{ j.bike or '' }}</td>
+    <td>{{ '%.1f' % j.estimate_hours }}</td>
+    <td class="{{ 'late' if j.due_date < today and j.status != 'ready' }}">{{ j.due_date }}</td>
+    <td class="status {{ 'status-ready' if j.status == 'ready' }} {{ 'status-waiting' if j.status == 'waiting on parts' }}">{{ j.status }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<h3>Last texts sent</h3>
+<table class="grid">
+  <tr><th>When</th><th>To</th><th>Message</th></tr>
+  {% for t in texts %}
+  <tr><td>{{ t.sent_at }}</td><td>{{ t.customer }}</td><td>{{ t.message }}</td></tr>
+  {% else %}
+  <tr><td colspan="3"><i>no texts yet</i></td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

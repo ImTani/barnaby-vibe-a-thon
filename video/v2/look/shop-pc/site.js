@@ -4,8 +4,9 @@
  * are marked "+film"; they're the 2009-teenager personality the real app's CSS comment already has.
  *
  *   G.SITE.html()            -> the whole site, every page, built once
- *   G.SITE.bind(el).render(s) -> shows s.page; applies s.reports ('soon' | 'built'), s.po, s.poHl, s.reassign,
- *                                s.handedBack (Monday afternoon's hand-backs: 0-4 bikes marked ready), s.marquee */
+ *   G.SITE.bind(el).render(s) -> shows s.page as of s.date (Thursday 19, Monday 23 or Tuesday 24 Nov: the Jobs page
+ *                                and the banner date follow the day); applies s.reports ('soon' | 'built'), s.po, s.poHl,
+ *                                s.reassign, s.handedBack (Monday afternoon's hand-backs: 0-4 bikes marked ready), s.marquee */
 (function (G) {
   'use strict';
   const D = G.SHOP;
@@ -28,22 +29,24 @@
 
   const NAV = [['jobs', 'Jobs'], ['customers', 'Customers'], ['parts', 'Parts'], ['po', 'Purchase Orders'], ['mechanics', 'Mechanics'], ['invoices', 'Invoices'], ['reports', 'Reports (coming soon!!)']];
 
-  function jobsPage() {
-    const st = D.stats;
-    const rows = D.jobs.map(j => {
-      const late = j.due_date < D.today && j.status !== 'ready';
+  /** Theo's Jobs page for one day. v: Monday's data (D) or another day's (D.days[date]); live: Monday's page, whose
+   * counters and hand-backs follow the state (the other days are as the shop printed them on that day). */
+  function jobsPage(v, live) {
+    const st = v.stats, tag = k => live ? ` data-stat="${k}"` : '';
+    const rows = v.jobs.map(j => {
+      const late = j.due_date < v.today && j.status !== 'ready';
       const sc = j.status === 'ready' ? 'status-ready' : j.status === 'waiting on parts' ? 'status-waiting' : '';
       return `<tr data-job="${j.job_id}"><td>${j.job_id}</td><td class="mech">${esc(j.mechanic || '-')}</td><td>${esc(j.work)}</td><td>${esc(j.customer)}</td><td>${esc(j.bike || '')}</td><td>${f1(j.estimate_hours)}</td><td class="${late ? 'late' : ''}">${j.due_date}</td><td class="status ${sc}">${esc(j.status)}</td></tr>`;
     }).join('');
-    const texts = D.texts.map(t => `<tr><td>${esc(t.sent_at)}</td><td>${esc(t.customer)}</td><td>${esc(t.message)}</td></tr>`).join('');
+    const texts = v.texts.map(t => `<tr><td>${esc(t.sent_at)}</td><td>${esc(t.customer)}</td><td>${esc(t.message)}</td></tr>`).join('');
     return `<div class="box stats">
-        <span data-stat="open_jobs"><b>Open jobs:</b> ${st.open_jobs}</span>
-        <span data-stat="due_today"><b>Due today:</b> ${st.due_today}</span>
-        <span data-stat="ready_to_collect"><b>Ready to collect:</b> ${st.ready_to_collect}</span>
+        <span${tag('open_jobs')}><b>Open jobs:</b> ${st.open_jobs}</span>
+        <span${tag('due_today')}><b>Due today:</b> ${st.due_today}</span>
+        <span${tag('ready_to_collect')}><b>Ready to collect:</b> ${st.ready_to_collect}</span>
         <span><b>Parts low:</b> <span class="${st.low_stock_parts ? 'low' : ''}">${st.low_stock_parts}</span></span>
-        <span data-stat="unpaid_invoices"><b>Unpaid invoices:</b> ${st.unpaid_invoices}</span>
+        <span${tag('unpaid_invoices')}><b>Unpaid invoices:</b> ${st.unpaid_invoices}</span>
       </div>
-      <h2>Open repair jobs &ndash; week of ${D.week_start}</h2>
+      <h2>Open repair jobs &ndash; week of ${v.week_start}</h2>
       <table class="grid jobs"><tr><th>Job #</th><th>Mechanic</th><th>Work</th><th>Customer</th><th>Bike</th><th>Hrs</th><th>Due</th><th>Status</th></tr>${rows}</table>
       <h3>Last texts sent</h3>
       <table class="grid"><tr><th>When</th><th>To</th><th>Message</th></tr>${texts || '<tr><td colspan="3"><i>no texts yet</i></td></tr>'}</table>`;
@@ -111,11 +114,12 @@
     const nav = NAV.map(([p, label]) => `<a data-p="${p}"${p === 'reports' ? ' class="soon"' : ''}>${label}</a>`).join('');
     const digits = '004127'.split('').map(c => `<i>${c}</i>`).join('');
     return `<div class="page site"><div class="s-page">
-      <div class="s-banner"><h1>Spokes &amp; Sprockets</h1><div class="sub">A Hartley family workshop &middot; est. 1987</div><div class="logo">${bannerSprocket()}</div><div class="date">${D.today}</div></div>
+      <div class="s-banner"><h1>Spokes &amp; Sprockets</h1><div class="sub">A Hartley family workshop &middot; est. 1987</div><div class="logo">${bannerSprocket()}</div><div class="date"></div></div>
       <div class="marquee"><span>*** SPRING TUNE-UP SPECIAL: full service just &pound;49.99!! *** Wheel builds done in house *** Ask about our loyalty card ***</span></div>
       <div class="s-nav">${nav}</div>
       <div class="s-content">
-        <div class="sp" data-p="jobs">${jobsPage()}</div>
+        <div class="sp" data-p="jobs" data-day="${D.today}">${jobsPage(D, true)}</div>
+        ${Object.keys(D.days).map(d => `<div class="sp" data-p="jobs" data-day="${d}">${jobsPage(D.days[d], false)}</div>`).join('')}
         <div class="sp" data-p="po">${poPage()}</div>
         <div class="sp" data-p="parts">${partsPage()}</div>
         <div class="sp" data-p="mechanics">${mechanicsPage()}</div>
@@ -137,16 +141,22 @@
   function bind(root) {
     const q = s => root.querySelector(s), qa = s => [...root.querySelectorAll(s)];
     const nav = qa('.s-nav a'), pages = qa('.sp'), reportsLink = q('.s-nav a[data-p="reports"]');
-    const poRow = q('tr.po-new'), marq = q('.marquee span');
-    const moved = D.reassigned.jobs.map(id => q(`tr[data-job="${id}"]`)).filter(Boolean);
+    const poRow = q('tr.po-new'), marq = q('.marquee span'), dateEl = q('.s-banner .date');
+    const mon = q(`.sp[data-p="jobs"][data-day="${D.today}"]`);            // Monday's Jobs page: the one the state animates
+    const moved = D.reassigned.jobs.map(id => mon.querySelector(`tr[data-job="${id}"]`)).filter(Boolean);
     const HB = D.handed_back, statEls = qa('[data-stat]');
-    const handed = HB.jobs.map(id => ({ td: q(`tr[data-job="${id}"] td.status`), was: D.jobs.find(j => j.job_id === id).status }));
+    const handed = HB.jobs.map(id => ({ td: mon.querySelector(`tr[data-job="${id}"] td.status`), was: D.jobs.find(j => j.job_id === id).status }));
+    // the day the shop's pages are printed for: the latest one we have on or before the state's date
+    const DAYS = [D.today, ...Object.keys(D.days)].sort();
+    const dayOf = date => DAYS.filter(d => d <= date).pop() || DAYS[0];
     const statusClass = st => st === 'ready' ? 'status-ready' : st === 'waiting on parts' ? 'status-waiting' : '';
     return {
       render(s) {
         const built = s.reports === 'built';
         const want = s.page === 'reports' ? (built ? 'reports-built' : 'reports-soon') : s.page;
-        pages.forEach(p => { p.style.display = p.dataset.p === want ? '' : 'none'; });
+        const day = dayOf(s.date || D.today);
+        pages.forEach(p => { p.style.display = p.dataset.p === want && (!p.dataset.day || p.dataset.day === day) ? '' : 'none'; });
+        dateEl.textContent = day;
         nav.forEach(a => a.classList.toggle('on', a.dataset.p === s.page));
         reportsLink.textContent = built ? 'Reports' : 'Reports (coming soon!!)';
         reportsLink.classList.toggle('soon', !built);

@@ -13,6 +13,8 @@ render against this page.
 | (off) | Shop | **Fri 20 Nov**: Theo's last day | calendar tab "THEO'S LAST DAY :(" on Fri 20/11; leaving drinks Fri 17:00 | corkboard calendar: 20 circled |
 | 3 | Shop | **Mon 23 Nov, 08:52** | shop-pc-12 clock `08:52 23/11/2026` | wall clock 08:52; preset `monday` |
 | 4–6 | Shop | Mon 23 Nov: the order 09:04, the report 16:08–16:16, the jobs moved to Priya 16:21 | frames 05–08 | (scene 6 "late afternoon" agrees) |
+| 5 | Shop | Mon 23 Nov, afternoon, before 16:08: Sofia's 4475, Kwame's 4490, Jana's 4488, then Tom's 4481 handed back (texted, marked ready) | frames 06–08: Ready to collect 8; the 16:16 report counts what's left, Dev 31 of 20, Ravi 10½ of 30 | |
+| (off) | Shop | **Mon 23 Nov, evening, before close**: Sofia, Kwame, Jana and Tom collect their bikes | Tuesday's Jobs page (preset `shop-tuesday`): Ready to collect 4 (Gareth, Marisol, Niamh, Chidi) | |
 | 7 | Shop | **Tue 24 Nov, 08:34**, Priya's first morning | `screens/shop-tuesday-16x10.png`, rendered from the look-dev page (Jobs, Priya on 4471/4472, gadget "24 Tuesday", clock `08:34 24/11/2026`) | wall clock 08:34; preset `tuesday` |
 | 8 | Lisbon | **Tue 24 Nov, 09:39**, Theo's second day (he started Mon 23 Nov at desk 14), the same morning as Priya's | lisbon-02 bar `ter 24 nov 09:39`; Quorum "Theo starts Mon 23 Nov, desk 14" | preset `day` |
 | 9 | Shop | **Tue 24 Nov, 18:40**, closing; the PC asleep | (set choice) | wall clock 18:40; preset `close` |

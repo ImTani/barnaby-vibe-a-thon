@@ -16,8 +16,9 @@ const CHROME = process.env.CHROME || 'C:/Program Files/Google/Chrome/Application
 const SHOTS = [
   // Thursday 19 Nov, 21:47: the nine tabs, the calendar active, the memory needle in the red (scenes 1-2)
   ['night', 'state=tabs'],
-  // Tuesday 24 Nov, 08:34: Theo's Jobs page with Dev's two wheel builds now Priya's (scene 7); the highlight settled
-  ['tuesday', 'state=shop-jobs-after&date=2026-11-24&time=08:34&reassign=1&scroll=34'],
+  // Tuesday 24 Nov, 08:34 (scene 7): Theo's Jobs page as the shop prints it that morning, Dev's two wheel builds now
+  // Priya's, Monday's four hand-backs collected on Monday evening (look-dev preset shop-tuesday)
+  ['tuesday', 'state=shop-tuesday'],
 ];
 
 (async () => {

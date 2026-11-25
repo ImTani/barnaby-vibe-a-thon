@@ -145,7 +145,7 @@ window.SHOP = {
   },
   {
    "job_id": 4476,
-   "mechanic": "Ravi",
+   "mechanic": "Dev",
    "work": "Full service",
    "customer": "Aoife O'Brien",
    "bike": "Ribble CGR",
@@ -428,39 +428,6 @@ window.SHOP = {
   "invoices": 2,
   "total": 83.0
  },
- "workload": {
-  "week_start": "2026-11-23",
-  "week_end": "2026-11-28",
-  "mechanics": [
-   {
-    "mechanic_id": 1,
-    "name": "Dev",
-    "weekly_capacity_hours": 20.0,
-    "workload_hours": 31.0,
-    "job_count": 9,
-    "spare_hours": -11.0,
-    "overloaded": true
-   },
-   {
-    "mechanic_id": 2,
-    "name": "Ravi",
-    "weekly_capacity_hours": 30.0,
-    "workload_hours": 22.0,
-    "job_count": 9,
-    "spare_hours": 8.0,
-    "overloaded": false
-   },
-   {
-    "mechanic_id": 3,
-    "name": "Priya",
-    "weekly_capacity_hours": 30.0,
-    "workload_hours": 0,
-    "job_count": 0,
-    "spare_hours": 30.0,
-    "overloaded": false
-   }
-  ]
- },
  "new_po": {
   "id": 3,
   "part": "Brake pads (Shimano resin, pair)",
@@ -518,5 +485,535 @@ window.SHOP = {
     "unpaid_invoices": 3
    }
   ]
+ },
+ "workload": {
+  "week_start": "2026-11-23",
+  "week_end": "2026-11-28",
+  "mechanics": [
+   {
+    "mechanic_id": 1,
+    "name": "Dev",
+    "weekly_capacity_hours": 20.0,
+    "workload_hours": 31.0,
+    "job_count": 9,
+    "spare_hours": -11.0,
+    "overloaded": true
+   },
+   {
+    "mechanic_id": 2,
+    "name": "Ravi",
+    "weekly_capacity_hours": 30.0,
+    "workload_hours": 10.5,
+    "job_count": 5,
+    "spare_hours": 19.5,
+    "overloaded": false
+   },
+   {
+    "mechanic_id": 3,
+    "name": "Priya",
+    "weekly_capacity_hours": 30.0,
+    "workload_hours": 0,
+    "job_count": 0,
+    "spare_hours": 30.0,
+    "overloaded": false
+   }
+  ]
+ },
+ "after_reassign": [
+  {
+   "mechanic_id": 1,
+   "name": "Dev",
+   "weekly_capacity_hours": 20.0,
+   "workload_hours": 19.5,
+   "job_count": 7,
+   "spare_hours": 0.5,
+   "overloaded": false
+  },
+  {
+   "mechanic_id": 3,
+   "name": "Priya",
+   "weekly_capacity_hours": 30.0,
+   "workload_hours": 11.5,
+   "job_count": 2,
+   "spare_hours": 18.5,
+   "overloaded": false
+  },
+  {
+   "mechanic_id": 2,
+   "name": "Ravi",
+   "weekly_capacity_hours": 30.0,
+   "workload_hours": 10.5,
+   "job_count": 5,
+   "spare_hours": 19.5,
+   "overloaded": false
+  }
+ ],
+ "days": {
+  "2026-11-19": {
+   "today": "2026-11-19",
+   "week_start": "2026-11-16",
+   "week_end": "2026-11-21",
+   "stats": {
+    "today": "2026-11-19",
+    "open_jobs": 22,
+    "due_today": 0,
+    "ready_to_collect": 0,
+    "low_stock_parts": 6,
+    "unpaid_invoices": 3
+   },
+   "jobs": [
+    {
+     "job_id": 4460,
+     "mechanic": "Ravi",
+     "work": "Full service",
+     "customer": "Gareth Hughes",
+     "bike": "Orbea Orca",
+     "estimate_hours": 3.0,
+     "due_date": "2026-11-22",
+     "status": "booked"
+    },
+    {
+     "job_id": 4462,
+     "mechanic": "Dev",
+     "work": "New chain + cassette",
+     "customer": "Marisol Delgado",
+     "bike": "Cube Attain",
+     "estimate_hours": 1.0,
+     "due_date": "2026-11-22",
+     "status": "booked"
+    },
+    {
+     "job_id": 4465,
+     "mechanic": "Ravi",
+     "work": "Brake pads",
+     "customer": "Niamh Fitzgerald",
+     "bike": "Marin Muirwoods",
+     "estimate_hours": 0.5,
+     "due_date": "2026-11-23",
+     "status": "booked"
+    },
+    {
+     "job_id": 4468,
+     "mechanic": "Dev",
+     "work": "Wheel true",
+     "customer": "Chidi Okonkwo",
+     "bike": "Merida Scultura",
+     "estimate_hours": 0.5,
+     "due_date": "2026-11-23",
+     "status": "booked"
+    },
+    {
+     "job_id": 4479,
+     "mechanic": "Ravi",
+     "work": "Tubeless setup",
+     "customer": "Karim Haddad",
+     "bike": "Santa Cruz Stigmata",
+     "estimate_hours": 1.5,
+     "due_date": "2026-11-23",
+     "status": "in progress"
+    },
+    {
+     "job_id": 4481,
+     "mechanic": "Dev",
+     "work": "Full service",
+     "customer": "Tom Whitfield",
+     "bike": "Brompton C Line",
+     "estimate_hours": 3.0,
+     "due_date": "2026-11-23",
+     "status": "in progress"
+    },
+    {
+     "job_id": 4491,
+     "mechanic": "Ravi",
+     "work": "Puncture repair + new tube",
+     "customer": "Zara Ali",
+     "bike": "Pinnacle Lithium",
+     "estimate_hours": 0.5,
+     "due_date": "2026-11-23",
+     "status": "booked"
+    },
+    {
+     "job_id": 4471,
+     "mechanic": "Dev",
+     "work": "Wheel build (front, 32 hole)",
+     "customer": "Rachel Okafor",
+     "bike": "Genesis Croix de Fer",
+     "estimate_hours": 6.0,
+     "due_date": "2026-11-24",
+     "status": "booked"
+    },
+    {
+     "job_id": 4475,
+     "mechanic": "Ravi",
+     "work": "Full service",
+     "customer": "Sofia Ferreira",
+     "bike": "Giant Defy",
+     "estimate_hours": 3.0,
+     "due_date": "2026-11-24",
+     "status": "booked"
+    },
+    {
+     "job_id": 4478,
+     "mechanic": "Dev",
+     "work": "Brake bleed + new pads",
+     "customer": "Anika Banerjee",
+     "bike": "Trek FX 3",
+     "estimate_hours": 1.5,
+     "due_date": "2026-11-24",
+     "status": "booked"
+    },
+    {
+     "job_id": 4485,
+     "mechanic": "Dev",
+     "work": "Headset replacement",
+     "customer": "Thanh Nguyen",
+     "bike": "Surly Long Haul Trucker",
+     "estimate_hours": 1.0,
+     "due_date": "2026-11-24",
+     "status": "booked"
+    },
+    {
+     "job_id": 4490,
+     "mechanic": "Ravi",
+     "work": "Bottom bracket replacement",
+     "customer": "Kwame Mensah",
+     "bike": "Boardman SLR",
+     "estimate_hours": 1.5,
+     "due_date": "2026-11-24",
+     "status": "booked"
+    },
+    {
+     "job_id": 4472,
+     "mechanic": "Dev",
+     "work": "Wheel build (rear, 32 hole)",
+     "customer": "Magnus Lindqvist",
+     "bike": "Bianchi Infinito",
+     "estimate_hours": 5.5,
+     "due_date": "2026-11-25",
+     "status": "booked"
+    },
+    {
+     "job_id": 4476,
+     "mechanic": "Dev",
+     "work": "Full service",
+     "customer": "Aoife O'Brien",
+     "bike": "Ribble CGR",
+     "estimate_hours": 3.0,
+     "due_date": "2026-11-25",
+     "status": "booked"
+    },
+    {
+     "job_id": 4483,
+     "mechanic": "Dev",
+     "work": "Drivetrain overhaul (chain + cassette)",
+     "customer": "Funmi Adeyemi",
+     "bike": "Cannondale Topstone",
+     "estimate_hours": 4.5,
+     "due_date": "2026-11-25",
+     "status": "booked"
+    },
+    {
+     "job_id": 4492,
+     "mechanic": "Ravi",
+     "work": "Cable replacement",
+     "customer": "Sean Brennan",
+     "bike": "Dawes Galaxy",
+     "estimate_hours": 0.5,
+     "due_date": "2026-11-25",
+     "status": "booked"
+    },
+    {
+     "job_id": 4482,
+     "mechanic": "Dev",
+     "work": "Full service",
+     "customer": "Piotr Kowalski",
+     "bike": "Specialized Allez",
+     "estimate_hours": 3.0,
+     "due_date": "2026-11-26",
+     "status": "booked"
+    },
+    {
+     "job_id": 4484,
+     "mechanic": "Dev",
+     "work": "E-bike diagnostics (motor cutting out)",
+     "customer": "Claire Moreau",
+     "bike": "Riese & Muller Charger4",
+     "estimate_hours": 3.5,
+     "due_date": "2026-11-26",
+     "status": "booked"
+    },
+    {
+     "job_id": 4488,
+     "mechanic": "Ravi",
+     "work": "Suspension fork service",
+     "customer": "Jana Novak",
+     "bike": "Canyon Grail",
+     "estimate_hours": 4.0,
+     "due_date": "2026-11-26",
+     "status": "booked"
+    },
+    {
+     "job_id": 4480,
+     "mechanic": "Ravi",
+     "work": "Headset swap",
+     "customer": "Yuki Tanaka",
+     "bike": "Kona Rove",
+     "estimate_hours": 2.0,
+     "due_date": "2026-11-27",
+     "status": "booked"
+    },
+    {
+     "job_id": 4487,
+     "mechanic": "Dev",
+     "work": "Gear tune, new cables + bar tape",
+     "customer": "Luca Rossi",
+     "bike": "Colnago C64",
+     "estimate_hours": 3.0,
+     "due_date": "2026-11-27",
+     "status": "booked"
+    },
+    {
+     "job_id": 4489,
+     "mechanic": "Ravi",
+     "work": "Full restoration (1978 Raleigh)",
+     "customer": "Arthur Pemberton",
+     "bike": "Raleigh Record Ace (1978)",
+     "estimate_hours": 6.0,
+     "due_date": "2026-11-27",
+     "status": "waiting on parts"
+    }
+   ],
+   "texts": [
+    {
+     "id": 2,
+     "customer": "Rachel Okafor",
+     "channel": "sms",
+     "message": "Hi Rachel, your rims have arrived, wheel build booked for next week. S&S",
+     "sent_at": "2026-11-19 11:02:00",
+     "job_id": null
+    },
+    {
+     "id": 1,
+     "customer": "Tom Whitfield",
+     "channel": "sms",
+     "message": "Hi Tom, your Brompton is ready to collect. Spokes & Sprockets",
+     "sent_at": "2026-10-24 11:02:00",
+     "job_id": null
+    }
+   ]
+  },
+  "2026-11-24": {
+   "today": "2026-11-24",
+   "week_start": "2026-11-23",
+   "week_end": "2026-11-28",
+   "stats": {
+    "today": "2026-11-24",
+    "open_jobs": 18,
+    "due_today": 3,
+    "ready_to_collect": 4,
+    "low_stock_parts": 6,
+    "unpaid_invoices": 3
+   },
+   "jobs": [
+    {
+     "job_id": 4460,
+     "mechanic": "Ravi",
+     "work": "Full service",
+     "customer": "Gareth Hughes",
+     "bike": "Orbea Orca",
+     "estimate_hours": 3.0,
+     "due_date": "2026-11-22",
+     "status": "ready"
+    },
+    {
+     "job_id": 4462,
+     "mechanic": "Dev",
+     "work": "New chain + cassette",
+     "customer": "Marisol Delgado",
+     "bike": "Cube Attain",
+     "estimate_hours": 1.0,
+     "due_date": "2026-11-22",
+     "status": "ready"
+    },
+    {
+     "job_id": 4465,
+     "mechanic": "Ravi",
+     "work": "Brake pads",
+     "customer": "Niamh Fitzgerald",
+     "bike": "Marin Muirwoods",
+     "estimate_hours": 0.5,
+     "due_date": "2026-11-23",
+     "status": "ready"
+    },
+    {
+     "job_id": 4468,
+     "mechanic": "Dev",
+     "work": "Wheel true",
+     "customer": "Chidi Okonkwo",
+     "bike": "Merida Scultura",
+     "estimate_hours": 0.5,
+     "due_date": "2026-11-23",
+     "status": "ready"
+    },
+    {
+     "job_id": 4479,
+     "mechanic": "Ravi",
+     "work": "Tubeless setup",
+     "customer": "Karim Haddad",
+     "bike": "Santa Cruz Stigmata",
+     "estimate_hours": 1.5,
+     "due_date": "2026-11-23",
+     "status": "in progress"
+    },
+    {
+     "job_id": 4491,
+     "mechanic": "Ravi",
+     "work": "Puncture repair + new tube",
+     "customer": "Zara Ali",
+     "bike": "Pinnacle Lithium",
+     "estimate_hours": 0.5,
+     "due_date": "2026-11-23",
+     "status": "booked"
+    },
+    {
+     "job_id": 4471,
+     "mechanic": "Priya",
+     "work": "Wheel build (front, 32 hole)",
+     "customer": "Rachel Okafor",
+     "bike": "Genesis Croix de Fer",
+     "estimate_hours": 6.0,
+     "due_date": "2026-11-24",
+     "status": "booked"
+    },
+    {
+     "job_id": 4478,
+     "mechanic": "Dev",
+     "work": "Brake bleed + new pads",
+     "customer": "Anika Banerjee",
+     "bike": "Trek FX 3",
+     "estimate_hours": 1.5,
+     "due_date": "2026-11-24",
+     "status": "booked"
+    },
+    {
+     "job_id": 4485,
+     "mechanic": "Dev",
+     "work": "Headset replacement",
+     "customer": "Thanh Nguyen",
+     "bike": "Surly Long Haul Trucker",
+     "estimate_hours": 1.0,
+     "due_date": "2026-11-24",
+     "status": "booked"
+    },
+    {
+     "job_id": 4472,
+     "mechanic": "Priya",
+     "work": "Wheel build (rear, 32 hole)",
+     "customer": "Magnus Lindqvist",
+     "bike": "Bianchi Infinito",
+     "estimate_hours": 5.5,
+     "due_date": "2026-11-25",
+     "status": "booked"
+    },
+    {
+     "job_id": 4476,
+     "mechanic": "Dev",
+     "work": "Full service",
+     "customer": "Aoife O'Brien",
+     "bike": "Ribble CGR",
+     "estimate_hours": 3.0,
+     "due_date": "2026-11-25",
+     "status": "booked"
+    },
+    {
+     "job_id": 4483,
+     "mechanic": "Dev",
+     "work": "Drivetrain overhaul (chain + cassette)",
+     "customer": "Funmi Adeyemi",
+     "bike": "Cannondale Topstone",
+     "estimate_hours": 4.5,
+     "due_date": "2026-11-25",
+     "status": "booked"
+    },
+    {
+     "job_id": 4492,
+     "mechanic": "Ravi",
+     "work": "Cable replacement",
+     "customer": "Sean Brennan",
+     "bike": "Dawes Galaxy",
+     "estimate_hours": 0.5,
+     "due_date": "2026-11-25",
+     "status": "booked"
+    },
+    {
+     "job_id": 4482,
+     "mechanic": "Dev",
+     "work": "Full service",
+     "customer": "Piotr Kowalski",
+     "bike": "Specialized Allez",
+     "estimate_hours": 3.0,
+     "due_date": "2026-11-26",
+     "status": "booked"
+    },
+    {
+     "job_id": 4484,
+     "mechanic": "Dev",
+     "work": "E-bike diagnostics (motor cutting out)",
+     "customer": "Claire Moreau",
+     "bike": "Riese & Muller Charger4",
+     "estimate_hours": 3.5,
+     "due_date": "2026-11-26",
+     "status": "booked"
+    },
+    {
+     "job_id": 4480,
+     "mechanic": "Ravi",
+     "work": "Headset swap",
+     "customer": "Yuki Tanaka",
+     "bike": "Kona Rove",
+     "estimate_hours": 2.0,
+     "due_date": "2026-11-27",
+     "status": "booked"
+    },
+    {
+     "job_id": 4487,
+     "mechanic": "Dev",
+     "work": "Gear tune, new cables + bar tape",
+     "customer": "Luca Rossi",
+     "bike": "Colnago C64",
+     "estimate_hours": 3.0,
+     "due_date": "2026-11-27",
+     "status": "booked"
+    },
+    {
+     "job_id": 4489,
+     "mechanic": "Ravi",
+     "work": "Full restoration (1978 Raleigh)",
+     "customer": "Arthur Pemberton",
+     "bike": "Raleigh Record Ace (1978)",
+     "estimate_hours": 6.0,
+     "due_date": "2026-11-27",
+     "status": "waiting on parts"
+    }
+   ],
+   "texts": [
+    {
+     "id": 2,
+     "customer": "Rachel Okafor",
+     "channel": "sms",
+     "message": "Hi Rachel, your rims have arrived, wheel build booked for next week. S&S",
+     "sent_at": "2026-11-19 11:02:00",
+     "job_id": null
+    },
+    {
+     "id": 1,
+     "customer": "Tom Whitfield",
+     "channel": "sms",
+     "message": "Hi Tom, your Brompton is ready to collect. Spokes & Sprockets",
+     "sent_at": "2026-10-24 11:02:00",
+     "job_id": null
+    }
+   ]
+  }
  }
 };

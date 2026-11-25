@@ -89,6 +89,9 @@
     'shop-reports-soon': { ...MON, ...AFTERNOON, time: '16:08', browser: true, tabs: ['shop'], page: 'reports', reports: 'soon', ram: .34, cpu: .08 },
     'shop-reports': { ...MON, ...AFTERNOON, time: '16:16', browser: true, tabs: ['shop'], page: 'reports', reports: 'built', ram: .36, cpu: .1 },
     'shop-jobs-after': { ...MON, ...AFTERNOON, time: '16:21', browser: true, tabs: ['shop'], page: 'jobs', reports: 'built', reassign: .62, scroll: 144, ram: .35, cpu: .09 },   // scroll: the counters to Jana's 4488
+    // Tue 24 Nov, 08:34, Priya's first morning (scene 7; the 3D monitor's texture): the shop's own Tuesday Jobs page,
+    // her two wheel builds, the four bikes handed back on Monday collected that evening (Ready to collect: 4)
+    'shop-tuesday': { date: '2026-11-24', time: '08:34', browser: true, tabs: ['shop'], page: 'jobs', reports: 'built', scroll: 34, ram: .35, cpu: .09 },
     'barnaby': { ...MON, browser: true, tabs: ['shop'], page: 'jobs', barnaby: 'slot', barnabyTray: true, ram: .36, cpu: .1 },
     'barnaby-frame': { ...MON, browser: true, tabs: ['shop'], page: 'jobs', barnaby: 'frame', barnabyTray: true, ram: .36, cpu: .1 },
   };

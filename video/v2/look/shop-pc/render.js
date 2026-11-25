@@ -49,7 +49,7 @@ async function sheet(page, out) {
  * 32/255 off; below that it's text antialiasing / glass-compositing noise (use ?blur=0 for bit-exact frames). */
 async function verify(page, browser) {
   const url = 'file:///' + path.join(HERE, 'index.html').replace(/\\/g, '/');
-  const names = ['desktop', 'start', 'tabs', 'tabs-parts', 'tabs-busy', 'shop-jobs', 'shop-po', 'shop-reports-soon', 'shop-reports', 'shop-jobs-after', 'barnaby', 'barnaby-frame'];
+  const names = ['desktop', 'start', 'tabs', 'tabs-parts', 'tabs-busy', 'shop-jobs', 'shop-po', 'shop-reports-soon', 'shop-reports', 'shop-jobs-after', 'shop-tuesday', 'barnaby', 'barnaby-frame'];
   let bad = 0;
   for (let i = 0; i < names.length; i++) {
     const a = names[i], b = names[(i + 5) % names.length];

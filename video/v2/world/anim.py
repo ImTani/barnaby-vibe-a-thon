@@ -1089,12 +1089,27 @@ def shop_shots(DM, M, hands):
     dh = med["loc"] - mug_c
     dh.z = 0.0
     dh.normalize()
-    mug_cam = dict(loc=mug_c + dh * 0.52 + Vector((0, 0, 0.07)), tgt=mug_c + Vector((-0.03, 0.0, -0.01)),
+    mug_cam = dict(loc=mug_c + dh * 0.5 + Vector((0, 0, 0.13)), tgt=mug_c + Vector((-0.03, 0.0, -0.015)),
                    lens=70.0, fstop=2.0, focus=mug_c + dh * 0.04)
     shots["x_mug_night"] = Still("x_mug_night", 2, "x_mug_night.png", preset("night"), mug_cam,
                                  notes="v2.3 match cut (Thu night -> Mon): Theo's WORLD'S OKAYEST NEPHEW mug in the "
                                        "lamp pool, cold coffee, shallow focus, the monitor's glow soft behind. "
                                        "2560x1440, 32 samples. Cut to x_mug_dawn (same framing).")
+
+    sh = Shot("x_mug_night_off", 2, ["world/x_mug_night.png"], 39.29, 39.29 + 3.0)
+    T_MOFF = 39.29 + 1.5
+    sh.notes = (f"v2.3 match cut, first half: x_mug_night's frame, Theo's mug in the lamp pool; the lamp clicks off at "
+                f"frame {sh.frame(T_MOFF)} (80% down in that frame, a 3-4 frame afterglow, then only the monitor's "
+                f"glow, -2.2 EV) and holds in the dark. Cut to x_mug_dawn. Static camera. 1920x1080, 12 samples.")
+    sh.events = {"lamp_off": T_MOFF + 1 / FPS}            # the first dark frame
+    sh.active = [(T_MOFF - 0.1, T_MOFF + 0.3)]
+
+    def f_moff(t):
+        cam_between(mug_cam, mug_cam, 0.0)
+        lamp_off_state(lamp_level(t, T_MOFF))
+    sh.segments = [(sh.start, preset("night"))]
+    sh.frame_fn = f_moff
+    shots[sh.id] = sh
 
     sh = Shot("x_mug_dawn", 3, ["world/x_mug_night.png"], 40.34, 40.34 + 3.5)
     T_RISE = (40.34 + 0.4, 40.34 + 3.1)
@@ -1144,8 +1159,11 @@ def shop_shots(DM, M, hands):
                                                               "side. 32 samples.")
     key_w = bpy.data.objects["backoffice_key"].matrix_world.translation.copy()
     rk_tgt = scr_c.copy()
-    rk_loc = key_w + Vector((0.06, -0.21, 0.1))
-    rk = dict(loc=rk_loc, tgt=key_w.lerp(rk_tgt, 0.33), lens=40.0, fstop=1.8, focus=key_w)
+    rk_loc = key_w + Vector((0.05, -0.2, 0.075))
+    dk, ds = (key_w - rk_loc).normalized(), (rk_tgt - rk_loc).normalized()
+    half = math.acos(max(-1.0, min(1.0, dk.dot(ds)))) / 2           # key low in frame, the monitor high
+    rk = dict(loc=rk_loc, tgt=rk_loc + (dk + ds).normalized() * 0.3,
+              lens=max(24.0, 10.125 / math.tan(half / 0.72)), fstop=1.8, focus=key_w)
     sh = Shot("x_key_rack", 2, ["world/03_keys_night.png"], 38.04, 38.04 + 2.5)
     T_RACK = (38.04 + 0.7, 38.04 + 1.9)
     sh.notes = (f"v2.3 rack focus, night, lamp on: low over the keyboard, Theo's key sharp in the foreground, then "

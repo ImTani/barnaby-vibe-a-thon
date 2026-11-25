@@ -1,5 +1,5 @@
 {
- "complete": false,
+ "complete": true,
  "fps": 24,
  "shots": [
   {
@@ -6954,17 +6954,40 @@
   },
   {
    "id": "s2_key_lamp",
+   "kind": "seq",
    "scene": 2,
    "replaces": "world/03_keys_night.png",
    "start": 37.54,
    "frames": 79,
-   "status": "rendering",
-   "notes": "Theo's BACK OFFICE key drops in from above frame and lands on the keyboard on the key_tap (38.59) with a small bounce, the tag settling after; the desk lamp clicks off on lamp_click (39.79) and the room drops to the monitor's glow (baked in: drop the still's brightness grade). Slow push toward the key. (frames 54-79 being re-rendered: a faster lamp-off)",
-   "kind": "seq",
+   "status": "done",
+   "notes": "Theo's BACK OFFICE key drops in from above frame (frame 21) and lands on the keyboard at frame 26 with a small bounce; a slow push toward the key; the lamp clicks off at frame 56: 80% dark in that frame, a tungsten afterglow over 3-4 frames, monitor-lit from frame 60 (exposure -2.2 EV). Baked in: no brightness grade on top. 1920x1080, 16 samples.",
    "events": {
     "key": 21,
     "key_land": 26,
     "lamp_off": 56
+   }
+  },
+  {
+   "id": "x_key_rack",
+   "kind": "seq",
+   "scene": 2,
+   "replaces": "world/03_keys_night.png",
+   "start": 37.54,
+   "frames": 84,
+   "status": "excluded",
+   "notes": "v2.3 rack focus, night, lamp on: low over the keyboard, Theo's key sharp in the foreground, then the focus racks to the monitor (frames 30-59). Static camera. 1920x1080, 12 samples. EXCLUDED: the key is below frame (only the monitor racks into focus); not for use."
+  },
+  {
+   "id": "x_mug_night_off",
+   "kind": "seq",
+   "scene": 2,
+   "replaces": "world/x_mug_night.png",
+   "start": 38.79,
+   "frames": 96,
+   "status": "done",
+   "notes": "v2.3 match cut, first half: x_mug_night's frame, Theo's mug in the lamp pool; the lamp clicks off at frame 49 (80% down in that frame, a 3-4 frame afterglow, then only the monitor's glow, -2.2 EV) and holds in the dark. Cut to x_mug_dawn. Static camera. 1920x1080, 12 samples.",
+   "events": {
+    "lamp_off": 50
    }
   },
   {
@@ -10894,27 +10917,41 @@
    }
   },
   {
+   "id": "x_mug_dawn",
+   "kind": "seq",
+   "scene": 3,
+   "replaces": "world/x_mug_night.png",
+   "start": 39.84,
+   "frames": 108,
+   "status": "done",
+   "notes": "v2.3 match cut: x_mug_night's framing on Monday morning: the lamp off, Martin's tea in the same mug, daylight rising from pre-dawn blue (frames 1-23) to Monday's morning light (full by frame 87). Static camera (handheld is post). 1920x1080, 12 samples.",
+   "events": {
+    "timelapse": 23,
+    "monday": 87
+   }
+  },
+  {
    "id": "s3_shelf",
+   "kind": "seq",
    "scene": 3,
    "replaces": "world/x_shelf_monday.png",
    "start": 55.71,
-   "frames": 80,
+   "frames": 216,
    "status": "done",
-   "notes": "Drawer 1 (BRAKE PADS) slides open from shut, one pair inside; ends on the approved still's state. Slow push toward the open drawer.",
-   "kind": "seq",
+   "notes": "SHOTLIST 3.5: held on the approved frame; drawer 1 (BRAKE PADS) slides open from shut at frames 37-57, one pair of pads inside; then holds on the approved still's state. 1600x900 at 12 samples, upscaled.",
    "events": {
-    "shelf": 19
+    "shelf": 37
    }
   },
   {
    "id": "s5_afternoon",
+   "kind": "seq",
    "scene": 5,
    "replaces": "world/04_medium_monday.png",
    "start": 77.22,
-   "frames": 102,
+   "frames": 216,
    "status": "done",
-   "notes": "Monday afternoon: the window sun slides slowly across the desk; slow push toward the monitor. Colour as approved (keep the film's AFT grade on top; drop the CSS sweep overlay).",
-   "kind": "seq",
+   "notes": "SHOTLIST 5.1: held on the Monday desk, about 14:30: a low winter sun breaks through and its warm shaft slides across the desk (frames 32-176). The light is the grade: no colour filter on top. 1600x900 at 12 samples, upscaled.",
    "events": {
     "afternoon": 13
    }
@@ -15172,6 +15209,62 @@
    ],
    "status": "done",
    "notes": "v2.3 plate for 2D pans: the approved Lisbon wide at 3840x2160 (same framing). 32 samples."
+  },
+  {
+   "id": "x_chair_dusk",
+   "kind": "still",
+   "scene": 6,
+   "file": "world/x_chair_dusk.png",
+   "start": null,
+   "frames": 1,
+   "res": [
+    2560,
+    1440
+   ],
+   "status": "done",
+   "notes": "v2.3 match cut (Mon dusk -> Tue): the empty desk chair from behind and to one side, the monitor and lamp beyond, dusk with the lamp on. 2560x1440, 32 samples. Cut to x_chair_tuesday (same framing)."
+  },
+  {
+   "id": "x_chair_tuesday",
+   "kind": "still",
+   "scene": 7,
+   "file": "world/x_chair_tuesday.png",
+   "start": null,
+   "frames": 1,
+   "res": [
+    2560,
+    1440
+   ],
+   "status": "done",
+   "notes": "v2.3 match cut: x_chair_dusk's framing on Tuesday morning, crisp sun, Priya's helmet hanging on the chair (the chair is pushed in, as on Tuesday). 2560x1440, 32 samples."
+  },
+  {
+   "id": "01_wide_night_4k",
+   "kind": "still",
+   "scene": 1,
+   "file": "world/01_wide_night_4k.png",
+   "start": null,
+   "frames": 1,
+   "res": [
+    3840,
+    2160
+   ],
+   "status": "done",
+   "notes": "v2.3 plate for 2D pans: the night wide at 3840x2160, a little wider (38 -> 33 mm) with the extra on the window side. 32 samples."
+  },
+  {
+   "id": "x_mug_night",
+   "kind": "still",
+   "scene": 2,
+   "file": "world/x_mug_night.png",
+   "start": null,
+   "frames": 1,
+   "res": [
+    2560,
+    1440
+   ],
+   "status": "done",
+   "notes": "v2.3 match cut (Thu night -> Mon): Theo's WORLD'S OKAYEST NEPHEW mug in the lamp pool, cold coffee, shallow focus, the monitor's glow soft behind. 2560x1440, 32 samples. Cut to x_mug_dawn (same framing)."
   }
  ]
 }

@@ -103,6 +103,7 @@ def main() -> int:
     a = ap.parse_args()
     out = Path(a.out)
     cues = json.loads(Path(a.cues).read_text(encoding="utf-8"))
+    PACE.update(cues.get("pace_wpm", {}))       # a film's cue sheet can set its own per-character pace (v2 does)
     voices = cues.get("voices", {})
     out.mkdir(parents=True, exist_ok=True)
     manifest, lines = [], cues["voice"]

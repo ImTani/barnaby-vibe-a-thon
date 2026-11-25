@@ -240,7 +240,7 @@ window.SHOP = {
    "customer": "Rachel Okafor",
    "channel": "sms",
    "message": "Hi Rachel, your rims have arrived, wheel build booked for next week. S&S",
-   "sent_at": "2026-11-20 11:02:00",
+   "sent_at": "2026-11-19 11:02:00",
    "job_id": null
   },
   {

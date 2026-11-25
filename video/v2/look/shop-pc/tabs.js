@@ -41,6 +41,10 @@
       </div></div>`;
   }
 
+  /* What Theo left in the box on Thursday night: a booking text for Sofia's job 4475 (full service, due Tue 24/11),
+   * never sent. Her "ready to collect" text is Barnaby's, on Monday afternoon. The count is the draft's own length. */
+  const DRAFT = 'Hi Sofia, your Giant Defy is booked in for a full service, ready Tues 24th. Spokes & Sprockets';
+
   function sms() {
     const log = D.texts.map(t => `<div class="msg"><i>${esc(t.sent_at.slice(0, 16))}</i><b>${esc(t.customer)}</b><br>${esc(t.message)}</div>`).join('');
     return `<div class="page sms">
@@ -50,8 +54,8 @@
           <div class="warn">${I.ICO.warn(14)} Your credits are running low. <u>Buy 500 more for &pound;29</u></div>
           <label>To (mobile number)</label><div class="in">07700 900110</div>
           <label>From</label><div class="in">SpokesSprk</div>
-          <label>Message</label><div class="ta">Hi Sofia, your Giant Defy is ready to collect. Spokes &amp; Sprockets<span class="caret"></span></div>
-          <div class="cnt">67 / 160 characters (1 text)</div>
+          <label>Message</label><div class="ta">${esc(DRAFT)}<span class="caret"></span></div>
+          <div class="cnt">${DRAFT.length} / 160 characters (1 text)</div>
           <div class="send">Send</div>
         </div>
         <div class="log"><h4>Sent messages</h4>${log}

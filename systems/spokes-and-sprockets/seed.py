@@ -153,7 +153,7 @@ def seed():
         con.execute("INSERT INTO purchase_orders (part_id, quantity, supplier, status, created) VALUES (?,?,?,?,?)",
                     (part_ids[part], qty, supplier, "received", d(-ago) + " 10:15:00"))
     for cust, msg, ago in [("Tom Whitfield", "Hi Tom, your Brompton is ready to collect. Spokes & Sprockets", 30),
-                           ("Rachel Okafor", "Hi Rachel, your rims have arrived, wheel build booked for next week. S&S", 3)]:
+                           ("Rachel Okafor", "Hi Rachel, your rims have arrived, wheel build booked for next week. S&S", 4)]:
         con.execute("INSERT INTO notifications (customer_id, job_id, channel, message, sent_at) VALUES (?,?,?,?,?)",
                     (cust_ids[cust], None, "sms", msg, d(-ago) + " 11:02:00"))
     con.commit()

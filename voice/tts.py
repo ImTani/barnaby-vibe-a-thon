@@ -66,7 +66,7 @@ _LEX_RE = re.compile(r"\b(" + "|".join(map(re.escape, LEXICON)) + r")\b")
 # the word is unstressed and something follows it in the same phrase. Left alone: words misaki already reduces in
 # context ("to", "a", "the", "than"), words with no safe weak form here ("sir", "your", "have" as a main verb), and
 # relative "that": its weak form ðət made Kokoro break before it ("the six | that only read"; SPEECH.md).
-WEAK = {"them": "ðəm", "me": "mi", "him": "hɪm", "her": "hə", "us": "əs", "for": "fə", "from": "fɹəm", "of": "əv",
+WEAK = {"them": "ðəm", "him": "hɪm", "her": "hə", "us": "əs", "for": "fə", "from": "fɹəm", "of": "əv",
         "at": "ət", "and": "ənd", "but": "bət", "can": "kən", "was": "wəz", "were": "wə", "are": "ə"}
 _LINKING_R = {"for", "her", "were", "are"}         # RP links these with /r/ before a vowel: "for a", "are always"
 _VOWELS = "aeiouæɑɐɒɔəɛɜɪʊʌAIOQWYᵊ"

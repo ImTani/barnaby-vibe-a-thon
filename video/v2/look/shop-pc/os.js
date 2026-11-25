@@ -61,6 +61,8 @@
     po: 0,                   // 0..1 the new purchase order row (#3) sliding in; 1 = in place
     poHl: 0,                 // 0..1 yellow "just appeared" highlight on that row
     reassign: 0,             // 0..1 Dev -> Priya on jobs 4471 and 4472 (0 = Dev, >= .5 = Priya, highlight peaks at .5)
+    handedBack: 0,           // 0..4 Monday afternoon's hand-backs marked ready, in order: Sofia 4475, Kwame 4490, Jana 4488,
+                             // Tom 4481 (scene 5); Theo's counters follow (Ready to collect 4 -> 8)
     scroll: 0,               // page scroll (logical px) of the active tab
     marquee: 0,              // Theo's marquee offset (px); tween it for movement
     loading: 0,              // 0..1 status-bar progress (0 = "Done")
@@ -74,6 +76,7 @@
 
   const MON = { date: '2026-11-23', time: '08:52' };
   const NIGHT = { date: '2026-11-19', time: '21:47' };          // Theo's last week, the night before his last day
+  const AFTERNOON = { handedBack: 4 };                          // Monday after scene 5: Sofia's, Kwame's, Jana's, Tom's bikes ready
   const ALL_TABS = TABS.map(t => t.id);
   const STATES = {
     'desktop': { ...MON },
@@ -83,9 +86,9 @@
     'tabs-busy': { ...NIGHT, time: '21:49', browser: true, tabs: ALL_TABS, active: 'cal', ram: .98, cpu: 1, notresp: true, balloon: true, cursor: { x: 640, y: 360, busy: 40 } },
     'shop-jobs': { ...MON, browser: true, tabs: ['shop'], page: 'jobs', ram: .34, cpu: .09 },
     'shop-po': { ...MON, time: '09:04', browser: true, tabs: ['shop'], page: 'po', po: 1, poHl: 1, ram: .35, cpu: .12 },
-    'shop-reports-soon': { ...MON, time: '16:08', browser: true, tabs: ['shop'], page: 'reports', reports: 'soon', ram: .34, cpu: .08 },
-    'shop-reports': { ...MON, time: '16:16', browser: true, tabs: ['shop'], page: 'reports', reports: 'built', ram: .36, cpu: .1 },
-    'shop-jobs-after': { ...MON, time: '16:21', browser: true, tabs: ['shop'], page: 'jobs', reports: 'built', reassign: .62, scroll: 34, ram: .35, cpu: .09 },
+    'shop-reports-soon': { ...MON, ...AFTERNOON, time: '16:08', browser: true, tabs: ['shop'], page: 'reports', reports: 'soon', ram: .34, cpu: .08 },
+    'shop-reports': { ...MON, ...AFTERNOON, time: '16:16', browser: true, tabs: ['shop'], page: 'reports', reports: 'built', ram: .36, cpu: .1 },
+    'shop-jobs-after': { ...MON, ...AFTERNOON, time: '16:21', browser: true, tabs: ['shop'], page: 'jobs', reports: 'built', reassign: .62, scroll: 144, ram: .35, cpu: .09 },   // scroll: the counters to Jana's 4488
     'barnaby': { ...MON, browser: true, tabs: ['shop'], page: 'jobs', barnaby: 'slot', barnabyTray: true, ram: .36, cpu: .1 },
     'barnaby-frame': { ...MON, browser: true, tabs: ['shop'], page: 'jobs', barnaby: 'frame', barnabyTray: true, ram: .36, cpu: .1 },
   };

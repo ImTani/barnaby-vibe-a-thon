@@ -57,7 +57,7 @@ async function verify(page, browser) {
     await page.waitForSelector('body[data-ready="1"]', { timeout: 10000 });
     await page.evaluate(a => pc.render(pc.preset(a)), a);
     const first = await page.screenshot({ encoding: 'base64' });
-    await page.evaluate((a, b) => { pc.render(pc.preset(b, { po: .3, poHl: .5, reassign: .9, scroll: 120, marquee: 333, start: .6, tabIn: .2, dim: .4, secs: 17 })); pc.render(pc.preset(a)); }, a, b);
+    await page.evaluate((a, b) => { pc.render(pc.preset(b, { po: .3, poHl: .5, reassign: .9, handedBack: 2, scroll: 120, marquee: 333, start: .6, tabIn: .2, dim: .4, secs: 17 })); pc.render(pc.preset(a)); }, a, b);
     const again = await page.screenshot({ encoding: 'base64' });
     const r = await page.evaluate(async (x, y) => {   // decode + compare off-DOM, in the same tab
       const load = s => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.src = 'data:image/png;base64,' + s; });

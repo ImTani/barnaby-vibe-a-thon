@@ -6,8 +6,9 @@ Seeds a throwaway database (system temp dir, deleted afterwards) with systems/sp
 "today" pinned to Monday 2026-11-23 as in the recorded run (video/data.js), and reads it back through Theo's own
 services.py. Writes shop-data.js next to this file. Nothing in systems/ is modified.
 
-The film's later states (PO #3, the workload report, the two wheel builds moving to Priya) are derived here from the
-same data, the same way the real run did them, so the pages never show a number the real app wouldn't.
+The film's later states (PO #3, the workload report, the four bikes handed back on Monday afternoon, the two wheel
+builds moving to Priya) are derived here from the same data, the same way the real run did them, so the pages never
+show a number the real app wouldn't.
 """
 from __future__ import annotations
 
@@ -72,6 +73,16 @@ def main() -> int:
                        "status": "ordered", "created": f"{TODAY} 09:04:12"},
             "reassigned": {"to": "Priya", "jobs": [4471, 4472]},
         }
+        # Monday afternoon (script scene 5), after everything above was read: Martin hands back four finished bikes and
+        # Barnaby marks each one ready (Theo's set_job_status), in the script's order. The counters after each one come
+        # from Theo's shop_stats, so the 16:08-16:21 pages show what the real app would: stats[i] = after the first i+1.
+        # (Barnaby's texts to them aren't exported: the canon gives no minute for them.)
+        hand_back = [4475, 4490, 4488, 4481]          # Sofia, Kwame, Jana, Tom's Brompton
+        after = []
+        for job_id in hand_back:
+            assert services.set_job_status(job_id, "ready")["ok"], job_id
+            after.append(services.shop_stats())
+        data["handed_back"] = {"status": "ready", "jobs": hand_back, "stats": after}
     finally:
         try:
             os.remove(os.environ["SPOKES_DB"])

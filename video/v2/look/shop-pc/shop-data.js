@@ -475,5 +475,48 @@ window.SHOP = {
    4471,
    4472
   ]
+ },
+ "handed_back": {
+  "status": "ready",
+  "jobs": [
+   4475,
+   4490,
+   4488,
+   4481
+  ],
+  "stats": [
+   {
+    "today": "2026-11-23",
+    "open_jobs": 22,
+    "due_today": 5,
+    "ready_to_collect": 5,
+    "low_stock_parts": 6,
+    "unpaid_invoices": 3
+   },
+   {
+    "today": "2026-11-23",
+    "open_jobs": 22,
+    "due_today": 5,
+    "ready_to_collect": 6,
+    "low_stock_parts": 6,
+    "unpaid_invoices": 3
+   },
+   {
+    "today": "2026-11-23",
+    "open_jobs": 22,
+    "due_today": 5,
+    "ready_to_collect": 7,
+    "low_stock_parts": 6,
+    "unpaid_invoices": 3
+   },
+   {
+    "today": "2026-11-23",
+    "open_jobs": 22,
+    "due_today": 5,
+    "ready_to_collect": 8,
+    "low_stock_parts": 6,
+    "unpaid_invoices": 3
+   }
+  ]
  }
 };

@@ -4,7 +4,8 @@
  * are marked "+film"; they're the 2009-teenager personality the real app's CSS comment already has.
  *
  *   G.SITE.html()            -> the whole site, every page, built once
- *   G.SITE.bind(el).render(s) -> shows s.page; applies s.reports ('soon' | 'built'), s.po, s.poHl, s.reassign, s.marquee */
+ *   G.SITE.bind(el).render(s) -> shows s.page; applies s.reports ('soon' | 'built'), s.po, s.poHl, s.reassign,
+ *                                s.handedBack (Monday afternoon's hand-backs: 0-4 bikes marked ready), s.marquee */
 (function (G) {
   'use strict';
   const D = G.SHOP;
@@ -36,11 +37,11 @@
     }).join('');
     const texts = D.texts.map(t => `<tr><td>${esc(t.sent_at)}</td><td>${esc(t.customer)}</td><td>${esc(t.message)}</td></tr>`).join('');
     return `<div class="box stats">
-        <span><b>Open jobs:</b> ${st.open_jobs}</span>
-        <span><b>Due today:</b> ${st.due_today}</span>
-        <span><b>Ready to collect:</b> ${st.ready_to_collect}</span>
+        <span data-stat="open_jobs"><b>Open jobs:</b> ${st.open_jobs}</span>
+        <span data-stat="due_today"><b>Due today:</b> ${st.due_today}</span>
+        <span data-stat="ready_to_collect"><b>Ready to collect:</b> ${st.ready_to_collect}</span>
         <span><b>Parts low:</b> <span class="${st.low_stock_parts ? 'low' : ''}">${st.low_stock_parts}</span></span>
-        <span><b>Unpaid invoices:</b> ${st.unpaid_invoices}</span>
+        <span data-stat="unpaid_invoices"><b>Unpaid invoices:</b> ${st.unpaid_invoices}</span>
       </div>
       <h2>Open repair jobs &ndash; week of ${D.week_start}</h2>
       <table class="grid jobs"><tr><th>Job #</th><th>Mechanic</th><th>Work</th><th>Customer</th><th>Bike</th><th>Hrs</th><th>Due</th><th>Status</th></tr>${rows}</table>
@@ -77,8 +78,8 @@
       <p>Theo is working on loads of reports (mechanic workload, best customers, lapsed customers...). For now:</p>
       <div class="box stats">
         <span><b>Taken today:</b> &pound;${f2(tk.total)} (${tk.invoices} invoices)</span>
-        <span><b>Open jobs:</b> ${st.open_jobs}</span>
-        <span><b>Ready to collect:</b> ${st.ready_to_collect}</span>
+        <span data-stat="open_jobs"><b>Open jobs:</b> ${st.open_jobs}</span>
+        <span data-stat="ready_to_collect"><b>Ready to collect:</b> ${st.ready_to_collect}</span>
       </div>
       <p class="updated">last updated: march 2011</p>`;
   }
@@ -100,8 +101,8 @@
       <p class="note">Booked hours = the estimates of jobs due this week (Mon&ndash;Sat) that aren't ready or collected yet, same as Theo's notes.</p>
       <div class="box stats today">
         <span><b>Taken today:</b> &pound;${f2(tk.total)} (${tk.invoices} invoices)</span>
-        <span><b>Open jobs:</b> ${st.open_jobs}</span>
-        <span><b>Ready to collect:</b> ${st.ready_to_collect}</span>
+        <span data-stat="open_jobs"><b>Open jobs:</b> ${st.open_jobs}</span>
+        <span data-stat="ready_to_collect"><b>Ready to collect:</b> ${st.ready_to_collect}</span>
       </div>
       <p class="updated">workload report added ${D.today.split('-').reverse().join('/')} by Barnaby &middot; approved by Martin</p>`;
   }
@@ -138,6 +139,9 @@
     const nav = qa('.s-nav a'), pages = qa('.sp'), reportsLink = q('.s-nav a[data-p="reports"]');
     const poRow = q('tr.po-new'), marq = q('.marquee span');
     const moved = D.reassigned.jobs.map(id => q(`tr[data-job="${id}"]`)).filter(Boolean);
+    const HB = D.handed_back, statEls = qa('[data-stat]');
+    const handed = HB.jobs.map(id => ({ td: q(`tr[data-job="${id}"] td.status`), was: D.jobs.find(j => j.job_id === id).status }));
+    const statusClass = st => st === 'ready' ? 'status-ready' : st === 'waiting on parts' ? 'status-waiting' : '';
     return {
       render(s) {
         const built = s.reports === 'built';
@@ -160,6 +164,15 @@
           tr.classList.toggle('fresh', hl > .02);
           tr.style.setProperty('--hl', hl);
         });
+        // Monday afternoon: the first n bikes handed back are 'ready', and Theo's counters are the shop's own after them
+        const n = Math.round(clamp(s.handedBack || 0, 0, HB.jobs.length));
+        handed.forEach(({ td, was }, i) => {
+          const st = i < n ? HB.status : was;
+          td.textContent = st;
+          td.className = `status ${statusClass(st)}`.trim();
+        });
+        const stats = n ? HB.stats[n - 1] : D.stats;
+        statEls.forEach(el => { el.lastChild.nodeValue = ` ${stats[el.dataset.stat]}`; });
         // marquee: starts ~a third of the way in, as if it has been scrolling
         const span = 1740, text = 760;   // the page is 980 wide; the text is ~760
         marq.style.left = `${((150 - (s.marquee || 0) + text) % span + span) % span - text}px`;

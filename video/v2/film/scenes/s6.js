@@ -252,8 +252,9 @@
     build(root) {
       const n37 = VE(37) - V(37);
       const cb = sfxT('mouse_click', M('click_build')), cardAt = V(33), CHAIR = pick('world/x_chair_dusk.png', '');
+      const LAMP = shotDone('s6_lamp_on');
       const MON = 'world/04_medium_monday.png', DUSK = pick('world/06_medium_dusk.png', MON), STICKY = pick('world/x_sticky_dusk.png', MON), GLASSES = pick('world/x_glasses_dusk.png', MON);
-      const cardItem = at => ({ src: 'comp/martin-build', at, cam: [960, 540, 1],
+      const cardItem = (at, close) => ({ src: 'comp/martin-build', at, cam: [960, 540, 1], close,
           state: t => ({ room: 0, side: 'card', time: '16:16', foot: '', martinSay: t >= V(36) ? 'Fussy.' : t >= V(34) ? 'Add it.' : 'You can do that?', card: +clamp((t - cardAt - .3) / .6).toFixed(3), marker: [11.62, 2.45], passage: 1,
             press: [+pressAt(t, cb).toFixed(3), 0] }),
           build: l => { const cur = cursor(l, 1.5); (rv.curs = rv.curs || []).push(cur); },
@@ -263,21 +264,27 @@
             const c = hand(t, [from, AddIt[0] - 260, AddIt[1] + 230], [{ t: cb, x: AddIt[0], y: AddIt[1] }]);
             cur.at(c[0], c[1], true);
           } });
+      // Theo's system at 16:08, Reports (coming soon!!): one state for the full screen (6.3) and the monitor's glass in
+      // the dusk desk shots around it (6.1, 6.4), so the room's screen is the page we cut to; the marquee and the clock
+      // run on one clock, Martin's hand goes to the tab in 6.3 and rests there
+      const soonState = t => {
+        const b = Math.max(M('soon_tab') + 1.4, V(29) + 4), c = path2(t, [[b - .9, 700, 470], [b - .1, 578, 258], [b + 3, 582, 261]]);   // Martin's hand to the tab
+        return { preset: 'shop-reports-soon', marquee: +(((t - S + 2) * 60) % 2000).toFixed(1), secs: Math.floor(t - S + 6) % 60,
+          cursor: { x: +(c[0] + wiggle(t, 31, 2, 1.2)).toFixed(2), y: +(c[1] + wiggle(t, 32, 1.7, 1)).toFixed(2) } };
+      };
       run = seq(root, [
-        // 6.1 dusk: the room deep blue, then the lamp comes on (Blender's s6_lamp_on / 06_medium_dusk when they land;
-        // until then the Monday desk in the late grade, its light stepping up on the lamp's click)
-        { src: DUSK, at: S, cam: hold(960, 610, 1.08), keepGrade: true,
-          grade: t => DUSK === MON ? `${LATE} brightness(${lerp(.62, 1, easeOutCubic(P(t, M('lamp_on'), .12))).toFixed(3)})` : '' },
+        // 6.1 dusk: the room deep blue, then the lamp comes on: Blender's s6_lamp_on (it replaces the Monday still, locked
+        // off on its framing, so its glass is the still's: glassFromStill), Theo's system live on the monitor. Until the
+        // sequence lands, the Monday desk in the late grade, its light stepping up on the lamp's click.
+        LAMP ? { src: MON, at: S, cam: hold(960, 610, 1.08), glassFromStill: true, screen: { src: 'live/shop', state: soonState } }
+          : { src: DUSK, at: S, cam: hold(960, 610, 1.08), keepGrade: true, screen: { src: 'live/shop', state: soonState },
+            grade: t => DUSK === MON ? `${LATE} brightness(${lerp(.62, 1, easeOutCubic(P(t, M('lamp_on'), .12))).toFixed(3)})` : '' },
         // 6.2 the sticky note, in Theo's hand; 6.3 Reports (coming soon!!), locked and held for the joke
         { src: STICKY, at: M('sticky'), grade: STICKY === MON ? LATE : '', cam: STICKY === MON ? hold(948, 766, 3.1, .006) : hold(960, 540, 1.0) },
-        { src: 'live/shop', at: M('soon_tab'), cam: [960, 540, 1],
-          state: t => {
-            const b = Math.max(M('soon_tab') + 1.4, V(29) + 4), c = path2(t, [[b - .9, 700, 470], [b - .1, 578, 258], [b + 3, 582, 261]]);   // Martin's hand to the tab
-            return { preset: 'shop-reports-soon', marquee: +(((t - M('soon_tab')) * 60) % 2000).toFixed(1), secs: Math.floor(t - M('soon_tab')) + 14,
-              cursor: { x: +(c[0] + wiggle(t, 31, 2, 1.2)).toFixed(2), y: +(c[1] + wiggle(t, 32, 1.7, 1)).toFixed(2) } };
-          } },
+        { src: 'live/shop', at: M('soon_tab'), cam: [960, 540, 1], state: soonState },
         // 6.4 back to the dusk desk: "I could write it" / "You can do that?" / "With your say-so"
-        { src: DUSK, at: V(30), grade: DUSK === MON ? LATE : '', cam: pan(V(30) + .3, M('code') - V(30) - .8, 880, 610, 1040, 600, 1.1) },
+        { src: DUSK, at: V(30), grade: DUSK === MON ? LATE : '', cam: pan(V(30) + .3, M('code') - V(30) - .8, 880, 610, 1040, 600, 1.1),
+          screen: { src: 'live/shop', state: soonState, grade: DUSK === MON ? LATE : '' } },
         // 6.5 "I'll work on a copy", literally: tracing paper over Martin's plan; Barnaby drafts the Workload room in
         // pencil, the code typed in the margin; then Theo's checks land as stamps (drafting(), below). Wide while the sheet
         // goes down, then one push to his working frame (the room, the margin, the title block). The side panel is
@@ -290,7 +297,7 @@
         // 6.6 Martin's plan with the explanation card; mid-line, his reading glasses on the dusk desk; back to the card
         cardItem(V(33)),
         { src: GLASSES, at: M('glasses'), grade: GLASSES === MON ? LATE : '', cam: GLASSES === MON ? hold(640, 865, 2.05) : hold(960, 540, 1.0) },
-        cardItem(M('glasses') + 2.4),
+        cardItem(M('glasses') + 2.4, { x: 1542, y: 520, d: .6 }),      // closes back into the shop PC on the reload
         // 6.8 the reload, the tab turns Reports (locked); 6.9 the scene's one move: the Workload room appears
         { src: 'live/shop', at: M('reload'), cam: [960, 540, 1],
           state: t => t < M('tab_change')
@@ -301,7 +308,7 @@
             sticker: +easeOutBack(clamp((t - M('new_room') - .75) / .35), 2.6).toFixed(3), side: 'build' }) },
         // 6.10 (v2.3: the triptych is cut) Martin's plan with the new Workload room and its hours, Dev 31 of 20; his line
         // prints in the side panel as he says it, held through "Good idea."
-        { src: 'comp/martin-build', at: M('same_butler'), cam: [960, 540, 1], state: () => ({ side: 'build' }),
+        { src: 'comp/martin-build', at: M('same_butler'), cam: [960, 540, 1], state: () => ({ side: 'build' }), close: { x: 1542, y: 520, d: .6 },
           build: l => { rv.mb = reveal(l, 'worlds/martin-build.png', [[1428, 356, 1832, 384], [1426, 395, 1812, 423], [1426, 435, 1811, 463], [1426, 475, 1656, 496]], { color: '#F5F2EA', a: V(37), b: VE(37) - .1, chars: [31, 32, 30, 17] }); },
           over: t => rv.mb.render(t) },
         // 6.11 the jobs page: Dev -> Priya (locked, held)

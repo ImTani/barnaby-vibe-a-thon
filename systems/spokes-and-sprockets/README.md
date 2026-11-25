@@ -1,7 +1,7 @@
 # Spokes & Sprockets back office (v2.3)
 
 The shop computer's system. Jobs, customers, parts, ordering, mechanics, invoices.
-Written by me (Theo) in 2009 when I was 16 because the old Access database kept corrupting,
+Written by me (Theo) in 2009 when I was 14 because the old Access database kept corrupting,
 and patched ever since. Uncle Martin: this file is for whoever looks after it after me. Sorry in advance.
 
 ## Running it
@@ -29,6 +29,8 @@ pytest                            # the tests
   (There's no report for this yet. It's on the Reports page as "coming soon". It has been coming soon since 2011.)
 - **Parts**: every part has a stock level and a reorder level. When stock is at or below the reorder level,
   order more. Jobs list the parts they need in `job_parts`.
+- **Never trust the stock count on a Friday.** Saturday's parts get picked on Friday afternoon and nobody
+  updates the shelves till Monday. (Priya, if you're reading this: hi, welcome, and sorry.)
 - When a bike is ready we **text the customer** (the SMS box reads the `notifications` table), then mark
   the job `ready`. When they pick it up, mark it `collected`, which also updates their last visit.
 - Customers who haven't been in for **over a year** should get a "we miss you" text (another report I never wrote).

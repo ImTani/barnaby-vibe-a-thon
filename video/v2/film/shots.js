@@ -76,11 +76,35 @@ function blenderFor(key, a, b) {
 G.__pending = [];
 G.settle = () => { const p = G.__pending; G.__pending = []; return Promise.all(p); };
 
+/** Camera keys [[t, x, y, s], ...]: two keys ease in and out (as the animatic); more keys run through a monotone
+ * cubic (Fritsch-Butland tangents, zero at the ends), so the camera eases in, carries its speed through the middle
+ * keys instead of stopping at each, never overshoots a key, and eases out. Holds (equal neighbours) stay holds. */
 function camAt(cam, t) {
   if (!cam) return null;
   if (typeof cam[0] === 'number') return cam;
-  const keys = cam.map(k => [k[0], k.slice(1)]);
-  return keyframes(t, keys, easeInOutSine);
+  if (cam.length <= 2) return keyframes(t, cam.map(k => [k[0], k.slice(1)]), easeInOutSine);
+  const n = cam.length;
+  if (t <= cam[0][0]) return cam[0].slice(1);
+  if (t >= cam[n - 1][0]) return cam[n - 1].slice(1);
+  let i = 0; while (i < n - 2 && t > cam[i + 1][0]) i++;
+  const h = cam[i + 1][0] - cam[i][0];
+  if (h <= 1e-6) return cam[i + 1].slice(1);
+  const u = (t - cam[i][0]) / h, u2 = u * u, u3 = u2 * u;
+  const tan = (k, c) => {                                   // tangent of component c at key k (value per second)
+    if (k === 0 || k === n - 1) return 0;
+    const h0 = cam[k][0] - cam[k - 1][0], h1 = cam[k + 1][0] - cam[k][0];
+    if (h0 <= 1e-6 || h1 <= 1e-6) return 0;
+    const d0 = (cam[k][c] - cam[k - 1][c]) / h0, d1 = (cam[k + 1][c] - cam[k][c]) / h1;
+    if (d0 * d1 <= 0) return 0;
+    const w0 = 2 * h1 + h0, w1 = h1 + 2 * h0;
+    return (w0 + w1) / (w0 / d0 + w1 / d1);
+  };
+  const out = [];
+  for (let c = 1; c <= 3; c++) {
+    const p0 = cam[i][c], p1 = cam[i + 1][c], m0 = tan(i, c) * h, m1 = tan(i + 1, c) * h;
+    out.push((2 * u3 - 3 * u2 + 1) * p0 + (u3 - 2 * u2 + u) * m0 + (-2 * u3 + 3 * u2) * p1 + (u3 - u2) * m1);
+  }
+  return out;
 }
 
 /** Place an element of natural size (w, h) so source point (x, y) is at the frame centre, zoom s over cover. */

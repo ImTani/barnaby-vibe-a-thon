@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Theo · the workshop hologram, calm · on the 2009 PC (modest), Thu 19 Nov 21:47</title>
+<link rel="stylesheet" href="../../shop-pc/os.css">
+<link rel="stylesheet" href="../../shop-pc/site.css">
+<link rel="stylesheet" href="../../shop-pc/pages.css">
+<style>html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; } #barnaby-client svg { display: block; }</style>
+</head><body>
+<div id="screen"></div>
+<script src="../../shop-pc/shop-data.js"></script>
+<script src="../../shop-pc/icons.js"></script>
+<script src="../../shop-pc/wallpaper.js"></script>
+<script src="../../shop-pc/site.js"></script>
+<script src="../../shop-pc/tabs.js"></script>
+<script src="../../shop-pc/os.js"></script>
+<script src="../../worlds/data/building.js"></script>
+<script src="../../worlds/data/story.js"></script>
+<script src="../data/canon.js"></script>
+<script src="lib/common.js"></script>
+<script src="../../worlds/comps/lib/theo-shared.js"></script>
+<script src="lib/theo.js"></script>
+<script src="lib/theo-scenes.js"></script>
+<script>
+/* The shop PC (../../shop-pc, unchanged) on Thursday night after Theo has closed his nine tabs: the desktop at 21:47,
+   Barnaby's window in its slot (#barnaby-client), and Theo's world inside it, modest: flat light, no bloom. */
+(function () {
+  const root = document.getElementById('screen');
+  const pc = PC.build(root, { lw: 1280, lh: 720, blur: false });
+  root.style.transform = 'scale(1.5)';
+  const s = pc.preset('desktop', { date: '2026-11-19', time: '21:47', barnaby: 'frame', barnabyTray: false, ram: .36, cpu: .1 });
+  pc.render(s);
+  document.fonts.ready.then(() => {
+    pc.render(s);
+    const c = pc.barnabyClient, w = c.offsetWidth, h = c.offsetHeight;
+    c.parentNode.querySelector('.guide').style.display = 'none';   // the empty frame's own guide text
+    const svg = W2.svg(c, w, h);
+    THEO_SCENES.handoverTall(svg, w, h);
+    document.body.dataset.ready = '1';
+  });
+})();
+</script>
+</body></html>

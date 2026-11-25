@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Martin · the floor plan · the new Workload room (Mon 16:16)</title>
+<link rel="stylesheet" href="lib/martin-page.css">
+<style>
+  .here { background: #B0285F; }
+  .card { border: 3px solid #B0285F; }
+  .card h2 { font-size: 26px; color: #7A1A41; }
+  .rows { margin-top: 16px; display: grid; grid-template-columns: 84px 1fr; row-gap: 16px; align-items: center; }
+  .rows .n { font-size: 27px; font-weight: 700; }
+  .rows .v { font-size: 21px; color: #2E2B25; margin-top: 4px; }
+  .rows .v b { font-weight: 700; color: #1D1B17; }
+  .rows .v .over { color: #A3261B; font-weight: 700; }
+  .bar { position: relative; height: 20px; background: #ECE6DA; border-radius: 4px; }
+  .bar i { position: absolute; top: 0; bottom: 0; left: 0; background: #1D1B17; border-radius: 4px 0 0 4px; }
+  .bar i.over { background: repeating-linear-gradient(135deg, #A3261B 0 7px, #C9503F 7px 12px); border-radius: 0 4px 4px 0; }
+  .bar u { position: absolute; top: -6px; bottom: -6px; width: 3px; background: #1D1B17; text-decoration: none; }
+  .note { margin-top: 18px; padding-top: 14px; border-top: 1.5px solid #E5DED0; font-size: 20px; line-height: 1.3; color: #3B372F; }
+  .note b { color: #1D1B17; }
+  .foot { font-family: "Cascadia Code", Consolas, monospace; font-size: 16px; word-spacing: 0; }
+</style></head>
+<body>
+<svg id="plan" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+<div class="head">
+  <div class="shop"><b>Spokes &amp; Sprockets</b><span>the shop, room by room</span></div>
+  <div class="when"><span>Monday 23 November</span><b>16:16</b></div>
+</div>
+<div class="side">
+  <div class="here"><div class="dot" id="here-bell"></div><div><b>Workload</b><span>a new room, beside the back office</span></div></div>
+  <div class="who">Martin · 16:08</div>
+  <div class="martin-says" id="martin"></div>
+  <div class="barnaby-says"><div class="bell" id="say-bell"></div><div id="barnaby"></div></div>
+  <div class="card">
+    <h2>Booked this week, Monday to Saturday</h2>
+    <div class="rows" id="rows"></div>
+    <div class="note"><b>Added at 16:16, with your click.</b> It only reads the job board and changes nothing. It can be undone.</div>
+  </div>
+</div>
+<div class="foot" id="engine"></div>
+<script src="../../worlds/data/building.js"></script>
+<script src="../../worlds/data/story.js"></script>
+<script src="../data/canon.js"></script>
+<script src="lib/common.js"></script>
+<script src="lib/martin.js"></script>
+<script>
+(function () {
+  const { bell, esc } = W2, M = MARTIN, S = WORLDS.story.build;
+  const svg = document.getElementById('plan');
+  const mini = (id, size) => { const s = W2.svg(document.getElementById(id), size, size); bell(s, size / 2, size / 2 + .5, size * .62, M.GOLD_LT); };
+  mini('here-bell', 40); mini('say-bell', 40);
+  document.getElementById('martin').textContent = '“' + S.martin + '”';
+  document.getElementById('barnaby').textContent = S.after;
+  // the report's own result (data/story.js: [name, booked, weekly capacity]); one scale for all three bars
+  const max = Math.max(...S.result.map(r => Math.max(r[1], r[2]))), pct = h => (h / max * 100).toFixed(2) + '%';
+  const hrs = h => String(h).replace('.5', '½');
+  document.getElementById('rows').innerHTML = S.result.map(([n, b, c]) => {
+    const over = b > c ? b - c : 0;
+    const bar = `<div class="bar"><i style="width:${pct(Math.min(b, c))}"></i>${over ? `<i class="over" style="left:${pct(c)};width:${pct(over)}"></i>` : ''}<u style="left:calc(${pct(c)} - 1.5px)"></u></div>`;
+    const v = n === 'Priya' ? `<b>0 h</b> of ${c} · starts tomorrow` : over ? `<b>${hrs(b)} h</b> of ${c} · <span class="over">${hrs(over)} h over</span>` : `<b>${hrs(b)} h</b> of ${c}`;
+    return `<div class="n">${esc(n)}</div><div>${bar}<div class="v">${v}</div></div>`;
+  }).join('');
+  const T = S.technical;
+  document.getElementById('engine').textContent = `on a copy · ${T.files.length} files · tests 22 passed   ·   synapse --discover · 24 capabilities`;
+
+  document.fonts.ready.then(() => {
+    M.plan(svg, {
+      moment: 'build', x: 90, y: 286, s: 60, focus: 'reports', built: true, labelSize: 32, labelSizes: { reports: 28 }, pipR: 7,
+      labelAt: { shop: [0.5, 6.1], office: [6.78, 1.78], reports: [9.97, 1.08], workshop: [7.0, 4.78], stockroom: [15.32, 4.22], goodsin: [15.32, 6.12] },
+      standNames: true, standNameSize: 19,
+      passage: true, passagePath: [[10.55, 6.22], [6.95, 6.02], [5.05, 4.1]], passageW: 18, passageLabel: [10.95, 6.0], passageLabelSize: 20,
+      newSticker: [12.05, 0.12, 7, 100, 44],
+      marker: [11.62, 2.3], markerR: 27,
+    });
+    M.legend(svg, 92, 912, ['can', 'key', 'shut', 'passage', 'new', 'barnaby'], { fs: 21, gap: 36 });
+    document.body.dataset.ready = '1';
+  });
+})();
+</script>
+</body></html>

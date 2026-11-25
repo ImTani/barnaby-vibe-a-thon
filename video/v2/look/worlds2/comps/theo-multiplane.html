@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Theo · the multiplane stand, refined (fallback) · handover, Thu 19 Nov 21:47</title>
+<style>html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #140D09; } svg { display: block; } ::selection { background: #E7B46A; color: #140D09; }</style>
+</head><body>
+<svg id="s" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+<script src="../../worlds/data/building.js"></script>
+<script src="../../worlds/data/story.js"></script>
+<script src="../data/canon.js"></script>
+<script src="lib/common.js"></script>
+<script src="../../worlds/comps/lib/theo-shared.js"></script>
+<script src="../../worlds/comps/lib/theo-multiplane.js"></script>
+<script src="lib/theo.js"></script>
+<script>
+/* The multiplane stand, refined as the fallback for Theo. Changes from the last round: the room colours are the same
+   six hues Martin's plan uses (one shop, every world); only plane 1 (the six he took) is in full light and every one of
+   its cels is named; plane 2 and the background sit back; the captions are larger and say what each plane means. */
+(function () {
+  const { el, text, FONT } = W2, M = MULTI, T0 = THEO, H = HOLO2, S = WORLDS.story.handover, W = WORLDS;
+  const svg = document.getElementById('s');
+  // one shop, every world: Martin's room hues on the painted glass
+  W.ROOMS.forEach(r => { M.CEL[r.id] = r.hue; });
+  M.defs(svg);
+  const P = T0.projection({ cx: 860, cy: 812, s: 45, yaw: -0.14, pitch: 0.38 }), Z = [0, 5, 10.2];
+  el('rect', { x: 0, y: 0, width: 1920, height: 1080, fill: M.UMBER }, svg);
+  el('rect', { x: 0, y: 0, width: 1920, height: 1080, fill: 'url(#keylight)' }, svg);
+  el('polygon', { points: P.pts([[-4, -4, -1.2], [24, -4, -1.2], [24, 13, -1.2], [-4, 13, -1.2]]), fill: '#1C130D', stroke: '#3A2A1E', 'stroke-width': 1 }, svg);
+
+  // the rostrum camera, lens down
+  const top = P(10, 4.5, 15.2), lx = top[0];
+  el('rect', { x: lx - 70, y: -20, width: 140, height: top[1] + 20, fill: '#1E1712', stroke: '#4A382A', 'stroke-width': 1.2 }, svg);
+  for (let ry = 70; ry < top[1] - 14; ry += 10) el('line', { x1: lx - 70, y1: ry, x2: lx + 70, y2: ry, stroke: '#33271D', 'stroke-width': 3 }, svg);
+  el('ellipse', { cx: lx, cy: top[1], rx: 70, ry: 15, fill: '#0B0806', stroke: '#8C6B4A', 'stroke-width': 1.6 }, svg);
+  el('ellipse', { cx: lx, cy: top[1], rx: 34, ry: 7, fill: '#1D2A2E', stroke: '#C8B08A', 'stroke-width': 1 }, svg);
+
+  M.stand(svg, P, 14, false);
+  // background and plane 2 sit back
+  const back = el('g', { opacity: .5 }, svg);
+  M.plate(back, P, Z[0], { tint: .03 }); M.bg(back, P, Z[0], 'handover');
+  const mid = el('g', { opacity: .55 }, svg);
+  M.plate(mid, P, Z[1], { tint: .05 });
+  const st = W.state('handover');
+  // reuse the stand's own cel layout; plane 2 gets the inked and the frosted, plane 1 the painted
+  const tmp = el('g', {}, svg); const laid = M.planes(tmp, P, 'handover', Z); tmp.remove();
+  const g2 = el('g', { transform: P.matrix(Z[1]) }, mid);
+  laid.filter(a => a.state === 'key').forEach(a => M.plaque(g2, a, 'inked', a.at));
+  laid.filter(a => a.state === 'shut').forEach(a => M.plaque(g2, a, 'frosted', a.at));
+  // plane 1: in full light
+  M.plate(svg, P, Z[2], { tint: .07 });
+  const g1 = el('g', { transform: P.matrix(Z[2]) }, svg);
+  const lit = laid.filter(a => a.state === 'lit');
+  lit.forEach(a => M.plaque(g1, a, 'painted', a.at));
+  M.stand(svg, P, 14, true);
+
+  // every painted cel named, upright, staggered where they sit close
+  const off = { open_jobs: [0, -50], jobs_due: [0, -92], job_detail: [0, -54], mechanics: [0, 44], search: [0, -50], parts_low: [0, -50] };
+  for (const a of lit) {
+    const p = P(a.at[0], a.at[1], Z[2]), d = off[a.tool] || [0, -48], ty = p[1] + d[1];
+    el('line', { x1: p[0], y1: p[1] + (d[1] < 0 ? -14 : 14), x2: p[0], y2: ty + (d[1] < 0 ? 6 : -18), stroke: 'rgba(244,235,216,.55)', 'stroke-width': 1 }, svg);
+    const t = text(svg, p[0], ty, a.tool, { 'text-anchor': 'middle', 'font-family': FONT.mono, 'font-size': 18, 'font-weight': 600, fill: M.CREAM, stroke: M.UMBER, 'stroke-width': 5, 'paint-order': 'stroke' });
+  }
+
+  // captions on the rail: the plane in focus is lit, the others step back
+  const cap = (z, a, b, lit) => {
+    const p = P(-2, 11.2, z), x = 56;
+    const t = text(svg, x, p[1] - 20, a, { fill: lit ? M.CREAM : 'rgba(244,235,216,.5)', 'font-family': FONT.theo, 'font-size': lit ? 24 : 20, 'font-weight': 700 });
+    text(svg, x, p[1] + 8, b, { fill: lit ? '#E7B46A' : 'rgba(244,235,216,.45)', 'font-family': FONT.mono, 'font-size': lit ? 17 : 15 });
+    el('line', { x1: x + t.getComputedTextLength() + 14, y1: p[1] - 27, x2: p[0] - 4, y2: p[1] - 2, stroke: '#F4EBD8', 'stroke-opacity': lit ? .7 : .3, 'stroke-width': 1.2 }, svg);
+  };
+  cap(Z[2], 'Painted: the six I’ve taken', '6 read-only · exposed', true);
+  cap(Z[1], 'Inked: waiting for a key', '16 by key · 1 frosted (denied)', false);
+  cap(Z[0], 'Background: the shop', 'spokes-and-sprockets · 23 found', false);
+
+  // the exposure, top left
+  const ex = el('g', { 'font-family': FONT.mono }, svg);
+  text(ex, 60, 74, `$ ${S.synapse.cmd}`, { fill: M.CREAM, 'font-size': 19, 'font-weight': 600 });
+  text(ex, 60, 104, `Extracted ${S.synapse.found} endpoint(s) · ${S.synapse.seconds.toFixed(2)} s, under ${Math.ceil(S.synapse.frames24)} frames at 24 fps`, { fill: '#E7B46A', 'font-size': 16 });
+  text(svg, 1860, 74, 'Thu 19 Nov 2026  21:47', { fill: 'rgba(244,235,216,.5)', 'font-family': FONT.mono, 'font-size': 16, 'text-anchor': 'end' });
+
+  // his words, right
+  H.says(svg, 1492, 760, ['Twenty-three', 'endpoints, sir.', 'I’ve taken the six', 'that only read;', 'nobody’s given me', 'any keys yet.'], { fs: 40, lh: 50, bellFill: M.CREAM });
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script>
+</body></html>

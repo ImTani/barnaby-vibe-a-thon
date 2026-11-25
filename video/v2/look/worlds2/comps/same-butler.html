@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Same butler, three worlds · the Build moment, Mon 23 Nov 16:16</title>
+<link rel="stylesheet" href="lib/priya.css">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #111 !important; background-image: none !important; }
+  .panel { position: absolute; top: 0; width: 640px; height: 1080px; overflow: hidden; }
+  .panel svg { display: block; }
+  #theo { left: 0; } #martin { left: 640px; background: #F5F2EA; } #priya { left: 1280px; background: #ECE7DD;
+    background-image: radial-gradient(circle, rgba(60,50,30,.07) 2.2px, transparent 2.6px); background-size: 36px 36px; background-position: 18px 18px; }
+  .seam { position: absolute; top: 0; bottom: 0; width: 4px; background: #111; z-index: 5; }
+  /* Martin, portrait */
+  .m-head { position: absolute; left: 36px; right: 36px; top: 30px; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1D1B17; padding-bottom: 12px;
+    font-family: "MFig", "Gill Sans MT", sans-serif; color: #1D1B17; }
+  .m-head b { font-size: 30px; } .m-head span { font-size: 26px; } .m-head span b { font-size: 26px; }
+  .m-here { position: absolute; left: 36px; right: 36px; top: 98px; height: 58px; border-radius: 12px; background: #B0285F; color: #fff; display: flex; align-items: center; gap: 12px; padding: 0 16px;
+    font-family: "MFig", "Gill Sans MT", sans-serif; }
+  .m-here b { font-size: 27px; } .m-here span { font-size: 19px; opacity: .92; }
+  .m-res { position: absolute; left: 388px; top: 452px; width: 222px; font-family: "MFig", "Gill Sans MT", sans-serif; color: #1D1B17; }
+  .m-res h3 { margin: 0 0 10px; font-size: 20px; color: #7A1A41; line-height: 1.1; }
+  .m-res .r { margin-bottom: 12px; }
+  .m-res .r b { font-size: 22px; display: inline-block; width: 64px; }
+  .m-res .r span { font-size: 19px; }
+  .m-res .r .over { color: #A3261B; font-weight: 700; }
+  .m-res .bar { position: relative; height: 12px; background: #E7E0D2; border-radius: 3px; margin-top: 4px; }
+  .m-res .bar i { position: absolute; top: 0; bottom: 0; left: 0; background: #1D1B17; border-radius: 3px 0 0 3px; }
+  .m-res .bar i.over { background: repeating-linear-gradient(135deg, #A3261B 0 6px, #C9503F 6px 10px); border-radius: 0 3px 3px 0; }
+  .m-res .bar u { position: absolute; top: -4px; bottom: -4px; width: 2.5px; background: #1D1B17; }
+  .m-say { position: absolute; left: 36px; right: 36px; bottom: 34px; display: grid; grid-template-columns: 36px 1fr; gap: 12px; font-family: "Gill Sans MT", sans-serif; font-size: 26px; line-height: 1.22; color: #1D1B17; }
+  .m-say .bell { width: 36px; height: 36px; border-radius: 50%; background: #1D1B17; display: grid; place-items: center; margin-top: 2px; }
+  /* Priya, portrait */
+  .p-head { position: absolute; left: 36px; right: 36px; top: 30px; font-family: Bahnschrift, sans-serif; color: #23201B; }
+  .p-head h2 { margin: 0; font-size: 38px; font-weight: 700; line-height: 1; }
+  .p-head .when { font-size: 21px; color: #5B554A; margin-top: 8px; }
+  .p-week { position: absolute; left: 36px; right: 36px; top: 136px; display: flex; align-items: center; gap: 12px; font-family: Bahnschrift, sans-serif; font-size: 21px; color: #23201B; }
+  .p-week .bar { flex: 1; height: 12px; background: rgba(35,32,27,.12); border-radius: 6px; }
+  .p-note { position: absolute; left: 36px; right: 36px; top: 186px; font-family: Bahnschrift, sans-serif; font-size: 22px; color: #23201B; display: flex; align-items: center; gap: 10px; }
+  .p-note .bell { width: 34px; height: 34px; border-radius: 50%; background: #23201B; display: grid; place-items: center; flex: none; }
+  .p-tags .tag { transform-origin: 0 0; }
+  .p-roll { position: absolute; left: 24px; right: 24px; bottom: 24px; height: 186px; border-radius: 14px; background: #77704F; padding: 0 14px; box-sizing: border-box; display: flex;
+    background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 2px, transparent 2px 6px), repeating-linear-gradient(0deg, rgba(0,0,0,.035) 0 2px, transparent 2px 5px); box-shadow: 0 10px 22px rgba(50,40,20,.25); }
+  .p-roll::before { content: ""; position: absolute; inset: 9px; border: 2px dashed #D8CFA8; border-radius: 10px; opacity: .55; }
+  .p-roll .pocket .q { font-size: 23px; }
+  .p-roll-h { position: absolute; left: 36px; bottom: 222px; font-family: Bahnschrift, sans-serif; font-size: 22px; font-weight: 700; color: #23201B; }
+</style></head>
+<body>
+<div class="panel" id="theo"></div>
+<div class="panel" id="martin">
+  <svg id="mplan" width="640" height="1080" viewBox="0 0 640 1080" style="position:absolute;inset:0"></svg>
+  <div class="m-head"><b>Spokes &amp; Sprockets</b><span>Mon 23 Nov <b>16:16</b></span></div>
+  <div class="m-here"><svg id="mbell" width="36" height="36"></svg><div><b>Workload</b> <span>a new room</span></div></div>
+  <div class="m-res" id="mres"></div>
+  <div class="m-say"><div class="bell" id="msay"></div><div id="mline"></div></div>
+</div>
+<div class="panel" id="priya">
+  <div class="p-head"><h2>Priya’s bench</h2><div class="when">Mon 23 Nov · 16:16 · she starts tomorrow</div></div>
+  <div class="p-week"><span>Her week</span><div class="bar"></div><span><b>0</b> of 30 hours</span></div>
+  <div class="p-note"><div class="bell" id="pbell"></div><span>Two wheel builds, offered to her. Waiting for Martin.</span></div>
+  <div class="p-tags" id="ptags"></div>
+  <div class="p-roll-h">Something new to ask</div>
+  <div class="p-roll" id="proll"></div>
+</div>
+<div class="seam" style="left:638px"></div><div class="seam" style="left:1278px"></div>
+<script src="../../worlds/data/building.js"></script>
+<script src="../../worlds/data/story.js"></script>
+<script src="../data/canon.js"></script>
+<script src="lib/common.js"></script>
+<script src="../../worlds/comps/lib/theo-shared.js"></script>
+<script src="lib/theo.js"></script>
+<script src="lib/theo-scenes.js"></script>
+<script src="lib/martin.js"></script>
+<script src="lib/priya.js"></script>
+<script>
+/* One event, Mon 23 Nov 16:16: Martin clicks "Add it" and the workload report lands. Theo (at his Lisbon desk, his
+   first day) sees the new endpoint and the checks; Martin sees a new room in his building; Priya (who starts
+   tomorrow) sees the two wheel builds Barnaby is about to offer her (Martin says yes at 16:21) and one new thing she
+   can ask. Same build, same result, three worlds. */
+(function () {
+  const S = WORLDS.story, M = MARTIN, P = PRIYA, { bell, esc } = W2;
+  const dot = (id, size, fill) => { const s = W2.svg(document.getElementById(id), size, size); bell(s, size / 2, size / 2 + .5, size * .62, fill); };
+  // Martin
+  dot('mbell', 36, '#fff'); document.getElementById('mbell').style.cssText = 'background:#1D1B17;border-radius:50%;box-shadow:0 0 0 3px #fff;flex:none';
+  dot('msay', 36, M.GOLD_LT);
+  document.getElementById('mline').textContent = 'Dev’s carrying thirty-one hours against his twenty.';
+  const max = 31, pct = h => (h / max * 100).toFixed(2) + '%';
+  document.getElementById('mres').innerHTML = '<h3>Booked this week</h3>' + S.build.result.map(([n, b, c]) => {
+    const over = Math.max(0, b - c);
+    return `<div class="r"><b>${n}</b><span>${b} of ${c}${over ? ` · <span class="over">${over} over</span>` : ''}</span>
+      <div class="bar"><i style="width:${pct(Math.min(b, c))}"></i>${over ? `<i class="over" style="left:${pct(c)};width:${pct(over)}"></i>` : ''}<u style="left:calc(${pct(c)} - 1px)"></u></div></div>`;
+  }).join('');
+  // Priya
+  dot('pbell', 34, '#E2B54E');
+  document.getElementById('ptags').innerHTML =
+      P.tag(S.priyaTuesday.bench[0], { ghost: true, style: 'left:44px;top:234px;transform:scale(.68) rotate(-1deg)' })
+    + P.tag(S.priyaTuesday.bench[1], { ghost: true, style: 'left:150px;top:526px;transform:scale(.68) rotate(.8deg)' });
+  document.getElementById('proll').innerHTML = P.asks([['Who’s got too much on this week?', 'reports', 'spanner']]);
+  const pk = document.querySelector('#proll .pocket'); pk.querySelector('.pk').insertAdjacentHTML('beforeend', '<span class="new">new today</span>');
+
+  document.fonts.ready.then(() => {
+    // Theo
+    const tc = document.getElementById('theo'), ts = W2.svg(tc, 640, 1080);
+    THEO_SCENES.buildTall(ts, 640, 1080);
+    // Martin's plan, portrait: back lane at the top, Market Place at the bottom
+    M.plan(document.getElementById('mplan'), {
+      moment: 'build', x: 44, y: 210, s: 34, rotate: true, focus: 'reports', built: true, labelSize: 21, labelSizes: { reports: 18.5 }, pipR: 4.6, wallW: 4, gutter: 7,
+      labelAt: { stockroom: [19.55, 0.22], goodsin: [19.55, 5.3], workshop: [14.4, 3.95], reports: [11.62, 0.2], office: [9.2, 0.2], shop: [3.75, 0.3] },
+      labelLines: { office: ['Back', 'office'], goodsin: ['Back', 'door'] },
+      pipsPerRow: { shop: 9 }, streetSize: 15, skipFixtures: ['counter'],
+      passage: true, passagePath: [[10.55, 6.22], [6.95, 6.02], [5.55, 5.0]], passageW: 12, passageDim: true,
+      newSticker: [11.75, 4.75, 8, 74, 32], marker: [10.45, 2.05], markerR: 18,
+    });
+    // a leader from the new room to its result
+    const T = (x, y) => [44 + y * 34, 210 + (20 - x) * 34], a = T(11.1, 3.0);
+    W2.el('path', { d: `M${a[0]},${a[1]} L382,${a[1]} L382,462`, fill: 'none', stroke: '#7A1A41', 'stroke-width': 2.5 }, document.getElementById('mplan'));
+    document.body.dataset.ready = '1';
+  });
+})();
+</script>
+</body></html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<!--
+ Barnaby in the film: three worlds, round 2 (clarity first). Old frames: ../worlds/frames/. New frames: frames/ (render:
+ node video/v2/look/worlds2/render.js). Code: comps/*.html + comps/lib/. Data: ../worlds/data/ (unchanged, reused) +
+ data/canon.js (canonical dates and the shared room colours). Open this file directly.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Barnaby in the film · three worlds, round 2</title>
+<style>
+  :root { --ground: #17181b; --raise: #202226; --rule: #34373d; --ink: #eceae4; --ink-2: #bdb9b0; --ink-3: #8f8c84; --mark: #e2b54e;
+    --sans: "Segoe UI", system-ui, sans-serif; --cond: Bahnschrift, "Segoe UI", sans-serif; }
+  * { box-sizing: border-box; }
+  ::selection { background: var(--mark); color: #17181b; }
+  html { scrollbar-color: #3a3e45 var(--ground); }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 17px/1.55 var(--sans); }
+  a { color: var(--mark); text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--mark); outline-offset: 3px; border-radius: 2px; }
+  .wrap { max-width: 1500px; margin: 0 auto; padding: 56px 48px 96px; }
+  h1 { font: 600 44px/1.1 var(--cond); margin: 0 0 14px; }
+  .lede { max-width: 80ch; color: var(--ink-2); margin: 0 0 8px; }
+  .rule { margin: 22px 0 0; padding: 16px 20px; background: var(--raise); border: 1px solid var(--rule); border-radius: 6px; max-width: 1100px; color: var(--ink-2); }
+  .rule b { color: var(--ink); }
+  nav { display: flex; gap: 22px; margin: 22px 0 0; font: 600 17px var(--cond); }
+  section { margin-top: 72px; padding-top: 30px; border-top: 1px solid var(--rule); }
+  h2 { font: 600 36px/1.1 var(--cond); margin: 0 0 8px; }
+  .verdict { color: var(--ink-2); max-width: 90ch; margin: 0 0 18px; }
+  .verdict q { color: var(--ink); font-style: italic; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  figure { margin: 0; background: var(--raise); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+  figure img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #000; }
+  figcaption { padding: 12px 16px 14px; color: var(--ink-2); font-size: 15.5px; }
+  figcaption b { color: var(--ink); font-weight: 600; }
+  .tag { display: inline-block; font: 600 12.5px var(--cond); letter-spacing: .06em; text-transform: uppercase; border-radius: 3px; padding: 1px 7px; margin-right: 8px; border: 1px solid var(--ink-3); color: var(--ink-3); }
+  .tag.new { border-color: var(--mark); color: #17181b; background: var(--mark); }
+  .more { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 22px; }
+  .changes { margin: 18px 0 0; padding: 0 0 0 20px; color: var(--ink-2); max-width: 110ch; }
+  .changes li { margin: 5px 0; } .changes b { color: var(--ink); font-weight: 600; }
+  .notes li { margin: 6px 0; color: var(--ink-2); max-width: 110ch; }
+  .notes b { color: var(--ink); }
+  @media (max-width: 1000px) { .pair, .more { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Barnaby in the film: three worlds, round 2</h1>
+  <p class="lede">Refinements of the directions you responded to, no new dice. Same butler underneath: one building, one set of 24 abilities, one story (the same data files feed every frame), and now one set of room colours that every world shares.</p>
+  <div class="rule"><b>The rule this round: clarity first.</b> Distinct things in distinct colours, one obvious “you are here”, one focus per moment with the detail behind it, legible at film distance in a 1920×1080 frame, and still a world with character that a real person could use.</div>
+  <nav><a href="#martin">Martin</a><a href="#theo">Theo</a><a href="#priya">Priya</a><a href="#same">Same butler</a><a href="#fixed">What the critique caught</a></nav>
+
+  <section id="martin">
+    <h2>Martin · the floor plan, done the way the sticker album reads</h2>
+    <p class="verdict">You said: <q>so much of it is the same colour that I can’t tell</q>; the album reads because there are <q>multiple different things</q> and <q>a specific section that I’m supposed to be on</q>.</p>
+    <div class="pair">
+      <figure><img src="../worlds/frames/martin-manual.png" alt="Last round: the dealer manual plate"><figcaption><span class="tag">Last round</span><b>Dealer manual plate</b>: one ink colour, 24 numbered callouts, an index column.</figcaption></figure>
+      <figure><img src="frames/martin-key.png" alt="New: the plan at 08:55, asking for the ordering key"><figcaption><span class="tag new">New</span><b>Mon 23 Nov, 08:55: asking for the ordering key.</b> Six rooms, each its own colour; only the back door is in full colour, the same blue as the card that asks. His walk is the dotted line: tomorrow’s jobs on the job board (08:53), the parts drawer in the back office (08:54), the back door (08:55). The pads shortfall points at drawer 1, where he found it.</figcaption></figure>
+    </div>
+    <div class="pair" style="margin-top:22px">
+      <figure><img src="../worlds/frames/martin-album.png" alt="Last round: the sticker album"><figcaption><span class="tag">Last round</span><b>Sticker album</b>: what you liked (separate things, a place you are), kept as the method, not the theme.</figcaption></figure>
+      <figure><img src="frames/martin-build.png" alt="New: the Workload room at 16:16"><figcaption><span class="tag new">New</span><b>Mon 23 Nov, 16:16: the Build.</b> The new Workload room is the one lit room, with its NEW sticker; the pips show the three keys he now holds; the shortcut is a road-marked band. The result sits beside it.</figcaption></figure>
+    </div>
+    <ul class="changes">
+      <li><b>Six areas, six hues</b> (teal shop, violet office, orange workshop, green stockroom, blue back door, raspberry Workload), each a full colour when it is the place that matters and a pale tint of itself otherwise.</li>
+      <li><b>Room names at 32 px</b>, readable from the back of a room. The 24 abilities are pips under each name (filled: he can; ring: your key; struck: kept shut), not 24 labels.</li>
+      <li><b>Three marks, three shapes</b>: the key (a white disc, gold key, on the back door itself), the new room (a sticker), the shortcut (an ink band with gold road markings). Barnaby is the ink disc with his bell.</li>
+      <li><b>One card at a time</b>, in the colour of the room it belongs to. Engine note for the judges kept small at the foot of the Build frame.</li>
+    </ul>
+  </section>
+
+  <section id="theo">
+    <h2>Theo · the workshop hologram, calm (and the multiplane stand, refined)</h2>
+    <p class="verdict">You said: <q>nice, but it’s really busy. It needs to be executed really well, otherwise the multiplane stand is a better use.</q></p>
+    <div class="pair">
+      <figure><img src="../worlds/frames/theo-hologram.png" alt="Last round: the workshop hologram"><figcaption><span class="tag">Last round</span><b>Workshop hologram</b>: all 23 routes printed around the model, rain, lamp, scan plane, all at once.</figcaption></figure>
+      <figure><img src="frames/theo-handover-2-taken.png" alt="New: the hologram, what matters"><figcaption><span class="tag new">New</span><b>Thu 19 Nov, 21:47, beat 2: what matters.</b> The six he took are the only white things in the frame and the only ones named; the other 17 are one quiet count. No rain, no fixtures, low walls.</figcaption></figure>
+    </div>
+    <div class="more">
+      <figure><img src="frames/theo-handover-1-reading.png" alt="New: beat 1, the system being read"><figcaption><span class="tag new">New</span><b>Beat 1: the system being read.</b> One event (the scan plane), one label, Theo’s line. Everything found so far is the same outline until he chooses.</figcaption></figure>
+      <figure><img src="frames/theo-handover-pc.png" alt="New: modest on the 2009 PC"><figcaption><span class="tag new">New</span><b>Modest on the 2009 PC.</b> Beat 2 in Barnaby’s window on the real shop desktop (../shop-pc, unchanged): flat light, no bloom, the six listed once by room.</figcaption></figure>
+      <figure><img src="frames/theo-lisbon.png" alt="New: fully himself in Lisbon"><figcaption><span class="tag new">New</span><b>Tue 24 Nov, 09:41, Lisbon: fully himself.</b> In #barnaby-slot on Theo’s tiling desk (../lisbon-pc, the quorum preset, unchanged): Quorum’s 13 endpoints on one plate with bloom, then the one thing that matters, the two disputed deadlines, and his line.</figcaption></figure>
+    </div>
+    <div class="pair" style="margin-top:22px">
+      <figure><img src="../worlds/frames/theo-multiplane.png" alt="Last round: the multiplane stand"><figcaption><span class="tag">Last round</span><b>Multiplane stand.</b></figcaption></figure>
+      <figure><img src="frames/theo-multiplane.png" alt="New: the multiplane stand, refined"><figcaption><span class="tag new">New</span><b>The fallback, refined.</b> Only plane 1 is in full light and every cel on it is named; plane 2 and the background step back; the painted background uses the same six room colours as Martin’s plan; captions say what each plane means.</figcaption></figure>
+    </div>
+    <ul class="changes">
+      <li><b>One focus per beat</b>: reading (the plane), then taken (the six). Labels on screen went from more than thirty to six.</li>
+      <li><b>Hierarchy</b>: his line at 46 px, the six paths at 19 px bold, the count at 17 px, the command at 19/16 px; the model is support, not text.</li>
+      <li><b>Modest vs fully himself is now a rendering choice, not a different design</b>: flat light on the 2009 PC; bloom and depth on the Lisbon desk.</li>
+      <li><b>Recommendation</b>: the calm hologram. It now holds one thing at a time; the multiplane stays the fallback if it still feels like too much at speed.</li>
+    </ul>
+  </section>
+
+  <section id="priya">
+    <h2>Priya · her bench, usable first</h2>
+    <p class="verdict">You said: <q>fun as a gimmick</q>, but it has to keep <q>a balance between being cool and gimmicky and actually being a usable product</q>.</p>
+    <div class="pair">
+      <figure><img src="../worlds/frames/priya-toolroll.png" alt="Last round: the toolroll"><figcaption><span class="tag">Last round</span><b>The toolroll</b>: 24 pockets, the questions set sideways, her jobs in a strip at the bottom.</figcaption></figure>
+      <figure><img src="frames/priya-tuesday.png" alt="New: her bench, Tuesday 08:34"><figcaption><span class="tag new">New</span><b>Tue 24 Nov, 08:34, day one.</b> Her two jobs first and biggest, as Martin’s paper repair tags (who, bike, work, hours, due, parts). Then what she can ask, six pockets, every question printed flat. Who’s collecting and Theo’s README line at the side.</figcaption></figure>
+    </div>
+    <ul class="changes">
+      <li><b>Her two jobs lead</b>: tag numbers at 58 px, names at 40 px, “Due today” the only coral on the screen, the spokes shortfall the only red, the tick the only green.</li>
+      <li><b>What she can ask</b>: six questions, horizontal, 24 px, each with a dot in the colour of the room it happens in (the same colours as Martin’s plan); the shortcut keeps its band.</li>
+      <li><b>The fun is in the details</b>: the eyelet and clipped tag corners, Martin’s hand crossing out Dev, a grease thumbprint, the tools in their pockets, Theo’s README line on a torn slip.</li>
+    </ul>
+  </section>
+
+  <section id="same">
+    <h2>Same butler, three worlds · the Build, Mon 23 Nov 16:16</h2>
+    <p class="verdict">One event (Martin clicks Add it; the workload report lands), three worlds, the new versions.</p>
+    <div class="pair">
+      <figure><img src="../worlds/frames/same-butler.png" alt="Last round: same butler"><figcaption><span class="tag">Last round</span>(timed 15:05, now corrected to 16:16)</figcaption></figure>
+      <figure><img src="frames/same-butler.png" alt="New: same butler, three worlds"><figcaption><span class="tag new">New</span><b>Theo</b>: the room built where Reports was planned, one new endpoint in the accent, 22 passed. <b>Martin</b>: the Workload room lit, the result beside it. <b>Priya</b>: the two wheel builds offered to her (dashed until Martin’s yes at 16:21) and one new thing she can ask.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="fixed" class="notes">
+    <h2>What the critique caught (and fixed)</h2>
+    <ul>
+      <li><b>Dates.</b> The last round’s data put the Build at 15:05, the reassignment at 15:08, the passage at 14:20 and Lisbon on Monday. <code>data/canon.js</code> corrects them to the canon (Build 16:16, asked 16:08, reassignment 16:21, Lisbon Tue 24 Nov 09:41, Priya Tue 08:34) without touching the shared data files; no frame prints a minute for the passage, which the canon doesn’t give.</li>
+      <li><b>Where the last pads are.</b> The canon (CONTINUITY.md, and Theo’s parts list) keeps the last pair in drawer 1 of the parts cabinet on the back-office shelf, not the stockroom. The 08:55 plan now points the note into the back office (“Pads: 1 pair left · drawer 1 · Anika’s brakes need 2”) and his walk runs job board 08:53 → back office 08:54 → back door 08:55; <code>data/canon.js</code> moves the pads fixture and the route data to match. The Build frame and the same-butler plan show neither the note nor the walk.</li>
+      <li><b>Keys at 16:16.</b> The old ‘build’ state held only the ordering key; scene 5’s two cards (text customers, mark bikes ready) were missing. Fixed: the 16:16 plan shows 9 open, 13 by key, 1 shut, 1 new (24).</li>
+      <li><b>“Priya starts today”</b> in the Build line: she starts Tuesday. Now “Priya starts tomorrow”, as the script says.</li>
+      <li><b>Priya at 16:16</b>: the builds only move at 16:21, so at the Build moment her tags are dashed and marked “Offered to you”, not already hers.</li>
+      <li><b>Collisions found and fixed</b>: the route through the Stockroom label, the Workload label under its sticker, the shortcut band over Ravi’s name and over “counter”, crossing leaders on the hologram, toolroll tools over the heading, the Lisbon page’s missing real-app image path, the empty-frame guide text and the dashed taskbar placeholders showing through on the 2009 PC.</li>
+      <li><b>One colour, one meaning</b>: Priya’s spoken line moved from coral to ink so coral means only “due today”; red means only a shortfall; gold means only Barnaby’s marks.</li>
+      <li><b>Figures checked against the seed and the shop screens</b>: Dev 31 of 20, Ravi 22 of 30, Priya 0 then 11½ of 30; 4471 front 6 h due Tue, 4472 rear 5½ h due Wed; spokes 40 on the shelf, 64 for both; pads 1, Anika needs 2; ready to collect: Gareth, Marisol, Niamh, Chidi; 23 found, 6 taken, 1 denied, 0.48 s; 24 after the Build, 0.41 s; 22 passed, 1 warning, 1.55 s; +11/+34/+69; Quorum 13, 6 exposed, 0.51 s.</li>
+    </ul>
+    <h2 style="margin-top:32px">Substitutions</h2>
+    <ul>
+      <li>The impeccable launcher was not run: its engine would be downloaded on first use. Its craft guidance (craft floor, clarify, distill, quieter, layout) was read and applied by hand.</li>
+      <li>No image generation. Every frame is HTML/CSS/SVG rendered with headless Chrome (<code>render.js</code>, the same renderer as last round).</li>
+      <li>Installed fonts only: Gill Sans MT with Segoe UI figures (Martin), Segoe UI and Cascadia Code (Theo), Bahnschrift, Rockwell and Ink Free (Priya).</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Priya · her bench · Tuesday 24 Nov 08:34, day one</title>
+<link rel="stylesheet" href="lib/priya.css">
+</head><body>
+<div class="abs head">
+  <div style="display:flex;align-items:baseline"><h1>Priya’s bench</h1><span class="when">Tuesday 24 November · 08:34</span></div>
+  <div class="week"><span>Your week</span><div class="bar"><i id="wk"></i></div><span id="wkt"></span></div>
+</div>
+<div class="abs talk">
+  <div class="her"><small>Priya</small><span id="her"></span></div>
+  <div class="him"><div class="bell" id="bell"></div><span id="him"></span></div>
+</div>
+<div id="tags"></div>
+<div class="abs col">
+  <h2><span class="dot" id="rcdot"></span>Ready to collect</h2>
+  <div class="rc" id="rc"></div>
+  <div class="slip"><small>From Theo’s README</small><p id="note"></p></div>
+</div>
+<div class="abs roll-h">Things you can ask me<span>just say it, or hold Space</span></div>
+<div class="abs roll" id="roll"></div>
+<script src="../../worlds/data/building.js"></script>
+<script src="../../worlds/data/story.js"></script>
+<script src="../data/canon.js"></script>
+<script src="lib/common.js"></script>
+<script src="lib/priya.js"></script>
+<script>
+(function () {
+  const { esc, bell } = W2, S = WORLDS.story.priyaTuesday, P = PRIYA;
+  const $ = id => document.getElementById(id);
+  $('her').textContent = '“' + S.priya + '”';
+  $('him').textContent = S.barnaby;
+  const b = W2.svg($('bell'), 42, 42); bell(b, 21, 21.5, 26, '#E2B54E');
+  $('wk').style.width = (S.week.booked / S.week.capacity * 100) + '%';
+  $('wkt').innerHTML = `<b>${P.hrs(S.week.booked)}</b> of ${S.week.capacity} hours`;
+  $('tags').innerHTML = P.tag(S.bench[0], { thumb: true, style: 'left:72px;top:300px;transform:rotate(-1deg)' })
+                      + P.tag(S.bench[1], { style: 'left:716px;top:304px;transform:rotate(.8deg)' });
+  $('rcdot').style.background = P.room('shop').hue;
+  $('rc').innerHTML = S.ready.map(([n, bk]) => `<div>${esc(n)}<span>${esc(bk)}</span></div>`).join('');
+  $('note').textContent = S.note.text;
+  // what she can ask, each a real ability open to Barnaby on Tuesday (data/story.js asks), with the room it happens in
+  $('roll').innerHTML = P.asks([
+    ['What’s on my bench?', 'workshop', 'spanner'],
+    ['What does Rachel’s wheel need?', 'workshop', 'spokekey'],
+    ['Is anything running low?', 'stockroom', 'lever'],
+    ['Who’s collecting today?', 'shop', 'cutters'],
+    ['Rachel’s is done. Hand it back.', 'passage', 'driver'],
+    ['Order more spokes.', 'goodsin', 'spoke'],
+  ]);
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script>
+</body></html>

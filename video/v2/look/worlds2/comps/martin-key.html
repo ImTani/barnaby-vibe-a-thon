@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Martin · the floor plan · asking for the ordering key (Mon 08:55)</title>
+<link rel="stylesheet" href="lib/martin-page.css">
+<style>
+  .here { background: #2459A6; }
+  .card { border: 3px solid #2459A6; }
+  .card dt { color: #173C72; }
+  .card .btn.yes { background: #2459A6; border-color: #2459A6; }
+</style></head>
+<body>
+<svg id="plan" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+<div class="head">
+  <div class="shop"><b>Spokes &amp; Sprockets</b><span>the shop, room by room</span></div>
+  <div class="when"><span>Monday 23 November</span><b>08:55</b></div>
+</div>
+<div class="side">
+  <div class="here"><div class="dot" id="here-bell"></div><div><b>The back door</b><span>where deliveries come in</span></div></div>
+  <div class="who">Martin</div>
+  <div class="martin-says" id="martin"></div>
+  <div class="barnaby-says"><div class="bell" id="say-bell"></div><div id="barnaby"></div></div>
+  <div class="card">
+    <div class="top"><svg id="card-key" width="64" height="64" viewBox="0 0 64 64"></svg><h2 id="card-title"></h2></div>
+    <dl id="card-lines"></dl>
+    <div class="btns"><button class="btn yes" id="yes"></button><button class="btn" id="no"></button></div>
+  </div>
+</div>
+<script src="../../worlds/data/building.js"></script>
+<script src="../../worlds/data/story.js"></script>
+<script src="../data/canon.js"></script>
+<script src="lib/common.js"></script>
+<script src="lib/martin.js"></script>
+<script>
+(function () {
+  const { el, bell, key, esc } = W2, M = MARTIN, S = WORLDS.story.martinKey;
+  const svg = document.getElementById('plan');
+  const mini = (id, size) => { const s = W2.svg(document.getElementById(id), size, size); bell(s, size / 2, size / 2 + .5, size * .62, M.GOLD_LT); };
+  mini('here-bell', 40); mini('say-bell', 40);
+  const ck = document.getElementById('card-key');
+  el('circle', { cx: 32, cy: 32, r: 29, fill: '#fff', stroke: M.INK, 'stroke-width': 3.5 }, ck); key(ck, 32, 32, 40, M.GOLD);
+
+  document.getElementById('martin').textContent = '“' + S.martin + '”';
+  document.getElementById('barnaby').textContent = S.barnaby;
+  document.getElementById('card-title').textContent = S.card.title;
+  document.getElementById('card-lines').innerHTML = S.card.lines.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+  document.getElementById('yes').textContent = S.card.yes; document.getElementById('no').textContent = S.card.no;
+
+  document.fonts.ready.then(() => {
+    M.plan(svg, {
+      moment: 'martinKey', x: 90, y: 286, s: 60, focus: 'goodsin', built: false, labelSize: 32, pipR: 7,
+      labelAt: { shop: [0.5, 6.1], office: [6.78, 2.42], reports: [10.08, 1.42], workshop: [7.0, 4.78], stockroom: [15.32, 4.22], goodsin: [15.32, 6.12] },
+      labelLines: { office: ['Back', 'office'] }, labelSizes: { office: 28 },
+      standNames: true, standNameSize: 19,
+      // his walk this morning (canon: the last pair of pads is in drawer 1 of the parts cabinet on the back-office
+      // shelf): tomorrow's jobs on the job board (08:53), through the arch and behind the counter into the back office
+      // by its door (08:54, the parts drawer), out past the office window to the back door (08:55)
+      route: [[7.3, 8.05], [7.0, 6.2], [5.75, 5.6], [5.75, 1.65], [8.3, 1.65], [9.3, 2.2], [9.3, 3.95], [14.3, 3.95], [14.3, 7.25], [18.15, 7.25]],
+      stops: [[7.3, 8.05, '08:53', -82, 0], [8.3, 1.65]],
+      keyAsk: [20.02, 7.05], keyR: 40,
+      marker: [18.6, 6.95], markerR: 30, markerLabel: ['Barnaby', 0, 28],
+    });
+    // the shortfall, stuck on above the back office, pointing at the drawer where he found it
+    const T = (x, y) => [90 + x * 60, 286 + y * 60];
+    const p = T(8.3, 1.65), sx = 452, sy = 186, nw = 344;
+    el('path', { d: `M${p[0]},${p[1] - 9} L${p[0]},${sy + 68}`, stroke: M.INK, 'stroke-width': 3 }, svg);
+    const sg = el('g', { transform: `translate(${sx},${sy}) rotate(-2)` }, svg);
+    el('rect', { x: 3, y: 5, width: nw, height: 68, rx: 8, fill: 'rgba(0,0,0,.18)' }, sg);
+    el('rect', { x: 0, y: 0, width: nw, height: 68, rx: 8, fill: '#fff', stroke: '#A3261B', 'stroke-width': 2.5 }, sg);
+    W2.warn(sg, 26, 34, 28, '#A3261B');
+    const nf = { 'font-family': W2.FONT.martin, 'font-size': 22, 'font-weight': 700, fill: '#A3261B' };
+    const t1 = W2.text(sg, 52, 29, 'Pads: 1 pair left', nf), x1 = 52 + t1.getComputedTextLength();
+    el('circle', { cx: x1 + 12, cy: 22, r: 2.6, fill: '#A3261B' }, sg);
+    W2.text(sg, x1 + 24, 29, 'drawer 1', nf);
+    W2.text(sg, 52, 55, 'Anika’s brakes need 2', { 'font-family': W2.FONT.martin, 'font-size': 20, fill: M.INK });
+    M.pill(svg, sx + nw + 14, sy + 30, '08:54', { fs: 18 });
+    M.pill(svg, ...T(16.9, 6.7), '08:55', { fs: 18 });   // where he is now: the back door
+    M.legend(svg, 92, 912, ['can', 'key', 'shut', 'walk', 'asking'], { fs: 21, gap: 38 });
+    document.body.dataset.ready = '1';
+  });
+})();
+</script>
+</body></html>

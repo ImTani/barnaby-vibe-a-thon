@@ -1,0 +1,30 @@
+/* Martin's view: page chrome shared by his frames (1920x1080). Gill Sans MT with Segoe UI figures (common.js). */
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #F5F2EA; color: #1D1B17; }
+body { word-spacing: .04em; font-family: "MFig", "Gill Sans MT", "Gill Sans", "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+::selection { background: #E2B54E; color: #1D1B17; }
+#plan { position: absolute; inset: 0; }
+.head { position: absolute; left: 92px; right: 60px; top: 40px; height: 64px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1D1B17; }
+.head .shop { display: flex; align-items: baseline; gap: 18px; }
+.head .shop b { font-size: 38px; font-weight: 700; letter-spacing: .005em; }
+.head .shop span { font-size: 24px; color: #5E584C; }
+.head .when { font-size: 30px; display: flex; gap: 16px; align-items: baseline; }
+.head .when b { font-weight: 700; }
+.side { position: absolute; left: 1372px; top: 146px; width: 488px; display: flex; flex-direction: column; }
+.here { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-radius: 12px; color: #fff; }
+.here .dot { width: 40px; height: 40px; border-radius: 50%; background: #1D1B17; display: grid; place-items: center; flex: none; box-shadow: 0 0 0 3px #fff; }
+.here b { font-size: 30px; font-weight: 700; line-height: 1; }
+.here span { font-size: 20px; opacity: .92; display: block; margin-top: 3px; }
+.who { font-size: 19px; font-weight: 700; color: #6E675A; letter-spacing: .06em; text-transform: uppercase; margin: 30px 0 4px; }
+.martin-says { font-size: 27px; font-style: italic; color: #3B372F; line-height: 1.25; }
+.barnaby-says { text-wrap: pretty; display: grid; grid-template-columns: 40px 1fr; gap: 14px; margin-top: 26px; font-size: 32px; line-height: 1.24; }
+.barnaby-says .bell { width: 40px; height: 40px; border-radius: 50%; background: #1D1B17; display: grid; place-items: center; margin-top: 2px; }
+.card { margin-top: 30px; background: #fff; border-radius: 14px; padding: 24px 26px 26px; box-shadow: 0 6px 18px rgba(40, 30, 10, .13); }
+.card h2 { margin: 0; font-size: 29px; line-height: 1.16; font-weight: 700; }
+.card .top { display: grid; grid-template-columns: 64px 1fr; gap: 16px; align-items: center; }
+.card dl { margin: 18px 0 0; display: grid; grid-template-columns: 1fr; gap: 12px; }
+.card dt { font-size: 18px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.card dd { text-wrap: pretty; word-spacing: .08em; margin: 2px 0 0; font-size: 22px; line-height: 1.25; color: #2E2B25; }
+.card .btns { display: flex; gap: 14px; margin-top: 22px; }
+.card .btn { font: inherit; font-size: 26px; font-weight: 700; padding: 13px 30px; border-radius: 10px; border: 3px solid #1D1B17; background: #fff; color: #1D1B17; }
+.card .btn.yes { color: #fff; }
+.foot { position: absolute; left: 92px; top: 960px; font-size: 17px; color: #7D766A; letter-spacing: .02em; }

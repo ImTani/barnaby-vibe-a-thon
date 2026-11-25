@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Theo · the workshop hologram, fully himself · Lisbon, Tue 24 Nov 09:41 (staged)</title>
+<link rel="stylesheet" href="../../lisbon-pc/lisbon.css">
+<style>html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; } #barnaby-client svg { display: block; }</style>
+</head><body>
+<div id="screen"></div>
+<script src="../../lisbon-pc/endpoints.js"></script>
+<script src="../../lisbon-pc/art.js"></script>
+<script src="../../lisbon-pc/content.js"></script>
+<script src="../../lisbon-pc/wallpaper.js"></script>
+<script src="../../lisbon-pc/desk.js"></script>
+<script src="../../worlds/data/building.js"></script>
+<script src="../../worlds/data/story.js"></script>
+<script src="../data/canon.js"></script>
+<script src="lib/common.js"></script>
+<script src="../../worlds/comps/lib/theo-shared.js"></script>
+<script src="lib/theo.js"></script>
+<script src="lib/theo-scenes.js"></script>
+<script>
+/* Theo's Lisbon desk (../../lisbon-pc, unchanged), main monitor, the 'quorum' preset: Tue 24 Nov 09:41, Barnaby's log
+   shows the Connect run (09:39:58) and Theo's line; his slot (#barnaby-client) holds Theo's world, fully himself. */
+(function () {
+  const root = document.getElementById('screen');
+  const desk = LX.build(root, { monitor: 'main', lw: 1280, lh: 720, realapp: '../../lisbon-pc/realapp/barnaby-connect.png' });
+  root.style.transform = 'scale(1.5)';
+  const s = LX.preset('quorum', { barnaby: 'frame' });
+  desk.render(s);
+  const imgs = [...document.images].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; }));
+  Promise.all([document.fonts.ready, ...imgs]).then(() => {
+    desk.render(s);
+    const c = desk.barnabyClient, w = c.offsetWidth, h = c.offsetHeight;
+    const svg = W2.svg(c, w, h);
+    THEO_SCENES.quorumTall(svg, w, h, LX_ENDPOINTS.quorum, LX_CONTENT.QUORUM, LX_CONTENT.SAY.quorum);
+    document.body.dataset.ready = '1';
+  });
+})();
+</script>
+</body></html>

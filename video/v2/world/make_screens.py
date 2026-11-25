@@ -3,13 +3,17 @@
     python video/v2/world/make_screens.py
 
 Writes video/v2/world/screens/:
-    shop-tuesday.png     the shop PC on Tuesday 24 Nov, 08:34: look-dev frame 08 (Priya's two wheel builds
-                         highlighted) with its calendar gadget and taskbar clock moved on a day
+    shop-night-16x10.png, shop-tuesday-16x10.png
+                         the shop PC at the 3D monitor's own 16:10 shape, rendered from the look-dev page
+                         (render_shop_screens.js, node + the installed Chrome): Thursday 21:47's nine tabs, and
+                         Tuesday 24 Nov 08:34's Jobs page with Priya's two wheel builds
+    shop-tuesday.png     16:9 fallback if node/Chrome aren't there: frame 08 with its gadget and clock moved on a day
     shop-asleep.png      the shop PC asleep (scene 9): a black panel, Barnaby's bell glowing small in the corner
     lisbon-*.png         placeholders for Theo's Lisbon desk, used only when look/frames/lisbon-*.png don't exist yet
 """
 import math
 import os
+import subprocess
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
@@ -46,36 +50,37 @@ def shop_tuesday():
 
 
 def bell_glyph(size, colour, width=None):
-    """Barnaby's bell as a filled silhouette (it has to read at a few pixels on a sleeping monitor): the dome, the
-    knob on its plunger, the base."""
-    s = size / 48.0
+    """Barnaby's bell as a filled silhouette drawn to survive being 20 px tall on a monitor across the room: a full
+    hemisphere dome standing clear of a wider, thicker base, a thin plunger, a ball knob, a pale highlight. Drawn in a
+    64-unit box; the bell is 46 units tall."""
+    s = size / 64.0
     im = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    d.pieslice([8 * s, 17 * s, 40 * s, 49 * s], 180, 360, fill=colour)          # dome
-    d.rounded_rectangle([5 * s, 34 * s, 43 * s, 40 * s], radius=2 * s, fill=colour)  # base
-    d.rectangle([22.6 * s, 11 * s, 25.4 * s, 18 * s], fill=colour)              # plunger
-    d.ellipse([19.5 * s, 7 * s, 28.5 * s, 13 * s], fill=colour)                # knob
-    d.arc([14 * s, 22 * s, 32 * s, 40 * s], 205, 255, fill=(255, 236, 190, 255), width=max(1, int(2 * s)))
+    d.rounded_rectangle([4 * s, 51 * s, 60 * s, 59 * s], radius=3 * s, fill=colour)              # base
+    d.pieslice([12 * s, 27 * s, 52 * s, 67 * s], 180, 360, fill=colour)                        # dome
+    d.rectangle([12 * s, 46.2 * s, 52 * s, 47.6 * s], fill=colour)                             # dome's rim
+    d.rectangle([30.6 * s, 17 * s, 33.4 * s, 28 * s], fill=colour)                             # plunger
+    d.ellipse([26.5 * s, 11 * s, 37.5 * s, 20 * s], fill=colour)                               # knob
+    d.arc([17 * s, 32 * s, 43 * s, 58 * s], 200, 250, fill=(255, 240, 205, 255), width=max(1, int(2.4 * s)))
     return im
 
 
-def asleep(w, h, corner="br", scale=1.0, path=None, base=(0, 0, 0)):
-    """A sleeping panel: black, with the bell glowing softly in one corner."""
+def asleep(w, h, corner="br", scale=1.0, path=None, base=(0, 0, 0), frac=0.105):
+    """A sleeping panel: black, Barnaby's bell glowing softly in one corner, about `frac` of the screen's height."""
     im = Image.new("RGB", (w, h), base)
-    g = int(56 * scale)
-    bell = bell_glyph(g, GOLD + (255,), 2.6)
+    g = int(h * frac * 64 / 46)                               # glyph box so the bell itself is frac * h tall
+    bell = bell_glyph(g, GOLD + (255,))
+    m = int(h * 0.045)
+    x = w - g - m if "r" in corner else m
+    y = h - g - m if "b" in corner else m
     glow = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    x = w - g - int(40 * scale) if "r" in corner else int(40 * scale)
-    y = h - g - int(40 * scale) if "b" in corner else int(40 * scale)
-    halo = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    hd = ImageDraw.Draw(halo)
-    cx, cy, r = x + g // 2, y + g // 2, int(g * 1.1)
-    hd.ellipse([cx - r, cy - r, cx + r, cy + r], fill=GOLD + (90,))
-    halo = halo.filter(ImageFilter.GaussianBlur(g * 0.6))
-    glow.alpha_composite(halo)
+    hd = ImageDraw.Draw(glow)
+    cx, cy, r = x + g // 2, y + int(g * 0.6), int(g * 0.95)
+    hd.ellipse([cx - r, cy - r, cx + r, cy + r], fill=GOLD + (70,))
+    glow = glow.filter(ImageFilter.GaussianBlur(g * 0.45))
     soft = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     soft.alpha_composite(bell, (x, y))
-    glow.alpha_composite(soft.filter(ImageFilter.GaussianBlur(3 * scale)))
+    glow.alpha_composite(soft.filter(ImageFilter.GaussianBlur(max(2, g // 30))))
     glow.alpha_composite(soft)
     out = im.convert("RGBA")
     out.alpha_composite(glow)
@@ -192,13 +197,25 @@ def lisbon_laptop(path, w=2560, h=1600):
     im.save(path)
 
 
+def shop_16x10():
+    """The shop PC's own 16:10 screens (1920x1200), rendered from the look-dev page by render_shop_screens.js."""
+    js = os.path.join(HERE, "render_shop_screens.js")
+    try:
+        subprocess.run(["node", js], check=True)
+        return True
+    except (OSError, subprocess.CalledProcessError) as e:
+        print("16:10 shop screens not rendered (node/Chrome?):", e, "- desk.py falls back to the 16:9 frames")
+        return False
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
-    shop_tuesday()
-    asleep(1920, 1200, "br", 2.2, os.path.join(OUT, "shop-asleep.png"))
+    shop_16x10()
+    shop_tuesday()                                            # 16:9 fallback, used only without the 16:10 render
+    asleep(1920, 1200, "br", path=os.path.join(OUT, "shop-asleep.png"))
     lisbon_main(os.path.join(OUT, "lisbon-main-placeholder.png"))
     lisbon_second(os.path.join(OUT, "lisbon-second-placeholder.png"))
     lisbon_laptop(os.path.join(OUT, "lisbon-laptop-placeholder.png"))
-    asleep(2560, 1440, "br", 1.3, os.path.join(OUT, "lisbon-main-asleep.png"))
+    asleep(2560, 1440, "br", path=os.path.join(OUT, "lisbon-main-asleep.png"), frac=0.08)
     Image.new("RGB", (2560, 1440), (0, 0, 0)).save(os.path.join(OUT, "lisbon-black.png"))
     print("wrote", sorted(os.listdir(OUT)))

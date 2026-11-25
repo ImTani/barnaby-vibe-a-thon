@@ -42,7 +42,7 @@ from math import cos, pi, radians, sin
 import bmesh
 import bpy
 import numpy as np
-from mathutils import Quaternion, Vector
+from mathutils import Euler, Quaternion, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
@@ -73,10 +73,16 @@ SHOTS = {
 DEFAULT_SHOTS = "wide_night,medium_night,keys_night,medium_monday,medium_tuesday"
 
 # what the monitor shows in each preset (the shop PC look-dev is canon; see CONTINUITY.md)
-SCREENS = {
-    "night": os.path.join(FRAMES, "shop-pc-03-tabs.png"),                 # Thu 19 Nov, 21:47, nine tabs
+def _first(*paths):
+    return next((p for p in paths if os.path.exists(p)), paths[-1])
+
+
+SCREENS = {   # 16:10 renders from make_screens.py fill the panel; the 16:9 look-dev frames are the fallback
+    "night": _first(os.path.join(SCREEN_DIR, "shop-night-16x10.png"),
+                    os.path.join(FRAMES, "shop-pc-03-tabs.png")),          # Thu 19 Nov, 21:47, nine tabs
     "monday": os.path.join(FRAMES, "shop-pc-12-desktop-16x10.png"),       # Mon 23 Nov, 08:52, Back Office
-    "tuesday": os.path.join(SCREEN_DIR, "shop-tuesday.png"),              # Tue 24 Nov, 08:34, Priya's two jobs
+    "tuesday": _first(os.path.join(SCREEN_DIR, "shop-tuesday-16x10.png"),
+                      os.path.join(SCREEN_DIR, "shop-tuesday.png")),      # Tue 24 Nov, 08:34, Priya's two jobs
     "close": os.path.join(SCREEN_DIR, "shop-asleep.png"),                 # asleep; Barnaby's bell in the corner
 }
 SCREEN_BRIGHT = {"night": 0.88, "monday": 1.3, "tuesday": 1.3, "close": 1.0}   # backlight against the room
@@ -3341,52 +3347,149 @@ def job_card(M, name, loc, yaw, no, fields, mech=None, parent=None, tilt=(0, 0))
     return jc
 
 
+HELMET_ANCHORS = {"front": (-0.098, -0.05, 0.006), "rear": (-0.092, 0.078, 0.006)}   # one side; mirror x for the other
+
+
 def build_helmet(M, parent, loc, rot):
-    """Priya's road helmet: a matt shell with vents (cut through to the grey foam), a rear retention dial, black
-    webbing straps and buckle; hung by its straps over the corner of the chair back."""
+    """Priya's road helmet: an elongated in-moulded shell with a tail and a dorsal ridge, twelve rounded vent slots cut
+    through to the black EPS foam (which shows all round the lower rim), a matt white microshell with a coral band, a
+    retention cradle and dial at the back. Helmet space: opening at z = 0, front -y, tail +y."""
     g = grp("helmet", loc, rot, parent=parent)
-    shell_m = mat("helmet_shell", "#c95b36", 0.42, coat=0.35)
-    foam = mat("helmet_foam", "#8f9296", 0.85)
+    shell_m = mat("helmet_shell", "#e9e7e1", 0.48, coat=0.25)
+    eps = mat("helmet_eps", "#18181a", 0.85)
+    coral = mat("helmet_coral", "#d65a3a", 0.45, coat=0.25)
+
+    def surf(x, y):
+        """Height of the shell's top surface over (x, y)."""
+        ry = 0.128 if y < 0 else 0.15
+        k = 1 - (x / (0.103 * (1 - 0.3 * max(0.0, y / 0.15) ** 2))) ** 2 - (y / ry) ** 2
+        return 0.112 * math.sqrt(max(0.0, k)) + 0.006 * math.exp(-(x / 0.018) ** 2) * (k > 0)
+
     bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=28, v_segments=16, radius=1.0)
+    bmesh.ops.create_uvsphere(bm, u_segments=40, v_segments=22, radius=1.0)
     for v in bm.verts:
         x, y, z = v.co
-        z = max(z, -0.05)
-        tail = 1.0 + 0.18 * max(0.0, y)                      # longer at the back, a little tail
-        v.co = Vector((x * 0.1, y * 0.135 * tail, z * 0.105))
-    bmesh.ops.delete(bm, geom=[f for f in bm.faces if all(v.co.z < -0.004 for v in f.verts)], context="FACES")
-    shell = finish("helmet_shell", bm, [shell_m, foam], g, angle=50)
+        z = max(z, -0.04)
+        yy = y * (0.128 if y < 0 else 0.15)
+        tail = max(0.0, y)
+        xx = x * 0.103 * (1 - 0.3 * tail ** 2)
+        zz = z * 0.112 * (1 - 0.3 * tail ** 3) + 0.006 * math.exp(-(xx / 0.018) ** 2) * max(0.0, z)
+        v.co = Vector((xx, yy, zz))
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if all(v.co.z < 0.0005 for v in f.verts)], context="FACES")
+    shell = finish("helmet_shell", bm, [shell_m, eps], g, angle=40)
     sd = shell.modifiers.new("Solid", "SOLIDIFY")
-    sd.thickness = 0.018
+    sd.thickness = 0.022
+    sd.offset = -1
     sd.material_offset = 1
-    cutters = []
-    for k, (x, y0, y1, z) in enumerate(((0.0, -0.07, 0.075, 0.12), (-0.038, -0.065, 0.07, 0.11),
-                                        (0.038, -0.065, 0.07, 0.11), (-0.07, -0.035, 0.05, 0.085),
-                                        (0.07, -0.035, 0.05, 0.085))):
-        c = tube(f"helmet_vent{k}", (x, y0, z), (x * 1.04, y1, z - 0.01), 0.011, foam, n=8, parent=g)
-        c.scale = (1.0, 1.0, 1.0)
-        c.hide_render = True
-        cutters.append(c)
-    for c in cutters:
-        bo = shell.modifiers.new("Vent", "BOOLEAN")
-        bo.operation = "DIFFERENCE"
-        bo.object = c
-        bo.solver = "EXACT"
-        try:
-            bo.material_mode = "TRANSFER"
-        except (AttributeError, TypeError):
-            pass
-    torus("helmet_rim", 1.0, 0.07, (0, 0, -0.003), mat("helmet_trim", "#2a2b2e", 0.5), nR=40, nr=6, parent=g,
-          scale=(0.1, 0.142, 0.1))
-    box("helmet_dial", (0.034, 0.012, 0.018), (0, 0.15, 0.0), M["plastic_blk"], bev=0.005, parent=g)
-    box("helmet_reflector", (0.03, 0.002, 0.008), (0, 0.157, 0.018), mat("reflector", "#d9d9d9", 0.25, metal=0.5),
-        bev=0.001, parent=g)
-    web = mat("webbing", "#1b1b1d", 0.8)
-    for s in (-1, 1):
-        curve(f"helmet_strap{s}", [(s * 0.095, -0.02, 0.005), (s * 0.085, 0.0, -0.06), (s * 0.03, 0.02, -0.11),
-                                   (0.0, 0.03, -0.13)], 0.004, web, parent=g, res=6, bres=1).scale = (1, 1, 1)
-    box("helmet_buckle", (0.022, 0.008, 0.016), (0, 0.03, -0.135), M["plastic_blk"], bev=0.003, parent=g)
+    sd.material_offset_rim = 1
+    # twelve vents: rounded slots following the shell, cut right through
+    vents = [(0.0, -0.075, -0.02), (0.0, 0.02, 0.085),
+             (-0.034, -0.095, -0.03), (0.034, -0.095, -0.03), (-0.036, 0.0, 0.07), (0.036, 0.0, 0.07),
+             (-0.068, -0.075, -0.015), (0.068, -0.075, -0.015), (-0.066, 0.01, 0.06), (0.066, 0.01, 0.06),
+             (-0.022, -0.125, -0.108), (0.022, -0.125, -0.108)]
+    cb = bmesh.new()
+    for x, y0, y1 in vents:                                   # stadium slots, swept outward toward the back
+        w = 0.0105 if abs(x) < 0.05 else 0.009
+        ym, L = (y0 + y1) / 2, abs(y1 - y0)
+        sweep = radians(10) * (1 if x > 0.01 else -1 if x < -0.01 else 0)
+        half = L / 2 - w
+        if half > 0.002:
+            outline = ([(w * cos(t), half + w * sin(t)) for t in np.linspace(0, pi, 7)] +
+                       [(w * cos(t), -half + w * sin(t)) for t in np.linspace(pi, 2 * pi, 7)])
+        else:                                                 # a short vent is a round hole (no zero-length sides)
+            outline = [(w * cos(t), w * sin(t)) for t in np.linspace(0, 2 * pi, 12, endpoint=False)]
+        zs = surf(x, ym)
+        lo = [cb.verts.new((x + px * cos(sweep) - py * sin(sweep), ym + px * sin(sweep) + py * cos(sweep), zs - 0.05))
+              for px, py in outline]
+        hi = [cb.verts.new((v.co.x, v.co.y, zs + 0.05)) for v in lo]
+        n = len(lo)
+        cb.faces.new(lo[::-1])
+        cb.faces.new(hi)
+        for k in range(n):
+            cb.faces.new((lo[k], lo[(k + 1) % n], hi[(k + 1) % n], hi[k]))
+    bmesh.ops.recalc_face_normals(cb, faces=cb.faces)        # (the axis swap above mirrors them inside out)
+    cut = finish("helmet_vent_cutters", cb, eps, g, smooth=False)
+    cut.hide_render = True
+    cut.display_type = "WIRE"
+    bo = shell.modifiers.new("Vents", "BOOLEAN")
+    bo.operation = "DIFFERENCE"
+    bo.object = cut
+    try:                                                      # (Exact mis-reads this thin solidified shell)
+        bo.solver = "MANIFOLD"
+    except TypeError:
+        bo.solver = "FLOAT"
+    try:
+        bo.material_mode = "TRANSFER"
+    except (AttributeError, TypeError):
+        pass
+    # the coral band round the lower edge, and the logo-less side graphic
+    ring = []
+    for k in range(48):                                       # the shell's own outline at z = 1.4 cm, a hair proud
+        t = 2 * pi * k / 48
+        ux, uy = cos(t), sin(t)
+        zu = 0.014 / 0.112
+        rr = math.sqrt(max(0.0, 1 - zu * zu))
+        x, y = ux * rr, uy * rr
+        yy = y * (0.128 if y < 0 else 0.15)
+        xx = x * 0.103 * (1 - 0.3 * max(0.0, y) ** 2)
+        ring.append((xx * 1.012, yy * 1.01, 0.014))
+    curve("helmet_band", ring, 0.0062, eps, parent=g, cyclic=True, res=2, bres=1).scale = (1, 1, 1.6)
+    for sgn in (-1, 1):                                       # a coral accent stripe sweeping along each side
+        pts = []
+        for k in range(9):
+            y = -0.1 + 0.2 * k / 8
+            z = 0.034 + 0.026 * k / 8
+            xs = sgn * 1.004 * 0.103 * (1 - 0.3 * max(0.0, y / 0.15) ** 2) * math.sqrt(max(0.0, 1 - (z / 0.112) ** 2
+                                                                                          - (y / (0.128 if y < 0 else 0.15)) ** 2))
+            pts.append((xs, y, z))
+        curve(f"helmet_stripe{sgn}", pts, 0.0028, coral, parent=g, res=4, bres=1)
+    # retention: a black cradle under the tail, the dial
+    torus("helmet_cradle", 1.0, 0.05, (0, 0.03, -0.012), M["plastic_blk"], nR=36, nr=5, arc=(20, 160), parent=g,
+          scale=(0.085, 0.11, 0.2))
+    dg = grp("helmet_dial", (0, 0.14, -0.018), (90, 0, 0), parent=g)
+    cyl("helmet_dial_body", 0.017, 0.012, (0, 0, 0), M["plastic_blk"], n=20, bev=0.002, parent=dg)
+    for k in range(16):
+        a = 2 * pi * k / 16
+        box(f"helmet_dial_grip{k}", (0.003, 0.003, 0.011), (0.0172 * cos(a), 0.0172 * sin(a), 0), M["rubber"], bev=0,
+            rot=(0, 0, math.degrees(a)), parent=dg)
+    disc("helmet_dial_light", 0, 0, 0.004, 0.0062, mat("helmet_red", "#b3241c", 0.3), dg, n=12)
+    for s in (-1, 1):                                          # Y-splitters under each ear
+        for nm, a in HELMET_ANCHORS.items():
+            ax, ay, az = a
+            box(f"helmet_anchor{s}{nm}", (0.008, 0.012, 0.008), (ax * s, ay, az + 0.002), M["plastic_blk"], bev=0.002,
+                parent=g)
     return g
+
+
+def hang_helmet_straps(M, chair, loc, rot):
+    """The two unbuckled chin-strap halves hang from the perched helmet: front and rear webbing from each side meet
+    at a Y-splitter, then one strap drops to its half of the buckle. Chair space."""
+    web = mat("webbing", "#1b1b1d", 0.8)
+    Rm = Euler([radians(a) for a in rot], "XYZ").to_matrix()
+    O = Vector(loc)
+    for side, s in (("near", 1), ("far", -1)):
+        pts = {}
+        for nm, a in HELMET_ANCHORS.items():
+            pts[nm] = O + Rm @ Vector((a[0] * s, a[1], a[2]))
+        mid = (pts["front"] + pts["rear"]) / 2
+        out = Vector((0, -0.012 * s, 0))                      # hang just clear of the backrest
+        split = mid + out + Vector((0.0, 0.0, -0.07))
+        end = split + Vector((0.008, -0.004 * s, -0.12))
+        for nm in ("front", "rear"):
+            a = pts[nm]
+            curve(f"strap_{side}_{nm}", [a, a + out * 0.5 + Vector((0, 0, -0.02)), split], 0.0035, web, parent=chair,
+                  res=6, bres=1).scale = (1, 1, 1)
+        curve(f"strap_{side}_tail", [split, split + Vector((0.003, 0, -0.05)), end], 0.004, web, parent=chair, res=6,
+              bres=1)
+        box(f"strap_{side}_splitter", (0.012, 0.006, 0.02), split, M["plastic_blk"], bev=0.002, parent=chair)
+        if side == "near":
+            box("strap_buckle_f", (0.026, 0.009, 0.036), end + Vector((0, 0, -0.016)), M["plastic_blk"], bev=0.004,
+                parent=chair)
+            box("strap_buckle_f_slot", (0.016, 0.002, 0.008), end + Vector((0, -0.0055, -0.03)), M["hole"], bev=0,
+                parent=chair)
+        else:
+            box("strap_buckle_m", (0.022, 0.006, 0.03), end + Vector((0, 0, -0.014)), M["plastic_blk"], bev=0.003,
+                parent=chair)
 
 
 def build_coffee_cup(M, loc, yaw, name="coffee_cup", label="PRIYA", font_file="MISTRAL.TTF"):
@@ -3500,13 +3603,10 @@ def build_priya(M, mug):
     job_card(M, "job_4472", (-0.06, -0.012, 0.0322), -6, 4472,
              [("Name", "Magnus Lindqvist"), ("Bike", "Bianchi Infinito"), ("Work", "wheel build, rear"),
               ("", "32 hole · 5.5 hrs"), ("Due", "Wed 25/11")], mech=("Dev", "Priya"), parent=kb)
-    chair = bpy.data.objects["chair"]
-    build_helmet(M, chair, (0.11, -0.318, 0.94), (78, 0, 8))
-    web = mat("webbing", "#1b1b1d", 0.8)
-    for k, dx in enumerate((-0.03, 0.03)):                   # the straps, looped over the top of the chair back
-        curve(f"helmet_hang{k}", [(0.12 + dx, -0.33, 0.97), (0.12 + dx, -0.322, 1.08), (0.12 + dx * 0.6, -0.29, 1.125),
-                                  (0.12 + dx * 0.4, -0.25, 1.12), (0.12 + dx * 0.3, -0.232, 1.07)], 0.0042, web,
-              parent=chair, res=6, bres=1)
+    chair = bpy.data.objects["chair"]                          # perched on the corner of the chair back, unbuckled
+    hloc, hrot = (-0.164, -0.231, 1.033), (-25, 0, 90)
+    build_helmet(M, chair, hloc, hrot)
+    hang_helmet_straps(M, chair, hloc, hrot)
 
 
 def build_close(M, kb):
@@ -3654,7 +3754,7 @@ def build_cameras():
     camera("CAM_medium", (1.44, 0.86, 1.5), (1.12, 2.5, 1.1), 30, 2.4, (1.02, 2.34, 0.9))
     camera("CAM_keys", (1.25, 1.92, 1.1), (1.08, 2.34, 0.8), 45, 10.0, (1.06, 2.3, 0.8))
     camera("CAM_medium_monday", (1.44, 0.86, 1.5), (1.12, 2.5, 1.1), 30, 2.4, (1.02, 2.34, 0.9))
-    camera("CAM_medium_tuesday", (1.5, 0.4, 1.33), (1.3, 2.5, 0.97), 27, 2.8, (1.3, 2.3, 0.85))
+    camera("CAM_medium_tuesday", (1.38, 0.3, 1.38), (1.26, 2.5, 0.97), 27, 5.6, (1.6, 1.75, 1.0))
     camera("CAM_board", (1.84, 1.98, 1.42), (1.84, 2.8, 1.4), 36, 2.8, (1.84, 2.78, 1.4))
     camera("CAM_shelf", (0.74, 1.92, 2.08), (0.5, 2.6, 1.68), 36, 4.0, (0.36, 2.5, 1.77))
     camera("CAM_bell", (2.86, 3.31, 1.1), (3.17, 3.63, 0.997), 60, 6.3, (3.13, 3.615, 1.0))
@@ -3666,7 +3766,7 @@ def build_cameras():
 
 
 CHAIR_POSE = {"night": ((1.66, 1.55, 0.0), 58), "monday": ((1.66, 1.55, 0.0), 58),
-              "tuesday": ((1.72, 1.68, 0.0), 18), "close": ((1.58, 1.62, 0.0), 40)}
+              "tuesday": ((1.92, 1.72, 0.0), 20), "close": ((1.58, 1.62, 0.0), 40)}
 
 
 def apply_preset(name, M, hands):
@@ -3709,6 +3809,8 @@ def apply_preset(name, M, hands):
     LIGHTS["L_window_day"].data.color = (0.86, 0.88, 0.95) if name == "tuesday" else (0.72, 0.84, 1.0)
     LIGHTS["L_room_fill"].data.energy = 24.0 if name == "tuesday" else 40.0
     bpy.data.objects["mug"].location = (1.4, 2.385, DZ) if name == "tuesday" else (1.74, 2.36, DZ)
+    # drawer 2 stands open all week; on Tuesday it's shut (Martin tidied the desk for Priya, as he did the note)
+    bpy.data.objects["desk_drawer_g1"].location.y = 0.0 if name == "tuesday" else -0.2
     loc, rz = CHAIR_POSE[name]
     ch = bpy.data.objects["chair"]
     ch.location = loc
@@ -3725,6 +3827,12 @@ def apply_preset(name, M, hands):
     for bs, st in REFLECT_EMIT:
         bs.inputs["Emission Strength"].default_value = st * REFLECT_LEVEL[name]
     sc.view_settings.exposure = {"night": 0.3, "monday": 0.0, "tuesday": 0.05, "close": 0.75}[name]
+    ring = bpy.data.objects["tower_power_ring"]
+    ring.data.materials[0] = M["led_amber"] if name == "close" else M["led_blue"]
+    mon_led = bpy.data.objects.get("mon_led")        # a sleeping 2009 monitor shows amber too
+    if mon_led:
+        mon_led.data.materials[0] = M["led_amber"] if name == "close" else M["led_blue"]
+    principled(M["led_amber"]).inputs["Emission Strength"].default_value = 3.0 if name == "close" else 5.0
     hh, mm = CLOCK[name]
     hands["hour"].rotation_euler = (0, 0, -2 * pi * ((hh % 12) + mm / 60) / 12)
     hands["minute"].rotation_euler = (0, 0, -2 * pi * mm / 60)

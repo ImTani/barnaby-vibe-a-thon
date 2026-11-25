@@ -52,7 +52,7 @@ SHOTS = {
     "wide_day": ("LCAM_wide", "day", "lisbon_01_wide_day.png", 0.0),
     "medium_day": ("LCAM_medium", "day", "lisbon_02_medium_day.png", 0.0),
     "medium_night": ("LCAM_medium", "night", "lisbon_03_medium_night.png", 0.0),
-    "detail_day": ("LCAM_detail", "day", "x_lisbon_detail_day.png", 0.0),
+    "detail_day": ("LCAM_detail", "day", "x_lisbon_detail_day.png", -0.35),
     "close_half": ("LCAM_close_half", "night", "x_close_half_lisbon.png", 0.0, (960, 1080)),
 }
 DEFAULT_SHOTS = "wide_day,medium_day,medium_night"
@@ -409,6 +409,8 @@ def build_outside(M):
                      loc=(-8.8, 0, 0.6), rot=(90, 0, 90), m=hills))
     sky = mat("lx_sky", "#bcd6ea", 1.0, emit="#bcd6ea", estr=2.5)
     obs.append(boxmm("lx_sky", (-11.0, -8.0, -1.0), (-10.9, 10.0, 6.0), sky, bev=0))
+    # the wide shot's own sky, placed where the walls hide it except through the window (used only in the wide)
+    obs.append(boxmm("lx_sky_wide", (-1.72, 2.5, 0.4), (-1.7, 6.5, 2.88), sky, bev=0))
     for ob in obs:
         ob.visible_shadow = ob.name.startswith(("bld", "roof", "chim"))
     return lit, sky
@@ -719,57 +721,112 @@ def build_desk_kit(M):
 
 
 def build_nata(M, loc, yaw):
-    """A pastel de nata: fluted puff-pastry cup, blistered custard with scorched spots, a bite out of it, crumbs, on a
-    paper napkin from the pastelaria."""
+    """A pastel de nata on a pastelaria napkin: a fluted puff-pastry cup whose layers show on the wall and flake at the
+    browned rim, and a glossy egg custard with its blistered, caramelised, nearly black spots, a little cinnamon."""
     g = grp("nata", loc, (0, 0, yaw))
     nap = mat("napkin", "#f7f4ec", 0.85)
     box("napkin", (0.15, 0.15, 0.0008), (0, 0, 0.0004), nap, rot=(0, 0, 12), bev=0, parent=g)
     for k in range(2):
         rect(f"napkin_line{k}", -0.07, -0.066 + k * 0.004, 0.07, -0.0648 + k * 0.004, 0.0009,
              mat("napkin_blue", "#2f5fa8", 0.6), g).rotation_euler = (0, 0, radians(12))
-    pastry = mat("pastry", "#8f4f16", 0.55)
-    n, rings = 36, [(0.03, 0.0), (0.034, 0.008), (0.037, 0.016), (0.039, 0.022), (0.036, 0.0245)]
+    # pastry: golden at the foot, browner up the wall, dark at the rim; layer ridges every 2.4 mm
+    pastry = mat("nata_pastry", "#c4873a", 0.62)
+    nt, b = pastry.node_tree, principled(pastry)
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(tc.outputs["Object"], sep.inputs[0])
+    rz = nt.nodes.new("ShaderNodeMapRange")
+    rz.inputs["From Min"].default_value = 0.004
+    rz.inputs["From Max"].default_value = 0.026
+    nt.links.new(sep.outputs["Z"], rz.inputs["Value"])
+    nz = nt.nodes.new("ShaderNodeTexNoise")
+    nz.inputs["Scale"].default_value = 260.0
+    nz.inputs["Detail"].default_value = 4.0
+    nt.links.new(tc.outputs["Object"], nz.inputs["Vector"])
+    shade = nt.nodes.new("ShaderNodeMath")
+    shade.operation = "MULTIPLY_ADD"
+    nt.links.new(rz.outputs["Result"], shade.inputs[0])
+    shade.inputs[1].default_value = 0.8
+    nt.links.new(nz.outputs["Fac"], shade.inputs[2])
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    els = ramp.color_ramp.elements
+    els[0].position, els[0].color = 0.35, rgba("#e0aa48")
+    els[1].position, els[1].color = 1.15 / 1.3, rgba("#7a4410")
+    mid = els.new(0.62)
+    mid.color = rgba("#c08024")
+    sc_ = nt.nodes.new("ShaderNodeMath")
+    sc_.operation = "MULTIPLY"
+    nt.links.new(shade.outputs[0], sc_.inputs[0])
+    sc_.inputs[1].default_value = 1 / 1.3
+    nt.links.new(sc_.outputs[0], ramp.inputs["Fac"])
+    nt.links.new(ramp.outputs["Color"], b.inputs["Base Color"])
+    wave = nt.nodes.new("ShaderNodeTexWave")
+    wave.bands_direction = "Z"
+    wave.inputs["Scale"].default_value = 1.0 / 0.0024
+    wave.inputs["Distortion"].default_value = 2.0
+    nt.links.new(tc.outputs["Object"], wave.inputs["Vector"])
+    _bump(nt, b, wave.outputs["Fac"], 0.5, 0.0006)
+    n = 42
+    prof = [(0.025, 0.0), (0.028, 0.004), (0.031, 0.009), (0.0335, 0.015), (0.0355, 0.02), (0.0368, 0.0235),
+            (0.0372, 0.0255), (0.0355, 0.0262), (0.0338, 0.0238)]
     bm = bmesh.new()
     grid = []
-    for r, z in rings:
-        grid.append([bm.verts.new(((r + 0.0018 * cos(9 * 2 * pi * i / n)) * cos(2 * pi * i / n),
-                                   (r + 0.0018 * cos(9 * 2 * pi * i / n)) * sin(2 * pi * i / n), z + 0.001))
-                     for i in range(n)])
-    for a, b in zip(grid, grid[1:]):
+    for r, z in prof:
+        row = []
+        for i in range(n):
+            t = 2 * pi * i / n
+            rr = r + 0.0022 * cos(14 * t) + 0.0006 * sin(z * 2 * pi / 0.0024)   # flutes and layer ridges
+            row.append(bm.verts.new((rr * cos(t), rr * sin(t), z + 0.001)))
+        grid.append(row)
+    for a_, b_ in zip(grid, grid[1:]):
         for i in range(n):
             j = (i + 1) % n
-            bm.faces.new((a[i], a[j], b[j], b[i]))
+            bm.faces.new((a_[i], a_[j], b_[j], b_[i]))
     c0 = bm.verts.new((0, 0, 0.001))
     for i in range(n):
         bm.faces.new((grid[0][(i + 1) % n], grid[0][i], c0))
-    shell = finish("nata_shell", bm, pastry, g, angle=50)
-    custard = mat("custard", "#d99a14", 0.3)
-    nt, b = custard.node_tree, principled(custard)
-    nz = nt.nodes.new("ShaderNodeTexNoise")
-    nz.inputs["Scale"].default_value = 130.0
-    nz.inputs["Detail"].default_value = 4.0
-    mr = nt.nodes.new("ShaderNodeMapRange")
-    mr.inputs["From Min"].default_value = 0.5
-    mr.inputs["From Max"].default_value = 0.6
-    nt.links.new(nz.outputs["Fac"], mr.inputs["Value"])
-    nt.links.new(_mix(nt, mr.outputs["Result"], "#d99a14", "#2e1405"), b.inputs["Base Color"])
-    _bump(nt, b, nz.outputs["Fac"], 0.4, 0.002)
-    lathe("nata_custard", [(0.0, 0.0225), (0.02, 0.0222), (0.033, 0.0205), (0.0335, 0.019), (0.0, 0.019)], n=32,
-          m=custard, parent=g)
-    cutter = sphere("nata_bite", 0.024, (0.045, -0.012, 0.018), pastry, seg=14, rings=8, parent=g)
-    cutter.hide_render = True
-    for ob in (shell, bpy.data.objects["nata_custard"]):
-        bo = ob.modifiers.new("Bite", "BOOLEAN")
-        bo.operation = "DIFFERENCE"
-        bo.object = cutter
-        bo.solver = "EXACT"
+    finish("nata_shell", bm, pastry, g, angle=60)
     rng = random.Random(5)
-    for k in range(9):
-        sphere(f"crumb{k}", rng.uniform(0.0012, 0.0025), (rng.uniform(0.035, 0.07), rng.uniform(-0.04, 0.02), 0.0012),
-               pastry, seg=6, rings=4, parent=g, scale=(1.3, 1, 0.6))
-    for k in range(40):                                       # a dusting of cinnamon
-        a, r = rng.uniform(0, 2 * pi), rng.uniform(0, 0.028)
-        disc(f"cinn{k}", r * cos(a), r * sin(a), 0.0007, 0.0227, mat("cinnamon", "#6b3a1c", 0.8), g, n=5)
+    flake = mat("nata_flake", "#8f5418", 0.6)
+    for k in range(4):                                       # the flaky, browned lip: loose rings of pastry
+        torus(f"nata_flake_ring{k}", 0.0352 + rng.uniform(-0.0008, 0.0012), 0.0013 + 0.0004 * k,
+              (rng.uniform(-0.0006, 0.0006), rng.uniform(-0.0006, 0.0006), 0.0262 + 0.0005 * k), flake,
+              rot=(rng.uniform(-3, 3), rng.uniform(-3, 3), rng.uniform(0, 90)), nR=40, nr=5, parent=g)
+    # custard: glossy egg yellow, blistered to caramel and almost black in patches
+    custard = mat("nata_custard", "#e8a81a", 0.22, spec=0.5)
+    nt, b = custard.node_tree, principled(custard)
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    nz = nt.nodes.new("ShaderNodeTexNoise")
+    nz.inputs["Scale"].default_value = 55.0
+    nz.inputs["Detail"].default_value = 6.0
+    nz.inputs["Roughness"].default_value = 0.62
+    nt.links.new(tc.outputs["Object"], nz.inputs["Vector"])
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    els = ramp.color_ramp.elements
+    els[0].position, els[0].color = 0.4, rgba("#e8ac1c")
+    els[1].position, els[1].color = 0.62, rgba("#1a0c05")
+    for pos, c in ((0.47, "#c97d1c"), (0.52, "#7a3a0e"), (0.56, "#3a1806")):
+        e = els.new(pos)
+        e.color = rgba(c)
+    nt.links.new(nz.outputs["Fac"], ramp.inputs["Fac"])
+    nt.links.new(ramp.outputs["Color"], b.inputs["Base Color"])
+    rough = nt.nodes.new("ShaderNodeMapRange")
+    rough.inputs["From Min"].default_value = 0.46
+    rough.inputs["From Max"].default_value = 0.58
+    rough.inputs["To Min"].default_value = 0.2
+    rough.inputs["To Max"].default_value = 0.6
+    nt.links.new(nz.outputs["Fac"], rough.inputs["Value"])
+    nt.links.new(rough.outputs["Result"], b.inputs["Roughness"])
+    _bump(nt, b, nz.outputs["Fac"], 0.55, 0.0012)
+    lathe("nata_custard", [(0.0, 0.0258), (0.012, 0.0256), (0.024, 0.0249), (0.0322, 0.0238), (0.0338, 0.0228),
+                           (0.0338, 0.02), (0.0, 0.02)], n=40, m=custard, parent=g)
+    for k in range(34):                                       # a dusting of cinnamon, heavier in the middle
+        a, r = rng.uniform(0, 2 * pi), 0.022 * rng.random() ** 1.6
+        disc(f"cinn{k}", r * cos(a), r * sin(a), rng.uniform(0.0004, 0.0008), 0.0262, mat("cinnamon", "#5a2e14", 0.8),
+             g, n=5)
+    for k in range(6):                                        # a few flakes on the napkin
+        sphere(f"flake{k}", rng.uniform(0.0012, 0.0022), (rng.uniform(0.04, 0.065), rng.uniform(-0.035, 0.02), 0.0012),
+               flake, seg=6, rings=4, parent=g, scale=(1.6, 1.0, 0.35))
 
 
 def build_chair(M):
@@ -990,6 +1047,17 @@ def main():
         bpy.context.scene.collection.children.link(c)
         COLL[name] = c
     D.setup_render(args)
+    # the same diorama presentation as the shop: the camera sees a dark surround, the room keeps its daylight
+    wn = bpy.context.scene.world.node_tree
+    lp = wn.nodes.new("ShaderNodeLightPath")
+    dark = wn.nodes.new("ShaderNodeBackground")
+    dark.inputs[0].default_value = rgba("#1c2333")
+    dark.inputs[1].default_value = 0.7
+    mix = wn.nodes.new("ShaderNodeMixShader")
+    wn.links.new(lp.outputs["Is Camera Ray"], mix.inputs[0])
+    wn.links.new(wn.nodes["Background"].outputs[0], mix.inputs[1])
+    wn.links.new(dark.outputs[0], mix.inputs[2])
+    wn.links.new(mix.outputs[0], wn.nodes["World Output"].inputs["Surface"])
     M = D.build_materials()
     D.ensure_photo(M)
     build_room(M)
@@ -1047,6 +1115,8 @@ def main():
                     if t is None or cam_p.y + t * (v.y - cam_p.y) < 0.05 or cam_p.z + t * (v.z - cam_p.z) > LH:
                         hide = True
                         break
+            if ob.name == "lx_sky_wide":
+                hide = not wide
             ob.hide_render = hide
         sc.view_settings.exposure += ev
         sc.camera = bpy.data.objects[cam]

@@ -9,12 +9,12 @@ render against this page.
 
 | Scene | Where | Day and time | Source | On the set |
 |---|---|---|---|---|
-| 1–2 | Shop | **Thu 19 Nov, 21:47**, raining | shop-pc-03 clock `21:47 19/11/2026`, gadget "19 Thursday" | wall clock 21:47; preset `night` |
+| 1–2 | Shop | **Thu 19 Nov, 21:47**, raining | shop-pc-03 clock `21:47 19/11/2026`, gadget "19 Thursday"; on the 3D monitor `screens/shop-night-16x10.png` (the same state at 16:10) | wall clock 21:47; preset `night` |
 | (off) | Shop | **Fri 20 Nov**: Theo's last day | calendar tab "THEO'S LAST DAY :(" on Fri 20/11; leaving drinks Fri 17:00 | corkboard calendar: 20 circled |
 | 3 | Shop | **Mon 23 Nov, 08:52** | shop-pc-12 clock `08:52 23/11/2026` | wall clock 08:52; preset `monday` |
-| 4–6 | Shop | Mon 23 Nov, during the day | frames 05/07/08 show 11:26–11:31 | (the script calls scene 6 "late afternoon": see the notes below) |
-| 7 | Shop | **Tue 24 Nov, 08:34**, Priya's first morning | `screens/shop-tuesday.png` (frame 08 moved on a day) | wall clock 08:34; preset `tuesday` |
-| 8 | Lisbon | **Mon 23 Nov, 09:39**, Theo's first morning ("desk 14") | lisbon-02 bar `seg 23 nov 09:39`; Quorum "Theo starts Mon 23 Nov, desk 14" | preset `day` |
+| 4–6 | Shop | Mon 23 Nov: the order 09:04, the report 16:08–16:16, the jobs moved to Priya 16:21 | frames 05–08 | (scene 6 "late afternoon" agrees) |
+| 7 | Shop | **Tue 24 Nov, 08:34**, Priya's first morning | `screens/shop-tuesday-16x10.png`, rendered from the look-dev page (Jobs, Priya on 4471/4472, gadget "24 Tuesday", clock `08:34 24/11/2026`) | wall clock 08:34; preset `tuesday` |
+| 8 | Lisbon | **Tue 24 Nov, 09:39**, Theo's second day (he started Mon 23 Nov at desk 14), the same morning as Priya's | lisbon-02 bar `ter 24 nov 09:39`; Quorum "Theo starts Mon 23 Nov, desk 14" | preset `day` |
 | 9 | Shop | **Tue 24 Nov, 18:40**, closing; the PC asleep | (set choice) | wall clock 18:40; preset `close` |
 | 9 | Lisbon | **Tue 24 Nov, 20:07**, leaving | lisbon-05 bar `ter 24 nov 20:07` | preset `night` |
 | photo | Shop front | **Sun 14 Jun 2009** | the print's date stamp `'09 6 14` | Theo 14, Martin 44 (WORLD: 31 and 61 in 2026) |
@@ -32,14 +32,14 @@ render against this page.
 | Moving box "THEO, LISBON" (plant, poster tube, hoodie) | Theo | Thursday only |
 | Sticky note "Reports: coming soon (sorry Uncle M)" | Theo | the only sticky note in the film; Martin peels it off once the report is built (Monday) |
 | README (pinned) | Theo | item 2: backup USB stick, desk drawer 2; item 3: supplier logins in the red binder; item 4: never trust the stock count on a Friday |
-| Backup USB stick, paper tag "BACKUP (Fridays!)" | Theo | desk drawer 2, which is left open |
+| Backup USB stick, paper tag "BACKUP (Fridays!)" | Theo | desk drawer 2, left open, except on Tuesday morning when it's shut (Martin tidied up for Priya) |
 | Corkboard calendar (Wheelwright, Nov 2026) | Martin's (red pen, Ink Free) | Mon 16–Wed 18 crossed off, Fri 20 circled "THEO'S LAST DAY :("; Martin doesn't cross days off, so it's unchanged on Monday/Tuesday |
 | Reading glasses on a cord, rag, pencil | Martin | |
 | Job card 4478 (Anika Banerjee, Trek FX 3, brake bleed + pads F+R, 2 pairs, due Tue 24/11) | Martin's hand | matches the jobs list on the screens |
 | Job cards 4471 (Rachel Okafor, front wheel build) and 4472 (Magnus Lindqvist, rear), Mech: ~~Dev~~ Priya | Martin's hand | the reassignment on screen (frame 08); left on the keyboard for her |
-| Helmet, takeaway coffee "PRIYA", waxed-canvas toolroll | Priya | |
+| Road helmet (matt white, coral accent, black EPS rim, twelve vents, retention dial), takeaway coffee "PRIYA", waxed-canvas toolroll | Priya | the helmet perches on the corner of the chair back, its unbuckled straps and buckle hanging |
 | Studio badge "ANDORINHA · Theo Hartley · Pipeline · DESK 14", teal lanyard | Theo (Lisbon) | Quorum: desk 14; the to-do list: "badge, desk 14, wifi" |
-| Pastel de nata (bitten) on a pastelaria napkin, a bica | Theo (Lisbon) | to-do list: "find the good pastelaria (ask Inês)" |
+| Pastel de nata on a pastelaria napkin, a bica | Theo (Lisbon) | to-do list: "find the good pastelaria (ask Inês)" |
 
 Handwriting: Segoe Print is Theo's (the sticky note, the box, the key tag, the CD-R in the photo, the BACKUP tag,
 "SHELF A"). Ink Free is Martin's (calendar, drawer labels, binders, boxes, job cards). Mistral is the barista's (the
@@ -49,8 +49,10 @@ cup). Kristen ITC is a child's (the thank-you drawing). Nobody else's hand appea
 
 | Prop | Thu night (1–2) | Mon (3–6) | Tue (7) | Shop close (9) | Lisbon day (8) | Lisbon night (9) |
 |---|---|---|---|---|---|---|
-| Screen | shop-pc-03 (tabs, letterboxed) | shop-pc-12 (Back Office, 16:10) | shop-tuesday | shop-asleep (bell in the corner) | lisbon-02 main / studio / laptop | lisbon-05 (dimmed) |
+| Screen (all 16:10, filling the panel) | shop-night-16x10 (nine tabs) | shop-pc-12 (Back Office) | shop-tuesday-16x10 | shop-asleep (Barnaby's bell, ~10% of the height, bottom right) | lisbon-02 main / studio / laptop (`ter 24 nov`) | lisbon-05 (dimmed) |
 | Desk lamp | on | off (daylight) | off | **off** | n/a | n/a |
+| Tower power LED | blue | blue | blue | **amber** (asleep) | | |
+| Drawer 2 (USB stick) | open | open | shut | open | | |
 | Key + tag on the keyboard | ✓ | (taken in the scene 3 time-lapse) | | | | |
 | Headphones | ✓ desk, plugged in | | | | ✓ on the stand | ✓ |
 | Photo frame | ✓ | | | | ✓ | ✓ |
@@ -61,10 +63,10 @@ cup). Kristen ITC is a child's (the thank-you drawing). Nobody else's hand appea
 | Rag | | ✓ | | | | |
 | Pencil | | ✓ | ✓ | | | |
 | Priya's helmet, cup, toolroll, cards 4471/4472 | | | ✓ | | | |
-| Chair | by the box | same | pulled out, helmet hooked on it | turned in | | |
+| Chair | by the box | same | pushed in by the pedestal, the helmet perched on its corner | turned in | | |
 
 Always on the shop set: the service bell and its RING FOR SERVICE card (on the counter), the corkboard, the shelf, the
-cables, the drawer-2 USB stick, the workshop through the door.
+cables, the workshop through the door.
 
 ## The parts cabinet agrees with Theo's parts list (shop-pc-03b)
 
@@ -89,7 +91,6 @@ the dock goes to the grommet; the tray's strip goes to the wall socket; the mous
 
 ## Open questions for the director
 
-- The script puts scene 6 (the report) in the "late afternoon"; look-dev frames 07 and 08 show 11:26 and 11:31.
-- Scene 8 (Lisbon, Mon 23 Nov per its screens) plays after scene 7 (Tue 24 Nov) in the cut: as a parallel day it's
-  fine, but no on-screen date should contradict it.
-- The 16:9 shop frames (03 tabs, 08) letterbox on the 16:10 panel; a 16:10 render of 03 would fill it as 12 does.
+- The close in the shop is set at 18:40 (a set choice; no screen shows the time). Lisbon's close is 20:07.
+- Shelf B (brake fluid, tyres) and the rims cupboard from the parts list are not on this set; a workshop shot would
+  need them.

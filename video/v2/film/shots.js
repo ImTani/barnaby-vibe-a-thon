@@ -65,16 +65,42 @@ function blenderManifest() {
   catch (e) { G.BLENDER = null; }
   return G.BLENDER;
 }
+/** A sequence's clock: frameAt(t) (1-based, clamped) and the film times of its first and last frames. */
+function seqClock(s, fps = FILM_FPS) {
+  if (s.__clock) return s.__clock;
+  const pts = [];
+  for (const k in s.events || {}) if (CUES.marks[k] != null) pts.push([CUES.marks[k], +s.events[k]]);
+  pts.sort((p, q) => p[0] - q[0]);
+  let frameAt;
+  if (!pts.length) frameAt = t => (t - s.start) * fps + 1;
+  else frameAt = t => {
+    if (t <= pts[0][0]) return pts[0][1] + (t - pts[0][0]) * fps;
+    for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) {
+      const [ta, fa] = pts[i - 1], [tb, fb] = pts[i]; return tb > ta ? fa + (fb - fa) * (t - ta) / (tb - ta) : fb;
+    }
+    const [tl, fl] = pts[pts.length - 1]; return fl + (t - tl) * fps;
+  };
+  // the film times of frame 1 and the last frame (outside the events the clock runs 1:1)
+  const tOf = f => {
+    if (!pts.length) return s.start + (f - 1) / fps;
+    if (f <= pts[0][1]) return pts[0][0] - (pts[0][1] - f) / fps;
+    const l = pts[pts.length - 1]; if (f >= l[1]) return l[0] + (f - l[1]) / fps;
+    for (let i = 1; i < pts.length; i++) if (f <= pts[i][1]) { const [ta, fa] = pts[i - 1], [tb, fb] = pts[i]; return fb > fa ? ta + (tb - ta) * (f - fa) / (fb - fa) : tb; }
+    return l[0];
+  };
+  return (s.__clock = { frame: t => clamp(Math.floor(frameAt(t) + 1e-6), 1, s.frames), t0: tOf(1), t1: tOf(s.frames) + 1 / fps, anchored: pts.length > 0 });
+}
+
 function blenderFor(key, a, b, scene) {
   const m = blenderManifest();
   if (!m || !m.shots || !key.startsWith('world/')) return null;
   let best = null, bestOv = 0;
   for (const s of m.shots) {
-    if (s.kind === 'still' || s.start == null) continue;                           // stills swap in by file (pick)
+    if (s.kind === 'still' || (s.start == null && !s.events)) continue;            // stills swap in by file (pick)
     if (scene != null && s.scene != null && +s.scene !== +scene) continue;         // never another scene's shot
     const rep = Array.isArray(s.replaces) ? s.replaces : [s.replaces];    // one shot may cover several stills in a row
     if (s.status !== 'done' || !rep.includes(key) || !(s.frames > 0)) continue;
-    const s0 = s.start, s1 = s.start + s.frames / (m.fps || FILM_FPS);
+    const ck = seqClock(s, m.fps || FILM_FPS), s0 = ck.t0, s1 = ck.t1;
     const ov = Math.min(b, s1) - Math.max(a, s0);
     if (ov > bestOv && ov >= .5 * Math.min(b - a, s1 - s0)) { best = s; bestOv = ov; }
   }
@@ -204,7 +230,7 @@ function seq(root, items, end, o = {}) {
         it.s.box.style.zIndex = it.z || 0;
         let g = typeof it.grade === 'function' ? it.grade(t) : (it.grade || '');
         if (it.bl) {                                     // the Blender sequence: its own camera and light
-          const n = clamp(Math.floor((t - it.bl.start) * FILM_FPS) + 1, 1, it.bl.frames);
+          const n = seqClock(it.bl).frame(t);
           if (n !== it.blN) {
             it.blN = n; it.s.img.src = it.blDir + String(n).padStart(4, '0') + '.jpg';
             G.__pending.push(it.s.img.decode().catch(() => { G.__errors && G.__errors.push('[blender] missing ' + it.s.img.src); }));
@@ -362,7 +388,7 @@ function quadOf(id, at) {
   const m = blenderManifest(); if (!m || !m.shots) return null;
   const sh = m.shots.find(x => x.id === id);
   if (!sh || sh.status !== 'done') return null;
-  const pf = clamp(Math.floor((at - sh.start) * (m.fps || FILM_FPS)) + 1, 1, sh.frames);
+  const pf = seqClock(sh, m.fps || FILM_FPS).frame(at);
   let q = null;
   if (sh.screen_quads) {
     let best = null; for (const k in sh.screen_quads) if (best == null || Math.abs(+k - pf) < Math.abs(best - pf)) best = +k;
@@ -474,5 +500,5 @@ function typed(s, t, a, b) {
 }
 
 Object.assign(G, { SRC, SIZE, V, VE, M, still, seq, frameImg, label, fadeEl, markSVG, markAnim, sizeOf, imgPath: path, reveal, sweep,
-  cursor, path2, clickK, typed, LIVE_FRAMES: frames, FILM_FPS, hold, move, pan, sfxT, sfxAll, hand, pressAt, pick, quadOf });
+  cursor, path2, clickK, typed, LIVE_FRAMES: frames, FILM_FPS, hold, move, pan, sfxT, sfxAll, hand, pressAt, pick, quadOf, seqClock });
 })(window);

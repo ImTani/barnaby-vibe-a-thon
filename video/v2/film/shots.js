@@ -197,14 +197,14 @@ function still(parent, key, o = {}) {
  * (world stills and Blender sequences) get the fine grain and the soft vignette; screens and worlds stay clean. */
 function seq(root, items, end, o = {}) {
   const list = items.map(it => ({ ...it, s: still(root, it.src, it) }));
-  list.forEach(it => {
-    if (!o.dissolves && !it.keepFi && !it.pin) it.fi = 0;
-    if (it.pin) { it.quad = quadOf(it.pin.shot, it.at); if (!it.quad) it.fi = 0; }
-  });
+  list.forEach((it, i) => { if (!o.dissolves && !it.keepFi && !it.pin) it.fi = 0; it.prev = list[i - 1] || null; });
+  // which Blender sequence plays each room still (on the shot's plain window), then the pins: a push into the screen
+  // only pins when the shot under it IS the sequence the quad belongs to (else, e.g. after an insert, a cut)
+  list.forEach((it, i) => { const nx = list[i + 1]; it.bl = blenderFor(it.src, it.at, it.until != null ? it.until : nx ? nx.at + (nx.fi || 0) : end, o.scene); });
+  list.forEach(it => { if (!it.pin) return; it.quad = it.prev && it.prev.bl && it.prev.bl.id === it.pin.shot ? quadOf(it.pin.shot, it.at) : null; if (!it.quad) it.fi = 0; });
   list.forEach((it, i) => {
-    const nx = list[i + 1]; it.prev = list[i - 1] || null;
+    const nx = list[i + 1];
     it.end = it.until != null ? it.until : nx ? nx.at + Math.max(nx.fi || 0, nx.quad ? (nx.fi || 0) + (nx.pin.d || .6) : 0, nx.open ? nx.open.d || .55 : 0) : end;
-    it.bl = blenderFor(it.src, it.at, it.end, o.scene);
     if (it.bl) { it.blDir = `../world/out/anim/${it.bl.id}/`; it.blN = -1; }
     if (isRoom(it.src) && !it.clean) it.finish = finish(it.s.box);
     if (isRoom(it.src) && !it.tripod) it.hh = handheld(it.src + '@' + it.at.toFixed(2));

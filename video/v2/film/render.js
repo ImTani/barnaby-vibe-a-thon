@@ -73,7 +73,7 @@ async function worker(tag, scale = SCALE) {
     }, t, stamp || null);
     return p.screenshot({ path: file, type: 'jpeg', quality: q, optimizeForSpeed: true });
   };
-  return { b, p, shot, errors: () => p.evaluate(() => window.__errors.slice()) };
+  return { b, p, shot, errors: () => p.evaluate(() => window.__errors.slice()), fallbacks: () => p.evaluate(() => (window.__fallbacks || []).slice()) };
 }
 
 function ffmpeg(args) {
@@ -92,7 +92,21 @@ function mux(silent, final) {
   console.log('wrote', final);
 }
 const BASE = flags.name || 'barnaby_v2';           // --name=barnaby_v2_review -> out/barnaby_v2_review.mp4
+/** Every frame there, non-empty and decodable, before an encode (ffmpeg decodes them all to null). */
+function checkFrames(f0, f1) {
+  const dirF = path.join(OUT, 'frames'), bad = [];
+  for (let f = f0; f < f1; f++) {
+    const p = path.join(dirF, String(f).padStart(5, '0') + '.jpg');
+    if (!fs.existsSync(p) || fs.statSync(p).size < 1000) bad.push(f);
+  }
+  if (bad.length) throw new Error(`frames missing or empty: ${bad.length} (first ${bad.slice(0, 8).join(', ')})`);
+  const r = spawnSync('ffmpeg', ['-hide_banner', '-v', 'error', '-framerate', String(FPS), '-start_number', String(f0), '-i', path.join(dirF, '%05d.jpg'),
+    '-frames:v', String(f1 - f0), '-f', 'null', '-'], { encoding: 'utf8' });
+  if (r.status !== 0 || (r.stderr || '').trim()) throw new Error('frames that do not decode:\n' + (r.stderr || '').slice(0, 2000));
+  console.log(`checked ${f1 - f0} frames: all there, non-empty, decodable`);
+}
 function encode(f0, f1, name) {
+  checkFrames(f0, f1);
   const silent = path.join(OUT, name || BASE + '-silent.mp4');
   ffmpeg(['-framerate', String(FPS), '-start_number', String(f0), '-i', path.join(OUT, 'frames', '%05d.jpg'), '-frames:v', String(f1 - f0),
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS), '-movflags', '+faststart', silent]);
@@ -101,7 +115,7 @@ function encode(f0, f1, name) {
 }
 
 async function renderFrames(f0, f1) {
-  const out = dir('frames'); const t0 = Date.now(); let done = 0; const W = Math.min(WORKERS, f1 - f0); let errs = 0; const ms = [];
+  const out = dir('frames'); const t0 = Date.now(); let done = 0; const W = Math.min(WORKERS, f1 - f0); let errs = 0, fb = []; const ms = [];
   const bl = readBlender(); console.log('blender manifest:', bl ? `${(bl.shots || []).filter(s => s.status === 'done').length} done of ${(bl.shots || []).length}, complete=${!!bl.complete}` : 'none');
   await Promise.all([...Array(W)].map(async (_, w) => {
     let k = await worker(w);
@@ -116,8 +130,9 @@ async function renderFrames(f0, f1) {
       }
       if (++done % 150 === 0) console.log(`${done}/${f1 - f0} frames  ${((Date.now() - t0) / 1000).toFixed(0)}s  ${(done / ((Date.now() - t0) / 1000)).toFixed(1)} fps`);
     }
-    errs += (await k.errors()).length; await k.b.close();
+    errs += (await k.errors()).length; fb = fb.concat(await k.fallbacks()); await k.b.close();
   }));
+  if (fb.length) console.log(`blender frames missing, the still used instead: ${fb.length}\n  ` + fb.slice(0, 20).join('\n  '));
   ms.sort((a, b) => a - b);
   console.log(`rendered ${done} frames in ${((Date.now() - t0) / 1000).toFixed(1)}s; per frame per worker: median ${ms[ms.length >> 1] || 0} ms, p95 ${ms[Math.floor(ms.length * .95)] || 0} ms (${W} workers)`);
   if (errs) { console.log(`WARNING: ${errs} page errors during render`); process.exitCode = 2; }

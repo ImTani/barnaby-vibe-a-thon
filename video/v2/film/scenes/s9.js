@@ -10,16 +10,17 @@
   Scene({
     id: '9', start: S, end: E, fadeIn: 0,
     build(root) {
+      const LNIGHT = shotDone('s9_lisbon_night');
       const ASLEEP = pick('world/lisbon_03_medium_night_asleep.png', 'world/lisbon_03_asleep_night.png', 'world/lisbon_03_night_asleep.png', '');
       run = seq(root, [
         { src: 'world/x_close_night.png', at: S, cam: hold(940, 570, 1.08) },
-        { src: pick('world/lisbon_03_medium_night_on.png', 'world/lisbon_03_medium_night.png'), at: M('lisbon_night'), fi: .9, cam: hold(1010, 525, 1.06),
+        { src: LNIGHT ? 'world/lisbon_03_medium_night.png' : pick('world/lisbon_03_medium_night_on.png', 'world/lisbon_03_medium_night.png'), at: M('lisbon_night'), fi: .9, cam: hold(1010, 525, 1.06),
           build: l => {
             dimmer = el('div', {}, l);       // everything but Barnaby's slot sinks: the two monitors dim to one small glow
             css(dimmer, { left: '0px', top: '0px', width: '1920px', height: '1080px', background: 'radial-gradient(circle at 1148px 480px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 60px, rgba(0,0,0,.72) 260px)' });
           },
-          over: t => { dimmer.style.opacity = ASLEEP ? '0' : easeInOutSine(P(t, M('dim'), 1.6)).toFixed(3); } },
-      ].concat(ASLEEP ? [{ src: ASLEEP, at: M('dim'), fi: 1.6, cam: hold(1010, 525, 1.06) }] : []).concat([
+          over: t => { dimmer.style.opacity = ASLEEP || LNIGHT ? '0' : easeInOutSine(P(t, M('dim'), 1.6)).toFixed(3); } },
+      ].concat(ASLEEP && !LNIGHT ? [{ src: ASLEEP, at: M('dim'), fi: 1.6, cam: hold(1010, 525, 1.06) }] : []).concat([
         // the last move: the two desks, closing gently as the bell rings and the titles come up
         { src: pick('world/s9_two_desks.png', 'world/close_two_desks.png'), at: M('two_desks'), fi: .9, cam: [[M('two_desks'), 960, 540, 1.0], [E, 960, 560, 1.04]],
           build: l => { seam = el('div', {}, l);       // the join between the two desks: a thin, feathered dark gutter

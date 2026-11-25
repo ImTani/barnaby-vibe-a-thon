@@ -13,10 +13,10 @@
     id: '3', start: S, end: E, fadeIn: 0,
     build(root) {
       const flip = M('clock') + .95, full = Math.max(V(9), M('clock') + 1.6);
-      const DAWN = pick('world/x_mug_dawn.png', '');            // the match cut on the mug (with the night one)
+      const DAWN_SEQ = shotDone('x_mug_dawn'), DAWN = DAWN_SEQ ? 'world/x_mug_night.png' : pick('world/x_mug_dawn.png', '');   // the match on the mug
       run = seq(root, [
       ].concat(DAWN ? [
-        { src: DAWN, at: S, cam: hold(960, 540, 1.0), keepGrade: true, grade: t => `brightness(${lerp(.05, 1, easeInOutSine(P(t, S + .5, M('monday') - S - .8))).toFixed(3)})` },
+        { src: DAWN, at: S, cam: hold(960, 540, 1.0), grade: DAWN_SEQ ? '' : t => `brightness(${lerp(.05, 1, easeInOutSine(P(t, S + .5, M('monday') - S - .8))).toFixed(3)})` },
         { src: 'world/04_medium_monday.png', at: M('monday'), cam: hold(960, 600, 1.12) },
       ] : [
         { src: 'world/02_medium_night.png', at: S, cam: [960, 600, 1.12], grade: 'brightness(.16)' },

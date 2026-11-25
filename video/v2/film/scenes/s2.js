@@ -44,7 +44,7 @@
     build(root) {
       const sweepA = M('reading') + .1, sweepB = M('six_lit') - .9;
       const SIX = M('six_lit') + .2;
-      const MUG = pick('world/x_mug_night.png', '');
+      const MUG = pick('world/x_mug_night.png', '') || (shotDone('x_mug_night_off') ? 'world/x_mug_night.png' : '');
       run = seq(root, [
         // 2.1 the photo: a very slow push (memory); 2.2 the calendar, held; 2.3 the desk at night for "Seventeen years."
         { src: 'world/photo_2009.png', at: S, cam: move(S + .3, M('calendar') - S - .5, [750, 550, 1.04], [730, 540, 1.12], 0) },
@@ -74,7 +74,7 @@
         { src: 'world/02_medium_night.png', at: M('desk_detail'), cam: pan(V(7), M('key') - V(7) - .3, 1050, 620, 890, 630, 1.12) },
         { src: 'world/03_keys_night.png', at: M('key'), cam: move(M('key') + .2, 1.6, [760, 700, 1.1], [700, 800, 1.3], 0),
           grade: t => `brightness(${lerp(1, .16, easeOutCubic(P(t, M('lamp_off'), .15))).toFixed(3)})` },
-      ].concat(MUG ? [{ src: MUG, at: M('lamp_off') - 1.4, cam: hold(960, 540, 1.0), keepGrade: true,
+      ].concat(MUG ? [{ src: MUG, at: M('lamp_off') - 1.4, cam: hold(960, 540, 1.0),
           grade: t => `brightness(${lerp(1, .05, easeOutCubic(P(t, M('lamp_off'), .15))).toFixed(3)})` }] : []), E, { scene: 2 });
       shop = run.list[3].s;
     },

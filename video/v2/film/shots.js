@@ -91,12 +91,14 @@ function seqClock(s, fps = FILM_FPS) {
   return (s.__clock = { frame: t => clamp(Math.floor(frameAt(t) + 1e-6), 1, s.frames), t0: tOf(1), t1: tOf(s.frames) + 1 / fps, anchored: pts.length > 0 });
 }
 
+const UNUSED = ['x_key_rack'];                   // the key has its moment already (the drop, the mug, the lamp)
 function blenderFor(key, a, b, scene) {
   const m = blenderManifest();
   if (!m || !m.shots || !key.startsWith('world/')) return null;
   let best = null, bestOv = 0;
   for (const s of m.shots) {
     if (s.kind === 'still' || (s.start == null && !s.events)) continue;            // stills swap in by file (pick)
+    if (UNUSED.includes(s.id)) continue;                                           // left out by the director's call
     if (scene != null && s.scene != null && +s.scene !== +scene) continue;         // never another scene's shot
     const rep = Array.isArray(s.replaces) ? s.replaces : [s.replaces];    // one shot may cover several stills in a row
     if (s.status !== 'done' || !rep.includes(key) || !(s.frames > 0)) continue;
@@ -233,7 +235,12 @@ function seq(root, items, end, o = {}) {
           const n = seqClock(it.bl).frame(t);
           if (n !== it.blN) {
             it.blN = n; it.s.img.src = it.blDir + String(n).padStart(4, '0') + '.jpg';
-            G.__pending.push(it.s.img.decode().catch(() => { G.__errors && G.__errors.push('[blender] missing ' + it.s.img.src); }));
+            const img = it.s.img, want = img.src;
+            G.__pending.push(img.decode().catch(() => {        // the frame isn't there: this frame shows the shot's still
+              (G.__fallbacks = G.__fallbacks || []).push(`${it.bl.id} frame ${n}: missing, the still for this frame`);
+              console.warn(`[blender] ${it.bl.id} frame ${n} missing: the still ${it.src} for this frame`);
+              if (img.src === want) { img.src = path(it.src); it.blN = -1; return img.decode().catch(() => {}); }
+            }));
           }
           it.s.place(t, null, it.fit);
           if (!it.keepGrade) g = '';

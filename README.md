@@ -16,9 +16,11 @@ the system's own tools. When the system can't do what you asked, Barnaby **grows
 Track 4 (Open innovation) · 2nd Brain Labs × Geek Room Vibe-a-thon · built on
 [Synapse CLI](https://www.npmjs.com/package/@2ndbrainlabs-ai/synapse-cli) 0.1.9.
 
-**Videos.** The v2 film (about 3:38 on its locked cue sheet; rendered from code, still in production; see
-[`video/v2/`](video/v2/)) and a live walkthrough of the real app (recorded on this machine with
-[`docs/WALKTHROUGH.md`](docs/WALKTHROUGH.md)). *Links are added at submission.*
+**Videos.** The film, *Every system deserves a butler* (5:07): Blender dioramas, the real app's screens and the shop's
+2009 back office composited in code, a score and sound design from code, Martin, Theo and Priya voiced by real people
+and Barnaby by ElevenLabs (see [`video/v2/`](video/v2/); English captions in
+[`video/v2/film/barnaby_v2.en.srt`](video/v2/film/barnaby_v2.en.srt)). It is in the Demo Video folder linked from the
+submission form, with a live walkthrough of the real app to follow ([`docs/WALKTHROUGH.md`](docs/WALKTHROUGH.md)).
 
 ---
 
@@ -28,8 +30,8 @@ Track 4 (Open innovation) · 2nd Brain Labs × Geek Room Vibe-a-thon · built on
 |---|---|
 | **Originality and real-world value** | Every small business runs on a system nobody has time to rewrite, and the person who wrote it eventually leaves. Barnaby is a handover: point him at the repo, and the system gets a butler who can answer, act, and grow what's missing. Voice-first, bring-your-own-repo, and an agent that writes its own missing endpoint. See [`docs/WRITEUP.md`](docs/WRITEUP.md). |
 | **How central Synapse is** | Barnaby has **no tools of his own** except growth. Every system tool is a Synapse-generated MCP server. Connect, Unlock, Compose and Build each *are* a Synapse call (table above). Synapse's surface cache is his map of what the system *could* do. See [`docs/MCP_SETUP.md`](docs/MCP_SETUP.md). |
-| **Technical execution** | [`scripts/demo_check.py`](scripts/demo_check.py) drives the whole story against the real stack (no mocks), in the film's order, and checks every outcome against the shop's own API and git history, plus that nothing Barnaby said aloud used the machine's words: **16/16 pass**. 27 fast unit tests cover the fix-up pass, the discovery atlas, approval tiers, habit detection, the plain-language cards and the bring-your-own-model worker (`.venv/Scripts/python -m pytest tests`). A fix-up pass repairs known Synapse 0.1.9 output issues (disclosed below). Approvals are tiered; code changes land only after the tests pass and you click to approve. |
-| **Quality of the demo** | The v2 film tells one family's story in about three and a half minutes; the walkthrough shows the same flow live in the real app. What's real and what's staged is in the table [below](#real-vs-staged). |
+| **Technical execution** | [`scripts/demo_check.py`](scripts/demo_check.py) drives the whole story against the real stack (no mocks), in the film's order, and checks every outcome against the shop's own API and git history, plus that nothing Barnaby said aloud used the machine's words: **16/16 pass**. 28 fast unit tests cover the fix-up pass, the discovery atlas, approval tiers, habit detection, the plain-language cards and the bring-your-own-model worker (`.venv/Scripts/python -m pytest tests`). A fix-up pass repairs known Synapse 0.1.9 output issues (disclosed below). Approvals are tiered; code changes land only after the tests pass and you click to approve. |
+| **Quality of the demo** | The film tells one family's story in five minutes; the walkthrough shows the same flow live in the real app. What's real and what's staged is in the table [below](#real-vs-staged). |
 
 ### The real run, end to end (`scripts/demo_check.py`, 25 Nov, 18:30 IST)
 
@@ -127,7 +129,7 @@ recreation of a real run, like most product films.
 | Compose via hosted Synapse Custom mode | **Real** (needs a free `SYNAPSE_API_KEY`) |
 | Barnaby's answers, tool calls, approvals, the Build diff and its tests | **Real** (`demo_check` runs them; the film's diff and figures come from a recorded run, [`video/data.js`](video/data.js), and the demo shop's seed) |
 | Spokes & Sprockets, Theo, Martin, Priya | **Fiction.** The shop, its people and its data are made up: a purpose-built 2009-style app ([`systems/spokes-and-sprockets`](systems/spokes-and-sprockets)) with 29 invented customers, seeded jobs and backdated git history |
-| The film (v2, [`video/v2/`](video/v2/)) | **Rendered from code**, and still in production: a procedural Blender diorama of the shop desk and a Lisbon desk ([`desk.py`](video/v2/world/desk.py), [`lisbon.py`](video/v2/world/lisbon.py)), screens designed as HTML pages and captured with puppeteer, and an HTML film engine in which every frame is a pure function of time, encoded with ffmpeg. It's a staged recreation of the real run. The final file will be `video/v2/film/out/barnaby_v2.mp4`; the low-res animatic (960×540, 15 fps) is in [`video/v2/animatic/`](video/v2/animatic/) |
+| The film (v2, [`video/v2/`](video/v2/)) | **Rendered from code**: procedural Blender dioramas of the shop desk and a Lisbon desk, animated ([`desk.py`](video/v2/world/desk.py), [`lisbon.py`](video/v2/world/lisbon.py), [`anim.py`](video/v2/world/anim.py)), screens designed as HTML pages and composited live onto the monitors, and an HTML film engine in which every frame is a pure function of time, encoded with ffmpeg (1080p, 24 fps, 5:07). It's a staged recreation of the real run. Voices: Martin, Theo and Priya by real people; Barnaby by ElevenLabs. The file itself (gitignored, too large for the repo) is in the submission's Demo Video folder; the low-res animatic (960×540, 15 fps) is in [`video/v2/animatic/`](video/v2/animatic/) |
 | The film's voices | Martin, Theo and Priya: **real people**, recorded in DubMate against the picture; the film is re-timed around their reads (word timings by Whisper). Barnaby: **ElevenLabs v4** (voice "George"), performed scene by scene; free plan, non-commercial, credited on the end card |
 | The film's Lisbon scene (Quorum, ComfyUI) | **Staged** (an on-screen note says so). The endpoint counts are **real** Synapse scans (13 and 28) |
 | Brands | No real brand logos are used in the film |

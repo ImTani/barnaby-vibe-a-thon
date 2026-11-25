@@ -62,7 +62,7 @@ cup). Kristen ITC is a child's (the thank-you drawing). Nobody else's hand appea
 | Desk lamp | on | off (daylight) | off | **off** | n/a | n/a |
 | Tower power LED | blue | blue | blue | **amber** (asleep) | | |
 | Drawer 2 (USB stick) | open | open | shut | open | | |
-| Key + tag on the keyboard | ✓ | (taken in the scene 3 time-lapse) | | | | |
+| Key + tag on the keyboard | ✓ only from s2_key_lamp, where Theo drops it (not in the s1 opening, 01_wide_night(_4k), 02_medium_night) | (taken in the scene 3 time-lapse) | | | | |
 | Headphones | ✓ desk, plugged in | | | | ✓ on the stand | ✓ |
 | Photo frame | ✓ | | | | ✓ | ✓ |
 | Crumpled receipt by the in-tray | ✓ | ✓ | | | | |
@@ -70,7 +70,7 @@ cup). Kristen ITC is a child's (the thank-you drawing). Nobody else's hand appea
 | Mug | cold coffee | tea | half-drunk tea, moved beside Priya's cup | empty | | |
 | Sticky note on the bezel | ✓ | ✓ | **gone** | gone | | |
 | Glasses | | on job card 4478 | | **folded on the keyboard** | | |
-| Rag | | ✓ | | | | |
+| Rag | | ✓ (slid out of frame for the x_mug_dawn match cut) | | | | |
 | Pencil | | ✓ | ✓ | | | |
 | Priya's helmet, cup, toolroll, cards 4471/4472 | | | ✓ | | | |
 | Chair | by the box | same | pushed in by the pedestal, the helmet perched on its corner | turned in | | |

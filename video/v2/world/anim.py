@@ -11,6 +11,8 @@ Run from the repo root (Git Bash), ONE Blender at a time:
     --samples N         Eevee samples (default 24)
     --scale P           resolution percentage (default 100)
     --test LIST         render only these frames (numbers, or first/mid/last) to out/anim/_test/ (no manifest)
+    --tmp               re-render beside finished work: sequences to out/anim/_tmp_<id>/, stills to out/_tmp_<file>,
+                        no manifest update (swap the old away and the new in, then update the manifest)
     --compose           (no build) join the two halves of s9_two_desks with ffmpeg, then exit
 
 Timing: video/v2/cues.json is the clock; spans come from the animatic (anim/spans.js resolves them). Every shot is
@@ -277,9 +279,10 @@ def render_shot(sh, args, test=None):
             print(f"TEST {sh.id} frame {f} (t={sh.time(f):.2f}) in {time.time() - tf:.1f}s")
         return
     lo, hi = (int(x) for x in args.range.split("-")) if args.range else (1, sh.frames)
-    out_dir = os.path.join(OUT_ANIM, "_test", sh.id) if args.range else sh.out_dir
+    out_dir = (os.path.join(OUT_ANIM, "_test", sh.id) if args.range else
+               os.path.join(OUT_ANIM, "_tmp_" + sh.id) if args.tmp else sh.out_dir)
     os.makedirs(out_dir, exist_ok=True)
-    if not args.range:
+    if not args.range and not args.tmp:
         manifest_update(sh, "rendering")
     if sh.black_until is not None and not args.range:
         blk = os.path.join(OUT_ANIM, f"_black_{sh.res[0]}x{sh.res[1]}.jpg")
@@ -335,7 +338,7 @@ def render_shot(sh, args, test=None):
     with open(os.path.join(OUT_ANIM, "_log.txt"), "a") as fh:
         fh.write(f"{time.strftime('%H:%M:%S')} {sh.id} {sh.frames}f {dt:.0f}s {dt / sh.frames:.2f}s/f "
                  f"samples={args.samples} scale={args.scale}\n")
-    if not sh.id.endswith("_half"):
+    if not sh.id.endswith("_half") and not args.tmp:
         manifest_update(sh, "done")
 
 
@@ -378,14 +381,15 @@ def render_still(st, args, test=None):
     keep = sc.eevee.taa_render_samples
     sc.eevee.taa_render_samples = 4 if test else st.samples
     CUR["shot"] = None
-    path = os.path.join(OUT_ANIM, "_test", st.file) if test else os.path.join(HERE, "out", st.file)
+    path = (os.path.join(OUT_ANIM, "_test", st.file) if test else
+            os.path.join(HERE, "out", ("_tmp_" if args.tmp else "") + st.file))
     sc.render.filepath = path
     t1 = time.time()
     bpy.ops.render.render(write_still=True)
     sc.eevee.taa_render_samples = keep
     RIG["cam"].data.shift_x = 0.0
-    print(f"STILL {st.id} -> {st.file} in {time.time() - t1:.0f}s")
-    if not test:
+    print(f"STILL {st.id} -> {os.path.basename(path)} in {time.time() - t1:.0f}s")
+    if not test and not args.tmp:
         m = manifest_load()
         e = dict(id=st.id, kind="still", scene=st.scene, file="world/" + st.file, start=None, frames=1,
                  res=list(st.res), status="done", notes=st.notes)
@@ -597,7 +601,7 @@ def shop_shots(DM, M, hands):
     base = {}
     rest = [(ob, Vector(ob.location), ob.rotation_euler.copy()) for ob in
             (bpy.data.objects[n] for n in ("backoffice_key", "key_tag", "lamp_switch", "drawer_BRAKE PADS",
-                                           "rain_streaks"))]
+                                           "rain_streaks", "rag"))]
     streaks = bpy.data.objects["rain_streaks"]
     streaks_rest = Vector(streaks.location)
 
@@ -609,10 +613,16 @@ def shop_shots(DM, M, hands):
 
     L0 = {k: (ob.data.energy, tuple(ob.data.color)) for k, ob in L.items()}
 
-    def preset(name, ev=0.0):
+    key_tree = [bpy.data.objects["backoffice_key"]] + list(bpy.data.objects["backoffice_key"].children_recursive)
+
+    def preset(name, ev=0.0, key=True):
+        """A lighting/dressing state. key=False: Theo's BACK OFFICE key is not on the keyboard yet (it lands in
+        s2_key_lamp), for the night shots the film shows before that."""
         def setup():
             for ob, lc, rt in rest:                        # every animated prop back to its approved place
                 ob.location, ob.rotation_euler = Vector(lc), rt.copy()
+            for ob in key_tree:
+                ob.hide_render = not key
             for k, (en, col) in L0.items():                # every light back to its built level (dusk moves some)
                 if k in L:
                     L[k].data.energy, L[k].data.color = en, col
@@ -681,7 +691,7 @@ def shop_shots(DM, M, hands):
         car.location = Vector((-3.4, lerp(4.5, -1.5, k), 0.95))
         car.rotation_euler = (Vector((2.4, lerp(0.6, 2.6, k), 1.55)) - car.location).to_track_quat("-Z", "Y").to_euler()
         grid()
-    sh.segments = [(sh.start, preset("night"))]
+    sh.segments = [(sh.start, preset("night", key=False))]      # before the key drop (s2)
     sh.frame_fn = f1
     sh.black_until = 0.7                                # before light_up the frame is black: write it, don't render
     sh.notes = (f"16 s, lived in: up from black ({T_UP}-{T_LIT} s, frames {sh.frame(T_UP)}-{sh.frame(T_LIT)}; baked "
@@ -689,7 +699,7 @@ def shop_shots(DM, M, hands):
                 f"window and a car's lights sweeping the wall (frames {sh.frame(T_CAR[0])}-{sh.frame(T_CAR[1])}), "
                 f"then one slow approach from the wide (frame {sh.frame(T_GO)}) that lands framed on the monitor by "
                 f"frame {sh.frame(T_ARRIVE)} for the cut to the full-screen PC. Covers both s1 stills; full frame, "
-                f"no cam crop. 1920x1080, 12 samples.")
+                f"no cam crop. No key on the keyboard yet (Theo leaves it in s2). 1920x1080, 12 samples.")
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 2+3 · s2: the key lands, the lamp clicks off
@@ -1050,9 +1060,29 @@ def shop_shots(DM, M, hands):
     if nn.y > 0:
         nn = -nn
     sticky_cam = dict(loc=nc + nn * 0.2 + Vector((-0.07, 0.0, 0.035)), tgt=nc, lens=75.0, fstop=2.0, focus=nc)
+    # the WHOLE note sharp, only the room behind it soft: focus at the middle of the note's depth as framed (its curl,
+    # seen at an angle; its top runs out of frame), stopped down to f/28. Compared by eye at 2560 wide: at f/28, f/36
+    # and f/48 the ink and all four paper edges are equally crisp; f/28 keeps the most falloff on the desk and wall.
+    from bpy_extras.object_utils import world_to_camera_view
+    set_cam(sticky_cam["loc"], sticky_cam["tgt"], sticky_cam["lens"], sticky_cam["focus"], sticky_cam["fstop"])
+    rx, ry = sc.render.resolution_x, sc.render.resolution_y
+    sc.render.resolution_x, sc.render.resolution_y = 2560, 1440
+    bpy.context.view_layer.update()
+    fwd = (sticky_cam["tgt"] - sticky_cam["loc"]).normalized()
+    ev_note = note.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    seen = [ev_note.matrix_world @ v.co for v in ev_note.data.vertices]
+    seen = [w for w in seen if all(-0.01 <= c <= 1.01 for c in world_to_camera_view(sc, RIG["cam"], w)[:2])]
+    sc.render.resolution_x, sc.render.resolution_y = rx, ry
+    depths = [(w - sticky_cam["loc"]).dot(fwd) for w in seen]
+    s_f = 2 * min(depths) * max(depths) / (min(depths) + max(depths))    # near and far blur equally
+    sticky_cam["focus"] = sticky_cam["loc"] + fwd * s_f
+    sticky_cam["fstop"] = 28.0
+    print(f"x_sticky_dusk: note depth {min(depths):.3f}-{max(depths):.3f} m as framed, focus {s_f:.3f} m, "
+          f"f/{sticky_cam['fstop']:.0f}")
     shots["x_sticky_dusk"] = Still("x_sticky_dusk", 6, "x_sticky_dusk.png", lambda: dusk(1.0), sticky_cam,
-                                   notes="NEW (SHOTLIST 6.2): Theo's sticky note on the bezel at dusk, the lamp on, "
-                                         "shallow focus. 2560x1440, 32 samples.")
+                                   notes=f"NEW (SHOTLIST 6.2): Theo's sticky note on the bezel at dusk, the lamp on; "
+                                         f"the whole note sharp (f/{sticky_cam['fstop']:.0f}), only the room behind falls "
+                                         f"off. 2560x1440, 32 samples.")
     gl = bpy.data.objects["glasses"]
     gc = gl.matrix_world.translation.copy() + Vector((0, 0, 0.006))
     glasses_cam = dict(loc=gc + Vector((0.2, -0.2, 0.11)), tgt=gc + Vector((0.0, 0.01, 0.0)), lens=65.0, fstop=2.0,
@@ -1073,7 +1103,10 @@ def shop_shots(DM, M, hands):
 
     def shop_still_quads():
         ap = "approved still (not re-rendered); screen_quad in 1920x1080 px of its frame"
-        still_quad("02_medium_night", 2, "02_medium_night.png", pose("CAM_medium"), scr, (1920, 1080), ap, True)
+        still_quad("02_medium_night", 2, "02_medium_night.png", pose("CAM_medium"), scr, (1920, 1080),
+                   "approved still, re-rendered by desk.py (same camera and settings) without Theo's BACK OFFICE key: "
+                   "the film shows it before he leaves the key (s2_key_lamp); screen_quad in 1920x1080 px of its frame",
+                   True)
         still_quad("04_medium_monday", 3, "04_medium_monday.png", pose("CAM_medium_monday"), scr, (1920, 1080), ap,
                    True)
         still_quad("05_medium_tuesday", 7, "05_medium_tuesday.png", pose("CAM_medium_tuesday"), scr, (1920, 1080),
@@ -1089,8 +1122,46 @@ def shop_shots(DM, M, hands):
     dh = med["loc"] - mug_c
     dh.z = 0.0
     dh.normalize()
-    mug_cam = dict(loc=mug_c + dh * 0.5 + Vector((0, 0, 0.13)), tgt=mug_c + Vector((-0.03, 0.0, -0.015)),
+    # ONE camera for the whole match cut (x_mug_night, x_mug_night_off, x_mug_dawn): the mug sits in exactly the same
+    # place in all three. Martin's rag is moved out of this frame on Monday (rag_clear) instead of raising the camera.
+    mug_cam = dict(loc=mug_c + dh * 0.52 + Vector((0, 0, 0.07)), tgt=mug_c + Vector((-0.03, 0.0, -0.01)),
                    lens=70.0, fstop=2.0, focus=mug_c + dh * 0.04)
+    rag = bpy.data.objects["rag"]
+    rag_home = Vector(rag.location)
+
+    def rag_clear(cam):
+        """The shortest slide along the desk top that takes the whole rag out of cam's 16:9 frame (with a margin)."""
+        from bpy_extras.object_utils import world_to_camera_view
+        set_cam(cam["loc"], cam["tgt"], cam["lens"], cam["focus"], cam["fstop"])
+        rx, ry = sc.render.resolution_x, sc.render.resolution_y
+        sc.render.resolution_x, sc.render.resolution_y = 1920, 1080
+        desk = bpy.data.objects["desk_top"]
+        dx = [(desk.matrix_world @ Vector(c)) for c in desk.bound_box]
+        x0, x1 = min(v.x for v in dx) + 0.03, max(v.x for v in dx) - 0.03
+        y0, y1 = min(v.y for v in dx) + 0.01, max(v.y for v in dx) - 0.03
+        best = None
+        for dist in [0.01 * i for i in range(2, 61)]:
+            for a in range(0, 360, 10):
+                off = Vector((cos(radians(a)), sin(radians(a)), 0.0)) * dist
+                rag.location = rag_home + off
+                bpy.context.view_layer.update()
+                ev = rag.evaluated_get(bpy.context.evaluated_depsgraph_get())
+                cs = [ev.matrix_world @ Vector(c) for c in ev.bound_box]
+                if not all(x0 <= c.x <= x1 and y0 <= c.y <= y1 for c in cs):
+                    continue
+                vs = [world_to_camera_view(sc, RIG["cam"], c) for c in cs]
+                m = 0.04
+                if (all(v.x < -m for v in vs) or all(v.x > 1 + m for v in vs) or all(v.y < -m for v in vs) or
+                        all(v.y > 1 + m for v in vs) or all(v.z < 0 for v in vs)):
+                    best = off
+                    break
+            if best is not None:
+                break
+        rag.location = rag_home
+        sc.render.resolution_x, sc.render.resolution_y = rx, ry
+        print(f"rag_clear: {'moved ' + str(tuple(round(x, 3) for x in best)) if best is not None else 'NOT FOUND'}")
+        return best if best is not None else Vector((0.0, 0.0, 0.0))
+    rag_off = rag_clear(mug_cam)
     shots["x_mug_night"] = Still("x_mug_night", 2, "x_mug_night.png", preset("night"), mug_cam,
                                  notes="v2.3 match cut (Thu night -> Mon): Theo's WORLD'S OKAYEST NEPHEW mug in the "
                                        "lamp pool, cold coffee, shallow focus, the monitor's glow soft behind. "
@@ -1122,6 +1193,7 @@ def shop_shots(DM, M, hands):
 
     def setup_dawn():
         preset("monday")()
+        rag.location = rag_home + rag_off                  # out of the match cut's frame (preset() puts it back)
         base["day"] = {k: L[k].data.energy for k in ("L_sun", "L_window_day", "L_room_fill", "L_strip",
                                                        "L_drawer_bounce", "L_screen_day")}
         base["sky"] = sky_m.inputs["Emission Strength"].default_value
@@ -1153,10 +1225,11 @@ def shop_shots(DM, M, hands):
                                            "Tuesday). 2560x1440, 32 samples.")
     wide = pose("CAM_wide")
     wide4 = dict(wide, lens=33.0, shift_x=-0.06)
-    shots["01_wide_night_4k"] = Still("01_wide_night_4k", 1, "01_wide_night_4k.png", preset("night", 0.45), wide4,
-                                      res=(3840, 2160), notes="v2.3 plate for 2D pans: the night wide at 3840x2160, a "
-                                                              "little wider (38 -> 33 mm) with the extra on the window "
-                                                              "side. 32 samples.")
+    shots["01_wide_night_4k"] = Still("01_wide_night_4k", 1, "01_wide_night_4k.png", preset("night", 0.45, key=False),
+                                      wide4, res=(3840, 2160),
+                                      notes="v2.3 plate for 2D pans: the night wide at 3840x2160, a little wider (38 -> "
+                                            "33 mm) with the extra on the window side; s1, before the key drop: no key "
+                                            "on the keyboard. 32 samples.")
     key_w = bpy.data.objects["backoffice_key"].matrix_world.translation.copy()
     rk_tgt = scr_c.copy()
     rk_loc = key_w + Vector((0.05, -0.2, 0.075))
@@ -1590,6 +1663,7 @@ def parse():
     p.add_argument("--profile", action="store_true")
     p.add_argument("--overwrite", action="store_true")
     p.add_argument("--list", action="store_true")
+    p.add_argument("--tmp", action="store_true")
     return p.parse_args(argv)
 
 

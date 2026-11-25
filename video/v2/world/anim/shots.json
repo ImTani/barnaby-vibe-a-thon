@@ -14992,7 +14992,7 @@
     1440
    ],
    "status": "done",
-   "notes": "NEW (SHOTLIST 6.2): Theo's sticky note on the bezel at dusk, the lamp on, shallow focus. 2560x1440, 32 samples."
+   "notes": "NEW (SHOTLIST 6.2): Theo's sticky note on the bezel at dusk, the lamp on; the whole note sharp (f/28), only the room behind falls off. 2560x1440, 32 samples."
   },
   {
    "id": "x_glasses_dusk",
@@ -15020,7 +15020,7 @@
     1080
    ],
    "status": "approved",
-   "notes": "approved still (not re-rendered); screen_quad in 1920x1080 px of its frame",
+   "notes": "approved still, re-rendered by desk.py (same camera and settings) without Theo's BACK OFFICE key: the film shows it before he leaves the key (s2_key_lamp); screen_quad in 1920x1080 px of its frame",
    "screen_quad": [
     [
      677.9,
@@ -15250,7 +15250,7 @@
     2160
    ],
    "status": "done",
-   "notes": "v2.3 plate for 2D pans: the night wide at 3840x2160, a little wider (38 -> 33 mm) with the extra on the window side. 32 samples."
+   "notes": "v2.3 plate for 2D pans: the night wide at 3840x2160, a little wider (38 -> 33 mm) with the extra on the window side; s1, before the key drop: no key on the keyboard. 32 samples."
   },
   {
    "id": "x_mug_night",

@@ -23,6 +23,7 @@ Options (after the `--`):
     --regen-screen     rebuild screen_placeholder.png
     --regen-photo      re-render the 2009 photo (out/photo_2009.png) from its mini-set
     --save-blend       also save out/desk.blend (for animation work)
+    --prefix P         prefix every output file name with P (e.g. _tmp_: render beside a finished still, then swap)
     --no-render        build only
 
 Collections: SET (the room, desk, PC, corkboard, shelf), WORKSHOP (through the doorway), THEO (Thursday night only),
@@ -81,6 +82,9 @@ SHOTS = {
     "bin_monday": ("CAM_bin", "monday", "x_bin_monday.png", 0.9),
 }
 DEFAULT_SHOTS = "wide_night,medium_night,keys_night,medium_monday,medium_tuesday"
+# the film shows these night stills before Theo leaves his BACK OFFICE key on the keyboard (s2_key_lamp drops it in):
+# rendered without the key. keys_night (the drop's own frame) keeps it.
+BEFORE_KEY = {"wide_night", "medium_night"}
 
 # what the monitor shows in each preset (the shop PC look-dev is canon; see CONTINUITY.md)
 def _first(*paths):
@@ -127,6 +131,7 @@ def parse_args():
     p.add_argument("--regen-screen", action="store_true")
     p.add_argument("--save-blend", action="store_true")
     p.add_argument("--no-render", action="store_true")
+    p.add_argument("--prefix", default="")
     return p.parse_args(argv)
 
 
@@ -939,6 +944,56 @@ def lathe(name, prof, n=20, loc=(0, 0, 0), m=None, rot=(0, 0, 0), seg_mats=None,
             f.material_index = mi
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     return finish(name, bm, m, parent, loc, rot, angle=angle, coll=coll)
+
+
+def mug_handle(R, m, parent):
+    """The mug's handle: an oval-section D swept in the mug's XZ plane (handle side +x). Each end runs level into the
+    wall and is buried in it (stopping short of the inner wall), and over the last ~12 mm the section flares into a
+    slip-cast root (a fillet that spreads along the body), so the handle grows out of the mug, not beside it."""
+    cx, cz, ax, az, p = R + 0.003, 0.0515, 0.0215, 0.0255, 0.75      # the D's centreline (squared ellipse)
+    th_ = [pi / 2 - pi * i / 600 for i in range(601)]
+    dense = [Vector((cx + ax * abs(cos(t)) ** p, 0.0, cz + az * math.copysign(abs(sin(t)) ** p, sin(t))))
+             for t in th_]
+    acc = [0.0]
+    for a, b in zip(dense, dense[1:]):
+        acc.append(acc[-1] + (b - a).length)
+    n_arc, pts, k = 56, [], 0
+    for i in range(n_arc + 1):
+        s = acc[-1] * i / n_arc
+        while k < len(acc) - 2 and acc[k + 1] < s:
+            k += 1
+        u = (s - acc[k]) / max(acc[k + 1] - acc[k], 1e-9)
+        pts.append(dense[k].lerp(dense[k + 1], u))
+    x_in = R - 0.003                                                  # the ends, inside the wall (inner wall 0.0362)
+    top = [Vector((x_in + (cx - x_in) * i / 5, 0.0, cz + az)) for i in range(5)]
+    bot = [Vector((cx - (cx - x_in) * i / 5, 0.0, cz - az)) for i in range(1, 6)]
+    path = top + pts + bot
+    hw, ht, nr = 0.0062, 0.0040, 16                                   # half width (y), half thickness, section verts
+    bm = bmesh.new()
+    rings = []
+    for i, c in enumerate(path):
+        a, b = path[max(i - 1, 0)], path[min(i + 1, len(path) - 1)]
+        tg = (b - a).normalized()
+        nrm = Vector((-tg.z, 0.0, tg.x))                              # in-plane normal; y is the other axis
+        u = 1.0 - clamp01_((c.x - R) / 0.012)                         # 1 at the wall, 0 from 12 mm out
+        ft = 1.0 + 0.75 * u ** 2.6                                    # the root's fillet: it spreads along the body
+        fw = 1.0 + 0.12 * u ** 2                                      # (up and down) far more than sideways
+        rings.append([bm.verts.new(c + nrm * (ht * ft * cos(2 * pi * j / nr)) +
+                                   Vector((0.0, hw * fw * sin(2 * pi * j / nr), 0.0))) for j in range(nr)])
+    for ra, rb in zip(rings, rings[1:]):
+        for j in range(nr):
+            j2 = (j + 1) % nr
+            bm.faces.new((ra[j], rb[j], rb[j2], ra[j2]))
+    for ring, c in ((rings[0], path[0]), (rings[-1], path[-1])):     # caps (buried in the wall)
+        cv = bm.verts.new(c)
+        for j in range(nr):
+            bm.faces.new((ring[j], ring[(j + 1) % nr], cv))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return finish("mug_handle", bm, m, parent, angle=60)
+
+
+def clamp01_(x):
+    return 0.0 if x < 0 else 1.0 if x > 1 else x
 
 
 def torus(name, R, r, loc=(0, 0, 0), m=None, rot=(0, 0, 0), nR=24, nr=8, arc=None, parent=None, coll=None,
@@ -4098,7 +4153,7 @@ def build_desk_props(M):
     R = 0.042
     lathe("mug_body", [(0.0, 0.0), (0.036, 0.0), (0.0405, 0.004), (R, 0.012), (R, 0.092), (0.0405, 0.0965),
                        (0.0375, 0.0965), (0.0365, 0.092), (0.0362, 0.012), (0.0, 0.009)], n=24, m=M["ceramic"], parent=mug)
-    torus("mug_handle", 0.026, 0.0065, (R - 0.004, 0, 0.051), M["ceramic"], rot=(90, 0, 0), nR=12, nr=8, arc=(-76, 76), parent=mug)
+    mug_handle(R, M["ceramic"], mug)
     t = text("mug_text_src", "WORLD'S\nOKAYEST\nNEPHEW", "verdanab.ttf", 0.0118, (0, 0, 0), M["navy"], line=0.95)
     bpy.context.view_layer.update()
     dg = bpy.context.evaluated_depsgraph_get()
@@ -5182,12 +5237,16 @@ def main():
         sc.render.resolution_x, sc.render.resolution_y = res
         apply_preset(preset, M, hands)
         sc.view_settings.exposure += ev
+        key = bpy.data.objects.get("backoffice_key")
+        if key:
+            for ob in [key] + list(key.children_recursive):
+                ob.hide_render = shot in BEFORE_KEY
         sc.camera = bpy.data.objects[cam]
         grid_for_camera(sc.camera, args.scale)
-        sc.render.filepath = os.path.join(OUT, fname)
+        sc.render.filepath = os.path.join(OUT, args.prefix + fname)
         t1 = time.time()
         bpy.ops.render.render(write_still=True)
-        print(f"RENDERED {shot} -> {fname} in {time.time() - t1:.1f}s")
+        print(f"RENDERED {shot} -> {args.prefix + fname} in {time.time() - t1:.1f}s")
 
 
 if __name__ == "__main__":

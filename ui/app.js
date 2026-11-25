@@ -67,18 +67,27 @@
     }
     return box;
   }
+  // a folded section: technical detail and the change itself are there for whoever wants them, closed by default
+  function fold(cls, label, body) {
+    const d = el('details', 'fold ' + cls);
+    d.append(el('summary', '', label), body);
+    return d;
+  }
+  // Cards lead with the household's words: the plain title and summary (detail). The endpoint, the arguments,
+  // the test line (technical) and the diff sit folded underneath.
   function showCard(a) {
     if (document.getElementById('card-' + a.id)) return;
-    const labels = { write: 'Confirm a change', grow: 'Barnaby would like to grow', build: 'Barnaby wrote new code' };
+    const labels = { write: 'Confirm a change', grow: 'Barnaby would like a new ability', build: 'Barnaby made something new' };
     const card = el('div', 'card ' + a.tier); card.id = 'card-' + a.id;
     card.append(el('div', 'k', labels[a.tier] || 'Approval'), el('div', 'title', a.title));
     if (a.detail) card.append(el('div', 'detail', a.detail));
-    if (a.diff) card.append(renderDiff(a.diff));
+    if (a.diff) card.append(fold('change', 'See the change', renderDiff(a.diff)));
+    if (a.technical) card.append(fold('technical', 'Technical detail', el('div', 'technical-body', a.technical)));
     const actions = el('div', 'actions');
-    const yes = el('button', 'primary', a.tier === 'build' ? 'Approve and merge' : a.tier === 'grow' ? 'Unlock' : 'Approve');
-    const no = el('button', '', a.tier === 'grow' ? 'Not now' : 'Decline');
+    const yes = el('button', 'primary', a.tier === 'build' ? 'Yes, add it' : a.tier === 'grow' ? 'Yes, go ahead' : 'Approve');
+    const no = el('button', '', a.tier === 'write' ? 'Decline' : 'Not now');
     yes.onclick = () => decide(a.id, true); no.onclick = () => decide(a.id, false);
-    actions.append(yes, no, el('span', 'hint', a.voice_ok ? 'or say "yes"' : a.tier === 'build' ? 'read the diff first' : ''));
+    actions.append(yes, no, el('span', 'hint', a.voice_ok ? 'or say "yes"' : a.tier === 'build' ? 'a click, not by voice' : ''));
     card.append(actions);
     cards.append(card);
     card.scrollIntoView({ behavior: 'smooth', block: 'end' });

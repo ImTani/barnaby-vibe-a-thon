@@ -3,7 +3,7 @@
 Event types (data shape in brackets):
   system.connecting/connected  {system, endpoints, exposed}      growth.unlock/build/compose.*  {system, ...}
   tool.call  {id, system, tool, input, tier}                       tool.result {id, ok, preview}
-  approval.requested {id, kind, title, detail, diff?}              approval.resolved {id, approved}
+  approval.requested {id, kind, title, detail, technical, diff?}            approval.resolved {id, approved}
   say  {text, final}   (what Barnaby says)                          turn.start/turn.end {turn, ...}
   log  {level, text}
 """

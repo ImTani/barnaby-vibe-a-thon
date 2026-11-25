@@ -1,9 +1,12 @@
 """Tiered approvals. The gate rises with what's at stake; a misheard "yes" can never change code.
 
+Every card speaks to the household first: `title` and `detail` are plain words; `technical` (the endpoint, the
+arguments, the test line) and `diff` are for whoever wants them, and the display keeps them folded away.
+
   read   any GET                                   -> no gate
   write  POST/PUT/PATCH                            -> spoken "yes" or a click on the confirmation card
   grow   Unlock / Compose (Barnaby grows a tool)   -> one click
-  build  Barnaby writes code                       -> read the diff, then click (never by voice)
+  build  Barnaby writes code                       -> hear what it does (diff on the card), then click (never by voice)
   denied deny-listed endpoints, DELETE by default  -> never
 """
 from __future__ import annotations
@@ -26,6 +29,7 @@ class Pending:
     detail: str
     tier: str
     diff: str | None = None
+    technical: str = ""
     future: asyncio.Future = field(default_factory=lambda: asyncio.get_running_loop().create_future())
 
 
@@ -34,18 +38,18 @@ class Approvals:
         self.pending: dict[str, Pending] = {}
         self._ids = itertools.count(1)
 
-    async def request(self, *, tier: str, kind: str, title: str, detail: str = "", diff: str | None = None,
-                      timeout: float = 1800) -> bool:
+    async def request(self, *, tier: str, kind: str, title: str, detail: str = "", technical: str = "",
+                      diff: str | None = None, timeout: float = 1800) -> bool:
         pid = f"a{next(self._ids)}"
         if tier in settings.auto_approve:
             # full card content, so a recorded run can be replayed with real cards (ui/mock.js)
-            bus.emit("approval.auto", id=pid, tier=tier, kind=kind, title=title, detail=detail, diff=diff,
-                     voice_ok=tier in VOICE_OK)
+            bus.emit("approval.auto", id=pid, tier=tier, kind=kind, title=title, detail=detail, technical=technical,
+                     diff=diff, voice_ok=tier in VOICE_OK)
             return True
-        p = Pending(pid, kind, title, detail, tier, diff)
+        p = Pending(pid, kind, title, detail, tier, diff, technical)
         self.pending[pid] = p
-        bus.emit("approval.requested", id=pid, tier=tier, kind=kind, title=title, detail=detail, diff=diff,
-                 voice_ok=tier in VOICE_OK)
+        bus.emit("approval.requested", id=pid, tier=tier, kind=kind, title=title, detail=detail, technical=technical,
+                 diff=diff, voice_ok=tier in VOICE_OK)
         try:
             ok = await asyncio.wait_for(p.future, timeout)
         except TimeoutError:
@@ -69,7 +73,8 @@ class Approvals:
         return next(reversed(self.pending.values()), None) if self.pending else None
 
     def summary(self) -> list[dict]:
-        return [{"id": p.id, "tier": p.tier, "kind": p.kind, "title": p.title, "detail": p.detail, "diff": p.diff}
+        return [{"id": p.id, "tier": p.tier, "kind": p.kind, "title": p.title, "detail": p.detail,
+                 "technical": p.technical, "diff": p.diff, "voice_ok": p.tier in VOICE_OK}
                 for p in self.pending.values()]
 
 

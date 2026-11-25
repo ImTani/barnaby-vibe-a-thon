@@ -31,8 +31,9 @@ GROWTH = {f"mcp__barnaby__{t}" for t in ("capabilities", "unlock", "build", "com
 
 
 class Script:
-    """A model that follows a script, one step per request: a list of (tool, args) calls, or the reply text.
-    It keeps what it was shown, so a test can read the tool results and the tools on offer."""
+    """A model that follows a script, one step per request: a list of (tool, args) calls (words to say alongside
+    them may come first, as plain strings), or the reply text. It keeps what it was shown, so a test can read the
+    tool results and the tools on offer."""
 
     def __init__(self, *steps):
         self.steps = list(steps)
@@ -46,7 +47,7 @@ class Script:
         step = self.steps.pop(0)
         if isinstance(step, str):
             return ModelResponse(parts=[TextPart(step)])
-        return ModelResponse(parts=[ToolCallPart(name, args) for name, args in step])
+        return ModelResponse(parts=[TextPart(s) if isinstance(s, str) else ToolCallPart(*s) for s in step])
 
     def results(self, tool: str) -> list[ToolReturnPart]:
         """What the model was told each time it called `tool`, in order."""
@@ -164,7 +165,8 @@ async def test_the_conversation_and_the_servers_carry_across_turns(shop, make_wo
 
 async def test_writes_and_skills_wait_for_the_person_one_card_at_a_time(shop, make_worker):
     shop.exposed.append(ORDER)
-    script = Script([("mcp__fixture__place_order", {"item": "brake pads", "quantity": 10}),
+    asks = "Ten brake pads, and Tom's bike handed back, shall I?"
+    script = Script([asks, ("mcp__fixture__place_order", {"item": "brake pads", "quantity": 10}),
                      ("mcp__fixture-k1__hand_back", {"job_id": 4481})], "Ordered, and handed back.")
     w = make_worker(script)
     with heard() as events:
@@ -173,7 +175,11 @@ async def test_writes_and_skills_wait_for_the_person_one_card_at_a_time(shop, ma
 
     assert said == "Ordered, and handed back."
     assert [c["tier"] for c in cards] == ["write", "write"]
-    assert cards[0]["detail"].startswith(ORDER) and cards[1]["title"] == "Hand a job back"
+    # plain words first; the endpoint and the arguments are tucked away in `technical`
+    assert cards[0]["title"] == "Order an item: 10 × brake pads" and cards[0]["technical"].startswith(ORDER)
+    assert cards[1]["title"] == "Hand a job back: job 4481" and cards[1]["technical"].startswith("hand_back")
+    # the first card puts Barnaby's question to the person; once a result is in, a later card doesn't borrow it
+    assert (cards[0]["detail"], cards[1]["detail"]) == (asks, "")
     order = [e.type for e in events if e.type in ("approval.requested", "approval.resolved", "tool.result")]
     assert order == ["approval.requested", "approval.resolved", "tool.result"] * 2   # one card at a time, results live
     [placed], [handed] = script.results("mcp__fixture__place_order"), script.results("mcp__fixture-k1__hand_back")
@@ -228,7 +234,10 @@ async def test_growth_tools_then_restart_and_carry_on_with_the_history(shop, mak
     assert script.results("mcp__barnaby__connect")[0].content == "Give a known profile, or a repo path and its API URL."
     bad, good = script.results("mcp__barnaby__unlock")
     assert bad.outcome == "failed" and "No system called 'nowhere'" in bad.content      # errors reach the model
-    assert good.content.startswith(f"Unlocked {ORDER} (tool mcp__fixture__place_order).")
+    assert good.content.startswith(f"Unlocked {ORDER} (tool mcp__fixture__place_order): you can now order an item.")
+    unlock_card, order_card = of(events, "approval.auto")                   # no `ability` given: the endpoint's gist
+    assert unlock_card["title"] == "Let Barnaby order an item" and unlock_card["detail"] == "to order pads"
+    assert unlock_card["technical"].startswith(ORDER) and order_card["title"] == "Order an item: 10 × pads"
 
     # the server was restarted and the turn carried on by itself, with the conversation so far
     assert of(events, "system.reloaded") == [{"system": "fixture"}]

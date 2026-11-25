@@ -44,10 +44,10 @@ INTENTS = [
 
 NARRATE = {
     ("approval.requested", "write"): ["Shall I go ahead?", "Shall I?", "Shall I proceed?"],
-    ("approval.requested", "build"): ["It's on your display for review.", "The change is ready for you to look over."],
-    ("growth.build.tested", True): ["The tests pass.", "All the tests pass."],
-    ("growth.build.tested", False): ["The tests don't pass yet. I'll leave it there."],
-    ("growth.build.merged", None): ["Merged. Bringing it live.", "In. Restarting the system."],
+    ("approval.requested", "build"): ["It's on your display, whenever you're ready.", "Have a look on your display first."],
+    ("growth.build.tested", True): ["Theo's checks all pass.", "Everything still checks out."],
+    ("growth.build.tested", False): ["It doesn't check out yet, so I'll leave it there."],
+    ("growth.build.merged", None): ["Added. Just a moment while the system catches up.", "It's in. One moment."],
 }
 
 

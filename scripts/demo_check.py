@@ -12,6 +12,7 @@ shop's own API and git history. Runs on the local Claude Code login (no API key 
   4 Build     "who's overloaded this week?"                       -> new report endpoint written, tested, merged, used
   5 Act       "move Dev's two wheel builds to Priya"              -> both jobs reassigned in the 2009 system
   6 Compose   "hand back job 4481, and make it one step"          -> Synapse Custom composes a skill; Barnaby uses it
+  Speech      everything Barnaby said, across the run             -> none of the machine's words (toolkit.JARGON)
 """
 from __future__ import annotations
 
@@ -30,6 +31,7 @@ import httpx  # noqa: E402
 from barnaby.config import settings  # noqa: E402
 
 RESULTS: list[tuple[str, bool, str]] = []
+HEARD = None                    # the run's events (a bus subscription), for what Barnaby said aloud
 
 
 def check(name: str, ok: bool, detail: str = "") -> bool:
@@ -66,6 +68,9 @@ async def main() -> int:
     build_mod.registry = systems_mod.registry
     registry, worker = systems_mod.registry, worker_mod.worker
     shop_url = "http://127.0.0.1:8101"
+    global HEARD
+    from barnaby.events import bus
+    HEARD = bus.subscribe(replay=0)
 
     t0 = time.perf_counter()
     said = await worker.ask("Barnaby, this is the shop's system. Look after them for me.")   # Theo, his last week
@@ -143,7 +148,26 @@ async def main() -> int:
     return report()
 
 
+def speech_check() -> None:
+    """Everything Barnaby said this run (each `say`, spoken or final) is in the household's words, unless the
+    person used the word first."""
+    from barnaby.toolkit import jargon
+    said: list[str] = []
+    theirs, slips = "", []
+    while HEARD is not None and not HEARD.empty():
+        ev = HEARD.get_nowait()
+        if ev.type == "turn.start" and not ev.data.get("text", "").startswith("[Barnaby system]"):
+            theirs += " " + ev.data["text"]
+        elif ev.type == "say" and ev.data.get("text") and ev.data["text"] not in said:
+            said.append(t := ev.data["text"])
+            if words := jargon(t, theirs):
+                slips.append(f"{', '.join(words)} in \"{t[:100]}\"")
+    check("Speech: no endpoint/API/tool/MCP/server/deploy/merge/diff/worktree/Synapse in anything Barnaby said",
+          bool(said) and not slips, "; ".join(slips) if slips else f"{len(said)} lines, all plain")
+
+
 def report() -> int:
+    speech_check()
     passed = sum(ok for _, ok, _ in RESULTS)
     print(f"\n{passed}/{len(RESULTS)} checks passed")
     return 0 if passed == len(RESULTS) else 1

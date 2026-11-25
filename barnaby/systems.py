@@ -151,13 +151,14 @@ class Registry:
                  read_only=sum(e.read_only for e in eps), seconds=round(res.seconds, 2))
         return {"ok": res.ok, "discovered": len(eps), "exposed": starter}
 
-    async def compose(self, s: System, description: str) -> synapse.CustomResult:
-        """Compose a new skill with Synapse Custom mode and register it as an MCP server for this system."""
+    async def compose(self, s: System, description: str, name: str = "") -> synapse.CustomResult:
+        """Compose a new skill with Synapse Custom mode and register it as an MCP server for this system.
+        `name` is what the household calls it ("Hand back a bike in one step"), for its cards."""
         res = await synapse.build_custom(s.name, s.repo_path, description)
         if res.ok:
             s.skills = [k for k in s.skills if k["tool"] != res.tool]
             s.skills.append({"server": f"{s.name}-k{len(s.skills) + 1}", "tool": res.tool, "path": str(res.server),
-                             "description": description})
+                             "description": description, "name": name})
             self.save()
         return res
 

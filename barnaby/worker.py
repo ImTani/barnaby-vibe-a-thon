@@ -58,7 +58,7 @@ class Worker(WorkerState):
         def sdk_tool(t: GrowthTool):
             async def handler(args: dict[str, Any]) -> dict:
                 return _text(await t.run(self, args))
-            return tool(t.name, t.description, dict.fromkeys(t.params, str))(handler)
+            return tool(t.name, t.description, t.json_schema())(handler)
 
         return create_sdk_mcp_server("barnaby", tools=[sdk_tool(t) for t in growth_tools()])
 

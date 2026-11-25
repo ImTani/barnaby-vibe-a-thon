@@ -6,7 +6,23 @@
 (function () {
   const C = CUES.scenes[8], S = C.start, E = C.end, FI = .6;
   let run, dimmer, rightOff, shade, title, mark, tag, old, card, cardParts, seam;
+  const LOCK_TOP = 396;          // the lockup's top: its cap height sits on the frame's centre line, the hand below it
   const REPO = 'github.com/ImTani/barnaby-vibe-a-thon';   // the public repo (confirmed by the coordinator)
+  /** Theo's hand, written on: word by word, left to right, behind a soft-edged mask at a pen's pace (each word's time
+   * by its letters, a short lift of the pen between words). h = {e, wd: [{e, n}]}; a = start, d = the whole line,
+   * k = the titles' fade (1 = up). Word widths are measured once, laid out in the loaded hand. */
+  function write(h, t, a, d, k) {
+    h.e.style.opacity = k.toFixed(4);
+    const LIFT = .09, F = 30, letters = h.wd.reduce((s, w) => s + w.n, 0), per = (d - LIFT * (h.wd.length - 1)) / letters;
+    let at = a;
+    for (const w of h.wd) {
+      if (!w.px) w.px = w.e.offsetWidth;
+      const dur = w.n * per, u = clamp((t - at) / dur), x = u * (w.px + F);
+      const m = u >= 1 ? 'none' : `linear-gradient(90deg, #000 ${(x - F).toFixed(1)}px, rgba(0,0,0,0) ${x.toFixed(1)}px)`;
+      w.e.style.webkitMaskImage = m; w.e.style.maskImage = m;
+      at += dur + LIFT;
+    }
+  }
   Scene({
     id: '9', start: S, end: E, fadeIn: 0,
     build(root) {
@@ -28,16 +44,37 @@
       ]), E, { dissolves: true, scene: 9 });
       rightOff = el('div', { cls: 'ov' }, root);     // the new desk fades (right half, soft edge)
       css(rightOff, { background: 'linear-gradient(90deg, rgba(0,0,0,0) 940px, rgba(6,5,4,1) 1010px)', display: 'none' });
-      // the titles over the two desks (TITLES.md): a scrim, the lockup, the line, its coda; one centred column
+      // the titles over the two desks (TITLES.md): the wordmark at the centre of the frame, and under it the line and
+      // its coda in Theo's hand (Segoe Print, as on his sticky note: make_note.py), written on word by word; a soft
+      // oval scrim keeps them legible over the desks. Styles live here (s9-titles), not in index.html.
+      if (!document.getElementById('s9-titles')) el('style', { attrs: { id: 's9-titles' }, html: `
+        @font-face{font-family:"TheoHand";src:url("file:///C:/Windows/Fonts/segoepr.ttf") format("truetype"),local("Segoe Print");font-weight:400}
+        .s9-titles{display:flex;flex-direction:column;align-items:center;padding-top:${LOCK_TOP}px}
+        .s9-titles .lock{display:flex;align-items:flex-end;gap:28px;margin-left:-14px;font:600 124px/1 "Sitka Subheading","Sitka Text",Constantia,Georgia,serif;
+          color:#EEEAE1;letter-spacing:-.012em;text-shadow:0 2px 22px rgba(8,7,6,.55)}
+        .s9-titles .lock .m{display:block;width:100px;height:100px;margin-bottom:16px;filter:drop-shadow(0 0 18px rgba(211,161,74,.22))}
+        .s9-titles .hand{font:400 58px/1.2 "TheoHand","Segoe Print",cursive;color:#F1ECE2;white-space:nowrap;margin-top:58px;
+          text-shadow:0 1px 16px rgba(8,7,6,.75)}
+        .s9-titles .hand.coda{color:#D3A14A;margin-top:4px;font-size:56px;transform:rotate(-1.6deg) translateX(34px)}
+        .s9-titles .hand .wd{display:inline-block;padding:.12em .3em .3em;margin:-.12em -.3em -.3em}
+        .s9-titles .hand .sp{display:inline-block;width:.32em}
+        .t-card .cred .vox{margin-left:auto;color:#A8A194}
+        .s9-warm{position:absolute;left:-9999px;top:0;visibility:hidden;font:400 40px "TheoHand"}
+      ` }, document.head);
+      el('span', { cls: 's9-warm', text: 'Every system deserves a butler. Even the old ones.' }, root);
+      try { document.fonts.load('400 58px "TheoHand"'); } catch (e) { }
       shade = el('div', { cls: 'ov' }, root);
-      css(shade, { background: 'linear-gradient(180deg, rgba(10,9,8,.86) 0px, rgba(10,9,8,.74) 440px, rgba(10,9,8,0) 720px)', display: 'none' });
-      const T = el('div', { cls: 'ov t-titles' }, root);
+      css(shade, { background: 'radial-gradient(ellipse 1080px 470px at 960px 600px, rgba(9,8,7,.8) 0%, rgba(9,8,7,.66) 42%, rgba(9,8,7,.3) 72%, rgba(9,8,7,0) 100%)', display: 'none' });
+      const T = el('div', { cls: 'ov s9-titles' }, root);
+      const words = s => s.split(' ').map(w => `<span class="wd">${w}</span>`).join('<span class="sp"></span>');
       T.innerHTML = `
         <div class="lock"><span class="m"></span><span class="w">Barnaby</span></div>
-        <div class="line">Every system deserves a butler.</div>
-        <div class="line coda">Even the old ones.</div>`;
+        <div class="hand">${words('Every system deserves a butler.')}</div>
+        <div class="hand coda">${words('Even the old ones.')}</div>`;
       css(T, { display: 'none' });
-      title = T.querySelector('.lock'); tag = T.querySelectorAll('.line')[0]; old = T.querySelectorAll('.line')[1];
+      title = T.querySelector('.lock');
+      tag = { e: T.querySelectorAll('.hand')[0] }; old = { e: T.querySelectorAll('.hand')[1] };
+      for (const h of [tag, old]) h.wd = [...h.e.querySelectorAll('.wd')].map(e => ({ e, n: e.textContent.length }));
       mark = T.querySelector('.m'); mark.innerHTML = markSVG('#D3A14A');
       // the product end card: warm charcoal, a 12-column grid (192 px margins), brass only in the mark
       card = el('div', { cls: 'ov t-card' }, root);
@@ -50,7 +87,7 @@
           <div><b>Compose</b><span>Turns steps he keeps repeating into one.</span></div>
           <div><b>Build</b><span>Writes what’s missing, and adds it when you say so.</span></div>
         </div>
-        <div class="cred"><span><b>Built on Synapse</b></span><span class="ev">2nd Brain Labs × Geek Room Vibe-a-thon</span></div>
+        <div class="cred"><span><b>Built on Synapse</b></span><span class="ev">2nd Brain Labs × Geek Room Vibe-a-thon</span><span class="vox">Voices: zoonie and sylenthsnares</span></div>
         ${REPO ? `<div class="repo">${REPO}</div>` : ''}
         <div class="fine">Recreated from a real recorded run. Quorum and ComfyUI scenes are staged; endpoint counts come from real Synapse scans. Martin, Theo and Priya voiced by real people; Barnaby’s voice: ElevenLabs. Spokes &amp; Sprockets is a fictional shop.</div>`;
       const cm = card.querySelector('.m'); cm.innerHTML = markSVG('#D3A14A'); markAnim(cm, 0, -100);   // at rest: no ring arcs
@@ -64,19 +101,19 @@
     },
     render(t) {
       run.render(t);
-      const nd = M('new_desk_fades'), EC = CUES.marks.end_card != null ? M('end_card') : M('credit') - .2, out = EC - .7;
+      const nd = M('new_desk_fades'), EC = CUES.marks.end_card != null ? M('end_card') : M('credit') - .2, out = EC - .45;
       rightOff.style.display = t > nd ? 'block' : 'none';
       rightOff.style.opacity = (.66 * easeInOutSine(P(t, nd, 1.6))).toFixed(3);      // the new desk recedes, not gone
-      // titles: in on the music (the lockup, then its line), the coda as the new desk fades; out together, calmly
-      const tOut = 1 - easeInOutSine(P(t, out, .7));
+      // titles: the lockup up on the music, then the line written on in Theo's hand;
+      // the coda written as the new desk fades; all out together, calmly, under the card's dissolve
+      const tOut = 1 - easeInOutSine(P(t, out, .75));
       const rise = (e, a, d) => { const k = easeOutCubic(P(t, a, d)) * tOut; e.style.opacity = k.toFixed(4); e.style.transform = `translateY(${((1 - easeOutCubic(P(t, a, d))) * 8).toFixed(2)}px)`; return k; };
-      const on = t > M('title') - .7 && t < out + .75;
+      const on = t > M('title') - .7 && t < out + .8;
       shade.parentNode && (shade.style.display = on ? 'block' : 'none');
-      shade.style.opacity = (easeInOutSine(P(t, M('title') - .7, 1.2)) * tOut).toFixed(3);
+      shade.style.opacity = (easeInOutSine(P(t, M('title') - .7, 1.4)) * tOut).toFixed(3);
       title.parentNode.style.display = on ? 'flex' : 'none';
       rise(title, M('title'), 1.1);
-      rise(tag, M('title') + 1.0, 1.0);
-      rise(old, M('old_ones'), 1.0);
+      if (on) { write(tag, t, M('title') + 1.2, 2.1, tOut); write(old, t, M('old_ones'), 1.35, tOut); }
       markAnim(mark, t, M('bell_final') + .55);            // the mark rings once, just after the real bell
       // the end card: a dissolve in over the titles' exit, then its rows settle in turn
       const ck = easeInOutSine(P(t, EC - .1, .8));

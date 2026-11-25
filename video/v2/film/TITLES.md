@@ -14,19 +14,21 @@ accent; warm ivory on warm charcoal). Built in `scenes/s9.js` and the `.t-titles
 - **Impeccable (docs only):** no eyebrows or kickers, no cards for structure, hierarchy from size and weight together,
   more space above a group than inside it, one authored motion moment, contrast checked on the real ground.
 
-## The titles over the two desks
-- **One centred column** above the desks, on a scrim (rgba(12,11,10) .82 at the top, gone by 660 px) so the type
-  sits on near-black without a box.
-- **Hierarchy, three levels only:** the lockup (the mark, 92 px, its base on the baseline of "Barnaby", Sitka
-  Subheading 600, 112 px, -0.012em); the line "Every system deserves a butler." (Sitka Text 46 px, ivory at 92%);
-  the coda "Even the old ones." in the same size and face, in brass. The line and its coda read as one couplet:
-  44 px above the couplet, 10 px between its lines.
-- **Upright, not italic:** DESIGN.md sets his serif upright, never italic, so the coda is upright brass (the earlier
-  plan said brass italic; the brand rule wins, agreed with the coordinator).
-- **Motion:** the lockup fades up over 1.1 s with an 8 px settle on 'title', the mark rings once just after the real
-  bell; the line follows 1.0 s later; the coda arrives on 'old_ones' as the new desk fades. All three leave together
-  over 0.7 s, before the card.
-- **The credit and the staged-scenes note moved to the card;** the desks carry only the name and the line.
+## The titles over the two desks (round 3: the wordmark at the centre, the line in Theo's hand)
+- **The wordmark at the centre of the frame:** the mark (100 px, its base on the baseline of "Barnaby") and "Barnaby"
+  in Sitka Subheading 600, 124 px, -0.012em, ivory; the lockup's top at 396 px so its cap height sits on the frame's
+  centre line. It fades up over 1.1 s with an 8 px settle on 'title'; the mark rings once just after the real bell.
+- **The line in Theo's hand:** "Every system deserves a butler." in Segoe Print (`segoepr.ttf`, loaded by @font-face
+  from its file URL as "TheoHand": the hand on his sticky note, make_note.py and CONTINUITY.md), 58 px, warm ivory,
+  58 px under the lockup. The coda "Even the old ones." in the same hand in brass (#D3A14A), 56 px, turned -1.6 deg and
+  set 34 px right, like a line added after. The serif is Barnaby; the hand is Theo, who built the old system.
+- **Written on, not faded:** each word in turn behind a soft-edged mask (30 px feather) moving left to right at a
+  pen's pace, time per word by its letters, a 90 ms lift between words. The line starts 1.2 s after 'title' and
+  takes 2.1 s; the coda starts on 'old_ones' (as the new desk fades) and takes 1.35 s. Nothing bounces.
+- **Legibility:** a soft oval scrim (warm near-black, .8 at the centre, gone by the frame's edges) under the group
+  instead of a top band; the type keeps a faint dark text-shadow over the lit desk.
+- **Out:** everything leaves together over 0.75 s from 'end_card' - 0.45, under the end card's dissolve.
+- Styles are injected by `scenes/s9.js` (`#s9-titles`); the old `.t-titles` rules in index.html are no longer used.
 
 ## The product end card
 - **Ground:** warm charcoal #1F1E1C (the brand's dark ground: the film ends at night, so no flash to ivory).
@@ -36,7 +38,8 @@ accent; warm ivory on warm charcoal). Built in `scenes/s9.js` and the `.t-titles
 - **The four ways he grows**, a quiet row under a hairline: Ask / Unlock / Compose / Build in Sitka Subheading 34 px,
   each with one plain sentence in Segoe UI 21 px (#B1AA9C, about 7:1): what it means for the owner, not how it works.
 - **Credits** under a second hairline: **Built on Synapse** (600) and the event, 2nd Brain Labs × Geek Room
-  Vibe-a-thon; under them, its own quiet line in the same sans and grey, the repo: github.com/ImTani/barnaby-vibe-a-thon.
+  Vibe-a-thon, and at the right end of that row, quieter (#A8A194), the shoutout "Voices: zoonie and
+  sylenthsnares"; under them, its own quiet line in the same sans and grey, the repo: github.com/ImTani/barnaby-vibe-a-thon.
 - **One spacing scale** (round 2): 48 between tiers, 32 from a rule to its content, 24 to the small print, 12 inside
   a step; the whole card is one column on the grid, centred in the frame.
 - **Small print** (16 px, #A39C8F, about 6:1): recreated from a real recorded run; Quorum and ComfyUI staged; endpoint

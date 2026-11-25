@@ -78,7 +78,7 @@ async function verify(page) {
     await page.evaluate(a => desk.render(LX.preset(a)), a);
     const first = await page.screenshot({ encoding: 'base64' });
     await page.evaluate((a, b) => {
-      desk.render(LX.preset(b, { out: 3, split: .5, type: .5, sayK: .3, planK: .6, app: .5, queueOpen: .4, queueHl: .7, step: 3, gpu: .2, vram: 9, frame: 7, lapIn: .5, qHl: .6, dim: .3, tick: 1, day: 2, edTop: 5, blink: 0, level: .9, secs: 11 }));
+      desk.render(LX.preset(b, { out: 3, split: .5, type: .5, sayK: .3, planK: .6, app: .5, queueOpen: .4, queueHl: .7, step: 3, gpu: .2, vram: 9, frame: 7, lapIn: .5, qHl: .6, dim: .3, tick: 1, evening: 1, edTop: 5, blink: 0, level: .9, secs: 11 }));
       desk.render(LX.preset(a));
     }, a, b);
     const again = await page.screenshot({ encoding: 'base64' });

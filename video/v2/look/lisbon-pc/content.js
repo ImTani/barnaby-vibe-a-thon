@@ -96,16 +96,16 @@
   function codeHTML() { const st = { doc: false }; return CODE.map(l => hlPy(l, st)); }
 
   /* ------------------------------------------------------------------ todo.txt ----------------------------------- */
-  // `barnaby: n` items get ticked by state.tick (the film can tick them as each house is read); `day: 2` items are
-  // done by Tuesday evening (state.day = 2)
+  // `barnaby: n` items get ticked by state.tick (the film can tick them as each house is read); `evening` items are
+  // done by the evening (state.evening = 1). It's Tuesday, Theo's second day: Monday's items are already struck.
   const TODO = [
     { t: 'badge, desk 14, wifi', done: true },
     { t: 'plant survived the flight', done: true },
     { t: 'first commit!!', done: true },
     { t: 'barnaby → the crew\'s memory', barnaby: 1 },
     { t: 'barnaby → the render box', barnaby: 2 },
-    { t: 'ring uncle M at lunch (shop ok?)', day: 2 },
-    { t: 'find the good pastelaria (ask inês)', day: 2 },
+    { t: 'find the good pastelaria (ask inês)', done: true },
+    { t: 'ring uncle M at lunch (shop ok?)', evening: 1 },
     { t: 'learn 10 words of pt (obrigado ✓)' },
   ];
 
@@ -124,9 +124,9 @@
     ['shell', 'zsh'],
     ['theme', 'nata (dark)'],
     ['font', 'fira code 12'],
-    ['uptime', '47 mins'],
+    ['uptime', '1 day, 47 mins'],
     ['desk', '14, by the window'],
-    ['day', '1 :)'],
+    ['day', '2 :)'],
   ];
   function fetchLines() {      // Theo's own `fetch` script: his drawn bike (shown inline, the way image-capable terminals do)
     const rows = FETCH_INFO.map(r => r.length === 1 ? r[0] : sp('t-key', r[0].padEnd(8)) + sp('t-fg', r[1]));
@@ -135,9 +135,9 @@
     return rows.map((h, i) => L(`<span class="t-fetch-pad"></span>${h}` + (i === 0 ? `<span class="t-fetch-art">${G.LXArt.bike(150)}</span>` : ''), i === 0 ? 'art' : ''));
   }
   const GITLOG = [
-    ['a41c9e2', '2m', 'theo', 'first commit at the new job!! (olá lisboa)', true],
-    ['3f0b7d1', '3d', 'inês', 'dailies: read render paths from box config'],
-    ['9c2e44a', '4d', 'marta', 'shotlist: add sc015'],
+    ['a41c9e2', '1d', 'theo', 'first commit at the new job!! (olá lisboa)', true],
+    ['3f0b7d1', '4d', 'inês', 'dailies: read render paths from box config'],
+    ['9c2e44a', '5d', 'marta', 'shotlist: add sc015'],
     ['e17d0b8', '1w', 'rui', 'renderbox: queue limit back to 4'],
   ];
   const gitLines = () => GITLOG.map(([h, t, a, msg, hero]) => L(sp('t-yel', '* ') + sp('t-hash', h) + '  ' + sp('t-mu', t.padEnd(3)) + ' ' + sp('t-auth', a.padEnd(6)) +
@@ -230,7 +230,7 @@
     ].map(([h]) => L(h));
     S.comfy = { entries: [...rest, P('~/work/pipeline', 'curl -s localhost:8700/api/connect \\', { branch: 'main', at: '09:42' }),
       L(sp('t-mu', '> ') + sp('t-flag', '-H ') + sp('t-str', '\'content-type: application/json\' ') + sp('t-fg', '\\')), ...cont, L(sp('t-fg', '{"ok":true,"system":"comfyui"}')), BL, P('~/work/pipeline', '', { branch: 'main', at: '09:42' })] };
-    // Tuesday 24 Nov, evening: the TODO from Monday is done (with Barnaby's help), Monday's first commit a day back
+    // Tuesday 24 Nov, evening: this morning's TODO is done (with Barnaby's help), Monday's first commit a day back
     S.night = { entries: [P('~/work/pipeline', 'git lg -3', { branch: 'main', at: '20:06' }),
       ...[['b7e1f20', '3h', 'theo', "dailies: ask the render box what's queued"], ['5d02c91', '6h', 'marta', 'shotlist: sc014 animatic due Thu 26 Nov'],
         ['a41c9e2', '1d', 'theo', 'first commit at the new job!! (olá lisboa)']].map(([hh, t, a, msg]) =>
@@ -255,7 +255,7 @@
 
   /* ------------------------------------------------------------------ the render box (staged) -------------------- */
   // The render box's jobs in submission order. state.job = the one running, state.queued = how many wait behind it.
-  // Mon 09:15: job 0 running, 2 queued; 09:39-09:41: job 2, 3 queued; 09:43: job 3, 3 queued ("three jobs are queued"); Tue 20:07: the overnight batch.
+  // Tue 09:15: job 0 running, 2 queued; 09:39-09:41: job 2, 3 queued; 09:43: job 3, 3 queued ("three jobs are queued"); Tue 20:07: the overnight batch.
   const JOBS = [
     ['sc014_bg_A', 'inês'], ['sc014_bg_B', 'inês'], ['sc015_bg_A', 'marta'], ['sc015_fx_mist', 'rui'],
     ['sc016_bg_A', 'inês'], ['sc016_bg_B', 'marta'], ['sc016_fx_rain', 'rui'], ['sc017_bg_A', 'inês'],
@@ -289,17 +289,18 @@
       { what: 'Lighting pass to the render box: deadline', a: ['Inês at stand-up', 'Mon 30 Nov'], b: ['the schedule sheet', 'Wed 2 Dec'], owner: 'Inês' },
     ],
     inbox: [
-      { from: 'Rui', subj: 'Welcome to the studio, Theo!', claims: 2, at: '08:05' },
+      { from: 'Rui', subj: 'Welcome to the studio, Theo!', claims: 2, at: 'Mon' },
       { from: 'Producer', subj: 'Re: sc14 animatic, Thursday please', claims: 1, at: 'Fri', dispute: true },
       { from: 'Inês', subj: 'render box etiquette (pls read)', claims: 1, at: 'Fri' },
     ],
     claims: [
-      { t: 'Theo starts Mon 23 Nov, desk 14', src: 'welcome email · Rui', tier: 'team', at: '08:05' },
+      // newest first; it's Tuesday morning, so yesterday's are "Mon"
+      { t: 'Ring uncle M at lunch', src: 'typed note · Theo', tier: 'device', at: '08:58' },
+      { t: 'Marta\'s birthday is 3 Dec', src: 'typed note · Theo', tier: 'mine', at: 'Mon' },
+      { t: 'Theo starts Mon 23 Nov, desk 14', src: 'welcome email · Rui', tier: 'team', at: 'Mon' },
       { t: 'Dailies at 10:00 in the screening room', src: 'email · Rui', tier: 'team', at: 'Fri' },
       { t: 'Render box: big jobs in the queue before 18:00', src: 'stand-up note · Inês', tier: 'team', at: 'Fri' },
       { t: 'Pombo client review moved to Fri 4 Dec', src: 'email · producer', tier: 'team', at: 'Thu' },
-      { t: 'Marta\'s birthday is 3 Dec', src: 'typed note · Theo', tier: 'mine', at: '09:20' },
-      { t: 'Ring uncle M at lunch', src: 'typed note · Theo', tier: 'device', at: '09:21' },
     ],
   };
 

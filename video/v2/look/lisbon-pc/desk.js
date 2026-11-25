@@ -31,8 +31,8 @@
 
   /* ------------------------------------------------------------------ state ------------------------------------- */
   const DEFAULT = {
-    date: '2026-11-23', time: '09:15', secs: 0,
-    day: 1,                  // 1 = Mon 23 Nov (Theo's first day), 2 = Tue 24 Nov (the closing night): todo.txt follows it
+    date: '2026-11-24', time: '09:15', secs: 0,   // Tue 24 Nov 2026: Theo's second day (scene 8), same as the closing night
+    evening: 0,              // 0 = the working morning (09:15-09:43), 1 = the evening (20:07): todo.txt, git signs, dailies note
     cpu: .07, mem: 6.1, netDown: .4, netUp: .1, nata: 1,
     temp: 17,                // Lisbon outside, °C (17 on a late-November morning, 13 in the evening)
     // main monitor (DP-1)
@@ -75,7 +75,7 @@
     'quorum-theo': { time: '09:41', cpu: .2, focus: 'log', term: 'idle', split: 1, out: M.theo, tick: 1, say: 'theo', plan: 'quorum', mode: 'speaking', level: .4, secs: 9, job: 2, step: 23, frame: 119, lap: 'quorum', qHl: 1 },
     // 09:42 Theo connects the render box with curl (shell); 09:43 he asks, Barnaby reads the card and the queue
     comfy: { time: '09:43', cpu: .19, focus: 'log', term: 'comfy', split: 1, out: M.comfy, tick: 2, say: 'comfy', plan: 'comfy', mode: 'speaking', level: .5, secs: 3, queueOpen: 1, queueHl: 1, job: 3, step: 9, frame: 123, lap: 'quorum', edTop: 11, edLine: 33 },
-    night: { date: '2026-11-24', day: 2, time: '20:07', temp: 13, cpu: .04, nata: 3, focus: 'term', term: 'night', tick: 2, mode: 'idle', edTop: 1, edLine: 1,
+    night: { evening: 1, time: '20:07', temp: 13, cpu: .04, nata: 3, focus: 'term', term: 'night', tick: 2, mode: 'idle', edTop: 1, edLine: 1,
       step: 9, gpu: 1, vram: 44.6, job: 9, queued: 6, frame: 97, lap: 'wall', synced: '19:58', dim: .5 },
     slot: { barnaby: 'slot' },
     frame: { barnaby: 'frame' },
@@ -198,12 +198,12 @@
     const body = [];
     for (let n = top; n < top + rows; n++) {
       if (n > CODE.length) { body.push(`<div class="el"><span class="es"></span><span class="en"></span><span class="ec t-tilde">~</span></div>`); continue; }
-      const cur = n === s.edLine, sign = s.day >= 2 ? '' : C.CODE_SIGNS[n];   // Tuesday: all committed
+      const cur = n === s.edLine, sign = s.evening >= .5 ? '' : C.CODE_SIGNS[n];   // evening: all committed
       const num = cur ? String(n) : String(Math.abs(n - s.edLine));
       body.push(`<div class="el ${cur ? 'cur' : ''}"><span class="es ${sign || ''}"></span><span class="en">${num}</span><span class="ec">${CODE[n - 1] || ''}</span></div>`);
     }
     const pct = Math.round((top - 1) / Math.max(1, CODE.length - rows) * 100);
-    return `<div class="ed-tabs"><span class="tab on">${A.icon('flow', 10)} dailies.py ${s.day >= 2 ? '' : '<i>+</i>'}</span><span class="tab">README.md</span><span class="ed-path">~/work/pipeline</span></div>
+    return `<div class="ed-tabs"><span class="tab on">${A.icon('flow', 10)} dailies.py ${s.evening >= .5 ? '' : '<i>+</i>'}</span><span class="tab">README.md</span><span class="ed-path">~/work/pipeline</span></div>
       <div class="ed-body">${body.join('')}</div>
       <div class="ed-status"><span class="mode">NORMAL</span><span class="br">${A.icon('branch', 10)} main</span><span class="fn">dailies.py</span><span class="sp"></span><span>utf-8</span><span class="pos">${s.edLine}:1</span><span class="pct">${top === 1 ? 'top' : pct >= 100 ? 'bot' : pct + '%'}</span></div>`;
   }
@@ -211,7 +211,7 @@
   /* ------------------------------------------------------------------ todo.txt ---------------------------------- */
   function todoHTML(s) {
     const rows = C.TODO.map((t, i) => {
-      const done = t.done || (t.barnaby && s.tick >= t.barnaby) || (t.day && s.day >= t.day);
+      const done = t.done || (t.barnaby && s.tick >= t.barnaby) || (t.evening && s.evening >= .5);
       return `<div class="td ${done ? 'done' : ''} ${t.barnaby ? 'bn' : ''}"><span class="tdn">${i + 1}</span><span class="tdb">${done ? '[x]' : '[ ]'}</span><span class="tdt">${esc(t.t)}</span></div>`;
     }).join('');
     return `<div class="td-head"><span>~/todo.txt</span><span>${clock(s)}</span></div><div class="td-body">${rows}</div>`;
@@ -245,7 +245,7 @@
       <circle cx="${c}" cy="${c}" r="${R}" class="ring"/><circle cx="${c}" cy="${c}" r="${R * .55}" class="ring2"/><circle cx="${c}" cy="${c}" r="${R * .16}" class="core"/>
       <g class="bars">${bars.join('')}</g></svg>`;
   }
-  /** At rest: the systems he's connected to on this desk (none on Monday morning; Quorum and ComfyUI once read). */
+  /** At rest: the systems he's connected to on this desk (none at 09:15; Quorum and ComfyUI once read). */
   function idleHTML(s) {
     const known = [['quorum', 'quorum', 'the crew’s memory'], ['comfyui', 'comfyui', 'the render box']].slice(0, clamp(Math.round(s.tick), 0, 2));
     const rows = known.map(([k, nm, what]) => `<div class="bn-house"><span class="hn">${esc(nm)}</span><span class="hw">${esc(what)}</span><span class="hr">${E[k] ? E[k].count : ''} endpoints</span></div>`).join('');
@@ -343,18 +343,17 @@
     ];
     return `<div class="gpu-title">theo@renderbox: gpu</div><div class="gpu-body">${L.map(l => `<div class="tl">${l}</div>`).join('')}</div>`;
   }
-  /** The last dailies note on this shot, by the clock: Friday's until Monday's 10:00 dailies, then Monday's; Tuesday's. */
+  /** The last dailies note on this shot, by the clock: Monday's until Tuesday's 10:00 dailies, then Tuesday's. */
   function dailiesNote(s) {
-    const [who, txt] = s.day >= 2 ? ['tue dailies · rui:', 'the head hold reads now. on to clean-up']
-      : s.time >= '10:30' ? ['mon dailies · rui:', 'better! ease the head back, don’t snap it']
-      : ['fri dailies · rui:', 'lovely. hold the head 2 frames longer on each bob'];
+    const [who, txt] = s.evening >= .5 || s.time >= '10:30' ? ['tue dailies · rui:', 'the head hold reads now. on to clean-up']
+      : ['mon dailies · rui:', 'better! ease the head back, don’t snap it'];
     return `<div class="pv-note"><b>${who}</b> ${esc(txt)}</div>`;
   }
   function pencilHTML(s, r) {
     const iw = r.w - 16, ih = Math.round(iw * 260 / 400);
     const f = Math.round(s.frame), total = 240;
     const ticks = []; for (let i = 0; i < 48; i++) ticks.push(`<i class="${i % 6 === 0 ? 'key' : ''} ${Math.floor(f / 5) === i ? 'now' : ''}"></i>`);
-    return `<div class="pv-title"><span>pombo_sc014_anim_v0${s.day >= 2 ? 4 : 3}.mov</span><span>pencil test</span></div>
+    return `<div class="pv-title"><span>pombo_sc014_anim_v0${s.evening >= .5 ? 4 : 3}.mov</span><span>pencil test</span></div>
       <div class="pv-img">${A.pigeon(iw, ih, f)}</div>
       <div class="pv-osd"><span class="pv-play">${A.icon('play', 10)}</span><span class="pv-f">${String(f).padStart(4, '0')} / ${String(total).padStart(4, '0')}</span><span>24 fps</span><span>on twos</span></div>
       <div class="pv-ticks">${ticks.join('')}</div>

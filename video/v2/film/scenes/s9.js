@@ -10,13 +10,14 @@
     id: '9', start: S, end: E, fadeIn: FI,
     build(root) {
       run = seq(root, [
-        { src: 'world/x_close_night.png', at: S - FI, cam: [[S - FI, 960, 560, 1.06], [M('lisbon_night'), 900, 600, 1.18]] },
-        { src: 'world/lisbon_03_medium_night.png', at: M('lisbon_night'), fi: .5, cam: [[M('lisbon_night'), 1000, 520, 1.1], [M('two_desks'), 1040, 540, 1.25]],
+        { src: 'world/x_close_night.png', at: S - FI, cam: hold(940, 570, 1.08) },
+        { src: 'world/lisbon_03_medium_night.png', at: M('lisbon_night'), fi: .5, cam: hold(1010, 525, 1.12),
           build: l => {
             dimmer = el('div', {}, l);       // everything but Barnaby's slot sinks: the two monitors dim to one small glow
             css(dimmer, { left: '0px', top: '0px', width: '1920px', height: '1080px', background: 'radial-gradient(circle at 1148px 480px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 60px, rgba(0,0,0,.72) 260px)' });
           },
           over: t => { dimmer.style.opacity = easeInOutSine(P(t, M('dim'), 1.6)).toFixed(3); } },
+        // the scene's one move: the two desks, closing gently as the bell rings and the titles come up
         { src: 'world/close_two_desks.png', at: M('two_desks'), fi: .7, cam: [[M('two_desks'), 960, 540, 1.0], [E, 960, 560, 1.04]] },
       ], E);
       rightOff = el('div', { cls: 'ov' }, root);     // the new desk fades (right half, soft edge)

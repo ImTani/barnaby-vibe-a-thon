@@ -10,7 +10,9 @@
   const TABS = ['shop', 'supplier', 'sms', 'xls', 'parts', 'invoices', 'email', 'bank', 'cal'];
   let run, shop, X = null;
   const ct = () => M('close_tabs');
-  const closeAt = i => ct() + .25 + i * .2;            // the i-th close (0..8), as the sound's tab_close cues
+  // the i-th close (0..8), on the cue sheet's own tab_close sounds (the layout's .25 + i * .2 if there are none)
+  const CLOSES = () => { const c = sfxAll('tab_close', ct() - .5, ct() + 20); return c.length === 9 ? c : [...Array(9)].map((_, i) => ct() + .25 + i * .2); };
+  const closeAt = i => CLOSES()[i];
   const FOLD = .15;
   function shopState(t) {
     let n = 9, fold = 1;
@@ -23,16 +25,15 @@
     const k = 1 - n / 9;                                  // how much has closed
     const st = { preset: 'tabs', secs: 31 + Math.floor(Math.max(0, t - ct())),
       ram: +lerp(.93, .36, easeInOutSine(clamp((t - closeAt(0)) / (closeAt(8) + .25 - closeAt(0))))).toFixed(4),
-      cpu: +clamp(.09 + .18 * Math.exp(-6 * ((t - ct()) % .2)) * (n > 0 && t < closeAt(8) ? 1 : 0) + .04 * (1 - k), 0, .9).toFixed(4) };
-    // five go with Ctrl+W (with five or more tabs the old browser hides the close box); the last four, his cursor
-    // clicks each tab's close box as it comes up
-    let c = [690 + wiggle(t, 21, 2.2, 3), 318 + wiggle(t, 22, 1.8, 2)];
-    if (X && t > closeAt(4) - .3) {
-      const keys = [[closeAt(4) - .3, c[0], c[1]]];
-      for (let i = 5; i <= 8; i++) { const x = X[9 - i]; keys.push([closeAt(i) - FOLD - .03, x[0], x[1]], [closeAt(i) - FOLD + .02, x[0], x[1]]); }
-      keys.push([closeAt(8) + .9, X[1][0] + 60, X[1][1] + 140]);
-      c = path2(t, keys);
+      cpu: +clamp(.09 + CLOSES().reduce((a, c) => a + .18 * (t >= c ? Math.exp(-6 * (t - c)) : 0), 0) + .04 * (1 - k), 0, .9).toFixed(4) };
+    // with five or more tabs the old browser hides the close box: those go with Ctrl+W, the hand still on the mouse;
+    // once a close box shows, his cursor clicks it (at human pace: a close he hasn't time to reach goes by keyboard)
+    const rest = [690, 318], clicks = [];
+    if (X) for (let i = 5; i <= 8; i++) {
+      const gap = closeAt(i) - (clicks.length ? clicks[clicks.length - 1].t : closeAt(4));
+      if (gap >= .55) { const x = X[9 - i]; clicks.push({ t: closeAt(i) - FOLD, x: x[0], y: x[1] }); }
     }
+    const c = clicks.length ? hand(t, [ct(), rest[0], rest[1]], clicks, [closeAt(8) + 1.2, rest[0] + 40, rest[1] + 120]) : rest;
     st.cursor = { x: +c[0].toFixed(2), y: +c[1].toFixed(2) };
     if (n === 0) Object.assign(st, { browser: false, tabs: [] });
     else Object.assign(st, { tabs: TABS.slice(0, n), active: TABS[n - 1], tabIn: +easeInOutSine(fold).toFixed(4) });
@@ -44,21 +45,23 @@
       const sweepA = M('reading') + .1, sweepB = M('six_lit') - .9;
       const SIX = M('six_lit') + .2;
       run = seq(root, [
-        { src: 'world/photo_2009.png', at: S - FI, cam: [[S - FI, 760, 560, 1.04], [M('calendar') + .5, 700, 540, 1.16]] },
-        { src: 'world/x_board_night.png', at: M('calendar'), fi: .5, cam: [[M('calendar'), 380, 560, 1.45], [M('box') + .5, 430, 730, 1.9]] },
-        { src: 'world/01_wide_night.png', at: M('box'), fi: .5, cam: [[M('box'), 1100, 650, 2.0], [ct() + .3, 1160, 700, 2.35]] },
-        { src: 'live/shop', at: ct(), fi: .3, cam: [[ct(), 960, 540, 1.04], [M('desktop_night'), 900, 500, 1.0], [M('bell_arrive'), 900, 520, 1.02]], state: t => shopState(t) },
-        { src: 'world/x_bell.png', at: M('bell_arrive') - .05, fi: .2, cam: [[M('bell_arrive'), 900, 620, 1.1], [M('reading'), 860, 660, 1.22]] },
-        { src: 'comp/theo-handover-1-reading', at: M('reading') - .25, fi: .4, cam: [[M('reading'), 960, 540, 1.0], [M('six_lit'), 960, 520, 1.06]],
+        // holds: each still held (an imperceptible drift at most); a detail is a cut, not a push
+        { src: 'world/photo_2009.png', at: S - FI, cam: hold(750, 550, 1.06) },
+        { src: 'world/x_board_night.png', at: M('calendar'), fi: .5, cam: hold(400, 620, 1.55) },
+        { src: 'world/01_wide_night.png', at: M('box'), fi: .5, cam: hold(1120, 670, 2.1) },
+        { src: 'live/shop', at: ct(), fi: .3, cam: [960, 540, 1], state: t => shopState(t) },
+        { src: 'world/x_bell.png', at: M('bell_arrive') - .05, fi: .2, cam: hold(880, 640, 1.12) },
+        { src: 'comp/theo-handover-1-reading', at: M('reading') - .25, fi: .4, cam: [960, 540, 1],
           state: t => ({ scan: +lerp(-.6, 20.6, easeInOutSine(clamp((t - sweepA) / (sweepB - sweepA)))).toFixed(3),
             heardK: +clamp((t - V(5)) / (VE(5) - V(5) - .1)).toFixed(3) }) },
-        { src: 'comp/theo-handover-2-taken', at: M('six_lit'), fi: .35, cam: [[M('six_lit'), 960, 540, 1.0], [M('old_pc'), 920, 600, 1.06]],
+        { src: 'comp/theo-handover-2-taken', at: M('six_lit'), fi: .35, cam: [960, 540, 1],
           state: t => ({ lit: +clamp((t - SIX) / .26, 0, 6).toFixed(3), counts: +clamp((t - SIX - 1.6) / .4).toFixed(3),
             sayK: +clamp((t - V(6)) / (VE(6) - V(6) - .1)).toFixed(3) }) },
-        { src: 'comp/theo-handover-pc', at: M('old_pc'), fi: .5, cam: [[M('old_pc'), 1150, 560, 1.0], [M('desk_detail'), 1480, 620, 1.3]],
+        { src: 'comp/theo-handover-pc', at: M('old_pc'), fi: .5, cam: [960, 540, 1],
           state: t => ({ lit: +clamp((t - M('old_pc') - .2) / .16, 0, 6).toFixed(3), sayK: +clamp((t - V(6)) / (VE(6) - V(6) - .1)).toFixed(3) }) },
-        { src: 'world/02_medium_night.png', at: M('desk_detail'), fi: .4, cam: [[M('desk_detail'), 560, 830, 1.55], [M('key'), 1300, 820, 1.55]] },
-        { src: 'world/03_keys_night.png', at: M('key'), fi: .4, cam: [[M('key'), 760, 700, 1.1], [E, 640, 840, 1.35]],
+        { src: 'world/02_medium_night.png', at: M('desk_detail'), fi: .4, cam: hold(960, 620, 1.12) },
+        // the scene's one move: the key landing (Blender's s2_key_lamp; on the still, a slow settle onto the key)
+        { src: 'world/03_keys_night.png', at: M('key'), fi: .4, cam: move(M('key') + .2, 1.6, [760, 700, 1.1], [700, 800, 1.3], 0),
           grade: t => `brightness(${lerp(1, .16, easeOutCubic(P(t, M('lamp_off'), .15))).toFixed(3)})` },
       ], E);
       shop = run.list[3].s;

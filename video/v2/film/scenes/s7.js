@@ -8,16 +8,17 @@
   Scene({
     id: '7', start: S, end: E, fadeIn: FI,
     build(root) {
-      const tags = M('priya_world') + .15, col = V(42) + 2.3, slip = M('readme_note') - .1;
+      const tags = M('priya_world') + .15, col = V(42) + 2.3, slip = M('readme_note') + .15;
       const st = t => ({ cards: +clamp((t - tags) / .62, 0, 2).toFixed(3), say: +clamp((t - V(40)) / (VE(40) - V(40) - .1)).toFixed(3),
         rc: +clamp((t - col) / .6).toFixed(3), note: +clamp((t - slip) / .55).toFixed(3) });
       run = seq(root, [
-        { src: 'world/05_medium_tuesday.png', at: S - FI, cam: [[S - FI, 520, 690, 1.75], [V(39) + 1.2, 1150, 620, 1.55], [M('priya_world'), 1400, 640, 1.75]] },
-        { src: 'comp/priya-tuesday', at: M('priya_world'), fi: .35, cam: [[M('priya_world'), 700, 420, 1.3], [VE(40), 760, 430, 1.38]], state: st },
-        { src: 'world/05_medium_tuesday.png', at: VE(40) + .15, cam: [[VE(40) + .15, 980, 560, 1.2], [V(42), 900, 520, 1.35]] },
-        { src: 'comp/priya-tuesday', at: V(42) - .1, fi: .3, state: st,
-          cam: [[V(42) - .1, 650, 470, 1.5], [V(42) + 1.9, 700, 560, 1.6], [col + .2, 1500, 440, 1.8], [M('readme_note') + .5, 1620, 660, 2.15], [VE(42) + .2, 1620, 680, 2.25]] },
-        { src: 'world/05_medium_tuesday.png', at: VE(42) + .2, fi: .3, cam: [[VE(42) + .2, 1300, 600, 1.3], [E, 1280, 600, 1.35]] },
+        // holds; Priya's bench is full frame and still; for Theo's note, a cut to its corner of the bench
+        { src: 'world/05_medium_tuesday.png', at: S - FI, cam: hold(960, 600, 1.12) },
+        { src: 'comp/priya-tuesday', at: M('priya_world'), fi: .35, cam: [960, 540, 1], state: st },
+        { src: 'world/05_medium_tuesday.png', at: V(41), cam: hold(1180, 600, 1.3) },
+        { src: 'comp/priya-tuesday', at: V(42), fi: .3, state: st, cam: [960, 540, 1] },
+        { src: 'comp/priya-tuesday', at: M('readme_note'), state: st, cam: [1620, 560, 1.85] },
+        { src: 'world/05_medium_tuesday.png', at: V(43), fi: .3, cam: hold(1150, 600, 1.2) },
       ], E);
     },
     render(t) { run.render(t); },

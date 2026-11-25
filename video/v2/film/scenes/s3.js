@@ -12,17 +12,21 @@
   Scene({
     id: '3', start: S, end: E, fadeIn: 0,
     build(root) {
-      const flip = M('clock') + .95;
+      const flip = M('clock') + .95, full = Math.max(V(9), M('clock') + 1.6);
       run = seq(root, [
         { src: 'world/02_medium_night.png', at: S, cam: [S, 960, 600, 1.12], grade: 'brightness(.16)' },
-        { src: 'world/04_medium_monday.png', at: S + .35, fi: 1.5,
-          cam: [[S + .35, 960, 600, 1.12], [S + 1.9, 960, 640, 1.06], [M('clock'), 1180, 830, 1.5]],
+        { src: 'world/04_medium_monday.png', at: S + .35, fi: 1.5, cam: hold(960, 600, 1.12, -.01),
           grade: t => `brightness(${lerp(1.35, 1, easeInOutSine(P(t, S + .6, 1.6))).toFixed(3)})` },
-        { src: 'live/shop', at: M('clock'), fi: .3,
-          cam: [[M('clock'), 1790, 320, 2.6], [M('clock') + .25, 1790, 330, 2.6], [flip - .1, 1780, 905, 2.6], [flip + .45, 1780, 920, 2.66], [M('martin_world') + .1, 960, 540, 1.0]],
+        // the screen clock: a cut to the corner of the screen (the calendar gadget and the taskbar clock), held while
+        // 08:51 turns 08:52; then, on Martin's line, Theo's Back Office full frame, locked
+        { src: 'live/shop', at: M('clock'), fi: .3, cam: [1700, 800, 1.9],
           state: t => ({ preset: 'shop-jobs', time: t < flip ? '08:51' : '08:52', secs: (58 + Math.floor(t - flip + 2)) % 60 }) },
+        { src: 'live/shop', at: full, cam: [960, 540, 1],
+          state: t => ({ preset: 'shop-jobs', time: '08:52', secs: (58 + Math.floor(t - flip + 2)) % 60 }) },
+        // Martin's plan, the west wing framed once (job board to back office); Barnaby walks inside the frame. The
+        // scene's one move: as he reaches drawer 1 and the pads note drops on, a push to end on the callout
         { src: 'comp/martin-key', at: M('martin_world'), fi: .5,
-          cam: [[M('martin_world'), 530, 640, 1.8], [M('walk'), 520, 700, 1.95], [M('walk') + 1.4, 470, 520, 1.9], [M('pads_callout'), 610, 330, 1.9], [M('shelf'), 640, 310, 1.95]],
+          cam: move(M('pads_callout') - .15, 1.4, [600, 540, 1.5], [620, 310, 2.0], 0),
           state: t => ({ walk: +walkAt(t).toFixed(4), pads: +clamp((t - M('pads_callout')) / .55).toFixed(3), ask: 0, card: 0, say: 0, martin: 0, time: '08:54' }),
           build: l => {
             // Barnaby listening at the job board while Martin asks: his ring breathes (a brass ring, his colour)
@@ -35,9 +39,9 @@
             const r = lerp(32, 60, easeOutCubic(u));
             css(ring, { display: 'block', left: (p[0] - r).toFixed(1) + 'px', top: (p[1] - r).toFixed(1) + 'px', width: 2 * r + 'px', height: 2 * r + 'px', opacity: (.8 * (1 - u)).toFixed(3) });
           } },
-        { src: 'world/x_shelf_monday.png', at: M('shelf'), fi: .35, cam: [[M('shelf'), 700, 420, 1.15], [E, 560, 340, 1.35]] },
+        { src: 'world/x_shelf_monday.png', at: M('shelf'), fi: .35, cam: hold(680, 400, 1.18) },
       ], E);
-      mk = run.list[3].s;
+      mk = run.list[4].s;
       sw = sweep(root, { angle: 100, color: 'rgba(255,240,214,.6)' });
     },
     ready() {

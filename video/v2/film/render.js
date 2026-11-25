@@ -28,7 +28,17 @@ const flags = {}, pos = [];
 for (const a of argv) { if (!a.startsWith('--')) { pos.push(a); continue; } const [k, v] = a.slice(2).split('='); flags[k] = v === undefined ? true : v; }
 const FPS = +(flags.fps || 24), WORKERS = +(flags.workers || 2), QUALITY = +(flags.quality || 92), SCALE = +(flags.scale || 1);
 const BLENDER_JSON = path.resolve(HERE, '../world/anim/shots.json');
-const readBlender = () => { try { return JSON.parse(fs.readFileSync(BLENDER_JSON, 'utf8')); } catch (e) { return null; } };
+// a shot counts as done only if its first and last frames are on disk (a re-render in progress may have cleared them)
+const readBlender = () => {
+  let m; try { m = JSON.parse(fs.readFileSync(BLENDER_JSON, 'utf8')); } catch (e) { return null; }
+  for (const s of m.shots || []) {
+    if (s.status !== 'done') continue;
+    const dir = path.resolve(HERE, '../world/out/anim', s.id), f = n => path.join(dir, String(n).padStart(4, '0') + '.jpg');
+    if (!(s.frames > 0 && fs.existsSync(f(1)) && fs.existsSync(f(s.frames)))) { s.status = 'done-but-frames-missing'; if (!readBlender.warned) console.log(`  blender: ${s.id} is "done" but its frames are not all there; using the stills`); }
+  }
+  readBlender.warned = true;
+  return m;
+};
 const OUT = path.join(HERE, 'out');
 const dir = d => { const p = path.join(OUT, d); fs.mkdirSync(p, { recursive: true }); return p; };
 const ARGS = ['--hide-scrollbars', '--allow-file-access-from-files', '--disable-background-timer-throttling', '--disable-renderer-backgrounding',

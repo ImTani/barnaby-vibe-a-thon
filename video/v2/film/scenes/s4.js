@@ -11,20 +11,20 @@
   Scene({
     id: '4', start: S, end: E, fadeIn: 0,
     build(root) {
-      const u = M('unlock'), cu = M('click_unlock'), arrive = V(14) + .6;
+      const u = M('unlock'), cu = sfxT('mouse_click', M('click_unlock')), arrive = V(14) + .6;   // the press, on its click
       const walkAt = t => lerp(AT_DRAWER, 1, easeInOutSine(clamp((t - (S + .3)) / (arrive - S - .3))));
-      run = seq(root, [
-        { src: 'comp/martin-key', at: S,
-          cam: [[S, 640, 330, 1.9], [S + 1.2, 760, 300, 1.75], [arrive, 1000, 560, 1.4], [M('card') + .3, 960, 540, 1.0], [cu, 975, 540, 1.03],
-            [cu + .3, 1060, 600, 1.25], [u - .05, 1235, 680, 2.0], [u + .9, 1230, 678, 2.08], [M('click_order'), 1120, 620, 1.5]],
-          state: t => ({
+      const keyState = t => ({
             walk: +walkAt(t).toFixed(4), ask: +easeOutBack(clamp((t - arrive - .15) / .45), 2.4).toFixed(3),
             card: +clamp((t - M('card')) / .6).toFixed(3), martin: +clamp((t - V(13)) / .35).toFixed(3),
             say: +clamp((t - V(14)) / (VE(14) - V(14) - .15)).toFixed(3), time: t < arrive ? '08:54' : '08:55',
-            press: +(clamp((t - cu + .02) / .06) * (1 - clamp((t - cu - .16) / .14))).toFixed(3),
+            press: +pressAt(t, cu).toFixed(3),
             keyRot: +(90 * easeInOutCubic(P(t, u, .4))).toFixed(2), given: t >= u + .42 ? 1 : 0,
             martinSay: t >= V(17) ? 'Yes.' : t >= V(15) ? 'Go on, then.' : undefined,
-          }),
+          });
+      run = seq(root, [
+        // Martin's whole world, locked: Barnaby walks on to the back door, the key disc, his answer, the card, the
+        // cursor on Allow. The scene's one move, from the click: in to the back door as the key turns in its lock
+        { src: 'comp/martin-key', at: S, cam: move(cu + .05, u + .4 - (cu + .05), [960, 540, 1], [1235, 680, 2.0], 0), state: keyState,
           build: l => {
             flash = el('div', {}, l); css(flash, { left: '1251px', top: '669px', width: '80px', height: '80px', borderRadius: '50%', background: '#fff', mixBlendMode: 'screen' });
             keyRing = el('div', {}, l); css(keyRing, { left: '1291px', top: '709px', width: '0px', height: '0px', borderRadius: '50%', border: '5px solid #D3A14A' });
@@ -34,12 +34,15 @@
             const k = P(t, u + .3, .9), r = lerp(44, 130, easeOutCubic(k));
             css(keyRing, { left: (1291 - r) + 'px', top: (709 - r) + 'px', width: 2 * r + 'px', height: 2 * r + 'px', opacity: (k > 0 && k < 1 ? 1 - k : 0).toFixed(3) });
             flash.style.opacity = (.5 * pulse(t, u + .42, .18)).toFixed(3);
-            // the cursor: in from below the card as Martin says "Go on, then.", onto Allow, the click, then away
-            if (!Y || t < V(15) - 1.2 || t > cu + 1.2) { cur.at(0, 0, false); return; }
-            const p = path2(t, [[V(15) - 1.2, Y[0] + 260, Y[1] + 190], [cu - .12, Y[0] - 6, Y[1] + 4], [cu + .25, Y[0] - 4, Y[1] + 6], [cu + 1.2, Y[0] - 150, Y[1] + 120]]);
+            // the cursor: Martin's hand on the mouse as he says "Go on, then.", to Allow at human speed, the press
+            const from = Math.min(V(15), cu - 1.4);
+            if (!Y || t < from || t > cu + .9) { cur.at(0, 0, false); return; }
+            const p = hand(t, [from, Y[0] + 260, Y[1] + 190], [{ t: cu, x: Y[0], y: Y[1] }], [cu + .9, Y[0] - 40, Y[1] + 60]);
             cur.at(p[0], p[1], true);
           } },
-        { src: 'live/shop', at: M('click_order') - .02, cam: [[M('click_order'), 960, 540, 1.0], [M('po') + 1.1, 760, 500, 1.35], [E, 690, 480, 1.55]],
+        // "Ten pairs from Madison...": back to the whole world, locked
+        { src: 'comp/martin-key', at: V(16), cam: [960, 540, 1], state: keyState },
+        { src: 'live/shop', at: M('click_order') - .02, cam: [960, 540, 1],
           state: t => {
             const a = M('po') + .3;
             return { preset: 'shop-po', po: +easeOutCubic(clamp((t - a) / .45)).toFixed(4), poHl: +clamp((t - a) / .3).toFixed(3),

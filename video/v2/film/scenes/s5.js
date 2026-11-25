@@ -32,12 +32,15 @@
   Scene({
     id: '5', start: S, end: E, fadeIn: FI,
     build(root) {
-      const walks = [[M('walk1'), 1.55], [M('walk2'), .85], [M('walk3') + .05, .62]];       // quicker each time
+      // the walks, quicker each time, timed by their footsteps on the cue sheet (the third has none: quicker still)
+      const stepsEnd = (a, b) => { const st = sfxAll('step', a - .05, b); return st.length ? st[st.length - 1] + .25 : a + 1; };
+      const w1 = Math.min(stepsEnd(M('walk1'), M('clunk2')), M('clunk2') - .05) - M('walk1');
+      const w2 = Math.min(stepsEnd(M('walk2'), M('clunk3')), M('clunk3') - .05) - M('walk2');
+      const walks = [[M('walk1'), w1], [M('walk2'), w2], [M('walk3') + .05, Math.max(.5, .72 * w2)]];
       const four = V(23) + 2.0;                                                               // "...the same four steps"
       const pa = M('passage') + .05, pd = .85, w4 = M('walk4');
-      // one shot on the plan from Sofia's cards to Tom's: a slow push in over the three walks, closer for the passage
-      const planCam = [[V(19) - .1, 1480, 450, 1.6], [M('cards2') + .9, 1500, 455, 1.62], [M('walk1') - .25, 1480, 470, 1.6],
-        [M('walk1') + .25, 640, 560, 1.6], [four, 600, 540, 1.85], [M('passage'), 590, 520, 1.95], [w4, 600, 520, 2.0], [E, 620, 520, 1.92]];
+      // Martin's world, locked: the whole of it for Sofia's cards; then, as Barnaby sets off, a cut to the shop floor
+      // (counter to workshop), framed once: the walks, the passage and Tom's step all happen inside that frame
       // a bike comes off a stand: Kwame's 4490 and Jana's 4488 are Ravi's, Tom's 4481 is Dev's (shop-data.js)
       const RAVI = [10.6, 6.9], DEV = [8.2, 6.9];
       const CLUNKS = [[M('clunk2'), RAVI], [M('clunk3'), RAVI], [M('clunk4'), DEV]];
@@ -49,8 +52,7 @@
         const after = t >= pa;
         const st = { room: 0, side: 'handback', time: '14:20', foot: '', martinSay: t >= V(20) ? 'Go on.' : undefined, passage: +easeInOutCubic(clamp((t - pa) / pd)).toFixed(4),
           say: +clamp((t - V(19)) / (VE(19) - V(19) - .1)).toFixed(3), cards: +clamp((t - M('cards2')) / .5, 0, 2).toFixed(3),
-          press: [+(clamp((t - M('click_text') + .02) / .06) * (1 - clamp((t - M('click_text') - .14) / .14))).toFixed(3),
-            +(clamp((t - M('click_ready') + .02) / .06) * (1 - clamp((t - M('click_ready') - .14) / .14))).toFixed(3)] };
+          press: [+pressAt(t, sfxT('mouse_click', M('click_text'))).toFixed(3), +pressAt(t, sfxT('mouse_click', M('click_ready'))).toFixed(3)] };
         if (walk >= 0 && !after) {
           st.route = MCUT(ROUTE, w).map(p => [+p[0].toFixed(3), +p[1].toFixed(3)]);
           st.stops = STOPS.filter(s => w >= frac(s[0]) - 1e-6).map(s => [ROUTE[s[0]][0], ROUTE[s[0]][1], s[1], s[2], s[3]]);
@@ -82,14 +84,15 @@
             const p = [90 + ROUTE[s[0]][0] * 60, 286 + ROUTE[s[0]][1] * 60], r = lerp(10, 34, easeOutCubic(k));
             css(e, { display: 'block', left: (p[0] - r) + 'px', top: (p[1] - r) + 'px', width: 2 * r + 'px', height: 2 * r + 'px', opacity: (1 - k).toFixed(3) });
           });
-          if (!A || t < M('click_text') - 1.0 || t > M('click_ready') + .6) { cur.at(0, 0, false); return; }
-          const c = path2(t, [[M('click_text') - 1.0, A[0][0] + 220, A[0][1] + 260], [M('click_text') - .06, A[0][0], A[0][1]], [M('click_text') + .12, A[0][0] + 2, A[0][1] + 2],
-            [M('click_ready') - .06, A[1][0], A[1][1]], [M('click_ready') + .6, A[1][0] - 120, A[1][1] + 150]]);
+          const c1 = sfxT('mouse_click', M('click_text')), c2 = sfxT('mouse_click', M('click_ready')), from = Math.min(V(20), c1 - 1.3);
+          if (!A || t < from || t > c2 + .9) { cur.at(0, 0, false); return; }
+          const c = hand(t, [from, A[0][0] + 220, A[0][1] + 260], [{ t: c1, x: A[0][0], y: A[0][1] }, { t: c2, x: A[1][0], y: A[1][1] }], [c2 + .9, A[1][0] - 60, A[1][1] + 110]);
           cur.at(c[0], c[1], true);
         } }, o); };
       run = seq(root, [
-        { src: 'world/04_medium_monday.png', at: S - FI, grade: AFT, cam: [[S - FI, 1000, 560, 1.08], [V(19) - .1, 900, 620, 1.25]] },
-        planItem({ at: V(19) - .1, fi: .35, cam: planCam }),
+        { src: 'world/04_medium_monday.png', at: S - FI, grade: AFT, cam: hold(960, 600, 1.1) },
+        planItem({ at: V(19) - .1, fi: .35, cam: [960, 540, 1] }),
+        planItem({ at: M('walk1'), cam: [620, 540, 1.62] }),
       ], E);
       plan = run.list[1].s;
       sw = sweep(root, { angle: 105, color: 'rgba(255,226,180,.5)' });

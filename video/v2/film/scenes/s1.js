@@ -2,8 +2,10 @@
  * drift to the 2009 monitor (the Blender agent's s1_open when it is done); full screen, the shop PC LIVE (look/shop-pc,
  * preset `tabs`: the nine tabs open, Calendar up, as on the 3D monitor): Theo's cursor clicks through them, one per
  * mark (tab1..tab9); each click, the old PC loads the page (status bar), the CPU needle kicks and the MEMORY needle
- * climbs a notch into the red; the clock gadget's second hand ticks. "Tab four." -> the cursor goes to workload.xls and clicks; "No — five." -> the Parts
- * list (approved look-dev 03b); "It's the one with the spanner." -> push in to the spanner by PARTS LIST. */
+ * climbs a notch into the red; the clock gadget's second hand ticks. "Tab four." -> the cursor goes to workload.xls
+ * and clicks; "No — five." -> the Parts list (approved look-dev 03b); "It's the one with the spanner." -> the scene's
+ * one move, a push to the spanner by PARTS LIST. The screen is otherwise full frame and locked; the hand moves at
+ * human speed (shots.js hand()), each press on its click sound. */
 (function () {
   const C = CUES.scenes[0], S = C.start, E = C.end;
   const TABS = ['shop', 'supplier', 'sms', 'xls', 'parts', 'invoices', 'email', 'bank', 'cal'];
@@ -20,14 +22,14 @@
       cpu += .055 * easeOutCubic(P(t, a, .3)) + .32 * Math.exp(-Math.max(0, t - a) * 5) * (t >= a ? 1 : 0);
     }
     // the switches to tab 4 and 5 make the old PC work too
-    for (const a of [M('tab4_active'), M('tab5_active')]) cpu += .22 * Math.exp(-Math.max(0, t - a) * 4) * (t >= a ? 1 : 0);
+    for (const a of [sfxT('tab', M('tab4_active')), sfxT('tab', M('tab5_active'))]) cpu += .22 * Math.exp(-Math.max(0, t - a) * 4) * (t >= a ? 1 : 0);
     return { ram: clamp(ram, 0, .97), cpu: clamp(cpu, 0, .99) };
   }
   Scene({
     id: '1', start: S, end: E, fadeIn: 0,
     build(root) {
-      const tabCam = [[M('screen'), 960, 540, 1.0], [M('tab9') + .2, 990, 470, 1.06], [M('tab5_active'), 900, 430, 1.1],
-        [M('spanner') - .1, 860, 380, 1.16], [E, 640, 262, 2.5]];
+      // the screen is full frame and locked; the one move: on "It's the one with the spanner." a push to the spanner
+      const tabCam = move(M('spanner'), Math.min(2.2, E - M('spanner') - .1), [960, 540, 1.0], [720, 262, 2.1], 0);
       run = seq(root, [
         { src: 'world/01_wide_night.png', at: S,
           cam: [[M('light_up'), 960, 540, 1.0], [M('medium') + .5, 880, 455, 1.3]],
@@ -48,23 +50,18 @@
     render(t) { run.render(t); },
   });
 
+  // the clicks, on the sound of each (the cue sheet's `tab` events): the nine tabs in turn, then "four", then "five"
+  const CLICK = () => { const c = []; for (let k = 1; k <= 9; k++) c.push(sfxT('tab', tabT(k))); c.push(sfxT('tab', M('tab4_active')), sfxT('tab', M('tab5_active'))); return c; };
   function cursorAt(t) {
-    // along the tab strip, a click on each tab at its mark (tab1..tab9), then back to workload.xls, then the Parts list
-    const t1 = tabT(1), t9 = tabT(9), a4 = M('tab4_active'), a5 = M('tab5_active');
-    const at = id => G.tab[id];
-    if (t < t9 + .1) {
-      const keys = [[M('screen'), at('shop')[0] + 40, at('shop')[1] + 60]];
-      for (let k = 1; k <= 9; k++) { const p = at(TABS[k - 1]); keys.push([tabT(k) - .05, p[0] - 6, p[1] + 3], [tabT(k) + .05, p[0] - 5, p[1] + 4]); }
-      const c = path2(t, keys); return [c[0] + wiggle(t, 3, 4, .6), c[1] + wiggle(t, 4, 3.3, .5)];
-    }
-    const c9 = at('cal'), x4 = at('xls'), x5 = at('parts');
-    if (t < a5 - .45) return path2(t, [[t9 + .1, c9[0] - 5, c9[1] + 4], [t9 + .45, c9[0] - 60, c9[1] + 60], [a4 - .05, x4[0] + 10, x4[1] + 2], [a5 - .45, x4[0] + 16, x4[1] + 6]]);
-    return path2(t, [[a5 - .45, x4[0] + 16, x4[1] + 6], [a5 - .05, x5[0] - 8, x5[1] + 2], [M('spanner'), x5[0] - 2, x5[1] + 4], [E, x5[0] + 16, x5[1] + 13]]);
+    const c = CLICK(), at = id => G.tab[id], order = TABS.concat(['xls', 'parts']);
+    const clicks = c.map((ct, i) => { const p = at(order[i]); return { t: ct, x: p[0] - 6, y: p[1] + 3 }; });
+    const x5 = at('parts');
+    return hand(t, [M('screen'), at('shop')[0] + 60, at('shop')[1] + 110], clicks, [c[10] + 1.4, x5[0] + 22, x5[1] + 30]);
   }
 
   function state(t) {
     // all nine already open, as on the 3D monitor (Calendar up); each click makes the old PC load that page
-    const n = nOpen(t), nd = needles(t), a4 = M('tab4_active'), a5 = M('tab5_active');
+    const n = nOpen(t), nd = needles(t), cl = CLICK(), a4 = cl[9], a5 = cl[10];
     const st = { preset: 'tabs', tabs: TABS, tabIn: 1, ram: +nd.ram.toFixed(4), cpu: +nd.cpu.toFixed(4), secs: 12 + Math.floor(Math.max(0, t - M('screen'))) };
     st.active = t >= a5 ? 'parts' : t >= a4 ? 'xls' : n ? TABS[n - 1] : 'cal';
     const last = t >= a5 ? a5 : t >= a4 ? a4 : n ? tabT(n) : -9, since = t - last;

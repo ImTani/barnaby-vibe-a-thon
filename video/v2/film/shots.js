@@ -187,7 +187,7 @@ function seq(root, items, end) {
           }
           it.s.place(t, null, it.fit);
           if (!it.keepGrade) g = '';
-        } else it.s.place(t, it.cam, it.fit);
+        } else it.s.place(t, typeof it.cam === 'function' ? it.cam(t, it) : it.cam, it.fit);
         const b = typeof it.blur === 'function' ? it.blur(t) : (it.blur || 0);
         const f = (g + (b > .05 ? ` blur(${b.toFixed(2)}px)` : '')).trim();
         it.s.img.style.filter = f || 'none';
@@ -305,6 +305,42 @@ function sweep(parent, o = {}) {
   };
 }
 
+/* ---- the director's camera rules (gate 4 notes): hold by default, motivated moves only, human-speed hands ---- */
+/** A held shot: (x, y, s) with at most an imperceptible drift over the whole shot (scale +k, default 1.2%). */
+const hold = (x, y, s = 1, k = .012) => (t, it) => { const u = easeInOutSine(clamp((t - it.at) / Math.max(.1, it.end - it.at))); return [x, y, s * (1 + k * u)]; };
+/** One motivated move: holds `from` (with the drift) until a, eases to `to` over d, then holds `to`. */
+const move = (a, d, from, to, k = .006) => (t, it) => {
+  if (t < a) { const u = easeInOutSine(clamp((t - it.at) / Math.max(.1, a - it.at))); return [from[0], from[1], from[2] * (1 + k * u)]; }
+  const u = easeInOutCubic(clamp((t - a) / d)), f = [from[0], from[1], from[2] * (1 + k)];
+  return [lerp(f[0], to[0], u), lerp(f[1], to[1], u), lerp(f[2], to[2], u)];
+};
+/** The cue sheet's sound events: the time of the `type` event nearest to `near` (e.g. a mouse_click by its mark). */
+function sfxT(type, near) {
+  let best = null;
+  for (const e of CUES.sfx || []) if (e.type === type && (best == null || Math.abs(e.t - near) < Math.abs(best.t - near))) best = e;
+  return best ? best.t : near;
+}
+const sfxAll = (type, a = -1e9, b = 1e9) => (CUES.sfx || []).filter(e => e.type === type && e.t >= a && e.t < b).map(e => e.t);
+/** A hand on a mouse: from rest [t, x, y], to each click {t, x, y} (the press is at t): it travels 0.6-1.0 s
+ * (longer for longer trips), arrives and settles 150 ms before the press, holds 120 ms down, and leaves no sooner
+ * than 120 ms after; with less room than that the trip is shortened. Ends at `after` [t, x, y] if given. */
+function hand(t, rest, clicks, after) {
+  const keys = [[rest[0], rest[1], rest[2]]];
+  let px = rest[1], py = rest[2], free = rest[0];
+  for (const c of clicks) {
+    const dist = Math.hypot(c.x - px, c.y - py), travel = clamp(.6 + dist / 1800, .6, 1.0);
+    const arrive = c.t - .15, leave = Math.max(free, arrive - travel);
+    if (leave > keys[keys.length - 1][0] + 1e-3) keys.push([leave, px, py]);
+    keys.push([Math.max(arrive, leave + .08), c.x, c.y], [c.t + .12, c.x, c.y]);
+    px = c.x; py = c.y; free = c.t + .24;
+  }
+  if (after) { keys.push([Math.max(free, after[0] - 1.0), px, py], [Math.max(free + .6, after[0]), after[1], after[2]]); }
+  keys.sort((a, b) => a[0] - b[0]);
+  return keyframes(t, keys.map(k => [k[0], [k[1], k[2]]]), easeInOutCubic);
+}
+/** The button under a click: down for 120 ms from the press. */
+const pressAt = (t, at) => (t >= at && t < at + .12 ? 1 : t >= at - .02 && t < at ? (t - at + .02) / .02 : 0);
+
 /** Typed text: the first n characters of s at time t, typing from a to b (deterministic, slightly uneven rhythm). */
 function typed(s, t, a, b) {
   const u = clamp((t - a) / (b - a)); if (u <= 0) return ''; if (u >= 1) return s;
@@ -313,5 +349,5 @@ function typed(s, t, a, b) {
 }
 
 Object.assign(G, { SRC, SIZE, V, VE, M, still, seq, frameImg, label, fadeEl, markSVG, markAnim, sizeOf, imgPath: path, reveal, sweep,
-  cursor, path2, clickK, typed, LIVE_FRAMES: frames, FILM_FPS });
+  cursor, path2, clickK, typed, LIVE_FRAMES: frames, FILM_FPS, hold, move, sfxT, sfxAll, hand, pressAt });
 })(window);

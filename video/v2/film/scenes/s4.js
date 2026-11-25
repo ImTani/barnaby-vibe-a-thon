@@ -19,7 +19,7 @@
             say: +clamp((t - V(14)) / (VE(14) - V(14) - .15)).toFixed(3), time: t < arrive ? '08:54' : '08:55',
             press: +pressAt(t, cu).toFixed(3),
             keyRot: +(90 * easeInOutCubic(P(t, u, .4))).toFixed(2), given: t >= u + .42 ? 1 : 0,
-            martinSay: t >= V(17) ? 'Yes.' : t >= V(15) ? 'Go on, then.' : undefined,
+            martinSay: t >= V(17) ? 'Yes.' : t >= V(15) ? 'Go right ahead.' : undefined,
           });
       run = seq(root, [
         // Martin's whole world, locked: Barnaby walks on to the back door, the key disc, his answer, the card, the

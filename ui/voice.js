@@ -11,7 +11,7 @@
   const audio = new Audio(); audio.autoplay = true;
   let pc = null, micTrack = null, connecting = null, holding = false;
   const handsfree = params.has('handsfree');
-  const APP = document.documentElement.dataset.skin === 'app';   // the app look says "Listening…" on the button while held
+  const APP = /^app3?$/.test(document.documentElement.dataset.skin || '');   // the app looks say "Listening…" on the button while held
 
   async function connect() {
     if (pc && pc.connectionState === 'connected') return;

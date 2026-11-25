@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#AA7C27">
+  <!-- The mark fitted to a 16-pixel grid: 1-pixel gaps, the tie kept as two notches and a knot. -->
+  <defs>
+    <mask id="barnaby-tie-16" maskUnits="userSpaceOnUse" x="0" y="0" width="16" height="16">
+      <rect width="16" height="16" fill="#fff"/>
+      <path d="M5.2 7.9 L7.4 9.2 L5.2 10.5 Z M10.8 7.9 L8.6 9.2 L10.8 10.5 Z" fill="#000"/>
+      <rect x="7.2" y="8.5" width="1.6" height="1.4" rx=".5" fill="#000"/>
+    </mask>
+  </defs>
+  <circle cx="8" cy="3.3" r="1.6"/>
+  <path d="M2.2 11.5 A5.8 5.8 0 0 1 13.8 11.5 Z" mask="url(#barnaby-tie-16)"/>
+  <rect x="1" y="12.5" width="14" height="2" rx="1"/>
+</svg>

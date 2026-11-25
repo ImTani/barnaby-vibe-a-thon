@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Barnaby's mark: icon sheet</title>
+<link rel="icon" href="../../../../ui/assets/favicon.svg">
+<style>
+  :root { --ivory: #F8F6F1; --char: #1F1E1C; --brass: #AA7C27; --brass-d: #D2A24C; --ink: #23211C; --ink-2: #5A564D; --cream: #FFF8EB;
+    --ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; --serif: "Sitka Text", Constantia, Georgia, serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ivory); color: var(--ink); font: 15px/1.5 var(--ui); -webkit-font-smoothing: antialiased; }
+  main { width: 1600px; padding: 48px 56px 56px; }
+  h1 { margin: 0; font: 600 34px/1.15 var(--serif); letter-spacing: -.01em; display: flex; align-items: center; gap: 14px; }
+  h1 svg { width: 44px; height: 44px; color: var(--brass); }
+  .lede { margin: 10px 0 0; color: var(--ink-2); max-width: 90ch; font-size: 16px; }
+  h2 { margin: 36px 0 12px; font: 600 13px/1 var(--ui); letter-spacing: .02em; color: var(--ink-2); }
+  .row { display: flex; align-items: flex-end; gap: 40px; padding: 28px 32px; border-radius: 16px; }
+  .row.light { background: #fff; border: 1px solid #E5E1D8; }
+  .row.ivory { background: var(--ivory); border: 1px solid #E5E1D8; }
+  .row.dark { background: var(--char); color: #ECE8DF; }
+  .cell { display: grid; justify-items: center; gap: 10px; }
+  .cell small { font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .dark .cell small { color: #A59F93; }
+  .m { display: block; }
+  .light .m, .ivory .m { color: var(--brass); }
+  .dark .m { color: var(--brass-d); }
+  .row.mono-l .m { color: var(--ink); }
+  .row.mono-d .m { color: var(--cream); }
+  .big { width: 256px; height: 256px; }
+  .px { image-rendering: pixelated; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .lockup { display: flex; align-items: center; gap: 10px; font: 600 22px/1 var(--serif); }
+  .lockup svg { width: 30px; height: 30px; }
+  .thread { width: 560px; font: 18px/1.55 var(--serif); }
+  .thread .who { display: flex; align-items: center; gap: 8px; font: 600 13px/1 var(--ui); color: var(--ink-2); margin-bottom: 6px; }
+  .thread .who svg { width: 20px; height: 20px; color: var(--brass); }
+  .dark .thread .who { color: #A59F93; } .dark .thread .who svg { color: var(--brass-d); }
+  .live { display: flex; align-items: center; gap: 10px; font: 15px/1.4 var(--ui); color: var(--ink-2); }
+  .live svg { width: 20px; height: 20px; color: var(--brass); overflow: visible; }
+  .dark .live { color: #B9B3A7; } .dark .live svg { color: var(--brass-d); }
+  /* the working animation: the knob taps, the bell dips, it rings */
+  .work .knob { animation: tap 1.4s cubic-bezier(.3,.7,.3,1) infinite; transform-box: view-box; }
+  .work .body { animation: dip 1.4s cubic-bezier(.3,.7,.3,1) infinite; transform-origin: 32px 55px; transform-box: view-box; }
+  .work .ring { animation: ring 1.4s ease-out infinite; opacity: 0; transform-origin: 32px 45px; transform-box: view-box; }
+  @keyframes tap { 0%, 40%, 100% { transform: translateY(0); } 14% { transform: translateY(3.4px); } }
+  @keyframes dip { 0%, 40%, 100% { transform: scaleY(1); } 14% { transform: scaleY(.955); } }
+  @keyframes ring { 0%, 12% { opacity: 0; transform: scale(.9); } 22% { opacity: 1; } 62%, 100% { opacity: 0; transform: scale(1.14); } }
+  .film { display: flex; gap: 18px; }
+  .film .f { display: grid; justify-items: center; gap: 8px; }
+  .film svg { width: 96px; height: 96px; color: var(--brass); overflow: visible; }
+  .film .work * { animation-play-state: paused !important; }
+  .app { display: block; border-radius: 0; }
+  .shadowed { filter: drop-shadow(0 10px 24px rgba(40, 30, 10, .18)); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <mask id="tie" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+      <rect width="64" height="64" fill="#fff"/>
+      <path d="M22.4 31.6 L29.6 36.4 L22.4 41.2 Z M41.6 31.6 L34.4 36.4 L41.6 41.2 Z" fill="#000" stroke="#000" stroke-width="2.6" stroke-linejoin="round"/>
+      <rect x="29.2" y="33.4" width="5.6" height="6" rx="2" fill="#000"/>
+    </mask>
+    <mask id="tie16" maskUnits="userSpaceOnUse" x="0" y="0" width="16" height="16">
+      <rect width="16" height="16" fill="#fff"/>
+      <path d="M5.2 7.9 L7.4 9.2 L5.2 10.5 Z M10.8 7.9 L8.6 9.2 L10.8 10.5 Z" fill="#000"/>
+      <rect x="7.2" y="8.5" width="1.6" height="1.4" rx=".5" fill="#000"/>
+    </mask>
+    <symbol id="mark" viewBox="0 0 64 64"><g fill="currentColor"><circle cx="32" cy="14.5" r="5.6"/><path d="M10.5 45.2 A21.5 21.5 0 0 1 53.5 45.2 Z" mask="url(#tie)"/><rect x="5" y="48.6" width="54" height="6.6" rx="3.3"/></g></symbol>
+    <symbol id="mark16" viewBox="0 0 16 16"><g fill="currentColor"><circle cx="8" cy="3.3" r="1.6"/><path d="M2.2 11.5 A5.8 5.8 0 0 1 13.8 11.5 Z" mask="url(#tie16)"/><rect x="1" y="12.5" width="14" height="2" rx="1"/></g></symbol>
+  </defs>
+</svg>
+<template id="working"><svg viewBox="0 0 64 64" class="work" aria-hidden="true"><g fill="currentColor"><g class="ring" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M8.6 31.5 A27 27 0 0 1 16.5 22.9"/><path d="M55.4 31.5 A27 27 0 0 0 47.5 22.9"/></g><circle class="knob" cx="32" cy="14.5" r="5.6"/><g class="body"><path d="M10.5 45.2 A21.5 21.5 0 0 1 53.5 45.2 Z" mask="url(#tie)"/><rect x="5" y="48.6" width="54" height="6.6" rx="3.3"/></g></g></svg></template>
+<main>
+  <h1><svg><use href="#mark"/></svg>Barnaby's mark</h1>
+  <p class="lede">A counter bell wearing a bow tie: the shop's "ring for service" bell, and the butler who answers it. One silhouette, one inner sign,
+  cut out of the brass so it works on any ground and in one colour. The 16-pixel version is drawn on its own grid (1-pixel gaps, the tie as two notches).</p>
+
+  <h2>THE MARK AT EVERY SIZE · BRASS ON LIGHT</h2>
+  <div class="row light">
+    <div class="cell"><svg class="m big"><use href="#mark"/></svg><small>512 (shown at 256)</small></div>
+    <div class="cell"><svg class="m" width="64" height="64"><use href="#mark"/></svg><small>64</small></div>
+    <div class="cell"><svg class="m" width="32" height="32"><use href="#mark"/></svg><small>32</small></div>
+    <div class="cell"><svg class="m" width="24" height="24"><use href="#mark"/></svg><small>24</small></div>
+    <div class="cell"><svg class="m" width="16" height="16"><use href="#mark16"/></svg><small>16 (pixel-fitted)</small></div>
+    <div class="cell"><svg class="m px" width="64" height="64" viewBox="0 0 16 16"><use href="#mark16" width="16" height="16"/></svg><small>16, enlarged 4×</small></div>
+  </div>
+  <h2>BRASS ON DARK</h2>
+  <div class="row dark">
+    <div class="cell"><svg class="m big"><use href="#mark"/></svg><small>512 (shown at 256)</small></div>
+    <div class="cell"><svg class="m" width="64" height="64"><use href="#mark"/></svg><small>64</small></div>
+    <div class="cell"><svg class="m" width="32" height="32"><use href="#mark"/></svg><small>32</small></div>
+    <div class="cell"><svg class="m" width="24" height="24"><use href="#mark"/></svg><small>24</small></div>
+    <div class="cell"><svg class="m" width="16" height="16"><use href="#mark16"/></svg><small>16</small></div>
+  </div>
+  <div class="grid2">
+    <div><h2>ONE COLOUR</h2>
+      <div class="row ivory mono-l">
+        <div class="cell"><svg class="m" width="96" height="96"><use href="#mark"/></svg><small>ink</small></div>
+        <div class="cell"><svg class="m" width="32" height="32"><use href="#mark"/></svg><small>32</small></div>
+        <div class="cell"><svg class="m" width="16" height="16"><use href="#mark16"/></svg><small>16</small></div>
+      </div></div>
+    <div><h2>&nbsp;</h2>
+      <div class="row dark mono-d">
+        <div class="cell"><svg class="m" width="96" height="96"><use href="#mark"/></svg><small>ivory</small></div>
+        <div class="cell"><svg class="m" width="32" height="32"><use href="#mark"/></svg><small>32</small></div>
+        <div class="cell"><svg class="m" width="16" height="16"><use href="#mark16"/></svg><small>16</small></div>
+      </div></div>
+  </div>
+
+  <h2>APP ICON · FAVICON</h2>
+  <div class="row ivory">
+    <div class="cell"><img class="app shadowed" src="../../../../ui/assets/barnaby-app-icon.svg" width="256" height="256" alt="App icon"><small>app icon, 512 (shown at 256)</small></div>
+    <div class="cell"><img class="app shadowed" src="../../../../ui/assets/barnaby-app-icon.svg" width="128" height="128" alt=""><small>128</small></div>
+    <div class="cell"><img class="app" src="../../../../ui/assets/barnaby-app-icon.svg" width="64" height="64" alt=""><small>64</small></div>
+    <div class="cell"><img class="app" src="../../../../ui/assets/barnaby-app-icon.svg" width="32" height="32" alt=""><small>32</small></div>
+    <div class="cell"><img class="app" src="../../../../ui/assets/favicon.svg" width="16" height="16" alt=""><small>favicon 16</small></div>
+    <div class="cell"><img class="app px" src="../../../../ui/assets/favicon.svg" width="64" height="64" alt=""><small>favicon 16, enlarged 4×</small></div>
+    <div class="cell"><img class="app" src="../../../../ui/assets/favicon.svg" width="32" height="32" alt=""><small>favicon 32</small></div>
+  </div>
+
+  <h2>IN USE · LOCKUP, AVATAR, WORKING</h2>
+  <div class="grid2">
+    <div class="row light" style="flex-direction:column;align-items:flex-start;gap:22px">
+      <div class="lockup"><svg style="color:var(--brass)"><use href="#mark"/></svg>Barnaby</div>
+      <div class="thread"><div class="who"><svg><use href="#mark"/></svg>Barnaby</div>Five repairs are due tomorrow, and only one is short.</div>
+      <div class="live" data-live></div>
+    </div>
+    <div class="row dark" style="flex-direction:column;align-items:flex-start;gap:22px">
+      <div class="lockup" style="color:#ECE8DF"><svg style="color:var(--brass-d)"><use href="#mark"/></svg>Barnaby</div>
+      <div class="thread"><div class="who"><svg><use href="#mark"/></svg>Barnaby</div>Five repairs are due tomorrow, and only one is short.</div>
+      <div class="live" data-live></div>
+    </div>
+  </div>
+  <h2>THE WORKING ANIMATION (1.4 s LOOP): THE KNOB TAPS, THE BELL DIPS, IT RINGS</h2>
+  <div class="row light film" id="film"></div>
+</main>
+<script>
+  const tpl = document.getElementById('working');
+  for (const host of document.querySelectorAll('[data-live]')) {
+    host.append(tpl.content.firstElementChild.cloneNode(true));
+    host.append(Object.assign(document.createElement('span'), { textContent: 'Looking at repair jobs due on Tue 24 Nov · 4s' }));
+  }
+  const film = document.getElementById('film');
+  [0, .1, .2, .3, .45, .7, .95].forEach(t => {
+    const f = document.createElement('div'); f.className = 'f';
+    const s = tpl.content.firstElementChild.cloneNode(true);
+    s.querySelectorAll('.knob, .body, .ring').forEach(n => n.style.animationDelay = `-${(t * 1.4).toFixed(2)}s`);
+    f.append(s, Object.assign(document.createElement('small'), { textContent: `${Math.round(t * 1400)} ms` }));
+    film.append(f);
+  });
+</script>
+</body>
+</html>

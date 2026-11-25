@@ -4,15 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Barnaby</title>
+<link rel="icon" href="/ui/assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/ui/style.css" id="look">
 <script>
 /* ?skin=<name> swaps the stylesheet before first paint; app.js then speaks in the household's words (plain activity,
    decisions kept). ?skin=app is the professional app look (pending the director's approval); signpost and ticket are
    last round's themed skins, kept for comparison. DEFAULT is the look with no ?skin: set it to 'app' to make the app
-   the default, and ?skin=classic still opens the old look (style.css). */
+   the default, and ?skin=classic still opens the old look (style.css). ?skin=app3 is round 3, modelled on the Claude
+   and Codex desktop apps; ?theme=dark|light (or the switch in app3, remembered) picks its light or dark. */
 (function () {
   var DEFAULT = '';
-  var m = /[?&]skin=(app|signpost|ticket|classic)\b/.exec(location.search);
+  var t = /[?&]theme=(light|dark)\b/.exec(location.search), theme = t ? t[1] : null;
+  try { theme = theme || localStorage.getItem('barnaby-theme'); } catch (e) {}
+  if (theme) document.documentElement.setAttribute('data-theme', theme);
+  var m = /[?&]skin=(app3|app|signpost|ticket|classic)\b/.exec(location.search);
   var skin = m ? m[1] : DEFAULT;
   if (!skin || skin === 'classic') return;
   document.documentElement.setAttribute('data-skin', skin);
@@ -24,6 +29,12 @@
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
+    <!-- Barnaby's mark (app3): a counter bell wearing a bow tie; the tie is cut out of the brass by this mask -->
+    <mask id="bb-tie" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+      <rect width="64" height="64" fill="#fff"/>
+      <path d="M22.4 31.6 L29.6 36.4 L22.4 41.2 Z M41.6 31.6 L34.4 36.4 L41.6 41.2 Z" fill="#000" stroke="#000" stroke-width="2.6" stroke-linejoin="round"/>
+      <rect x="29.2" y="33.4" width="5.6" height="6" rx="2" fill="#000"/>
+    </mask>
     <linearGradient id="brassG" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#f0cf8f"/><stop offset=".55" stop-color="#d4a85a"/><stop offset="1" stop-color="#9c7232"/>
     </linearGradient>
@@ -51,6 +62,11 @@
     <symbol fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="i-use" viewBox="0 0 24 24"><rect x="6.5" y="6.5" width="11" height="11" fill="currentColor"/></symbol>
     <symbol fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="i-chev" viewBox="0 0 24 24"><path d="M9 5.5l6.5 6.5L9 18.5"/></symbol>
     <symbol fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="i-keys" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01"/><path d="M10 10h.01"/><path d="M14 10h.01"/><path d="M17.5 10h.01"/><path d="M7.5 14h9"/></symbol>
+    <symbol fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+    <symbol fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M15 4.5v15"/></symbol>
+    <symbol fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" id="i-send" viewBox="0 0 24 24"><path d="M12 19V5.5M6 11.5l6-6 6 6"/></symbol>
     <symbol fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="i-can" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/></symbol>
     <symbol fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5"/><path d="M15 3v5"/><path d="M6 8h12v3a6 6 0 0 1-12 0z"/><path d="M12 17v4"/></symbol>
   </defs>
@@ -84,6 +100,8 @@
     </form>
   </aside>
 </main>
+
+<aside class="inspector" id="inspector" hidden aria-label="Barnaby at a glance"></aside>
 
 <footer class="input">
   <button id="talk" class="talk" type="button" title="Hold to talk (or hold Space)">

@@ -60,6 +60,102 @@ https://openai.com/codex/ (scroll to the app screenshots; headless Chrome is fin
 - Personality lives in the mark, the working animation, the voice of the copy, and a reading serif (chat), not in
   costumes, textures or themed chrome.
 
+## Codex desktop: aspect by aspect
+
+Captured 25 Nov from https://openai.com/codex/ (the product screenshots on the page; see `refs/codex-*.png`). Headless
+Chrome got a Cloudflare bot check (403), so the page was opened in an ordinary browser (cookies: "Reject
+non-essential") and only the page's own product images were rendered at their natural size by
+`tools/capture-codex-images.js`. Files:
+- `codex-new-task-dark.png`: the whole app, empty state;
+- `codex-parallel-agents.png`: the sidebar and a thread;
+- `codex-task-progress-review.png`: a finished task with its diff pane;
+- `codex-edited-files-review.png`: the changes card;
+- `codex-code-review-pr.png`: a PR review;
+- `codex-sidebar-tasks.png` and `codex-work-location-menu.png`: close-ups.
+
+**1. Overall structure**
+- **Four zones:**
+  - a slim icon rail on the far left (the mark at the top in a rounded tile, then a few nav icons);
+  - a sidebar ("Codex ▾", New chat, Pinned, Recents, Projects);
+  - the main thread;
+  - a review pane that slides in beside the thread when there are changes (the diff, with Commit and expand/close).
+- The thread's title sits in the window bar ("Refine merge conflict UI"). There is a lot of empty space, and the thread
+  and composer sit in a column of about 700 px.
+- **Empty state:** the mark large and centred, one question ("What should we build?"), and three suggestion rows
+  (an app icon plus a sentence) just above the composer. It says what the app is for without a tour.
+
+**2. Colour and surface**
+- **Dark:** a neutral charcoal with no tint. The rail, sidebar and thread are separated by one tone step each. The
+  composer is a lighter rounded slab, and cards are a darker or lighter slab, never outlined twice.
+- **Primary action:** white. The send button is a white circle with a black arrow, the only high-contrast object.
+- **Colour has jobs only:**
+  - one blue for unread dots and links;
+  - green and red only for +/− line counts and status ("Open");
+  - small coloured app icons on suggestion rows.
+- The purple gradients belong to the marketing page, not the app.
+
+**3. Typography**
+- One grotesk sans throughout, large and airy.
+- Titles are bold ("Codex", "Prevent duplicate checkout orders"). Secondary text is the same size in grey, often in
+  the same line: "Find latest PR **Miniapp**" puts the task in white and the project in grey.
+- Times are grey and small ("9:04 AM"). No serif anywhere: Codex's personality is in the mark and the copy, not the
+  type.
+
+**4. How the work shows**
+- Each turn's work collapses to one grey line above the answer, "Worked for 2m 30s ›", with the plain-prose answer
+  below, then a quiet row of icon actions (copy, thumbs, share, more).
+- A running task shows a small sparkle spinner in the sidebar list, and a waiting one a clock.
+- The user's message is a soft grey rounded bubble on the right. The assistant's words are not in a bubble.
+
+**5. Rich cards inline**
+- **Changes card:** "2 files edited +123 −42 Review ↗", then one rounded row per file ("slider.tsx +83 −0 ⌄",
+  collapsible), all on a darker slab with large radii (about 16–24 px). The counts are the whole summary; the diff is a
+  click away.
+- **PR view:** a green "Open" status pill, a bold title, the author and date, a Summary and a Test plan in plain
+  prose, then one primary pill button ("Merge") top right.
+- **Menus:** "Work in" with "Cloud ✓" and "This computer" in grey, i.e. icon + label + check. They are big, soft and
+  quiet.
+
+**6. The side pane**
+- **Review pane:** "Unstaged changes +23 −16 ▾" on the left, "Commit ▾", expand and close on the right; file
+  headers in grey; changed lines on red and green tints with line numbers. It opens beside the conversation for
+  whoever wants the detail, never inside the answer.
+
+**7. Composer**
+- **The slab:** big rounded corners (about 24 px), the placeholder "Do anything" / "Do anything. @ to use plugins",
+  "+" bottom left, the model selector ("5.6 Medium ⌄") bottom right, then a mic icon and the white circular send
+  button.
+- **Context chips** ("openai ⌄ monorepo ⌄") sit on a darker tab attached to the top of the composer: where the work
+  will happen, chosen right at the point of asking.
+
+**8. Brand and personality**
+- **The mark:** a soft scalloped "cloud" outline with a ">_" prompt inside, drawn as one even line. Friendly, a
+  little playful, and unmistakable at 24 px. It appears in the rail tile and as the empty-state hero.
+- **Personality:** the mark's soft silhouette, the warm question in the empty state, the sparkle spinner, and the
+  big soft radii everywhere. Everything else is austere.
+
+## Claude and Codex together: what to take for Barnaby
+- **From both:**
+  - one centred column, the answer as plain prose, the user's words in a soft bubble on the right;
+  - the work as one collapsed grey line per batch, with its duration;
+  - a big rounded composer with "+" on the left and the primary control on the right;
+  - a side pane for state and detail;
+  - colour only where it has a job.
+- **From Codex:**
+  - an empty state built around the mark and one question, with suggestion rows above the composer;
+  - the change summarised by its counts ("3 files · +102 −0"), opened on request;
+  - the context selector at the point of asking;
+  - the primary circle on the composer (for Barnaby: the brass Hold to talk, which turns into send when there is text).
+- **From Claude:**
+  - a warm ground and a reading serif for the assistant's words;
+  - one brand colour used the way coral is (mark, working glyph, primary decision);
+  - the live line (animated mark + present tense + timer);
+  - the inspector's quiet sections with right-aligned values and a small progress bar.
+- **Barnaby's own mark, by the same rule as theirs:**
+  - one simple silhouette with one inner sign. Codex puts a prompt inside a cloud; Barnaby is a service bell wearing a
+    bow tie (the butler), cut out of the brass;
+  - its own working animation: the knob taps and the bell rings.
+
 ## What round 2 got wrong against this
 - It modelled a generic productivity app (Linear/Mail), not an AI assistant.
   - The separate "What he did" column is a developer trace in a nicer coat.

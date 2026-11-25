@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barnaby, round 3: modelled on the Claude and Codex desktop apps</title>
+<link rel="icon" href="../../../../ui/assets/favicon.svg">
+<style>
+  :root { --ground: #F6F4EE; --ink: #24211C; --ink-2: #534F47; --ink-3: #6E695F; --hair: #E2DDD2; --brass: #A8772A; --brass-strong: #87590F;
+    --ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; --serif: "Sitka Text", Constantia, Georgia, serif; --head: "Sitka Subheading", "Sitka Text", Constantia, Georgia, serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 15.5px/1.55 var(--ui); -webkit-font-smoothing: antialiased; }
+  ::selection { background: #EADBB4; }
+  main { max-width: 1480px; margin: 0 auto; padding: 44px 48px 96px; }
+  header { display: flex; align-items: center; gap: 14px; }
+  header img { width: 44px; height: 44px; }
+  h1 { margin: 0; font: 600 32px/1.2 var(--head); letter-spacing: -.01em; }
+  h2 { margin: 56px 0 12px; font: 600 23px/1.3 var(--head); }
+  p, li { max-width: 80ch; }
+  .lede { margin: 14px 0 0; font: 18.5px/1.6 var(--serif); color: var(--ink); max-width: 72ch; }
+  .pending { display: inline-block; margin-top: 12px; font-size: 13.5px; font-weight: 600; color: var(--brass-strong); }
+  code { font: 13.5px "Cascadia Mono", Consolas, monospace; background: #ECE8DF; padding: 1px 5px; border-radius: 5px; }
+  .open { margin-top: 18px; padding: 14px 18px; background: #fff; border: 1px solid var(--hair); border-radius: 14px; max-width: 980px; }
+  .open p { margin: 4px 0; }
+  ul.tight li { margin: 5px 0; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 22px; margin-top: 14px; }
+  .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+  figure { margin: 0; }
+  figure img { display: block; width: 100%; height: auto; border: 1px solid var(--hair); border-radius: 10px; }
+  figure.narrow img { width: auto; max-width: 100%; max-height: 640px; }
+  figcaption { margin-top: 7px; font-size: 13.5px; color: var(--ink-2); }
+  figcaption a { color: inherit; }
+  .refs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
+  @media (max-width: 1000px) { .grid, .grid.three, .refs { grid-template-columns: 1fr; } main { padding: 28px 18px 64px; } }
+</style>
+</head>
+<body>
+<main>
+<header><img src="../../../../ui/assets/barnaby-app-icon.svg" alt=""><h1>Barnaby, round 3</h1></header>
+<p class="lede">The director on round 2: too subdued, no personality, and the icon needs work. "No AI apps look like this." So this
+round is modelled on the Claude and Codex desktop apps, after studying both aspect by aspect (<a href="REFERENCE-ANALYSIS.md">REFERENCE-ANALYSIS.md</a>).
+His work now sits inline and collapsed, with one live line while he works. His words are set in a warm reading serif on an ivory
+(or charcoal) ground, and brass is the one brand colour. And he has a mark of his own: a counter bell wearing a bow tie.</p>
+<span class="pending">Pending the director's approval. <code>?skin=app</code> (round 2) and the old default are unchanged.</span>
+<div class="open">
+  <p><b>Open it:</b> <code>.venv/Scripts/python -m barnaby serve</code>, then <code>http://127.0.0.1:8700/?skin=app3</code>
+  (add <code>&amp;mock=1</code> to replay the run, <code>&amp;turn=4</code> for the Build, <code>&amp;theme=dark</code> for dark, <code>&amp;overlay=1</code> for the compact window).</p>
+</div>
+
+<h2>An answer, light and dark</h2>
+<div class="grid">
+  <figure><img src="frames/app3-answer-1440.png" alt=""><figcaption>1440×900, light · <a href="frames/app3-answer-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app3-dark-answer-1440.png" alt=""><figcaption>1440×900, dark · <a href="frames/app3-dark-answer-1920.png">1920</a></figcaption></figure>
+</div>
+
+<h2>The mark</h2>
+<figure><img src="frames/app3-icons.png" alt="Barnaby's mark at every size, light, dark and one colour; the app icon and favicon; the lockup, avatar and working line; the working animation as a filmstrip"><figcaption>The mark at 16, 24, 32, 64 and 512; one colour; the app icon and favicon; in use; the working animation (the knob taps, the bell dips, it rings) · <a href="icon-sheet.html">the sheet itself</a> · files in <code>ui/assets/</code></figcaption></figure>
+
+<h2>Working, waiting, deciding</h2>
+<div class="grid">
+  <figure><img src="frames/app3-working-1440.png" alt=""><figcaption>Working: the live line with his mark at work, what he is doing now and a timer · <a href="frames/app3-working-1920.png">1920</a> · <a href="frames/app3-dark-working-1440.png">dark</a></figcaption></figure>
+  <figure><img src="frames/app3-detail-1440.png" alt=""><figcaption>A work line opened to its steps, one step to its technical record · <a href="frames/app3-detail-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app3-unlock-1440.png" alt=""><figcaption>A new key · <a href="frames/app3-unlock-1920.png">1920</a> · <a href="frames/app3-dark-unlock-1440.png">dark</a></figcaption></figure>
+  <figure><img src="frames/app3-build-1440.png" alt=""><figcaption>A new piece: what it does, reads, changes, the checks, the undo; the change by its counts · <a href="frames/app3-build-1920.png">1920</a> · <a href="frames/app3-dark-build-1920.png">dark</a></figcaption></figure>
+  <figure><img src="frames/app3-change-1440.png" alt=""><figcaption>"See the change" open; the decision stays docked in view · <a href="frames/app3-change-1920.png">1920</a> · <a href="frames/app3-dark-change-1440.png">dark</a></figcaption></figure>
+  <figure><img src="frames/app3-compose-1440.png" alt=""><figcaption>A shortcut (one step instead of several) · <a href="frames/app3-compose-1920.png">1920</a></figcaption></figure>
+</div>
+
+<h2>The rest of the states</h2>
+<div class="grid">
+  <figure><img src="frames/app3-empty-1440.png" alt=""><figcaption>Empty: his mark, a question, the two controls, the way in · <a href="frames/app3-empty-1920.png">1920</a> · <a href="frames/app3-dark-empty-1440.png">dark</a></figcaption></figure>
+  <figure><img src="frames/app3-connect-1440.png" alt=""><figcaption>Connecting a system (the "+" or the selector) · <a href="frames/app3-connect-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app3-listening-1440.png" alt=""><figcaption>Listening: Hold to talk held (a stand-in voice bot) · <a href="frames/app3-listening-1920.png">1920</a> · <a href="frames/app3-dark-listening-1440.png">dark</a></figcaption></figure>
+  <figure><img src="frames/app3-error-1440.png" alt=""><figcaption>Voice not running, said plainly · <a href="frames/app3-error-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app3-map-1440.png" alt=""><figcaption>What he can do, as a sheet over the side panel · <a href="frames/app3-map-1920.png">1920</a> · <a href="frames/app3-dark-map-1440.png">dark</a></figcaption></figure>
+  <figure><img src="frames/app3-map-today-1440.png" alt=""><figcaption>Technical names on; today's keys and new pieces · <a href="frames/app3-map-today-1920.png">1920</a></figcaption></figure>
+</div>
+<div class="grid three" style="margin-top:22px">
+  <figure class="narrow"><img src="frames/app3-overlay-560.png" alt=""><figcaption>Compact window (560): the key</figcaption></figure>
+  <figure class="narrow"><img src="frames/app3-overlay-build-560.png" alt=""><figcaption>Compact window: the Build</figcaption></figure>
+  <figure class="narrow"><img src="frames/app3-dark-overlay-build-560.png" alt=""><figcaption>Compact window, dark</figcaption></figure>
+</div>
+
+<h2>The references</h2>
+<div class="refs">
+  <figure><img src="refs/claude-desktop-code-tab.png" alt=""><figcaption>Claude desktop (Code tab)</figcaption></figure>
+  <figure><img src="refs/codex-new-task-dark.png" alt=""><figcaption>Codex: empty state</figcaption></figure>
+  <figure><img src="refs/codex-task-progress-review.png" alt=""><figcaption>Codex: a finished task, its change</figcaption></figure>
+</div>
+<p style="color: var(--ink-3); font-size: 13.5px; margin-top: 36px">Frames: <code>node video/v2/look/app3/capture.js</code> · icon sheet: <code>node video/v2/look/app3/tools/shot-sheet.js</code> ·
+checks: <code>node video/v2/look/app/check.js --skins app3</code> and <code>node video/v2/look/app3/check.js</code> (server running).</p>
+</main>
+</body>
+</html>

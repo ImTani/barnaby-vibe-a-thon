@@ -13,7 +13,9 @@ they're built and attached, and how to use the same servers from Claude Code, Cl
 | `barnaby` | Barnaby's growth tools: `capabilities`, `unlock`, `compose`, `build`, `connect` | hand-written ([`barnaby/toolkit.py`](../barnaby/toolkit.py)) | in-process (Agent SDK `create_sdk_mcp_server`, or Pydantic AI function tools) |
 
 Tools are addressed as `mcp__<server>__<tool>`, for example `mcp__shop__jobs_due` or
-`mcp__shop-k1__hand_back_finished_bike`.
+`mcp__shop-k1__hand_back_finished_bike`. A composed skill's tool name is Synapse's and varies from run to run (the
+25 Nov evening run made `notify_bike_ready_and_update_job`); the person sees the plain name Barnaby gave it ("Hand
+back a bike in one step").
 
 Where they live (all generated files stay out of the target repo, so its diffs stay clean):
 
@@ -35,7 +37,7 @@ All calls go through [`barnaby/synapse.py`](../barnaby/synapse.py). It runs the 
 | Moment | Command (run in the target repo) | Then |
 |---|---|---|
 | **Connect** | `synapse build --auto --local --all-endpoints`, then `--endpoints "<starter set>"` | read `.synapse/surface_cache.json`; expose the read-only starters |
-| **Unlock** | `synapse build --auto --local --endpoints "<exposed>,<new>"` (0.3–0.5 s) | reconnect the `<system>` server; the turn continues with the new tool |
+| **Unlock** | `synapse build --auto --local --endpoints "<exposed>,<new>"` (under a second: 0.3–0.8 s in our runs) | reconnect the `<system>` server; the turn continues with the new tool |
 | **Compose** | `synapse init` (once per repo), then `synapse build --custom -q "<one-sentence job>"` (16–40 s) | register `<system>-k<N>`; the turn continues with the skill |
 | **Build** | after Barnaby's code is merged and the system restarted: `synapse build --auto --local --endpoints "…,<new>" --discover` | the new endpoint appears in the atlas and as a tool |
 
@@ -80,15 +82,26 @@ ClaudeAgentOptions(
 )
 ```
 
-- `can_use_tool` maps each call to a tier: reads pass; writes and composed skills raise a confirmation card; Unlock and
-  Compose raise a one-click "grow" card; Build raises a card with the full diff. Deny-listed endpoints never pass.
+- `can_use_tool` hands each call to the shared tier gate (`gate()` in [`barnaby/toolkit.py`](../barnaby/toolkit.py)):
+  reads pass; writes and composed skills raise a confirmation card (a click or a spoken "yes"); Unlock and Compose
+  raise a one-click "grow" card; Build raises a card that explains the change in plain words, with the diff folded
+  underneath, and takes a click only. Deny-listed endpoints never pass.
+- Every card is written for the person, not a developer. Its `title` and `detail` are plain words ("Let Barnaby order
+  parts from your suppliers"); the endpoint, tool name and arguments travel in the approval event's `technical` field,
+  which the app keeps folded under "Technical detail" ([`barnaby/policy.py`](../barnaby/policy.py)).
 - When a growth step changes a server, the worker reconnects it (`reconnect_mcp_server`), or starts a new client on
   the same session when the set of servers changes (a new system or a new skill), and continues the turn.
+
+The bring-your-own-model worker ([`barnaby/worker_byom.py`](../barnaby/worker_byom.py), `BARNABY_WORKER_BACKEND=byom`)
+attaches the very same stdio servers as Pydantic AI `MCPToolset`s, names their tools `mcp__<server>__<tool>` the same
+way, and puts every call through the same `gate()`. The growth tools are plain function tools wrapping the same
+functions, so the prompt, the cards and the events are identical whichever model is thinking.
 
 ## Use the same servers from your own MCP client
 
 The generated servers are ordinary stdio MCP servers. With the system running (for the shop:
-`python scripts/demo_reset.py`, then `python -m barnaby connect shop`), add them to any client. Use absolute paths.
+`.venv/Scripts/python scripts/demo_reset.py`, then `.venv/Scripts/python -m barnaby connect shop`, which also starts
+the shop on port 8101), add them to any client. Use absolute paths.
 
 **Claude Code**
 
@@ -128,7 +141,8 @@ loop, which is the point of the project.
 Barnaby works on any repo Synapse can scan (Python FastAPI/Flask/aiohttp and Node routes; see the pitfalls in the
 [README](../README.md#synapse-019-issues-we-hit-and-the-disclosed-fix-up-pass)). Start its HTTP API, then:
 
-- on the display: *Connect a repo*, with the repo path and the API's URL; or
+- in the app: *Connect a system* ("+" in the composer, or the foot of *What he can do*), with a name, the repo path
+  and the API's URL; or
 - by voice or text: *"Barnaby, this is our inventory service, in D:/code/inventory, running on port 9000."*
 
 For Compose, put a free Synapse key in `.env` as `SYNAPSE_API_KEY` (hosted Custom mode). Everything else runs locally

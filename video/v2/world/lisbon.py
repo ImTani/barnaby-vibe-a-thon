@@ -78,6 +78,9 @@ LSCREENS = {
 }
 # panel brightness: by day against Lisbon sun; at night dimmed to a glow (the closing cut)
 LBRIGHT = {"day": {"main": 1.15, "studio": 1.1, "laptop": 1.15}, "night": {"main": 0.5, "studio": 0.2, "laptop": 0.22}}
+# the day's level (v2.4, chosen from five test renders against 05_medium_tuesday, the shot it cuts from): world light
+# (was 0.55), the sky's glow in the window (was 2.6, read white), exposure (was 0.15), bloom (threshold, strength)
+DAY_WORLD, DAY_SKY, DAY_EV, DAY_BLOOM = 0.25, 1.3, 0.0, (2.0, 0.12)
 PANELS = {}
 
 
@@ -323,7 +326,12 @@ def build_room(M):
         for k in range(1, 4):                                 # four panes high
             z = wz0 + 0.05 + k * (wz1 - wz0 - 0.1) / 4
             boxmm(f"lx_bar_h{side}{k}", (fx0 + 0.008, y0, z - 0.012), (fx1 - 0.008, y1, z + 0.012), white, bev=0.003)
-    boxmm("lx_glass", (fx0 + 0.018, wy0, wz0), (fx0 + 0.022, wy1, wz1), M["glass"], bev=0).visible_shadow = False
+    # v2.4: old window glass, a little hazy: once the day came down, the shop's sharp glass mirrored the sunlit floor
+    # as a hard white ghost over the roofs; rougher, the room's reflection is a soft sheen
+    lg = M["glass"].copy()
+    lg.name = "lx_window_glass"
+    principled(lg).inputs["Roughness"].default_value = 0.35
+    boxmm("lx_glass", (fx0 + 0.018, wy0, wz0), (fx0 + 0.022, wy1, wz1), lg, bev=0).visible_shadow = False
     cyl("lx_espag", 0.007, wz1 - wz0 - 0.2, (fx1 + 0.012, (wy0 + wy1) / 2, (wz0 + wz1) / 2), M["brass"], n=8)
     for s, y in ((-1, wy0), (1, wy1)):                        # shutters folded into the reveal
         for k in range(2):
@@ -1186,13 +1194,16 @@ def build_lights(M, heads):
     bpy.context.view_layer.update()
     wy0, wy1, wz0, wz1 = WIN
     wc = Vector((0.0, (wy0 + wy1) / 2, (wz0 + wz1) / 2))
-    # day: Lisbon sun through the window, the sky in the window, warm bounce
-    sun = light("LL_sun", "SUN", (-3, 1.0, 4), 26.0, (1.0, 0.9, 0.74), "DAY")
+    # day: Lisbon sun through the window, the sky in the window, warm bounce. v2.4 (film review, 26 Nov): the day read
+    # overblown next to the shop it cuts from (median luma ~200 vs 126, blacks lifted by bloom, ~4% clipped), so the
+    # daylight is lower in the scene itself (less of the room crosses the bloom threshold) and the fills come down
+    # more than the sun, for contrast: sun x0.7, window sky x0.4, bounce x0.35 (with DAY_* in apply_preset)
+    sun = light("LL_sun", "SUN", (-3, 1.0, 4), 18.2, (1.0, 0.9, 0.74), "DAY")
     sun.data.angle = radians(2.0)
     sun.rotation_euler = Vector((0.8, 0.36, -0.46)).to_track_quat("-Z", "Y").to_euler()
-    light("LL_window_sky", "AREA", (-0.12, wc.y, wc.z), 160.0, (0.78, 0.86, 1.0), "DAY", target=(1.6, 1.9, 0.8),
+    light("LL_window_sky", "AREA", (-0.12, wc.y, wc.z), 64.0, (0.78, 0.86, 1.0), "DAY", target=(1.6, 1.9, 0.8),
           size=1.0, size_y=1.6)
-    light("LL_bounce", "AREA", (1.7, 0.5, 2.7), 55.0, (1.0, 0.9, 0.78), "DAY", target=(1.3, 2.2, 0.7), size=2.2,
+    light("LL_bounce", "AREA", (1.7, 0.5, 2.7), 19.25, (1.0, 0.9, 0.78), "DAY", target=(1.3, 2.2, 0.7), size=2.2,
           size_y=1.6)
     # night: city light and moon through the window, the panels' glow, a warm street lamp far below
     light("LL_moon", "SPOT", (-2.6, 0.9, 3.6), 160.0, (0.55, 0.66, 1.0), "NIGHT", target=(1.0, 2.0, 0.4), spot=28,
@@ -1228,10 +1239,10 @@ def apply_preset(name, M, sky_m, lit_m):
     sc = bpy.context.scene
     bg = sc.world.node_tree.nodes["Background"]
     bg.inputs[0].default_value = rgba("#c7d8e6") if day else rgba("#141b2b")
-    bg.inputs[1].default_value = 0.55 if day else 0.12
+    bg.inputs[1].default_value = DAY_WORLD if day else 0.12
     sk = principled(sky_m)
     sk.inputs["Emission Color"].default_value = rgba("#bcd6ea") if day else rgba("#16213a")
-    sk.inputs["Emission Strength"].default_value = 2.6 if day else 1.0
+    sk.inputs["Emission Strength"].default_value = DAY_SKY if day else 1.0
     principled(lit_m).inputs["Emission Strength"].default_value = 0.0 if day else 4.0
     aspects = {"main": 16 / 9, "studio": 16 / 9, "laptop": 16 / 10}
     for slot in ("main", "studio", "laptop"):
@@ -1244,7 +1255,13 @@ def apply_preset(name, M, sky_m, lit_m):
             base = 1.5 if slot == "laptop" else 4.0
             ln.data.energy = base * LBRIGHT[name][slot] * max(lum, 0.01) / 0.08
             ln.data.color = tuple(float(c) for c in (mean / max(mean.max(), 1e-6)) * 0.7 + 0.3)
-    sc.view_settings.exposure = 0.15 if day else 0.42
+    sc.view_settings.exposure = DAY_EV if day else 0.42
+    # the shared bloom (desk.py build_compositor: threshold 1.0, strength 0.22) veiled the whole sunlit room; by day
+    # only real highlights bloom (the night keeps the approved glow on the panels)
+    gl = next((n for n in sc.compositing_node_group.nodes if n.bl_idname == "CompositorNodeGlare"), None)
+    if gl is not None:
+        gl.inputs["Threshold"].default_value = DAY_BLOOM[0] if day else 1.0
+        gl.inputs["Strength"].default_value = DAY_BLOOM[1] if day else 0.22
 
 
 def main():
@@ -1258,12 +1275,13 @@ def main():
         bpy.context.scene.collection.children.link(c)
         COLL[name] = c
     D.setup_render(args)
-    # the same diorama presentation as the shop: the camera sees a dark surround, the room keeps its daylight
+    # the same diorama presentation as the shop: the camera sees a dark surround, the room keeps its daylight. v2.4:
+    # near-black, as the film's opening keys the shop's (no indigo void at the frame's edges)
     wn = bpy.context.scene.world.node_tree
     lp = wn.nodes.new("ShaderNodeLightPath")
     dark = wn.nodes.new("ShaderNodeBackground")
-    dark.inputs[0].default_value = rgba("#1c2333")
-    dark.inputs[1].default_value = 0.7
+    dark.inputs[0].default_value = rgba("#060709")
+    dark.inputs[1].default_value = 0.5
     mix = wn.nodes.new("ShaderNodeMixShader")
     wn.links.new(lp.outputs["Is Camera Ray"], mix.inputs[0])
     wn.links.new(wn.nodes["Background"].outputs[0], mix.inputs[1])

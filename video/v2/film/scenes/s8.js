@@ -50,9 +50,9 @@
       const mainState = t => ({ preset: 'realapp', app: +easeOutCubic(clamp((t - M('realapp') - .05) / .6)).toFixed(4), secs: (40 + Math.floor(t - M('realapp')) + 600) % 60 });
       const MATCH = pick('world/lisbon_match_day.png', ''), LW4K = pick('world/lisbon_01_wide_day_4k.png', ''), DAY = shotDone('s8_lisbon_day');
       run = seq(root, [
-        // the match from Tuesday: 2/3 stop down to sit with s8_lisbon_day (x0.8 on the sRGB values = 2^-2/3 in linear
-        // light); the main monitor live on its glass
-        ...(MATCH ? [{ src: MATCH, at: S, cam: hold(960, 600, 1.12), grade: 'brightness(.8)', screen: { src: 'live/lis-main-empty', state: mainState } }] : []),
+        // the match from Tuesday, the main monitor live on its glass (v2.4: the day's level is set in Blender, lisbon.py
+        // DAY_*, so no 2D grade here)
+        ...(MATCH ? [{ src: MATCH, at: S, cam: hold(960, 600, 1.12), screen: { src: 'live/lis-main-empty', state: mainState } }] : []),
         // 8.1 with Blender's s8_lisbon_day: one continuous approach that lands on the monitor at 'realapp' for the push
         // (8.2, the nata insert, is the beat SHOTLIST says to drop first; the cup is on the desk in the approach);
         // without it, the 4K wide's pan (or the approved wide) and the nata insert, and a cut into the screen

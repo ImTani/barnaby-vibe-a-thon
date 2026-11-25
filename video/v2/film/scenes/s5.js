@@ -34,7 +34,7 @@
       const walks = [[M('walk1'), 1.55], [M('walk2'), .85], [M('walk3') + .05, .62]];       // quicker each time
       const four = V(23) + 2.0;                                                               // "...the same four steps"
       const pa = M('passage') + .05, pd = .85, w4 = M('walk4');
-      const planCam = [[V(19) - .1, 1480, 470, 1.6], [M('cards2') + .9, 1500, 480, 1.62], [M('walk1') - .25, 1480, 490, 1.6],
+      const planCam = [[V(19) - .1, 1480, 450, 1.6], [M('cards2') + .9, 1500, 455, 1.62], [M('walk1') - .25, 1480, 470, 1.6],
         [M('walk1') + .25, 640, 560, 1.62], [M('clunk2'), 630, 560, 1.68]];
       const plan2 = [[M('walk2'), 640, 560, 1.66], [M('clunk3'), 630, 555, 1.7]];
       const plan3 = [[M('walk3'), 640, 560, 1.66], [four, 600, 540, 1.85], [M('passage'), 590, 520, 1.95], [w4, 600, 520, 2.0], [E, 620, 520, 1.92]];

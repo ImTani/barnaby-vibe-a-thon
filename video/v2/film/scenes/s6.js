@@ -97,32 +97,42 @@
         <feComposite in="d" in2="a" operator="in"/></filter>
       <pattern id="dr-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
         <line x1="0" y1="0" x2="0" y2="6" stroke="${LEAD}" stroke-width="1.6"/></pattern></defs>
+      <g id="dr-wash"></g>
       <g id="dr-pencil" filter="url(#dr-lead)" fill="none" stroke="${LEAD}" stroke-linecap="round" stroke-linejoin="round"></g>
       <g id="dr-tip"><circle r="9" fill="${BRASS}" opacity=".22"/><circle r="3.6" fill="${BRASS}"/></g>`;
     sheet.appendChild(svg);
-    const pencil = svg.querySelector('#dr-pencil'), tip = svg.querySelector('#dr-tip');
+    const pencil = svg.querySelector('#dr-pencil'), tip = svg.querySelector('#dr-tip'), wash = svg.querySelector('#dr-wash');
     const mk = (tag, attrs, parent = pencil) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
 
     /* The drawing, sheet by sheet: [kind, spec, weight]. 'p' a pencil line (drawn along its length), 't' lettering
      * (written left to right), 'f' a shaded bar (its tone grows from the left). The room: x 678..835, y 286..466. */
-    const L = 678, R = 835, TP = 286, B = 466, BAR = 736, HR = 2.9;   // bars: 2.9 px per hour from x 736
-    const rows = [['Dev', 31, 20], ['Ravi', 10.5, 30], ['Priya', 0, 30]], RY = [352, 380, 408];
+    /* The room, traced on the plan at its own scale, is small; its sums go in an enlarged detail beside it (a drafting
+     * callout, "A"), drawn over the empty stockroom: x 905..1290, y 300..592. Bars: 5.2 px per hour from x 1000. */
+    const BAR = 1000, HR = 5.2, rows = [['Dev', 31, 20, '31 h of 20 · 11 over'], ['Ravi', 10.5, 30, '10½ h of 30'], ['Priya', 0, 30, '0 h of 30']], RY = [402, 472, 542];
+    const WORD = { 'letter-spacing': '.16em', 'font-weight': 700 };
     const SHEETS = [
+      // sheet 1, routes_reports.py: the way in. The walls, the door, the room's name
       [ ['p', 'M671 286 H842', 1], ['p', 'M835 279 V473', 1.1], ['p', 'M842 466 H750', .55], ['p', 'M708 466 H671', .25],
-        ['p', 'M678 473 V279', 1.1], ['p', 'M708 466 V427', .25, 1.6], ['p', 'M708 427 A39 39 0 0 1 747 466', .4, 1.1] ],
-      [ ['t', 'WORKLOAD', 692, 320, 16, .9, { 'letter-spacing': '.16em', 'font-weight': 700 }], ['p', 'M692 328 H791', .45, 1.3] ]
-        .concat(...rows.map(([n, h, cap], i) => [
-          ['t', n, 692, RY[i] + 4.5, 13.5, .35, {}],
-          ['p', `M${BAR} ${RY[i] - 6} H${BAR + Math.max(h, 1.2) * HR} V${RY[i] + 6} H${BAR} Z`, h ? .45 : .1, 1.4],
-          ['f', [BAR, RY[i] - 6, Math.min(h, cap) * HR, 12], h ? .3 : 0],
-          ['p', `M${BAR + cap * HR} ${RY[i] - 11} V${RY[i] + 11}`, .15, 2.2],
-        ].concat(h > cap ? [['h', [BAR + cap * HR, RY[i] - 6, (h - cap) * HR, 12], .3]] : []))),
+        ['p', 'M678 473 V279', 1.1], ['p', 'M708 466 V427', .25, 1.6], ['p', 'M708 427 A39 39 0 0 1 747 466', .4, 1.1],
+        ['t', 'WORKLOAD', 692, 320, 16, .7, WORD], ['p', 'M692 328 H791', .3, 1.3] ],
+      // sheet 2, services.py: the sums. Callout A, its leader, the detail: each mechanic's hours against the week
+      [ ['p', 'M847 342 a12 12 0 1 0 -24 0 a12 12 0 1 0 24 0', .25, 1.5], ['t', 'A', 835, 347.5, 14, .08, { 'text-anchor': 'middle', 'font-weight': 700 }],
+        ['p', 'M847 342 H905', .2, 1.3], ['w', [905, 300, 385, 292], .15], ['p', 'M905 300 H1290 V592 H905 Z', .9, 1.2],
+        ['t', 'DETAIL A · HOURS THIS WEEK', 921, 336, 14, .55, WORD] ]
+        .concat(...rows.map(([n, h, cap, say], i) => [
+          ['t', n, 921, RY[i] + 7, 20, .25, {}],
+          ['p', `M${BAR} ${RY[i] - 9} H${BAR + Math.max(h, .6) * HR} V${RY[i] + 9} H${BAR} Z`, h ? .4 : .08, 1.5],
+          ['f', [BAR, RY[i] - 9, Math.min(h, cap) * HR, 18], h ? .3 : 0],
+          ['p', `M${BAR + cap * HR} ${RY[i] - 15} V${RY[i] + 15}`, .12, 2.3],
+        ].concat(h > cap ? [['h', [BAR + cap * HR, RY[i] - 9, (h - cap) * HR, 18], .25]] : [])
+          .concat([['t', say, BAR, RY[i] + 33, 14.5, .3, {}]]))),
+      // sheet 3, tests/test_workload.py: the checks. Its measure, what it touches, each row ticked
       [ ['p', 'M678 279 V246', .25, 1.1], ['p', 'M835 279 V246', .25, 1.1], ['p', 'M678 256 H835', .6, 1.3],
         ['p', 'M672 262 L684 250', .1, 1.6], ['p', 'M829 262 L841 250', .1, 1.6],
         ['t', 'one week, Mon to Sat', 756.5, 243, 14, .7, { 'text-anchor': 'middle' }],
-        ['p', 'M842 304 Q858 262 900 226 H1004', .7, 1.3],
+        ['p', 'M842 298 Q856 258 900 226 H1004', .7, 1.3],
         ['t', 'reads the job board', 1012, 222, 15.5, .6, {}], ['t', 'changes nothing', 1012, 243, 15.5, .5, {}] ]
-        .concat(RY.map(y => ['p', `M847 ${y - 1} l5 6 l11 -13`, .2, 1.8])),
+        .concat(RY.map(y => ['p', `M1238 ${y - 2} l6 7 l14 -16`, .22, 2])),
     ];
     // build the strokes, each with its slot of its sheet's time (by weight)
     const strokes = [];
@@ -138,6 +148,9 @@
           s.clip = mk('rect', { x: 0, y: it[3] - it[4] * 1.1, width: 0, height: it[4] * 1.6 }, cp);
           s.e = mk('text', Object.assign({ x: it[2], y: it[3], 'font-size': it[4], 'font-family': '"Gill Sans MT","Gill Sans","Segoe UI",sans-serif', fill: LEAD, stroke: 'none', 'clip-path': `url(#${id})` }, it[6]));
           s.e.textContent = it[1]; s.anchor = it[6]['text-anchor'] || 'start'; s.x = it[2]; s.y = it[3]; s.size = it[4];
+        } else if (it[0] === 'w') {                                  // 'w' a wash of paper under a detail (legible over the plan)
+          const [x, y, w2, h2] = it[1];
+          s.e = mk('rect', { x, y, width: w2, height: h2, fill: '#FAF8F2', opacity: 0, stroke: 'none' }, wash);
         } else {                                                     // 'f' tone / 'h' hatch: a rect that grows from its left
           const [x, y, w2, h2] = it[1];
           s.e = mk('rect', { x, y, width: 0, height: h2, fill: it[0] === 'h' ? 'url(#dr-hatch)' : LEAD, opacity: it[0] === 'h' ? .9 : .32, stroke: 'none' });
@@ -200,6 +213,8 @@
             const x0 = s.anchor === 'middle' ? s.x - s.w / 2 : s.x;
             s.clip.setAttribute('x', (x0 - 2).toFixed(1)); s.clip.setAttribute('width', (k * (s.w + 4)).toFixed(1));
             if (k > 0 && k < 1) tipAt = [x0 + k * s.w, s.y - s.size * .3];
+          } else if (s.kind === 'w') {
+            s.e.setAttribute('opacity', (.66 * k).toFixed(3));
           } else {
             s.e.setAttribute('width', (k * s.w).toFixed(2));
             if (k > 0 && k < 1) tipAt = [s.x + k * s.w, s.y];

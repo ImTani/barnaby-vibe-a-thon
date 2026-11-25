@@ -18,8 +18,9 @@ stems sum to the soundtrack). The instrument renders are cached under .cache/aud
 - Sound effects and ambience follow cues.json -> sfx (foley.py; sources and processing in SOUND.md).
 - Voices from video/v2/audio/voice/manifest.json (video/audio/voices.py, which also takes recorded lines via --takes).
   Off-screen lines (Martin from the workshop, the two goodnights from the door) are pushed back: high-cut and more
-  room. Under speech (60 ms look-ahead) the music ducks -8 dB (up to 4 dB more where it runs hot) with a further -3 dB presence dip around 2.5 kHz, the ambience -4 dB and
-  the effects -2 dB.
+  room. Under speech (60 ms look-ahead) the music ducks -8 dB (up to 4 dB more where it runs hot) with a further -3 dB
+  presence dip around 2.5 kHz, the ambience -4 dB and the effects -2 dB; the score steps back for the key turning, the
+  click and the last bell.
 """
 from __future__ import annotations
 

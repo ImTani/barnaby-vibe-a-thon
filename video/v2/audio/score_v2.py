@@ -18,7 +18,7 @@ sum to the soundtrack), with sfx.wav also split into effects.wav and ambience.wa
   Lisbon; resolves with the bell and the titles. The run prints each section's cue time against its bar line.
 - Sound effects and ambience follow cues.json -> sfx (foley.py; sources and processing in SOUND.md).
 - Voices from video/v2/audio/voice/manifest.json (video/audio/voices.py, which also takes recorded lines via --takes).
-  Every line is levelled to the same K-weighted speech level (takes and TTS alike).
+  Every line is levelled to the same loudness (BS.1770, gated; takes and TTS alike).
   Off-screen lines (Martin from the workshop, the two goodnights from the door) are pushed back: high-cut and more
   room. Under speech (60 ms look-ahead) the music ducks -8 dB (up to 4 dB more where it runs hot) with a further -3 dB
   presence dip around 2.5 kHz, the ambience -4 dB and the effects -2 dB; the score steps back for the key turning, the
@@ -340,7 +340,7 @@ def envelope(x: np.ndarray, attack: float, release: float) -> np.ndarray:
 
 
 # ── voices ──
-VOICE_LEVEL = -20.0                                    # each line's K-weighted speech level before the master (dB)
+VOICE_LEVEL = -20.5                                    # each line's loudness before the master (LUFS)
 
 
 def offscreen(line: dict) -> float:
@@ -357,16 +357,20 @@ def voices() -> np.ndarray:
     man = json.loads((HERE / "voice" / "manifest.json").read_text(encoding="utf-8"))
     from scipy.signal import resample_poly
     out, far = cq.bus(), cq.bus()
+    import pyloudnorm as pyln
+    meter = pyln.Meter(SR)
     for i, line in enumerate(man, 1):
         y, sr = sf.read(HERE / line["file"], dtype="float32", always_2d=True)
         if sr != SR:
             y = resample_poly(y, SR // np.gcd(SR, sr), sr // np.gcd(SR, sr), axis=0).astype(np.float32)
         mono = cq.sos_filter(y.mean(1), "highpass", 75).astype(np.float32)     # a recorded take may bring rumble
-        # every line to the same K-weighted level over its speech (BS.1770 weighting, gated at -60 dBFS): TTS lines and
-        # recorded takes (the ElevenLabs Barnaby is mastered louder, brighter-compressed) sit level with each other
-        act = np.abs(mono) > 1e-3
-        kw = cq.k_weight(mono[None, :].astype(np.float64))[0]
-        lk = 10 * np.log10((kw[act] ** 2).mean() + 1e-12)
+        # every line to the same loudness (BS.1770 integrated, block-gated, so pauses don't count): TTS lines and recorded
+        # takes (the ElevenLabs Barnaby is mastered louder and more compressed) sit level with each other
+        lk = meter.integrated_loudness(mono.astype(np.float64)) if len(mono) > .6 * SR else -99.0
+        if not np.isfinite(lk) or lk < -70:
+            act = np.abs(mono) > 1e-3
+            kw = cq.k_weight(mono[None, :].astype(np.float64))[0]
+            lk = -0.691 + 10 * np.log10((kw[act] ** 2).mean() + 1e-12)
         mono = (mono * 10 ** ((VOICE_LEVEL - lk) / 20)).astype(np.float32)
         pan = {"Barnaby": 0.0, "Martin": -0.12, "Theo": -0.1, "Priya": 0.12}.get(line["who"], 0.0)
         d = offscreen(line)

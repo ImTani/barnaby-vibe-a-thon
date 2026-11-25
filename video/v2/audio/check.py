@@ -280,6 +280,9 @@ def main() -> int:
     meter = pyln.Meter(sr)
     res = {"file": {"sr": sr, "channels": info.channels, "subtype": info.subtype, "dur": round(len(mix) / sr, 3),
                     "film": CUES["duration"]}}
+    if abs(len(mix) / sr - float(CUES["duration"])) > .01:
+        print(f"soundtrack.wav is {len(mix) / sr:.2f} s but the cue sheet is {CUES['duration']} s: re-run score_v2.py first")
+        return 2
     res["pyloudnorm_I"] = round(meter.integrated_loudness(mix), 2)
     res["true_peak_dbtp_4x"] = round(db(true_peak(mix, sr)), 2)
     res["sample_peak_dbfs"] = round(db(np.abs(mix).max()), 2)

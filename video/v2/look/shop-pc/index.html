@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<!--
+  The shop PC (film v2 look-dev): the Hartleys' 2009 Windows 7-era desktop, Theo's back office, the nine tabs.
+
+  OPEN    index.html?state=<preset>[&key=value...]      (1920x1080 window -> 1.5x scale of a 1280x720 desktop)
+  RENDER  node video/v2/look/shop-pc/render.js           -> video/v2/look/frames/shop-pc-*.png
+
+  PRESETS (os.js STATES)
+    desktop            Monday 08:52, the desktop at rest (wallpaper, icons, gadgets, taskbar)
+    start              ... with the Start menu open
+    tabs               Theo's last week, Thu 21:47: nine tabs, Calendar active, memory needle in the red
+    tabs-parts         ... the Parts list tab active ("it's the one with the spanner")
+    tabs-busy          ... (Not Responding), low-memory balloon, busy cursor
+    shop-jobs          Monday: Theo's back office, Jobs page, "Reports (coming soon!!)"
+    shop-po            ... Purchase Orders with Barnaby's PO #3 just in (highlighted)
+    shop-reports-soon  ... the Reports page as Theo left it (coming soon!!, under construction)
+    shop-reports       ... after the build: the nav says "Reports"; Barnaby's workload report in Theo's style
+    shop-jobs-after    ... Jobs again, Dev's two wheel builds moving to Priya (highlighted)
+    barnaby            ... Barnaby's slot marked out (dashed guide with coordinates)
+    barnaby-frame      ... the slot as an empty Aero window, ready for his UI
+
+  ANY STATE KEY can be overridden in the URL (see PC.DEFAULT in os.js), e.g.
+    ?state=tabs&ram=.6&cpu=.3&tabs=shop,supplier,sms,xls&tabIn=.4      (a tab opening, needle mid-climb)
+    ?state=shop-po&po=.5&poHl=.8                                       (the PO row sliding in)
+    ?state=desktop&start=.5                                            (the Start menu half-faded in)
+    ?state=desktop&time=07:15&secs=20&dim=.6                           (time-lapse / going to sleep)
+    cursor=x,y[,busyAngle]   tabs=comma,list   lw=1280&lh=800 (16:10, the 3D monitor's panel shape; 1920x1200 window)
+    blur=0   no backdrop blur behind the glass: bit-exact frames (the blur adds faint compositing noise between renders)
+
+  FILM USE (pure function of state; no CSS animation anywhere):
+    const pc = PC.build(el, {lw: 1280, lh: 720}); el.style.transform = 'scale(1.5)';
+    pc.render(pc.preset('tabs', {ram: lerp(.4, .93, k)}));
+
+  BARNABY'S SLOT: #barnaby-slot, logical x=790 y=30 w=476 h=616 (at 1920x1080: x=1185 y=45, 714x924), the right-hand
+  side over the gadget column, clear of Theo's nav bar. Mount his UI in pc.barnabyClient (#barnaby-client: the
+  client area inside an Aero frame titled "Barnaby"), or replace the whole slot. Taskbar button and tray slots:
+  .barnaby-tb, .barnaby-tray (dashed circles; shown with barnabyTray=1).
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Shop PC · look-dev</title>
+<link rel="stylesheet" href="os.css">
+<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="pages.css">
+<style>html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }</style>
+</head>
+<body>
+<div id="screen"></div>
+<script src="shop-data.js"></script>
+<script src="icons.js"></script>
+<script src="wallpaper.js"></script>
+<script src="site.js"></script>
+<script src="tabs.js"></script>
+<script src="os.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.search);
+  const LW = +q.get('lw') || 1280, LH = +q.get('lh') || 720;
+  const root = document.getElementById('screen');
+  const pc = PC.build(root, { lw: LW, lh: LH, blur: q.get('blur') !== '0' });
+  const scale = +q.get('scale') || window.innerWidth / LW;
+  root.style.transform = `scale(${scale})`;
+
+  // URL -> state
+  const s = pc.preset(q.get('state') || 'desktop');
+  for (const [k, v] of q) {
+    if (['state', 'lw', 'lh', 'scale', 'blur'].includes(k) || !(k in PC.DEFAULT)) continue;
+    if (k === 'tabs') s.tabs = v ? v.split(',') : [];
+    else if (k === 'cursor') { const [x, y, b] = v.split(','); s.cursor = v ? { x: +x, y: +y, ...(b != null ? { busy: +b } : {}) } : null; }
+    else if (v === 'true' || v === 'false') s[k] = v === 'true';
+    else if (v !== '' && !isNaN(+v) && typeof PC.DEFAULT[k] !== 'string') s[k] = +v;
+    else s[k] = v;
+  }
+  if (typeof s.browser === 'number') s.browser = !!s.browser;
+  if (typeof s.barnabyTray === 'number') s.barnabyTray = !!s.barnabyTray;
+  pc.render(s);
+  window.pc = pc; window.pcState = s;
+  document.fonts.ready.then(() => { pc.render(s); document.body.dataset.ready = '1'; });
+})();
+</script>
+</body>
+</html>

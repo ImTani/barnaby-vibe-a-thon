@@ -1,0 +1,63 @@
+/* Theo's back office, as it renders in the browser. Values are the REAL app's
+ * (systems/spokes-and-sprockets/static/style.css, "Theo H 2009. dont touch the yellow line, mum likes it"),
+ * scoped under .site with ids turned into classes. Additions for the film are marked "+film". */
+.pc .site { background: #d9e4f2; font: 12px/1.4 Verdana, Tahoma, Geneva, sans-serif; color: #000; padding: 12px 0 16px; }
+.pc .site .s-page { width: 980px; margin: 0 auto; background: #ece9d8; border: 1px solid #6b6b6b; box-shadow: 3px 3px 0 #9aa9bd; }
+.pc .site .s-banner { background: linear-gradient(#3a6ea5, #1d4a77); color: #fff; padding: 12px 14px 10px; border-bottom: 4px solid #ffcc00; position: relative; }
+.pc .site .s-banner h1 { margin: 0; font: italic bold 28px "Trebuchet MS", Verdana, sans-serif; letter-spacing: .5px; text-shadow: 2px 2px 0 #0b2a4a; }
+.pc .site .s-banner .sub { color: #ffe680; font-size: 11px; }
+.pc .site .s-banner .date { position: absolute; right: 14px; top: 14px; font-size: 11px; color: #cfe0f5; }
+.pc .site .s-banner .logo { position: absolute; right: 108px; top: 9px; filter: drop-shadow(2px 2px 0 #0b2a4a); }      /* +film: Theo's spinning sprocket gif */
+.pc .site .marquee { background: #fffbd0; color: #8a4b00; border-bottom: 1px solid #c9b45a; font: bold 11px Verdana; padding: 2px 0; white-space: nowrap; overflow: hidden; height: 19px; position: relative; }
+.pc .site .marquee span { position: absolute; left: 0; top: 2px; }
+.pc .site .s-nav { background: #d4d0c8; border-bottom: 1px solid #808080; padding: 4px 8px; }
+.pc .site .s-nav a { display: inline-block; color: #00e; text-decoration: underline; padding: 2px 9px; margin: 1px 1px; background: linear-gradient(#fff, #e3e0d8); border: 2px outset #f4f4f4; font-size: 11px; }
+.pc .site .s-nav a.on { border-style: inset; background: #ece9d8; color: #551a8b; font-weight: bold; }
+.pc .site .s-nav a.soon { color: #888; }
+.pc .site .s-content { padding: 10px 12px 14px; background: #fff; min-height: 300px; }   /* real app: 380px; +film: 300 so the footer shows on a 720-line desktop */
+.pc .site h2 { margin: 0 0 8px; font: bold 15px Verdana; color: #1d4a77; border-bottom: 1px dotted #1d4a77; padding-bottom: 3px; }
+.pc .site h3 { margin: 14px 0 6px; font: bold 12px Verdana; color: #1d4a77; }
+.pc .site h3.first { margin-top: 4px; }
+.pc .site table.grid { border-collapse: collapse; width: 100%; font-size: 11px; }
+.pc .site table.grid th { background: #d4d0c8; border: 1px solid #808080; text-align: left; padding: 3px 5px; }
+.pc .site table.grid td { border: 1px solid #c6c6c6; padding: 3px 5px; vertical-align: top; }
+.pc .site table.grid tr:nth-child(even) td { background: #eef3fb; }
+.pc .site table.grid tr.fresh td { background: color-mix(in srgb, #fff3a0 calc(var(--hl, 1) * 100%), #ffffff); }   /* the real app's #ffffcc hover, stronger */
+.pc .site .late, .pc .site .low { color: #c00; font-weight: bold; }
+.pc .site .ok { color: #060; }
+.pc .site .status { font-weight: bold; }
+.pc .site .status-ready { color: #060; }
+.pc .site .status-waiting { color: #b35900; }
+.pc .site .box { border: 1px solid #9aa9bd; background: #f4f7fc; padding: 6px 8px; margin: 0 0 10px; font-size: 11px; }
+.pc .site .box b { color: #1d4a77; }
+.pc .site .box a { color: #00e; text-decoration: underline; }
+.pc .site .stats span { display: inline-block; margin-right: 16px; }
+.pc .site .soon-big { font: bold 22px "Comic Sans MS", "Trebuchet MS", sans-serif; color: #c60; margin: 30px 0 6px; display: flex; align-items: center; gap: 10px; }
+.pc .site .soon-big .uc { display: inline-flex; }                                                              /* +film: the under-construction gif */
+.pc .site .blink { color: #f90; }
+.pc .site .updated { color: #888; font-size: 10px; }
+.pc .site .note { color: #555; font-size: 10px; margin: 5px 0 0; }
+.pc .site .s-foot { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #555; padding: 6px 10px; border-top: 1px solid #c0c0c0; }
+.pc .site .s-foot a { color: #00e; text-decoration: underline; }
+.pc .site .s-foot .visits { display: flex; align-items: center; gap: 5px; }
+.pc .site .s-foot .ctr { display: inline-flex; gap: 1px; background: #000; padding: 1px; border: 1px solid #555; }        /* +film: odometer digits */
+.pc .site .s-foot .ctr i { font: bold 11px/13px "Courier New", monospace; font-style: normal; color: #3f3; background: linear-gradient(#1c1c1c, #000 50%, #141414); width: 9px; text-align: center; }
+/* +film: 88x31 buttons */
+.pc .site .badges { display: flex; gap: 5px; justify-content: center; padding: 4px 0 8px; background: #ece9d8; }
+.pc .site .b88 { width: 88px; height: 31px; display: flex; align-items: center; justify-content: center; gap: 3px; text-align: center; border: 1px solid #000; font: bold 9px/10px Verdana; overflow: hidden; }
+.pc .site .b88.a { background: linear-gradient(#2b5f9a, #0e2f57); color: #fff; } .pc .site .b88.a b { color: #ffcc00; }
+.pc .site .b88.b { background: #000; color: #3f3; font-family: "Courier New", monospace; letter-spacing: .5px; }
+.pc .site .b88.c { background: linear-gradient(#fff4a8, #ffcc00); color: #7a3d00; } .pc .site .b88.c b { color: #000; }
+.pc .site .b88.d { background: repeating-linear-gradient(-45deg, #ffcc00 0 6px, #111 6px 12px); color: #fff; }
+.pc .site .b88.d span { background: #111; padding: 2px 3px; font-size: 8px; }
+.pc .site .b88.e { background: linear-gradient(#e0e0e0, #b0b0b0); color: #800000; border-color: #444; }
+.pc .site .b88.f { background: linear-gradient(#5fbf4a, #2b7a1f); color: #fff; text-shadow: 1px 1px 0 #134a0d; }
+/* the workload report (Barnaby's, in Theo's style) */
+.pc .site table.workload td { vertical-align: middle; font-size: 12px; padding: 5px 6px; }
+.pc .site table.workload th.barh { width: 330px; font-weight: normal; color: #444; }
+.pc .site .wbar { position: relative; height: 14px; background: repeating-linear-gradient(90deg, #f4f4f4 0 9px, #e6e6e6 9px 10px); border: 1px solid #999; }
+.pc .site .wbar i { position: absolute; left: 0; top: 0; bottom: 0; }
+.pc .site .wbar i.load { background: linear-gradient(#7fc8ff, #2b78c4); border-right: 1px solid #1d4a77; }
+.pc .site .wbar i.load.over { background: linear-gradient(#ff8a7a, #cc1f10); border-right: 1px solid #700; }
+.pc .site .wbar i.cap { border-right: 2px dashed #1d4a77; height: 20px; top: -4px; z-index: 2; }
+.pc .site .box.today { margin-top: 12px; }

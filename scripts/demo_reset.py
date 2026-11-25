@@ -5,6 +5,8 @@
 - Copies systems/spokes-and-sprockets (the pristine source, tracked in our repo) to .demo/spokes-and-sprockets
   (gitignored). Barnaby only ever touches the copy, so his code changes and worktrees never land in our repo.
 - Gives the copy its own git repo with Theo's backdated history (2009 -> last week).
+- Stops a shop left running by an earlier session and clears Barnaby's registry + generated servers
+  (--keep-barnaby to skip), so Barnaby meets the shop for the first time again.
 - Seeds the shop database. "Today" defaults to the Monday of the current week (the story's Monday),
   and is written to .demo/today so every process uses the same date.
 """
@@ -49,12 +51,45 @@ def git(*args: str, env: dict | None = None) -> None:
                    env={**os.environ, **(env or {})})
 
 
+def forget_barnaby(ports=(8101,)) -> None:
+    """Barnaby starts from scratch too: stop the shop if an earlier session left it running (by the registry's pid,
+    then by whoever still listens on its port), and drop his registry and generated servers. Run this while
+    `barnaby serve` is stopped (it keeps the registry in memory)."""
+    import json
+    import psutil
+    state = DEMO / "barnaby"
+    pids = set()
+    reg = state / "systems.json"
+    if reg.exists():
+        pids |= {s["pid"] for s in json.loads(reg.read_text(encoding="utf-8")) if s.get("pid")}
+    try:
+        pids |= {c.pid for c in psutil.net_connections("tcp") if c.laddr and c.laddr.port in ports
+                 and c.status == psutil.CONN_LISTEN and c.pid}
+    except psutil.AccessDenied:
+        pass
+    for pid in pids:
+        try:
+            proc = psutil.Process(pid)
+            for child in proc.children(recursive=True):
+                child.kill()
+            proc.kill()
+            proc.wait(5)
+        except psutil.Error:
+            pass
+    reg.unlink(missing_ok=True)
+    if (state / "servers").exists():
+        shutil.rmtree(state / "servers", onerror=_rm_readonly)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--today", help="the demo's 'today' (default: Monday of this week)")
+    ap.add_argument("--keep-barnaby", action="store_true", help="keep Barnaby's registry and generated servers")
     a = ap.parse_args()
     today = a.today or (date.today() - timedelta(days=date.today().weekday())).isoformat()
 
+    if not a.keep_barnaby:
+        forget_barnaby()
     if DST.exists():
         shutil.rmtree(DST, onerror=_rm_readonly)
     for wt in DEMO.glob("worktree-*"):

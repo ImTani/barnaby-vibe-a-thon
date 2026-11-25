@@ -131,3 +131,19 @@ def test_habits_ignore_other_systems_and_one_offs():
     w.calls = [("quorum", "a"), ("quorum", "b"), ("quorum", "c")] * 3 + [("shop", "x"), ("shop", "y"), ("shop", "z")]
     assert w.habits("shop") == []
     assert w.habits("quorum")[0]["times"] >= 2
+
+
+def test_habit_nudge_offers_each_chain_once(monkeypatch):
+    from barnaby import toolkit
+
+    class Reg:
+        systems = {"shop": object()}
+    monkeypatch.setattr(toolkit, "_registry", lambda: Reg())
+    w = Worker()
+    chain = ["job_detail", "customer_detail", "notify", "update_status"]
+    w.calls = [("shop", t) for t in chain * 2]
+    assert w.habit_nudge() is None                                           # twice isn't a habit yet
+    w.calls += [("shop", t) for t in chain]
+    nudge = w.habit_nudge()
+    assert nudge and "job_detail -> customer_detail -> notify -> update_status" in nudge and "3 times" in nudge
+    assert w.habit_nudge() is None                                           # offered once per session

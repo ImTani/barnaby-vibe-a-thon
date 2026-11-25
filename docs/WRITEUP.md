@@ -94,5 +94,5 @@ router prefixes and `Literal` fields. Barnaby's fix-up pass keeps Synapse's orig
 ## What's next
 
 A trained wake word (our own Rust library), the hotkey overlay as a real always-on-top window, a live run of the
-bring-your-own-model worker on an open model, and Barnaby proposing compositions on his own from habits (the detection is in; the
-prompt to offer is in; it needs real-world tuning).
+bring-your-own-model worker on an open model, and tuning when Barnaby offers to compose (today he offers once a chain of calls has repeated
+three times in a session).

@@ -124,6 +124,10 @@ class Worker(WorkerState):
                             await client.reconnect_mcp_server(name)
                         bus.emit("system.reloaded", system=name)
                     prompt = continuation(self.grown)
+                nudge = self.habit_nudge()                        # a repeated chain: offer to compose it
+                if nudge:
+                    await client.query(nudge)
+                    final = await self._drain(client, turn) or final
             except Exception as e:  # noqa: BLE001 - surface every failure to the display
                 bus.emit("log", level="error", text=f"{type(e).__name__}: {e}")
                 final = "I'm terribly sorry, something went wrong on my side."

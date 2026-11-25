@@ -120,6 +120,7 @@ class WorkerState:
         self.reload: set[str] = set()         # servers whose MCP process must be restarted after this round
         self.grown: list[str] = []            # what was unlocked/built/composed this round (for the follow-up prompt)
         self.calls: list[tuple[str, str]] = []  # (system, tool) of every system call this session, for habits
+        self.offered: set[tuple[str, str]] = set()  # (system, chain) habits Barnaby has already offered to compose
         self.turn = 0
         self.busy = False
 
@@ -151,6 +152,21 @@ class WorkerState:
             seen.add(frozenset(g))
             out.append({"chain": " -> ".join(g), "times": c})
         return out[:3]
+
+
+    def habit_nudge(self, min_times: int = 3) -> str | None:
+        """After a turn: if a chain of calls has now repeated `min_times` times on a system, the follow-up prompt that
+        has Barnaby offer to fuse it into one skill (Compose). Each chain is offered once per session; once composed,
+        the skill replaces the chain, so it stops repeating."""
+        for name in list(_registry().systems):
+            for h in self.habits(name, min_times):
+                if (name, h["chain"]) in self.offered:
+                    continue
+                self.offered.add((name, h["chain"]))
+                return (f"[Barnaby system] Habit noticed on {name}: this session you've run {h['chain']} "
+                        f"{h['times']} times. In one short spoken sentence, offer to make that a single step (say how "
+                        "many times you've done it). Don't call compose unless the person agrees.")
+        return None
 
 
 # ── Barnaby's own tools: they grow the toolset, record it on the worker, and answer in plain text ──

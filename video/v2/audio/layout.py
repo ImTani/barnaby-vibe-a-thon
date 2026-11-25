@@ -64,6 +64,17 @@ class Timeline:
         self.last = n
         return onset
 
+    def word(self, n: int, w: str, default: float, edge: int = 0) -> float:
+        """Film time of word `w` in line n (edge 0 = its start, 1 = its end), from voice/words.json (align.py), so a
+        mark sits on the word whoever reads the line; `default` (the old offset-based time) when there's no timing."""
+        if not hasattr(self, "_words"):
+            f = HERE / "voice" / "words.json"
+            self._words = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+        for row in self._words.get(f"{n:02d}", []):
+            if row[0].rstrip("~") == w:
+                return self.t[n] + row[1 + edge]
+        return default
+
     # -- everything else --
     def mark(self, name: str, t: float) -> float:
         self.marks[name] = round(t, 3)
@@ -106,10 +117,10 @@ def build(T: Timeline) -> float:
             fx("hdd", t + .05, dur=.5)
     L(1, at=m("martin_os", T.marks["tab9"] + .6))         # (o.s., from the workshop, tired)
     L(2, gap=.7)                                           # "Tab four. No — five."
-    m("tab4_active", on(2) + .1)
-    fx("tab", on(2) + .18, pan=-.1)
-    m("tab5_active", on(2) + .9)
-    fx("tab", on(2) + .96, pan=-.05)
+    m("tab4_active", T.word(2, "four", on(2) + .1))
+    fx("tab", T.marks["tab4_active"] + .08, pan=-.1)
+    m("tab5_active", T.word(2, "five", on(2) + .9))
+    fx("tab", T.marks["tab5_active"] + .06, pan=-.05)
     L(3, gap=.9)                                           # (beat) "It's the one with the spanner."
     m("spanner", on(3))
     fx("radio_off", off(3) + .5, gain=.4, label="the workshop radio clicks off (o.s.)")
@@ -134,7 +145,7 @@ def build(T: Timeline) -> float:
     m("six_lit", off(5) - .2)                              # 23 endpoints; six light up
     fx("pop", T.marks["six_lit"] + .1, gain=.18, label="six light up")
     L(6, gap=1.0)                                          # Barnaby: "Twenty-three endpoints, sir..." (a beat after "for me")
-    m("old_pc", on(6) + 3.2)                               # the whole 2009 desktop: modest on old hardware
+    m("old_pc", T.word(6, "six", on(6) + 3.2))                               # the whole 2009 desktop: modest on old hardware
     L(7, gap=SPK)                                          # Theo: "It's Theo. And don't call my uncle sir..."
     m("desk_detail", on(7) - .2)
     L(8, gap=.6)                                           # Barnaby: "Noted."
@@ -160,7 +171,7 @@ def build(T: Timeline) -> float:
     m("walk", off(11) + .2)                                # Barnaby walks the workshop floor, then the drawer
     fx("compressor", off(11) - 1.2, gain=.22)
     L(12, gap=.9)                                          # "Five bikes due tomorrow. Only Anika's is a problem..."
-    m("pads_callout", on(12) + 2.6)
+    m("pads_callout", T.word(12, "anika's", on(12) + 2.6))
     m("shelf", off(12) - 1.9)                              # the parts box: one pair of pads inside
     s4 = off(12) + 1.2
 
@@ -168,7 +179,7 @@ def build(T: Timeline) -> float:
     T.scene(4, s4)
     L(13, at=s4 + .6)                                      # "Order ten from Madison, then."
     L(14, gap=SPK)                                         # "I can't order parts myself yet..."
-    m("card", on(14) + 2.2)                                # the card: Let Barnaby order parts...
+    m("card", T.word(14, "theo", on(14) + 2.2))                                # the card: Let Barnaby order parts...
     L(15, gap=.8)                                          # "Go on, then." (he reads the card first)
     m("click_unlock", off(15) + .7)
     fx("mouse_click", T.marks["click_unlock"] + .12, gain=.6)
@@ -237,7 +248,7 @@ def build(T: Timeline) -> float:
     L(34, gap=SPK)                                         # "Add it."
     L(35, gap=SPK)                                         # "That one needs your click, Martin..."
     L(36, gap=.6)                                          # "Fussy." (clicking)
-    fx("mouse_click", m("click_build", on(36) + .4), gain=.62)
+    fx("mouse_click", m("click_build", T.word(36, "fussy", on(36) + .4, edge=1)), gain=.62)
     m("reload", T.marks["click_build"] + .4)               # Theo's system reloads
     fx("reload", T.marks["reload"], gain=.25, label="the page reloads")
     m("tab_change", T.marks["reload"] + 1.1)               # "Reports (coming soon!!)" -> "Reports"

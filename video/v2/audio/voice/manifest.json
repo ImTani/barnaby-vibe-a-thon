@@ -608,14 +608,14 @@
   "sps": 2.56
  },
  {
-  "t": 214.92,
+  "t": 216.52,
   "scene": 7,
   "who": "Priya",
   "pace": "dry",
   "text": "So you're why I've got two wheel builds on my first day?",
   "speech": [
-   214.95,
-   218.97
+   216.55,
+   220.57
   ],
   "file": "voice/39_Priya.wav",
   "dur": 4.37,
@@ -624,14 +624,14 @@
   "sps": 2.99
  },
  {
-  "t": 219.38,
+  "t": 220.98,
   "scene": 7,
   "who": "Barnaby",
   "pace": "dry",
   "text": "Guilty. Dev had thirty-one hours booked. You had none.",
   "speech": [
-   219.57,
-   223.74
+   221.17,
+   225.34
   ],
   "file": "voice/40_Barnaby.wav",
   "dur": 4.68,
@@ -640,14 +640,14 @@
   "sps": 3.12
  },
  {
-  "t": 224.31,
+  "t": 225.91,
   "scene": 7,
   "who": "Priya",
   "pace": "dry",
   "text": "Fair. What else can this thing do?",
   "speech": [
-   224.34,
-   226.68
+   225.94,
+   228.28
   ],
   "file": "voice/41_Priya.wav",
   "dur": 2.65,
@@ -656,14 +656,14 @@
   "sps": 2.99
  },
  {
-  "t": 227.02,
+  "t": 228.62,
   "scene": 7,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "Your jobs, the parts they need, who's collecting what. And Theo left you a note: never trust the stock count on a Friday.",
   "speech": [
-   227.13,
-   234.71
+   228.73,
+   236.31
   ],
   "file": "voice/42_Barnaby.wav",
   "dur": 7.82,
@@ -672,14 +672,14 @@
   "sps": 3.56
  },
  {
-  "t": 235.48,
+  "t": 237.08,
   "scene": 7,
   "who": "Priya",
   "pace": "dry",
   "text": "Noted.",
   "speech": [
-   235.51,
-   236.21
+   237.11,
+   237.81
   ],
   "file": "voice/43_Priya.wav",
   "dur": 0.85,
@@ -688,14 +688,14 @@
   "sps": 2.86
  },
  {
-  "t": 249.67,
+  "t": 251.27,
   "scene": 8,
   "who": "Theo",
   "pace": "neutral",
   "text": "Barnaby \u2014 new job. This is the crew's memory.",
   "speech": [
-   249.71,
-   252.75
+   251.31,
+   254.35
   ],
   "file": "voice/44_Theo.wav",
   "dur": 3.14,
@@ -704,14 +704,14 @@
   "sps": 3.95
  },
  {
-  "t": 253.93,
+  "t": 255.53,
   "scene": 8,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "Thirteen endpoints, sir \u2014 and two deadlines in dispute. Shall I flag them?",
   "speech": [
-   253.95,
-   258.49
+   255.55,
+   260.09
   ],
   "file": "voice/45_Barnaby.wav",
   "dur": 4.89,
@@ -720,14 +720,14 @@
   "sps": 3.74
  },
  {
-  "t": 259.07,
+  "t": 260.67,
   "scene": 8,
   "who": "Theo",
   "pace": "dry",
   "text": "Still Theo.",
   "speech": [
-   259.09,
-   260.12
+   260.69,
+   261.72
   ],
   "file": "voice/46_Theo.wav",
   "dur": 1.13,
@@ -736,14 +736,14 @@
   "sps": 1.94
  },
  {
-  "t": 260.45,
+  "t": 262.05,
   "scene": 8,
   "who": "Barnaby",
   "pace": "dry",
   "text": "Theo.",
   "speech": [
-   260.62,
-   261.16
+   262.22,
+   262.76
   ],
   "file": "voice/47_Barnaby.wav",
   "dur": 0.94,
@@ -752,14 +752,14 @@
   "sps": 1.85
  },
  {
-  "t": 262.04,
+  "t": 263.64,
   "scene": 8,
   "who": "Theo",
   "pace": "neutral",
   "text": "And the render box?",
   "speech": [
-   262.06,
-   263.56
+   263.66,
+   265.16
   ],
   "file": "voice/48_Theo.wav",
   "dur": 1.58,
@@ -768,14 +768,14 @@
   "sps": 3.33
  },
  {
-  "t": 263.79,
+  "t": 265.39,
   "scene": 8,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "Twenty-eight endpoints. It's on the big card, and three jobs are queued.",
   "speech": [
-   264.01,
-   268.36
+   265.61,
+   269.96
   ],
   "file": "voice/49_Barnaby.wav",
   "dur": 4.74,
@@ -784,14 +784,14 @@
   "sps": 3.45
  },
  {
-  "t": 269.04,
+  "t": 270.64,
   "scene": 8,
   "who": "Theo",
   "pace": "dry",
   "text": "Show-off.",
   "speech": [
-   269.06,
-   269.93
+   270.66,
+   271.53
   ],
   "file": "voice/50_Theo.wav",
   "dur": 0.98,
@@ -800,14 +800,14 @@
   "sps": 2.3
  },
  {
-  "t": 273.89,
+  "t": 275.49,
   "scene": 9,
   "who": "Martin",
   "pace": "closing",
   "text": "Night, Barnaby.",
   "speech": [
-   273.93,
-   275.42
+   275.53,
+   277.02
   ],
   "file": "voice/51_Martin.wav",
   "dur": 1.6,
@@ -816,14 +816,14 @@
   "sps": 2.68
  },
  {
-  "t": 275.8,
+  "t": 277.4,
   "scene": 9,
   "who": "Barnaby",
   "pace": "closing",
   "text": "Goodnight, Martin.",
   "speech": [
-   276.02,
-   276.97
+   277.62,
+   278.57
   ],
   "file": "voice/52_Barnaby.wav",
   "dur": 1.46,
@@ -832,14 +832,14 @@
   "sps": 4.21
  },
  {
-  "t": 280.54,
+  "t": 282.14,
   "scene": 9,
   "who": "Theo",
   "pace": "closing",
   "text": "Night, Barnaby.",
   "speech": [
-   280.57,
-   281.83
+   282.17,
+   283.43
   ],
   "file": "voice/53_Theo.wav",
   "dur": 1.37,
@@ -848,14 +848,14 @@
   "sps": 3.17
  },
  {
-  "t": 282.14,
+  "t": 283.74,
   "scene": 9,
   "who": "Barnaby",
   "pace": "closing",
   "text": "Goodnight, Theo.",
   "speech": [
-   282.43,
-   283.32
+   284.03,
+   284.92
   ],
   "file": "voice/54_Barnaby.wav",
   "dur": 1.26,

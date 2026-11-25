@@ -260,7 +260,8 @@ def build(T: Timeline) -> float:
     L(38, gap=.6)                                          # "Good idea."
     m("reassign", off(38) + .4)                            # Dev -> Priya
     fx("pop", T.marks["reassign"] + .6, gain=.18, label="two rows change")
-    s7 = T.marks["reassign"] + 3.0
+    m("s6_chair", T.marks["reassign"] + 3.0)              # the empty chair at dusk: the match cut into Tuesday
+    s7 = T.marks["s6_chair"] + 1.6
 
     # ── 7 · Priya, day one (Tue 24 Nov, 08:34) ───────────────────────────────────────────────────────────────────
     T.scene(7, s7)

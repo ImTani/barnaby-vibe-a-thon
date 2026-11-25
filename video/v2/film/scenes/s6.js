@@ -5,7 +5,7 @@
  * world LIVE (martin-build): Barnaby's explanation card slides in (story.js build.card); "That one needs your click"
  * -> the cursor goes to "Add it"; "Fussy." -> the click -> Theo's system reloads (16:16): the status bar loads and
  * the tab "Reports (coming soon!!)" now says Reports -> on the plan the Workload room fills in where Reports was
- * planned, and its NEW sticker slaps on -> same butler, three worlds -> the after panel -> Dev -> Priya on Theo's
+ * planned, and its NEW sticker slaps on -> the plan with the room's hours as Barnaby speaks -> Dev -> Priya on Theo's
  * Jobs page (16:21): the two rows change, highlighted. */
 (function () {
   const C = CUES.scenes[5], S = C.start, E = C.end, FI = .4;
@@ -60,10 +60,11 @@
         { src: 'comp/martin-build', at: M('new_room'), open: { x: 1542, y: 520, d: .55 }, cam: move(M('new_room') + .05, 1.15, [700, 560, 1.32], [760, 420, 1.62], 0),
           state: t => ({ room: +easeInOutSine(clamp((t - M('new_room') - .1) / .6)).toFixed(3),
             sticker: +easeOutBack(clamp((t - M('new_room') - .75) / .35), 2.6).toFixed(3), side: 'build' }) },
-        // 6.10 the same event in all three worlds, held through Dev's line and "Good idea."
-        { src: 'comp/same-butler', at: M('same_butler'), cam: [960, 540, 1],
-          build: l => { rv.sb = reveal(l, SB, [[722, 986, 1170, 1015], [722, 1020, 801, 1046]], { color: '#F5F2EA', a: V(37), b: V(37) + n37 * 51 / 115 }); },
-          over: t => rv.sb.render(t) },
+        // 6.10 (v2.3: the triptych is cut) Martin's plan with the new Workload room and its hours, Dev 31 of 20; his line
+        // prints in the side panel as he says it, held through "Good idea."
+        { src: 'comp/martin-build', at: M('same_butler'), cam: [960, 540, 1], state: () => ({ side: 'build' }),
+          build: l => { rv.mb = reveal(l, 'worlds/martin-build.png', [[1428, 356, 1832, 384], [1426, 395, 1812, 423], [1426, 435, 1811, 463], [1426, 475, 1656, 496]], { color: '#F5F2EA', a: V(37), b: VE(37) - .1, chars: [31, 32, 30, 17] }); },
+          over: t => rv.mb.render(t) },
         // 6.11 the jobs page: Dev -> Priya (locked, held)
         { src: 'live/shop', at: M('reassign') - .1, cam: [960, 540, 1],
           state: t => ({ preset: 'shop-jobs-after', reassign: +clamp((t - M('reassign') - .25) / 1.3).toFixed(3), secs: 5 + Math.floor(t - M('reassign')) }) },

@@ -171,14 +171,15 @@ function seq(root, items, end, o = {}) {
   const list = items.map(it => ({ ...it, s: still(root, it.src, it) }));
   list.forEach(it => {
     if (!o.dissolves && !it.keepFi && !it.pin) it.fi = 0;
-    if (it.pin) { it.quad = quadOf(it.pin.shot); if (!it.quad) it.fi = 0; }
+    if (it.pin) { it.quad = quadOf(it.pin.shot, it.at); if (!it.quad) it.fi = 0; }
   });
   list.forEach((it, i) => {
-    const nx = list[i + 1];
+    const nx = list[i + 1]; it.prev = list[i - 1] || null;
     it.end = it.until != null ? it.until : nx ? nx.at + Math.max(nx.fi || 0, nx.quad ? (nx.fi || 0) + (nx.pin.d || .6) : 0, nx.open ? nx.open.d || .55 : 0) : end;
     it.bl = blenderFor(it.src, it.at, it.end);
     if (it.bl) { it.blDir = `../world/out/anim/${it.bl.id}/`; it.blN = -1; }
     if (isRoom(it.src) && !it.clean) it.finish = finish(it.s.box);
+    if (isRoom(it.src) && !it.tripod) it.hh = handheld(it.src + '@' + it.at.toFixed(2));
     if (it.open) {                                     // his mark, at the heart of the opening
       it.openMark = el('div', { html: markSVG('#D3A14A') }, it.s.box);
       css(it.openMark, { position: 'absolute', width: '132px', height: '132px', left: (it.open.x - 66) + 'px', top: (it.open.y - 74) + 'px', zIndex: 60, pointerEvents: 'none',
@@ -211,9 +212,17 @@ function seq(root, items, end, o = {}) {
         } else if (it.quad && t < it.at + (it.fi || 0) + (it.pin.d || .6)) {   // the push into the screen: it fades up
           // on the glass first (opaque before it moves: no double image), then grows to full frame
           const u = easeInOutCubic(clamp((t - it.at - (it.fi || 0)) / (it.pin.d || .6))), F = [[0, 0], [W, 0], [W, H], [0, H]];
-          const q = it.quad.map((p, k) => [lerp(p[0], F[k][0], u), lerp(p[1], F[k][1], u)]);
+          // the glass as the operator's hand holds it in the shot underneath (the same overscan, drift and roll)
+          const hp = it.prev && it.prev.hh ? it.prev.hh(t) : null, ca = hp ? Math.cos(hp[2] * Math.PI / 180) : 1, sa = hp ? Math.sin(hp[2] * Math.PI / 180) : 0;
+          const glass = hp ? it.quad.map(p => { const x = 1.04 * (p[0] - W / 2), y = 1.04 * (p[1] - H / 2); return [W / 2 + hp[0] + ca * x - sa * y, H / 2 + hp[1] + sa * x + ca * y]; }) : it.quad;
+          const q = glass.map((p, k) => [lerp(p[0], F[k][0], u), lerp(p[1], F[k][1], u)]);
           it.s.img.style.transform = it.s.layer.style.transform = pinMatrix(q, it.s.w, it.s.h);
         } else it.s.place(t, typeof it.cam === 'function' ? it.cam(t, it) : it.cam, it.fit);
+        if (it.hh) {                                     // the operator's hand, over the placement (frame px)
+          const h = it.hh(t), m = `translate(${(W / 2 + h[0]).toFixed(2)}px,${(H / 2 + h[1]).toFixed(2)}px) rotate(${h[2].toFixed(4)}deg) scale(1.04) translate(${-W / 2}px,${-H / 2}px) `;
+          it.s.img.style.transform = m + it.s.img.style.transform;
+          it.s.layer.style.transform = m + it.s.layer.style.transform;
+        }
         if (it.finish) it.finish(t);
         if (it.open) {                                   // Barnaby's window opening out of the screen
           const d = it.open.d || .55, u = clamp((t - it.at) / d);
@@ -344,11 +353,24 @@ function sweep(parent, o = {}) {
 }
 
 /* ---- the push into the screen: a corner pin onto the monitor's glass (shots.json screen_quad) ---------------- */
-function quadOf(id) {
+/** The glass's corners in the room shot `id` at film time `at`: from screen_quads {frame: quad} (the nearest frame
+ * within 3) or screen_quad, which belongs to screen_quad_frame (default: the last frame). If the sequence isn't on
+ * that frame when the push starts (it is still moving), there is no reliable quad: the push falls back to a cut. */
+function quadOf(id, at) {
   const m = blenderManifest(); if (!m || !m.shots) return null;
   const sh = m.shots.find(x => x.id === id);
   if (!sh || sh.status !== 'done') return null;
-  let q = sh.screen_quad || (sh.screen && sh.screen.quad);
+  const pf = clamp(Math.floor((at - sh.start) * (m.fps || FILM_FPS)) + 1, 1, sh.frames);
+  let q = null;
+  if (sh.screen_quads) {
+    let best = null; for (const k in sh.screen_quads) if (best == null || Math.abs(+k - pf) < Math.abs(best - pf)) best = +k;
+    if (best != null && Math.abs(best - pf) <= 3) q = sh.screen_quads[best];
+  }
+  if (!q && (sh.screen_quad || (sh.screen && sh.screen.quad))) {
+    const qf = sh.screen_quad_frame || sh.frames;
+    if (Math.abs(qf - pf) <= 3) q = sh.screen_quad || sh.screen.quad;
+    else if (!quadOf.warned) { quadOf.warned = true; G.__errors && console.warn(`[pin] ${id}: the quad is for frame ${qf}, the push starts on frame ${pf}: a cut instead`); }
+  }
   if (!q) return null;
   if (!Array.isArray(q)) q = [q.tl, q.tr, q.br, q.bl];
   if (q.length !== 4 || q.some(p => !Array.isArray(p) || p.length < 2)) return null;
@@ -364,6 +386,17 @@ function pinMatrix(q, w, h) {
   const a = x1 - x0 + g * x1, b = x3 - x0 + hh * x3, c = x0, d = y1 - y0 + g * y1, e = y3 - y0 + hh * y3, f = y0;
   const m = [a / w, d / w, 0, g / w, b / h, e / h, 0, hh / h, 0, 0, 1, 0, c, f, 0, 1];
   return `matrix3d(${m.map(v => +v.toFixed(8)).join(',')})`;
+}
+
+/* ---- an operator's handheld (room shots): smooth, low-frequency, seeded per shot -------------------------------- */
+function handheld(seedKey) {
+  let h = 2166136261; for (const ch of seedKey) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  const r = k => rand(h >>> 0, k);
+  // each axis: two sines with periods in 2-5 s and random phases, mixed 0.62 / 0.38 (never jittery)
+  const ax = n => { const p1 = 2 + 3 * r(n), p2 = 2 + 3 * r(n + 1), f1 = 6.2832 * r(n + 2), f2 = 6.2832 * r(n + 3);
+    return t => .62 * Math.sin(6.2832 * t / p1 + f1) + .38 * Math.sin(6.2832 * t / p2 + f2); };
+  const X = ax(10), Y = ax(20), R = ax(30);
+  return t => [W * .005 * X(t), H * .005 * Y(t), .2 * R(t)];
 }
 
 /* ---- the room finish: fine deterministic grain (about 2/255, a new pattern each frame) and a soft vignette --- */
@@ -395,7 +428,7 @@ function finish(box) {
 
 /* ---- the director's camera rules (gate 4 notes): hold by default, motivated moves only, human-speed hands ---- */
 /** A held shot: (x, y, s) with at most an imperceptible drift over the whole shot (scale +k, default 1.2%). */
-const hold = (x, y, s = 1, k = .012) => (t, it) => { const u = easeInOutSine(clamp((t - it.at) / Math.max(.1, it.end - it.at))); return [x, y, s * (1 + k * u)]; };
+const hold = (x, y, s = 1, k = 0) => (t, it) => { const u = easeInOutSine(clamp((t - it.at) / Math.max(.1, it.end - it.at))); return [x, y, s * (1 + k * u)]; };
 /** One motivated move: holds `from` (with the drift) until a, eases to `to` over d, then holds `to`. */
 const move = (a, d, from, to, k = .006) => (t, it) => {
   if (t < a) { const u = easeInOutSine(clamp((t - it.at) / Math.max(.1, a - it.at))); return [from[0], from[1], from[2] * (1 + k * u)]; }

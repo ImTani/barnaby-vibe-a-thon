@@ -38,44 +38,77 @@
   const ck = document.getElementById('card-key');
   el('circle', { cx: 32, cy: 32, r: 29, fill: '#fff', stroke: M.INK, 'stroke-width': 3.5 }, ck); key(ck, 32, 32, 40, M.GOLD);
 
-  document.getElementById('martin').textContent = '“' + S.martin + '”';
-  document.getElementById('barnaby').textContent = S.barnaby;
+  const martinEl = document.getElementById('martin'), barnabyEl = document.getElementById('barnaby');
+  const card = document.querySelector('.card'), yes = document.getElementById('yes'), when = document.querySelector('.head .when b');
+  martinEl.textContent = '“' + S.martin + '”';
+  barnabyEl.textContent = S.barnaby;
   document.getElementById('card-title').textContent = S.card.title;
   document.getElementById('card-lines').innerHTML = S.card.lines.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
-  document.getElementById('yes').textContent = S.card.yes; document.getElementById('no').textContent = S.card.no;
+  yes.textContent = S.card.yes; document.getElementById('no').textContent = S.card.no;
 
-  document.fonts.ready.then(() => {
+  // his walk this morning (canon: the last pair of pads is in drawer 1 of the parts cabinet on the back-office
+  // shelf): tomorrow's jobs on the job board (08:53), through the arch and behind the counter into the back office
+  // by its door (08:54, the parts drawer), out past the office window to the back door (08:55)
+  const ROUTE = [[7.3, 8.05], [7.0, 6.2], [5.75, 5.6], [5.75, 1.65], [8.3, 1.65], [9.3, 2.2], [9.3, 3.95], [14.3, 3.95], [14.3, 7.25], [18.15, 7.25]];
+  const seg = ROUTE.slice(1).map((p, i) => Math.hypot(p[0] - ROUTE[i][0], p[1] - ROUTE[i][1])), LEN = seg.reduce((a, b) => a + b, 0);
+  const AT_DRAWER = seg.slice(0, 4).reduce((a, b) => a + b, 0) / LEN;        // the walk's fraction at drawer 1 (08:54)
+  const MARK = [18.6, 6.95];                                                  // where he stands at the back door
+
+  /* film state (all optional; none = the approved frame, 08:55): walk 0..1 along his route (WALK_AT_DRAWER = at the
+     drawer), pads 0..1 the shortfall note, ask 0..1 the key disc, keyRot deg (the key turning), card 0..1 sliding in,
+     martin 0..1 his line, say 0..1 Barnaby's line typed, press 0..1 Allow pressed, time 'HH:MM' */
+  function render(st) {
+    st = st || {};
+    const walk = st.walk == null ? 1 : st.walk, pads = st.pads == null ? 1 : st.pads, ask = st.ask == null ? 1 : st.ask;
+    svg.innerHTML = '';
+    const route = M.cut(ROUTE, walk), here = route[route.length - 1], arr = Math.max(0, Math.min(1, (walk - .985) / .015));
     M.plan(svg, {
       moment: 'martinKey', x: 90, y: 286, s: 60, focus: 'goodsin', built: false, labelSize: 32, pipR: 7,
       labelAt: { shop: [0.5, 6.1], office: [6.78, 2.42], reports: [10.08, 1.42], workshop: [7.0, 4.78], stockroom: [15.32, 4.22], goodsin: [15.32, 6.12] },
       labelLines: { office: ['Back', 'office'] }, labelSizes: { office: 28 },
       standNames: true, standNameSize: 19,
-      // his walk this morning (canon: the last pair of pads is in drawer 1 of the parts cabinet on the back-office
-      // shelf): tomorrow's jobs on the job board (08:53), through the arch and behind the counter into the back office
-      // by its door (08:54, the parts drawer), out past the office window to the back door (08:55)
-      route: [[7.3, 8.05], [7.0, 6.2], [5.75, 5.6], [5.75, 1.65], [8.3, 1.65], [9.3, 2.2], [9.3, 3.95], [14.3, 3.95], [14.3, 7.25], [18.15, 7.25]],
-      stops: [[7.3, 8.05, '08:53', -82, 0], [8.3, 1.65]],
-      keyAsk: [20.02, 7.05], keyR: 40,
-      marker: [18.6, 6.95], markerR: 30, markerLabel: ['Barnaby', 0, 28],
+      route, stops: [[7.3, 8.05, '08:53', -82, 0]].concat(walk >= AT_DRAWER ? [[8.3, 1.65]] : []),
+      keyAsk: [20.02, 7.05], keyR: 40, keyK: ask >= 1 ? undefined : ask, keyRot: st.keyRot || 0,
+      marker: walk >= 1 ? MARK : [here[0] + (MARK[0] - ROUTE[9][0]) * arr, here[1] + (MARK[1] - ROUTE[9][1]) * arr], markerR: 30, markerLabel: walk >= .985 ? ['Barnaby', 0, 28] : null,     // his name in white, once he's on the blue
     });
     // the shortfall, stuck on above the back office, pointing at the drawer where he found it
     const T = (x, y) => [90 + x * 60, 286 + y * 60];
-    const p = T(8.3, 1.65), sx = 452, sy = 186, nw = 344;
-    el('path', { d: `M${p[0]},${p[1] - 9} L${p[0]},${sy + 68}`, stroke: M.INK, 'stroke-width': 3 }, svg);
-    const sg = el('g', { transform: `translate(${sx},${sy}) rotate(-2)` }, svg);
-    el('rect', { x: 3, y: 5, width: nw, height: 68, rx: 8, fill: 'rgba(0,0,0,.18)' }, sg);
-    el('rect', { x: 0, y: 0, width: nw, height: 68, rx: 8, fill: '#fff', stroke: '#A3261B', 'stroke-width': 2.5 }, sg);
-    W2.warn(sg, 26, 34, 28, '#A3261B');
-    const nf = { 'font-family': W2.FONT.martin, 'font-size': 22, 'font-weight': 700, fill: '#A3261B' };
-    const t1 = W2.text(sg, 52, 29, 'Pads: 1 pair left', nf), x1 = 52 + t1.getComputedTextLength();
-    el('circle', { cx: x1 + 12, cy: 22, r: 2.6, fill: '#A3261B' }, sg);
-    W2.text(sg, x1 + 24, 29, 'drawer 1', nf);
-    W2.text(sg, 52, 55, 'Anika’s brakes need 2', { 'font-family': W2.FONT.martin, 'font-size': 20, fill: M.INK });
-    M.pill(svg, sx + nw + 14, sy + 30, '08:54', { fs: 18 });
-    M.pill(svg, ...T(16.9, 6.7), '08:55', { fs: 18 });   // where he is now: the back door
+    if (pads > 0) {
+      const pg = pads < 1 ? el('g', { opacity: Math.min(1, pads * 1.6).toFixed(3) }, svg) : svg;
+      const p = T(8.3, 1.65), sx = 452, sy = 186, nw = 344, top = pads < 1 ? p[1] - 9 - (p[1] - 9 - sy - 68) * Math.min(1, pads * 1.4) : sy + 68;
+      el('path', { d: `M${p[0]},${p[1] - 9} L${p[0]},${top}`, stroke: M.INK, 'stroke-width': 3 }, pg);
+      const k = pads < 1 ? 1 - Math.pow(1 - Math.max(0, (pads - .3) / .7), 3) : 1;
+      if (k > 0) {
+        const sg = el('g', { transform: `translate(${sx},${sy + (1 - k) * 18}) rotate(-2)` + (k < 1 ? ` translate(${nw / 2},34) scale(${(.9 + .1 * k).toFixed(4)}) translate(${-nw / 2},-34)` : '') }, pg);
+        if (k < 1) sg.setAttribute('opacity', k.toFixed(3));
+        el('rect', { x: 3, y: 5, width: nw, height: 68, rx: 8, fill: 'rgba(0,0,0,.18)' }, sg);
+        el('rect', { x: 0, y: 0, width: nw, height: 68, rx: 8, fill: '#fff', stroke: '#A3261B', 'stroke-width': 2.5 }, sg);
+        W2.warn(sg, 26, 34, 28, '#A3261B');
+        const nf = { 'font-family': W2.FONT.martin, 'font-size': 22, 'font-weight': 700, fill: '#A3261B' };
+        const t1 = W2.text(sg, 52, 29, 'Pads: 1 pair left', nf), x1 = 52 + t1.getComputedTextLength();
+        el('circle', { cx: x1 + 12, cy: 22, r: 2.6, fill: '#A3261B' }, sg);
+        W2.text(sg, x1 + 24, 29, 'drawer 1', nf);
+        W2.text(sg, 52, 55, 'Anika’s brakes need 2', { 'font-family': W2.FONT.martin, 'font-size': 20, fill: M.INK });
+        const pl = M.pill(k < 1 ? sg.parentNode : svg, sx + nw + 14, sy + 30, '08:54', { fs: 18 });
+        if (k < 1) pl.g.setAttribute('opacity', k.toFixed(3));
+      }
+    }
+    if (walk >= 1) M.pill(svg, ...T(16.9, 6.7), '08:55', { fs: 18 });   // where he is now: the back door
     M.legend(svg, 92, 912, ['can', 'key', 'shut', 'walk', 'asking'], { fs: 21, gap: 38 });
-    document.body.dataset.ready = '1';
-  });
+    // the side: Martin's line, Barnaby's (typed as he says it), the card sliding in, Allow pressed
+    const say = st.say == null ? 1 : st.say, cardK = st.card == null ? 1 : st.card, press = st.press || 0;
+    martinEl.style.opacity = st.martin == null || st.martin >= 1 ? '' : String(st.martin);
+    barnabyEl.textContent = say >= 1 ? S.barnaby : S.barnaby.slice(0, Math.round(S.barnaby.length * Math.max(0, say)));
+    barnabyEl.parentNode.style.opacity = say > 0 ? '' : '0';
+    const ce = 1 - Math.pow(1 - cardK, 3);
+    card.style.transform = cardK >= 1 ? '' : `translateX(${((1 - ce) * 560).toFixed(1)}px)`;
+    card.style.opacity = cardK >= 1 ? '' : Math.min(1, cardK * 2).toFixed(3);
+    yes.style.filter = press > 0 ? `brightness(${(1 - .28 * press).toFixed(3)})` : '';
+    yes.style.transform = press > 0 ? `scale(${(1 - .04 * press).toFixed(4)})` : '';
+    when.textContent = st.time || S.time;
+  }
+  window.COMP = { render, AT_DRAWER, yes };
+  document.fonts.ready.then(() => { render(); document.body.dataset.ready = '1'; });
 })();
 </script>
 </body></html>

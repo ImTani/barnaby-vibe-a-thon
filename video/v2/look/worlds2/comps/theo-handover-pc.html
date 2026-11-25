@@ -33,7 +33,9 @@
     const c = pc.barnabyClient, w = c.offsetWidth, h = c.offsetHeight;
     c.parentNode.querySelector('.guide').style.display = 'none';   // the empty frame's own guide text
     const svg = W2.svg(c, w, h);
-    THEO_SCENES.handoverTall(svg, w, h);
+    // film use: COMP.render(state) redraws Barnaby's window from its state (handoverTall: lit, sayK); no state = this frame
+    window.COMP = { render(st) { svg.innerHTML = ''; THEO_SCENES.handoverTall(svg, w, h, st || {}); } };
+    COMP.render();
     document.body.dataset.ready = '1';
   });
 })();

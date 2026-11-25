@@ -10,5 +10,8 @@
 <script src="../../worlds/comps/lib/theo-shared.js"></script>
 <script src="lib/theo.js"></script>
 <script src="lib/theo-scenes.js"></script>
-<script>document.fonts.ready.then(() => { THEO_SCENES.handoverWide(document.getElementById('s'), 'reading'); document.body.dataset.ready = '1'; });</script>
+<script>
+// film use: COMP.render(state) redraws the frame from its state (lib/theo-scenes.js handoverWide); no state = this frame
+window.COMP = { render(st) { const s = document.getElementById('s'); s.innerHTML = ''; THEO_SCENES.handoverWide(s, 'reading', st || {}); } };
+document.fonts.ready.then(() => { COMP.render(); document.body.dataset.ready = '1'; });</script>
 </body></html>

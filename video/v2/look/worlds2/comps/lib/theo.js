@@ -69,12 +69,13 @@
   }
 
   /* draw the hologram. o: { P (projection), px (px per metre), moment, scanX (reading beat: bricks past it unread),
-     fidelity, built, defs } -> { pos: {tool: [x,y] top of brick} } */
+     fidelity, built, defs, litOnly (film: only these lit ones lit yet) } -> { pos: {tool: [x,y] top of brick} } */
   function model(svg, o) {
     const P = o.P, g = el('g', {}, svg), full = o.fidelity === 'full';
     building(g, P, { built: o.built, px: o.px, pool: o.defs.pool, newWallCol: o.newWallCol });
     const st = W.state(o.moment).filter(a => a.state !== 'planned')
       .map(a => o.allFound ? Object.assign({}, a, { state: 'key' }) : a)
+      .map(a => o.litOnly && a.state === 'lit' && !o.litOnly.includes(a.tool) ? Object.assign({}, a, { state: 'key' }) : a)
       .filter(a => o.scanX == null || a.anchor[0] < o.scanX)
       .sort((a, b) => P.depth(a.anchor[0], a.anchor[1]) - P.depth(b.anchor[0], b.anchor[1]));
     const pos = {};

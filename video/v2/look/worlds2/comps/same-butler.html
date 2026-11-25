@@ -99,6 +99,8 @@
     // Theo
     const tc = document.getElementById('theo'), ts = W2.svg(tc, 640, 1080);
     THEO_SCENES.buildTall(ts, 640, 1080);
+    // film use: COMP.render(state) redraws Theo's panel from its state (buildTall: files, tests, added, rediscover)
+    window.COMP = { render(st) { ts.innerHTML = ''; THEO_SCENES.buildTall(ts, 640, 1080, st || {}); } };
     // Martin's plan, portrait: back lane at the top, Market Place at the bottom
     M.plan(document.getElementById('mplan'), {
       moment: 'build', x: 44, y: 210, s: 34, rotate: true, focus: 'reports', built: true, labelSize: 21, labelSizes: { reports: 18.5 }, pipR: 4.6, wallW: 4, gutter: 7,

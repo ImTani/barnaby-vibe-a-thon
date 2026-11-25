@@ -9,6 +9,18 @@
   const W = window.WORLDS, B = W.building;
   const INK = '#1D1B17', PAPER = '#F5F2EA', GOLD = '#B8892B', GOLD_LT = '#E2B54E';
 
+  // film: the first k (0..1) of a polyline, by length
+  function cut(path, k) {
+    if (k == null || k >= 1) return path;
+    const seg = path.slice(1).map((p, i) => Math.hypot(p[0] - path[i][0], p[1] - path[i][1]));
+    let d = Math.max(0, k) * seg.reduce((a, b) => a + b, 0); const out = [path[0]];
+    for (let i = 0; i < seg.length; i++) {
+      if (d >= seg[i]) { out.push(path[i + 1]); d -= seg[i]; continue; }
+      const u = seg[i] ? d / seg[i] : 0; out.push([path[i][0] + (path[i + 1][0] - path[i][0]) * u, path[i][1] + (path[i + 1][1] - path[i][1]) * u]); break;
+    }
+    return out;
+  }
+
   function mapper(o) {
     return o.rotate
       ? (x, y) => [o.x + y * o.s, o.y + (B.size.w - x) * o.s]          // portrait: back lane at the top, Market Place below
@@ -31,8 +43,20 @@
 
   /* opts: { moment, x, y, s, rotate, focus: roomId, built: bool (reports drawn as Workload), labelAt: {room: [mx,my,dx,dy]},
      labelSize, pipR, route: [[x,y]...], stops: [[x,y,label,dx,dy]...], marker: [x,y], keyAsk: [x,y], passage: bool,
-     newSticker: [mx,my,rot,w,h], pads: [mx,my,rot,w] } */
+     newSticker: [mx,my,rot,w,h], pads: [mx,my,rot,w] }
+     film state (each optional, default = the approved drawing): passageK (0..1 the band drawn so far, its label at 1),
+     stickerK (0..1 the NEW sticker slapped on), keyK (0..1 the key disc popping in), keyRot (deg, the key turning),
+     routeOpacity */
+  function marker(g, T, o) {
+    const p = T(o.marker[0], o.marker[1]), r = o.markerR || 30;
+    el('circle', { cx: p[0] + 2, cy: p[1] + 5, r: r + 1, fill: 'rgba(0,0,0,.22)' }, g);
+    el('circle', { cx: p[0], cy: p[1], r, fill: INK, stroke: '#fff', 'stroke-width': 4 }, g);
+    bell(g, p[0], p[1] + 1, r * 1.2, GOLD_LT);
+    if (o.markerLabel) text(g, p[0] + (o.markerLabel[1] || 0), p[1] + r + (o.markerLabel[2] || 26), o.markerLabel[0], { 'text-anchor': 'middle', 'font-family': FONT.martin, 'font-size': o.markerLabelSize || 20, 'font-weight': 700, fill: o.markerLabelFill || '#fff' });
+  }
+
   function plan(svg, o) {
+    if (o.onlyMarker) { const T = mapper(o), g = el('g', {}, svg); marker(g, T, o); return { T, g }; }   // film: the marker alone
     const T = mapper(o), s = o.s, g = el('g', {}, svg);
     const st = W.state(o.moment);
     const built = !!o.built;
@@ -119,49 +143,45 @@
     }
 
     // his walk (a dotted ink line) and its stops
-    if (o.route) {
+    if (o.route && o.route.length > 1) {
+      const rg = o.routeOpacity != null && o.routeOpacity < 1 ? el('g', { opacity: o.routeOpacity }, g) : g;
       const d = o.route.map((p, i) => (i ? 'L' : 'M') + T(p[0], p[1]).map(n => n.toFixed(1)).join(',')).join(' ');
-      el('path', { d, fill: 'none', stroke: '#fff', 'stroke-width': 10, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: .85 }, g);
-      el('path', { d, fill: 'none', stroke: INK, 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-dasharray': '0.1 11' }, g);
+      el('path', { d, fill: 'none', stroke: '#fff', 'stroke-width': 10, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: .85 }, rg);
+      el('path', { d, fill: 'none', stroke: INK, 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-dasharray': '0.1 11' }, rg);
       for (const sp of o.stops || []) {
         const p = T(sp[0], sp[1]);
-        el('circle', { cx: p[0], cy: p[1], r: 8, fill: '#fff', stroke: INK, 'stroke-width': 3.5 }, g);
-        if (sp[2]) pill(g, p[0] + (sp[3] || 16), p[1] + (sp[4] || 0), sp[2], { fs: 18 });
+        el('circle', { cx: p[0], cy: p[1], r: 8, fill: '#fff', stroke: INK, 'stroke-width': 3.5 }, rg);
+        if (sp[2]) pill(rg, p[0] + (sp[3] || 16), p[1] + (sp[4] || 0), sp[2], { fs: 18 });
       }
     }
 
     // the passage he made: a road-marked band, its own shape
-    if (o.passage) {
-      const path = o.passagePath || B.passage.path.slice(0, 3);
+    if (o.passage && !(o.passageK <= 0)) {
+      const path = cut(o.passagePath || B.passage.path.slice(0, 3), o.passageK);
       const d = path.map((p, i) => (i ? 'L' : 'M') + T(p[0], p[1]).map(n => n.toFixed(1)).join(',')).join(' ');
       const pw = o.passageW || 20, op = o.passageDim ? .62 : 1, pg = el('g', { opacity: op }, g);
       el('path', { d, fill: 'none', stroke: '#fff', 'stroke-width': pw + 8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, pg);
       el('path', { d, fill: 'none', stroke: INK, 'stroke-width': pw, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, pg);
       el('path', { d, fill: 'none', stroke: GOLD_LT, 'stroke-width': 3.2, 'stroke-dasharray': '14 12', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, pg);
-      if (o.passageLabel) pill(pg, ...T(o.passageLabel[0], o.passageLabel[1]), 'Hand back a bike', { fs: o.passageLabelSize || 20 });
+      if (o.passageLabel && !(o.passageK < 1)) pill(pg, ...T(o.passageLabel[0], o.passageLabel[1]), 'Hand back a bike', { fs: o.passageLabelSize || 20 });
     }
 
     // the key he's asking for: a white disc with a gold key, ringed in ink
-    if (o.keyAsk) {
+    if (o.keyAsk && !(o.keyK <= 0)) {
       const p = T(o.keyAsk[0], o.keyAsk[1]), r = o.keyR || 38;
-      el('circle', { cx: p[0] + 2, cy: p[1] + 5, r: r + 1, fill: 'rgba(0,0,0,.2)' }, g);
-      el('circle', { cx: p[0], cy: p[1], r, fill: '#fff', stroke: INK, 'stroke-width': 4 }, g);
-      key(g, p[0], p[1], r * 1.34, GOLD);
+      const kg = o.keyK != null && o.keyK < 1 ? el('g', { transform: `translate(${p[0]},${p[1]}) scale(${o.keyK}) translate(${-p[0]},${-p[1]})` }, g) : g;
+      el('circle', { cx: p[0] + 2, cy: p[1] + 5, r: r + 1, fill: 'rgba(0,0,0,.2)' }, kg);
+      el('circle', { cx: p[0], cy: p[1], r, fill: '#fff', stroke: INK, 'stroke-width': 4 }, kg);
+      key(kg, p[0], p[1], r * 1.34, GOLD, o.keyRot || 0);
     }
 
     // Barnaby: an ink disc with his bell, where he is
-    if (o.marker) {
-      const p = T(o.marker[0], o.marker[1]), r = o.markerR || 30;
-      el('circle', { cx: p[0] + 2, cy: p[1] + 5, r: r + 1, fill: 'rgba(0,0,0,.22)' }, g);
-      el('circle', { cx: p[0], cy: p[1], r, fill: INK, stroke: '#fff', 'stroke-width': 4 }, g);
-      bell(g, p[0], p[1] + 1, r * 1.2, GOLD_LT);
-      if (o.markerLabel) text(g, p[0] + (o.markerLabel[1] || 0), p[1] + r + (o.markerLabel[2] || 26), o.markerLabel[0], { 'text-anchor': 'middle', 'font-family': FONT.martin, 'font-size': o.markerLabelSize || 20, 'font-weight': 700, fill: o.markerLabelFill || '#fff' });
-    }
-
+    if (o.marker) marker(g, T, o);
+  
     // the new room's sticker
-    if (o.newSticker) {
-      const q = o.newSticker, p = T(q[0], q[1]), R = W.ROOMS.find(r => r.id === 'reports');
-      const sg = el('g', { transform: `translate(${p[0]},${p[1]}) rotate(${q[2] || -8})` }, g);
+    if (o.newSticker && !(o.stickerK <= 0)) {
+      const q = o.newSticker, p = T(q[0], q[1]), R = W.ROOMS.find(r => r.id === 'reports'), sk = o.stickerK == null ? 1 : o.stickerK;
+      const sg = el('g', { transform: `translate(${p[0]},${p[1]}) rotate(${q[2] || -8})` + (sk < 1 || sk > 1 ? ` scale(${sk})` : '') }, g);
       const w = q[3] || 104, h = q[4] || 46;
       el('rect', { x: -w / 2 + 3, y: -h / 2 + 5, width: w, height: h, rx: 9, fill: 'rgba(0,0,0,.22)' }, sg);
       el('rect', { x: -w / 2, y: -h / 2, width: w, height: h, rx: 9, fill: '#fff', stroke: R.deep, 'stroke-width': 3 }, sg);
@@ -202,5 +222,5 @@
     return g;
   }
 
-  window.MARTIN = { plan, legend, pill, INK, PAPER, GOLD, GOLD_LT };
+  window.MARTIN = { plan, legend, pill, cut, INK, PAPER, GOLD, GOLD_LT };
 })();

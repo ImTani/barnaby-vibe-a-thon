@@ -172,7 +172,7 @@ function seq(root, items, end, o = {}) {
   });
   list.forEach((it, i) => {
     const nx = list[i + 1];
-    it.end = it.until != null ? it.until : nx ? nx.at + Math.max(nx.fi || 0, nx.quad ? nx.pin.d || .6 : 0, nx.open ? nx.open.d || .55 : 0) : end;
+    it.end = it.until != null ? it.until : nx ? nx.at + Math.max(nx.fi || 0, nx.quad ? (nx.fi || 0) + (nx.pin.d || .6) : 0, nx.open ? nx.open.d || .55 : 0) : end;
     it.bl = blenderFor(it.src, it.at, it.end);
     if (it.bl) { it.blDir = `../world/out/anim/${it.bl.id}/`; it.blN = -1; }
     if (isRoom(it.src) && !it.clean) it.finish = finish(it.s.box);
@@ -205,8 +205,9 @@ function seq(root, items, end, o = {}) {
           }
           it.s.place(t, null, it.fit);
           if (!it.keepGrade) g = '';
-        } else if (it.quad && t < it.at + (it.pin.d || .6)) {          // the push into the screen: pinned, growing
-          const u = easeInOutCubic(clamp((t - it.at) / (it.pin.d || .6))), F = [[0, 0], [W, 0], [W, H], [0, H]];
+        } else if (it.quad && t < it.at + (it.fi || 0) + (it.pin.d || .6)) {   // the push into the screen: it fades up
+          // on the glass first (opaque before it moves: no double image), then grows to full frame
+          const u = easeInOutCubic(clamp((t - it.at - (it.fi || 0)) / (it.pin.d || .6))), F = [[0, 0], [W, 0], [W, H], [0, H]];
           const q = it.quad.map((p, k) => [lerp(p[0], F[k][0], u), lerp(p[1], F[k][1], u)]);
           it.s.img.style.transform = it.s.layer.style.transform = pinMatrix(q, it.s.w, it.s.h);
         } else it.s.place(t, typeof it.cam === 'function' ? it.cam(t, it) : it.cam, it.fit);

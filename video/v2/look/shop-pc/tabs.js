@@ -45,8 +45,16 @@
    * never sent. Her "ready to collect" text is Barnaby's, on Monday afternoon. The count is the draft's own length. */
   const DRAFT = 'Hi Sofia, your Giant Defy is booked in for a full service, ready Tues 24th. Spokes & Sprockets';
 
+  /* Older texts from the SMS box's own log (not in the back office), merged with the shop's by date, newest first.
+   * Jana's fork service was booked for Mon 23 Nov (job 4488; her bike is one of Monday's hand-backs). */
+  const OLDER_TEXTS = [
+    { sent_at: '2026-11-12 10:12', customer: 'Jana Novak', message: 'Hi Jana, fork service booked in for Mon 23rd. Spokes & Sprockets' },
+    { sent_at: '2026-10-02 16:40', customer: 'Arthur Pemberton', message: 'Hi Arthur, the parts for the Raleigh are still on order, sorry! S&S' },
+  ];
+
   function sms() {
-    const log = D.texts.map(t => `<div class="msg"><i>${esc(t.sent_at.slice(0, 16))}</i><b>${esc(t.customer)}</b><br>${esc(t.message)}</div>`).join('');
+    const log = [...D.texts, ...OLDER_TEXTS].sort((a, b) => (a.sent_at < b.sent_at ? 1 : -1))
+      .map(t => `<div class="msg"><i>${esc(t.sent_at.slice(0, 16))}</i><b>${esc(t.customer)}</b><br>${esc(t.message)}</div>`).join('');
     return `<div class="page sms">
       <div class="top"><span class="logo">SMS<b>box</b></span><small>business texting from your PC &middot; since 2006</small><span class="cred">Credits: 14</span></div>
       <div class="body">
@@ -58,10 +66,7 @@
           <div class="cnt">${DRAFT.length} / 160 characters (1 text)</div>
           <div class="send">Send</div>
         </div>
-        <div class="log"><h4>Sent messages</h4>${log}
-          <div class="msg"><i>2026-10-02 16:40</i><b>Arthur Pemberton</b><br>Hi Arthur, the parts for the Raleigh are still on order, sorry! S&amp;S</div>
-          <div class="msg"><i>2026-09-28 10:12</i><b>Jana Novak</b><br>Hi Jana, fork service booked in for the 26th. Spokes &amp; Sprockets</div>
-        </div>
+        <div class="log"><h4>Sent messages</h4>${log}</div>
       </div></div>`;
   }
 
@@ -138,7 +143,7 @@
       [1, 'Carol Hartley', "Sunday lunch? + Theo's leaving do!!", 'Tue 19:41', false, true],
       [0, 'Harbour & County Bank', 'Important changes to your online banking', 'Tue 07:00', false, false],
       [0, 'Dev', "can't do tues this week, other shop", 'Mon 22:16', false, false],
-      [0, 'Jana Novak', 'Fork service - is the 26th still ok?', 'Mon 13:31', false, false],
+      [0, 'Jana Novak', 'Fork service - is Monday still ok?', 'Mon 13:31', false, false],
       [0, 'Ravi', 'van MOT reminder', '15/11', false, false],
       [0, 'Northgate Cycle Supply', 'WINTER CLEARANCE - up to 40% off!!', '14/11', false, false],
     ];
@@ -180,7 +185,7 @@
       [18, 16, 1, 'p', 'Theo - show uncle M the backup (AGAIN)'],
       [19, 9, 1, 'b', 'Anika - brakes?'],
       [19, 14, 2, 'p', 'Theo: write README for whoever looks after it next'],
-      [20, 17, 1, 'o', 'leaving drinks @ the Bell 5.30!!'],
+      [20, 17, 1, 'o', 'leaving drinks @ the Bell 5pm!!'],
       [21, 10, 2, 'g', 'Kids bike check (free)'],
     ];
     const allday = { 17: ['g', 'Dev at Market St shop'], 20: ['r', "THEO'S LAST DAY :("] };

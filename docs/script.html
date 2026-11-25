@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barnaby: the film · script v2 (gate 1, for review)</title>
+<style>
+:root{
+  --paper:#f6f1e6; --paper-2:#efe7d6; --ink:#24211c; --ink-2:#5b5448; --muted:#8a8172; --hair:#ddd3bf;
+  --brass:#a77a2e; --brass-lt:#d4a85a; --theo:#3e6e8e; --martin:#7a4b2a; --priya:#5f6f3a; --barnaby:#8a6418;
+  --mono:"Courier Prime","Courier New",Courier,monospace;
+  --serif:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+  --sans:"Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#d9d0bd;color:var(--ink);font:16px/1.55 var(--sans)}
+.page{max-width:1080px;margin:28px auto;background:var(--paper);box-shadow:0 18px 50px rgba(60,45,20,.25);border-radius:4px;padding:56px 64px 72px}
+.eyebrow{font:600 12px var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--brass);margin:0 0 10px}
+h1{font:normal 52px/1.05 var(--serif);margin:0 0 8px}
+h2{font:normal 30px/1.2 var(--serif);margin:46px 0 12px;padding-top:26px;border-top:1px solid var(--hair)}
+h3{font:600 15px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin:22px 0 8px}
+p{margin:0 0 12px} .lede{font-size:18px;color:var(--ink-2);max-width:70ch}
+.status{display:inline-block;font:600 12px var(--sans);letter-spacing:.12em;text-transform:uppercase;background:var(--brass);color:#fff;border-radius:999px;padding:4px 10px;vertical-align:middle;margin-left:8px}
+.fine{font-size:13px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;margin:8px 0 14px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--hair)}
+th{font:600 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+ul{margin:4px 0 12px 20px;padding:0} li{margin:3px 0}
+.who{font-weight:600}
+.t-theo{color:var(--theo)} .t-martin{color:var(--martin)} .t-priya{color:var(--priya)} .t-barnaby{color:var(--barnaby)}
+
+/* screenplay */
+.scene{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px;margin:30px 0 8px;padding-top:22px;border-top:1px dashed var(--hair)}
+.slug{grid-column:1/-1;font:700 16px var(--mono);letter-spacing:.02em;display:flex;justify-content:space-between;align-items:baseline}
+.slug .time{font:600 13px var(--sans);color:var(--muted);letter-spacing:.06em}
+.slug .name{font:italic 20px var(--serif);color:var(--brass);font-weight:normal;margin-left:10px}
+.script{font:15.5px/1.6 var(--mono)}
+.action{margin:0 0 12px}
+.cue{margin:16px 0 0 34%;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.cue .pace{font:600 11px var(--sans);letter-spacing:.06em;color:var(--muted);text-transform:none;margin-left:8px}
+.paren{margin:0 0 0 27%;font-style:italic;color:var(--ink-2)}
+.line{margin:0 12% 4px 20%}
+.notes{font-size:14px;background:var(--paper-2);border-radius:8px;padding:14px 16px;align-self:start}
+.notes h4{font:600 11.5px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--brass);margin:10px 0 4px}
+.notes h4:first-child{margin-top:0}
+.notes p{margin:0 0 6px}
+.engine{font:12.5px var(--mono);color:#6d6352;background:#e8dfcc;border-radius:5px;padding:2px 6px;display:inline-block;margin:2px 0}
+.staged{font:600 11px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:#fff;background:#8a8172;border-radius:4px;padding:2px 6px}
+.q{background:#fff8e6;border:1px solid #ecd9a8;border-radius:8px;padding:14px 18px;margin:10px 0}
+.q b{color:var(--brass)}
+@media (max-width:860px){.page{padding:32px 22px}.scene{grid-template-columns:1fr}.cue{margin-left:20%}.line{margin:0 4% 4px 10%}}
+</style>
+</head>
+<body>
+<main class="page">
+
+<p class="eyebrow">Barnaby · the film · v2</p>
+<h1>Script <span class="status">gate 1 · for your notes</span></h1>
+<p class="lede">A product film about a family, a desk and the old system they run on, with Barnaby arriving as the newest
+member of the household. Around 2:55. Everything here is open to your notes before anything is built.</p>
+<p class="fine">The world bible behind it: <code>video/v2/WORLD.md</code> (people, the desk and its props, how Barnaby
+speaks, era rules). The look book (gate 2) and an animatic (gate 3) come before any full render.</p>
+
+<h2>What changed from v1</h2>
+<table>
+<tr><th>Your note</th><th>What v2 does</th></tr>
+<tr><td>Captions told the story; UI on a dark grid</td><td>People and a place tell it. Every shot is the desk diorama or the screen inside it. Only the closing titles use on-screen text. One quiet "engine note" line carries the Synapse facts for judges.</td></tr>
+<tr><td>Barnaby talks like a developer ("ordering endpoint")</td><td>He speaks Martin's language, asks before taking a key, explains before changing anything. Same rule in the real app.</td></tr>
+<tr><td>Martin can't judge a code diff</td><td>Barnaby explains the change: what it does, what it reads, that it changes nothing, that Theo's checks pass. The code is behind "see the change".</td></tr>
+<tr><td>"Twenty-four things. Theo wrote twenty-three…" is textbook AI</td><td>Lines are written for characters with histories: Theo's jokes, Martin's "Go on, then", Priya's dry "Noted.", Barnaby's restraint.</td></tr>
+<tr><td>Personality like "Reports (coming soon!!)"</td><td>It becomes the spine of the Build beat: the room Theo never built, finally finished. Props and sticky notes carry more of it.</td></tr>
+<tr><td>Quorum and ComfyUI were just cards</td><td>Their own beat: Theo's new job, a brand-new house picked up in seconds. Staged and labelled as such.</td></tr>
+<tr><td>Speech too slow</td><td>Each character gets a measured pace from real speaking-rate research (the targets below are provisional until <code>SPEECH.md</code> lands).</td></tr>
+</table>
+
+<h2>The people</h2>
+<table>
+<tr><th>Who</th><th>In one line</th><th>Pace (provisional)</th></tr>
+<tr><td class="who t-martin">Martin Hartley, 61</td><td>Owner, Theo's uncle. Hands-on, plain-spoken, kind, busy. Voiced by you.</td><td>~165 wpm, clipped</td></tr>
+<tr><td class="who t-theo">Theo Hartley, 31</td><td>Wrote the system at 14, kept it alive 17 years, leaves Friday for an animation studio in Lisbon. Quick and funny.</td><td>~180 wpm</td></tr>
+<tr><td class="who t-priya">Priya Nair, 24</td><td>New mechanic, first day. Sharp with bikes, wary of old software, dry.</td><td>~170 wpm</td></tr>
+<tr><td class="who t-barnaby">Barnaby</td><td>The butler on the shop PC. Composed, warm, quietly witty. Unhurried, never slow.</td><td>~158 wpm</td></tr>
+</table>
+
+<h2>The device that makes Synapse legible</h2>
+<p><b>Synapse gives Barnaby the floor plan of the house. Martin gives him the keys.</b> On Barnaby's screen, Theo's
+system appears as a floor plan: each room is something the system can do (Jobs, Customers, Parts, Orders, Reports…).
+Lit rooms are ones Barnaby can use. A key icon means he could ask for it. Compose draws a service passage between rooms
+he keeps walking. Build adds a room. A one-line engine note in the corner gives the technical truth for anyone who wants
+it, e.g. <span class="engine">synapse · read Theo's code · 23 capabilities · 0.5 s</span>.</p>
+
+<h2>The script</h2>
+
+<!-- 1 -->
+<div class="scene">
+  <div class="slug"><span>1. INT. BACK OFFICE — NIGHT <span class="name">Nine tabs</span></span><span class="time">0:00 – 0:13</span></div>
+  <div class="script">
+    <p class="action">Black. Rain on a window. A PC fan spins up; a hard drive chatters. Light comes up on the back
+    office: one desk, a desk lamp, a 2009 monitor. We drift toward it.</p>
+    <p class="action">On the screen, browser tabs open one after another: Back Office v2.3, Supplier portal, SMS box,
+    workload.xls… The RAM gadget's needle climbs into the red.</p>
+    <p class="cue t-martin">Martin <span class="paren">(o.s., from the workshop, tired)</span><span class="pace">~170 wpm</span></p>
+    <p class="line">Theo — where's the parts list again?</p>
+    <p class="cue t-theo">Theo<span class="pace">~185 wpm</span></p>
+    <p class="line">Tab four. No — five.</p>
+    <p class="paren">(beat)</p>
+    <p class="line">It's the one with the spanner.</p>
+  </div>
+  <div class="notes">
+    <h4>Picture</h4><p>Diorama wide → slow push to the monitor. Screen: the Windows 7 desktop, nine tabs piling up, the CPU/RAM gadget dial.</p>
+    <h4>Sound</h4><p>Rain, PC fan, HDD clicks, a workshop radio far off. Tabs open with small real clicks. No music yet.</p>
+    <h4>Why</h4><p>The pain is shown by two people, not a caption.</p>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="scene">
+  <div class="slug"><span>2. INT. BACK OFFICE — NIGHT (CONT'D) <span class="name">The handover</span></span><span class="time">0:13 – 0:42</span></div>
+  <div class="script">
+    <p class="action">The camera drifts across the desk: a 2009 photo of teenage Theo and Martin outside the shop, Theo
+    holding a CD-R marked SHOP SYSTEM v1; the calendar, Friday circled, "THEO'S LAST DAY :("; a moving box, THEO —
+    LISBON.</p>
+    <p class="cue t-theo">Theo <span class="paren">(quietly)</span></p>
+    <p class="line">Seventeen years.</p>
+    <p class="action">The tabs close, one by one. A brass bell rings softly: Barnaby's window opens.</p>
+    <p class="cue t-theo">Theo</p>
+    <p class="line">Right. Barnaby — this is the shop's system. I wrote it when I was fourteen, so be kind. Look after them for me.</p>
+    <p class="action">On Barnaby's screen, a floor plan draws itself, room by room. Six rooms light up.</p>
+    <p class="cue t-barnaby">Barnaby<span class="pace">~155 wpm</span></p>
+    <p class="line">It's a lovely old house, Theo. I'll only look around for now — nobody's given me any keys.</p>
+    <p class="cue t-theo">Theo</p>
+    <p class="line">One thing. Don't call him "sir".</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Noted.</p>
+  </div>
+  <div class="notes">
+    <h4>Picture</h4><p>Desk detail shots (props tell who Theo is), then Barnaby's window on the monitor; cut full-screen for the floor plan.</p>
+    <h4>Engine note</h4><p><span class="engine">synapse · read Theo's code · 23 capabilities · 0.5 s</span><br><span class="engine">6 that only read · exposed to Barnaby</span></p>
+    <h4>Sound</h4><p>The bell is a real-sounding brass desk bell (Barnaby's sound for the whole film). Music enters: a warm, sparse acoustic guitar.</p>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="scene">
+  <div class="slug"><span>3. INT. BACK OFFICE — MONDAY MORNING <span class="name">Monday</span></span><span class="time">0:42 – 0:59</span></div>
+  <div class="script">
+    <p class="action">Time-lapse on the desk: the lamp goes off, daylight sweeps in. Theo's things are gone; the
+    WORLD'S OKAYEST NEPHEW mug stays. Martin's reading glasses, a greasy rag, a paper job card. The screen clock reads
+    08:52.</p>
+    <p class="cue t-martin">Martin <span class="paren">(sitting, a sigh)</span></p>
+    <p class="line">Right. Barnaby, is it?</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Good morning, Martin.</p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">What's due tomorrow — and are we short on anything?</p>
+    <p class="action">Barnaby walks the rooms: Jobs, then Parts.</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Five bikes due tomorrow. Only Anika's is a problem — her brakes need two pairs of pads, and we've one left.</p>
+    <p class="action">The shelf: a box of brake pads, a sticky note, LAST PAIR!!</p>
+  </div>
+  <div class="notes">
+    <h4>Picture</h4><p>Same desk, new owner (props swap). Barnaby's window shows his steps in plain words ("checking tomorrow's jobs… checking parts").</p>
+    <h4>Engine note</h4><p><span class="engine">6 calls · jobs_due, job_detail ×5 · 8.4 s</span></p>
+    <h4>Sound</h4><p>Workshop morning: radio, a freewheel ticking, a compressor. Music: light, walking pace.</p>
+    <h4>Payoff</h4><p>"Good morning, Martin." lands Theo's "don't call him sir".</p>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="scene">
+  <div class="slug"><span>4. INT. BACK OFFICE — DAY <span class="name">A key</span></span><span class="time">0:59 – 1:18</span></div>
+  <div class="script">
+    <p class="cue t-martin">Martin</p>
+    <p class="line">Order ten from Madison, then.</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">I can't order parts myself yet — but Theo built the system a way to. Shall I take that on?</p>
+    <p class="action">A card: <b>Let Barnaby order parts from your suppliers.</b> [Allow] [Not now]. On the floor plan,
+    the Orders room shows a small key.</p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">Go on, then.</p>
+    <p class="action">He clicks Allow. A key turns; the Orders room lights.</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Ten pairs from Madison, at six pounds fifty each. Shall I place it?</p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">Yes.</p>
+    <p class="action">Theo's Purchase Orders page: a new row slides in. Brake pads (Shimano resin) × 10 · Madison · ordered.</p>
+  </div>
+  <div class="notes">
+    <h4>Picture</h4><p>Full-screen on the card (plain words first; "POST /api/purchase-orders" as a small grey detail), then the 2009 Purchase Orders page.</p>
+    <h4>Engine note</h4><p><span class="engine">synapse · rebuilt with 1 more capability · 0.38 s</span></p>
+    <h4>Sound</h4><p>A key turning in a lock (foley), the bell's soft confirm, a mouse click.</p>
+  </div>
+</div>
+
+<!-- 5 -->
+<div class="scene">
+  <div class="slug"><span>5. INT. BACK OFFICE — AFTERNOON <span class="name">The same four steps</span></span><span class="time">1:18 – 1:38</span></div>
+  <div class="script">
+    <p class="action">The day moves: light slides across the desk. The counter bell rings: a customer collecting.</p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">Barnaby — Sofia's bike's done.</p>
+    <p class="action">Barnaby walks four rooms: the job, the customer, a text, the status. The bell again.</p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">Kwame's.</p>
+    <p class="action">The same four rooms, faster. The bell again.</p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">And Jana's.</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">That's three bikes handed back today, and the same four steps each time. Shall I make it one?</p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">Can you?</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Give me a moment.</p>
+    <p class="action">On the floor plan, a service passage draws itself through the four rooms: <b>Hand back a bike.</b></p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">Tom's Brompton.</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Tom's been texted, and it's marked ready.</p>
+  </div>
+  <div class="notes">
+    <h4>Picture</h4><p>A rhythmic montage cut to the bell rings; the fourth hand-back is a single step.</p>
+    <h4>Engine note</h4><p><span class="engine">synapse custom · composed from Theo's own functions · 16 s</span></p>
+    <h4>Sound</h4><p>The counter bell as rhythm; the composing moment gets a rising guitar figure that resolves on "Hand back a bike".</p>
+    <h4>Real</h4><p>Barnaby offering this after a repeated chain is real (he offers after three repeats).</p>
+  </div>
+</div>
+
+<!-- 6 -->
+<div class="scene">
+  <div class="slug"><span>6. INT. BACK OFFICE — DAY <span class="name">A room Theo never built</span></span><span class="time">1:38 – 2:12</span></div>
+  <div class="script">
+    <p class="cue t-martin">Martin</p>
+    <p class="line">Who's got too much on this week?</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">The system can't tell me — there's no report for it. Theo always meant to write one.</p>
+    <p class="action">The bezel: a sticky note in Theo's hand, "Reports: coming soon (sorry Uncle M)". On screen, the
+    tab: Reports (coming soon!!).</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">I could write it, if you like.</p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">You can do that?</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">With your say-so. I'll work on a copy — nothing changes until you've seen it.</p>
+    <p class="action">The screen fills with code, written line by line. Martin's glasses rest beside the keyboard. A
+    row of checks turns green.</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Done. It adds up each mechanic's booked hours for the week, the way Theo's notes count them. It only reads the job board — it can't change a thing — and all twenty-two of Theo's checks still pass. Shall I add it?</p>
+    <p class="action">A card: <b>Add a weekly workload report.</b> What it does · what it reads · changes nothing ·
+    22 checks pass. [Add it] [Not now] · <i>see the change</i></p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">Add it.</p>
+    <p class="action">Theo's system reloads. The tab that said "Reports (coming soon!!)" now just says Reports. A new room
+    appears on the floor plan: Workload.</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Dev's carrying thirty-one hours against his twenty. Priya starts today — shall I give her the two wheel builds?</p>
+    <p class="cue t-martin">Martin</p>
+    <p class="line">Good idea.</p>
+    <p class="action">In the job list, two rows change: Dev → Priya.</p>
+  </div>
+  <div class="notes">
+    <h4>Picture</h4><p>The centrepiece. Code on the 3D monitor (reflections on the glossy panel), then full-screen for the explanation card, then the "coming soon!!" tab changing. That tab is the emotional payoff.</p>
+    <h4>Engine notes</h4><p><span class="engine">writing on a copy · services.py, routes_reports.py, tests</span><br><span class="engine">pytest · 22 passed</span><br><span class="engine">synapse --discover · 24 capabilities (was 23)</span></p>
+    <h4>Sound</h4><p>Real keyboard foley under the code; music builds (focused), releases on "Add it" and the tab change.</p>
+  </div>
+</div>
+
+<!-- 7 -->
+<div class="scene">
+  <div class="slug"><span>7. INT. BACK OFFICE — LATER <span class="name">Priya, day one</span></span><span class="time">2:12 – 2:28</span></div>
+  <div class="script">
+    <p class="action">The desk again: a new toolroll, a lanyard, and on the monitor bezel, beside Theo's sticky notes,
+    a fresh sticker: HELLO my name is PRIYA.</p>
+    <p class="cue t-priya">Priya<span class="pace">~170 wpm</span></p>
+    <p class="line">Sorry — what can this thing actually do?</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Most of what the shop needs. Theo built nearly all of it; I added a room this morning.</p>
+    <p class="paren">(beat)</p>
+    <p class="line">And he left you a note. Never trust the stock count on a Friday.</p>
+    <p class="cue t-priya">Priya <span class="paren">(a small laugh)</span></p>
+    <p class="line">Noted.</p>
+  </div>
+  <div class="notes">
+    <h4>Picture</h4><p>The whole floor plan, gently lit: Theo's rooms, the passage, the new Workload room.</p>
+    <h4>Real</h4><p>The Friday note goes into Theo's README in the demo repo, so the real Barnaby can say it (he reads the README).</p>
+    <h4>Sound</h4><p>Workshop bustle; music settles.</p>
+  </div>
+</div>
+
+<!-- 8 -->
+<div class="scene">
+  <div class="slug"><span>8. INT. LISBON STUDIO — DAY <span class="name">Any house</span> <span class="staged">staged</span></span><span class="time">2:28 – 2:44</span></div>
+  <div class="script">
+    <p class="action">A different desk, the same set re-dressed: sunlight, a laptop, a studio badge, Theo's desk plant
+    from the moving box, a pastel de nata on a napkin.</p>
+    <p class="cue t-theo">Theo</p>
+    <p class="line">Barnaby — new job. This is the crew's memory.</p>
+    <p class="action">A new floor plan draws itself in seconds.</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Thirteen rooms, and two deadlines in dispute. Shall I flag them?</p>
+    <p class="cue t-theo">Theo</p>
+    <p class="line">And the render box?</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Twenty-eight rooms. It's on the big graphics card, and three jobs are waiting.</p>
+    <p class="cue t-theo">Theo <span class="paren">(grinning)</span></p>
+    <p class="line">Show-off.</p>
+  </div>
+  <div class="notes">
+    <h4>Picture</h4><p>Quorum and ComfyUI each get their own floor plan; brand-new houses, picked up right away.</p>
+    <h4>Engine notes</h4><p><span class="engine">synapse · quorum · 13 capabilities</span> <span class="engine">synapse · comfyui · 28 capabilities</span></p>
+    <h4>Disclosure</h4><p>Small on-screen note: "Quorum and ComfyUI scenes staged · capability counts from real Synapse scans." Also in the README.</p>
+  </div>
+</div>
+
+<!-- 9 -->
+<div class="scene">
+  <div class="slug"><span>9. INT. BACK OFFICE — NIGHT <span class="name">Goodnight</span></span><span class="time">2:44 – 2:58</span></div>
+  <div class="script">
+    <p class="action">The shop at night again. Martin's glasses folded on the keyboard. The service bell on the counter.
+    The screen dims; Barnaby's small bell glows in the corner.</p>
+    <p class="cue t-martin">Martin <span class="paren">(o.s., coat on, keys)</span></p>
+    <p class="line">Night, Barnaby.</p>
+    <p class="cue t-barnaby">Barnaby</p>
+    <p class="line">Goodnight, Martin.</p>
+    <p class="action">Lights out. The bell. Title: <b>Barnaby</b>. <i>Every system deserves a butler.</i> Then, softer:
+    <i>Even the old ones.</i> Built on Synapse · 2nd Brain Labs × Geek Room Vibe-a-thon.</p>
+  </div>
+  <div class="notes">
+    <h4>Sound</h4><p>The real bell, once. Music resolves. Room tone, rain returning.</p>
+    <h4>Small print</h4><p>"Recreated from a real recorded run. Quorum and ComfyUI staged. See the README."</p>
+  </div>
+</div>
+
+<h2>Martin's lines to record (yours)</h2>
+<table>
+<tr><th>#</th><th>Scene</th><th>Line</th><th>Direction</th></tr>
+<tr><td>1</td><td>1</td><td>Theo — where's the parts list again?</td><td>Off-mic, from the workshop, tired</td></tr>
+<tr><td>2</td><td>3</td><td>Right. Barnaby, is it?</td><td>Sitting down, a sigh, sceptical</td></tr>
+<tr><td>3</td><td>3</td><td>What's due tomorrow — and are we short on anything?</td><td>Brisk, practical</td></tr>
+<tr><td>4</td><td>4</td><td>Order ten from Madison, then.</td><td>Matter-of-fact</td></tr>
+<tr><td>5</td><td>4</td><td>Go on, then.</td><td>A little amused</td></tr>
+<tr><td>6</td><td>4</td><td>Yes.</td><td>Short</td></tr>
+<tr><td>7–9</td><td>5</td><td>Barnaby — Sofia's bike's done. / Kwame's. / And Jana's.</td><td>Busy, each one quicker</td></tr>
+<tr><td>10</td><td>5</td><td>Can you?</td><td>Genuinely surprised</td></tr>
+<tr><td>11</td><td>5</td><td>Tom's Brompton.</td><td>Testing it</td></tr>
+<tr><td>12</td><td>6</td><td>Who's got too much on this week?</td><td>Worried about his people</td></tr>
+<tr><td>13</td><td>6</td><td>You can do that?</td><td>Wary, impressed</td></tr>
+<tr><td>14</td><td>6</td><td>Add it.</td><td>Decided</td></tr>
+<tr><td>15</td><td>6</td><td>Good idea.</td><td>Warm</td></tr>
+<tr><td>16</td><td>9</td><td>Night, Barnaby.</td><td>Off-mic, leaving, fond</td></tr>
+</table>
+
+<h2>Questions for you</h2>
+<div class="q"><b>1.</b> Theo's new job is at an animation studio in Lisbon, which is where Quorum and ComfyUI show up. Keep it, or set that beat somewhere else?</div>
+<div class="q"><b>2.</b> The "don't call him sir" / "Good morning, Martin" thread, and Priya's "never trust the stock count on a Friday". Keep, cut, or replace with something of yours?</div>
+<div class="q"><b>3.</b> Running time is about 2:55. Happy to land near 3:00, or tighten to ~2:30?</div>
+<div class="q"><b>4.</b> Engine notes (the small monospace Synapse line) as written, or quieter/louder?</div>
+
+<p class="fine" style="margin-top:36px">v2 script · gate 1 · in parallel: speech research, the desk diorama, the shop PC,
+Barnaby's identity and the plain-language app changes are being explored for the look book (gate 2).</p>
+</main>
+</body>
+</html>

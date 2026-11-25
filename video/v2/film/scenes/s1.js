@@ -9,7 +9,18 @@
 (function () {
   const C = CUES.scenes[0], S = C.start, E = C.end;
   const TABS = ['shop', 'supplier', 'sms', 'xls', 'parts', 'invoices', 'email', 'bank', 'cal'];
-  let run, live, G = null;
+  let run, live, vig = null, G = null;
+  // the opening's grade: pixels much bluer than red (the void around the diorama, about rgb(6,12,24)) go to near-black;
+  // the warm room, its greens, the window and the blue chair (B < 2.5 R) are untouched
+  function voidFilter() {
+    if (document.getElementById('s1void')) return;
+    const d = document.createElement('div');
+    d.innerHTML = '<svg width="0" height="0" style="position:absolute"><filter id="s1void" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">' +
+      '<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -100 0 40 0 0" result="key"/>' +
+      '<feFlood flood-color="#030304" result="ink"/><feComposite in="ink" in2="key" operator="in" result="dark"/>' +
+      '<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="dark"/></feMerge></filter></svg>';
+    document.body.appendChild(d.firstChild);
+  }
   const tabT = k => M('tab' + k);                   // the k-th tab opens (k = 1..9)
   const nOpen = t => { let n = 0; for (let k = 1; k <= 9; k++) if (t >= tabT(k)) n = k; return n; };
   // the needles: each tab adds its notch (eased, a little overshoot, like a real needle), the CPU kicks and settles
@@ -30,20 +41,38 @@
     build(root) {
       // the screen is full frame and locked; the one move: on "It's the one with the spanner." a push to the spanner
       const tabCam = move(M('spanner'), Math.min(2.2, E - M('spanner') - .1), [960, 540, 1.0], [720, 262, 2.1], 0);
-      const WIDE4K = pick('world/01_wide_night_4k.png', ''), APPROACH = -.5 + 132 / 24;      // s1_open's approach: frame 133
-      run = seq(root, [
-      ].concat(WIDE4K ? [
-        { src: WIDE4K, at: S, cam: pan(M('light_up') + 1.2, APPROACH - M('light_up') - 1.6, 640, 470, 1180, 560, 1.22),
-          grade: t => `brightness(${easeInOutSine(P(t, M('light_up'), 1.8)).toFixed(3)})` },
-        { src: 'world/01_wide_night.png', at: APPROACH, cam: hold(960, 540, 1.0) },
+      // v2.3: the whole opening is Blender's s1_open, one camera, continuous from black: black -> the light comes up on
+      // `light_up` -> the drift to the desk (`medium`) -> into the monitor (`screen`). Frames 1-133 hold one framing
+      // (only the light moves), so they are re-timed: black until light_up, the light up over 1.8 s (as the approved
+      // grade), then the sequence's own events. The live desktop is on the glass the whole time (shots.js), so the
+      // push into the screen hands over to the same picture. The surround: near-black, a soft vignette (no indigo void).
+      const OPEN = shotDone('s1_open');
+      voidFilter();
+      const L = M('light_up'), openClock = t => {
+        const k = [[S, 1], [L, 30], [L + 1.8, 85], [M('medium'), 133], [M('screen'), 368]];
+        if (t >= k[k.length - 1][0]) return 368 + (t - M('screen')) * 24;
+        for (let i = 1; i < k.length; i++) if (t <= k[i][0]) return lerp(k[i - 1][1], k[i][1], (t - k[i - 1][0]) / (k[i][0] - k[i - 1][0]));
+        return 1;
+      };
+      const screenK = t => easeInOutSine(P(t, L + .3, 1.6));     // the monitor wakes with the room's light
+      run = seq(root, (OPEN ? [
+        { src: 'world/01_wide_night.png', at: S, blClock: openClock, keepGrade: true, grade: 'url(#s1void)', vignette: true,
+          screen: { src: 'live/shop', state: t => state(t), k: screenK } },
       ] : [
         { src: 'world/01_wide_night.png', at: S, cam: hold(960, 540, 1.0),
           grade: t => `brightness(${easeInOutSine(P(t, M('light_up'), 1.8)).toFixed(3)})` },
+        { src: 'world/02_medium_night.png', at: M('medium'), cam: move(M('medium') + .4, M('screen') - M('medium') - .5, [880, 640, 1.04], [842, 626, 1.6], 0),
+          screen: { src: 'live/shop', state: t => state(t) } },
       ]).concat([
-        { src: 'world/02_medium_night.png', at: M('medium'), cam: move(M('medium') + .4, M('screen') - M('medium') - .5, [880, 640, 1.04], [842, 626, 1.6], 0) },
-        // 1.2 into the screen: the live desktop pinned on the monitor's glass grows to full frame (a cut without a quad)
-        { src: 'live/shop', at: M('screen'), fi: .12, pin: { shot: 's1_open', d: .6 }, cam: tabCam, state: t => state(t) },
+        // 1.2 into the screen: the room is scaled around the monitor's glass until the live desktop fills the frame
+        { src: 'live/shop', at: M('screen'), pin: { d: .6 }, cam: tabCam, state: t => state(t) },
       ]), E, { scene: 1 });
+      const room = run.list[0];
+      if (room.vignette) {                           // the void: near-black at the edges, the diorama floating in it
+        vig = el('div', {}, room.s.box);
+        css(vig, { position: 'absolute', left: '0', top: '0', width: '1920px', height: '1080px', zIndex: 39, pointerEvents: 'none',
+          background: 'radial-gradient(ellipse 62% 66% at 50% 47%, rgba(3,3,4,0) 62%, rgba(3,3,4,.55) 86%, rgba(3,3,4,.9) 100%)' });
+      }
       live = run.list.find(it => it.src === 'live/shop').s;
     },
     ready() {
@@ -53,7 +82,10 @@
       G = { tab: {} };
       for (const id of TABS) G.tab[id] = L(d.querySelector(`.tab[data-id="${id}"]`).getBoundingClientRect());
     },
-    render(t) { run.render(t); },
+    render(t) {
+      run.render(t);
+      if (vig) vig.style.opacity = (1 - easeInOutSine(P(t, M('medium') + .2, 2.4))).toFixed(3);   // gone by the desk
+    },
   });
 
   // the clicks, on the sound of each (the cue sheet's `tab` events): the nine tabs in turn, then "four", then "five"

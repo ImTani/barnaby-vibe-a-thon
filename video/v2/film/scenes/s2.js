@@ -44,12 +44,15 @@
     build(root) {
       const sweepA = M('reading') + .1, sweepB = M('six_lit') - .9;
       const SIX = M('six_lit') + .2;
+      // the 2009 desktop with Barnaby's small window (theo-handover-pc): full screen at old_pc, then on the room's glass
+      const pcState = t => ({ lit: +clamp((t - M('old_pc') - .2) / .16, 0, 6).toFixed(3), sayK: +clamp((t - V(6)) / (VE(6) - V(6) - .1)).toFixed(3) });
       const MUG = pick('world/x_mug_night.png', '') || (shotDone('x_mug_night_off') ? 'world/x_mug_night.png' : '');
       run = seq(root, [
         // 2.1 the photo: a very slow push (memory); 2.2 the calendar, held; 2.3 the desk at night for "Seventeen years."
         { src: 'world/photo_2009.png', at: S, cam: move(S + .3, M('calendar') - S - .5, [750, 550, 1.04], [730, 540, 1.12], 0) },
         { src: 'world/x_board_night.png', at: M('calendar'), cam: hold(400, 620, 1.55) },
-        { src: 'world/02_medium_night.png', at: M('box'), cam: pan(M('box') + .3, M('close_tabs') - M('box') - .5, 880, 610, 1040, 600, 1.12) },
+        { src: 'world/02_medium_night.png', at: M('box'), cam: pan(M('box') + .3, M('close_tabs') - M('box') - .5, 880, 610, 1040, 600, 1.12),
+          screen: { src: 'live/shop', state: t => shopState(t) } },                 // the nine tabs, live on the glass
         // 2.4 the tabs close (locked); 2.5 on the bell, Barnaby's window opens on the desktop, his mark ringing
         { src: 'live/shop', at: ct(), cam: [960, 540, 1], state: t => shopState(t),
           build: l => { bellWin = el('div', {}, l); css(bellWin, { position: 'absolute', display: 'none', background: '#14110E' });
@@ -65,13 +68,15 @@
         { src: 'comp/theo-handover-1-reading', at: M('reading'), cam: [960, 540, 1], open: { x: 1542, y: 520, d: .6 },
           state: t => ({ scan: +lerp(-.6, 20.6, easeInOutSine(clamp((t - sweepA) / (sweepB - sweepA)))).toFixed(3),
             heardK: +clamp((t - V(5)) / (VE(5) - V(5) - .1)).toFixed(3) }) },
-        { src: 'comp/theo-handover-2-taken', at: M('six_lit'), cam: [960, 540, 1],
+        // ... and the world closes back into his window on the 2009 desktop (the open, reversed)
+        { src: 'comp/theo-handover-2-taken', at: M('six_lit'), cam: [960, 540, 1], close: { x: 1542, y: 520, d: .6 },
           state: t => ({ lit: +clamp((t - SIX) / .26, 0, 6).toFixed(3), counts: +clamp((t - SIX - 1.6) / .4).toFixed(3),
             sayK: +clamp((t - V(6)) / (VE(6) - V(6) - .1)).toFixed(3) }) },
         { src: 'comp/theo-handover-pc', at: M('old_pc'), cam: [960, 540, 1],
-          state: t => ({ lit: +clamp((t - M('old_pc') - .2) / .16, 0, 6).toFixed(3), sayK: +clamp((t - V(6)) / (VE(6) - V(6) - .1)).toFixed(3) }) },
+          state: pcState },
         // 2.8 back to the room: the desk at night for "It's Theo..." / "Noted."; 2.9 the key (Blender's s2_key_lamp)
-        { src: 'world/02_medium_night.png', at: M('desk_detail'), cam: pan(V(7), M('key') - V(7) - .3, 1050, 620, 890, 630, 1.12) },
+        { src: 'world/02_medium_night.png', at: M('desk_detail'), cam: pan(V(7), M('key') - V(7) - .3, 1050, 620, 890, 630, 1.12),
+          screen: { src: 'comp/theo-handover-pc', state: pcState } },                // the desktop with his window, live
         { src: 'world/03_keys_night.png', at: M('key'), cam: move(M('key') + .2, 1.6, [760, 700, 1.1], [700, 800, 1.3], 0),
           grade: t => `brightness(${lerp(1, .16, easeOutCubic(P(t, M('lamp_off'), .15))).toFixed(3)})` },
       ].concat(MUG ? [{ src: MUG, at: M('lamp_off') - 1.4, cam: hold(960, 540, 1.0),

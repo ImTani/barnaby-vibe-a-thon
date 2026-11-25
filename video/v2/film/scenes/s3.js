@@ -23,9 +23,10 @@
         { src: 'world/04_medium_monday.png', at: S + .35, fi: 1.5, keepFi: true, cam: hold(960, 600, 1.12, -.01),
           grade: t => `brightness(${lerp(1.35, 1, easeInOutSine(P(t, S + .6, 1.6))).toFixed(3)})` },
       ]).concat([
-        // 3.3 into the screen (the push, from the end of s3_timelapse): Theo's Back Office, full frame, locked, the
-        // clock gadget readable as the taskbar turns 08:51 -> 08:52
-        { src: 'live/shop', at: M('clock'), fi: .12, pin: { shot: 's3_timelapse', d: .6 }, cam: [960, 540, 1],
+        // 3.3 into the screen: the Monday desk (s3_timelapse) already shows this live screen on its glass; the room is
+        // scaled around the glass into Theo's Back Office, full frame, locked, the clock gadget readable as the taskbar
+        // turns 08:51 -> 08:52
+        { src: 'live/shop', at: M('clock'), pin: { d: .8 }, cam: [960, 540, 1],
           state: t => ({ preset: 'shop-jobs', time: t < flip ? '08:51' : '08:52', secs: (58 + Math.floor(t - flip + 2)) % 60 }) },
         // 3.4 Martin's plan, the whole shop held; Barnaby walks inside it; the one reframe, to the back-office wing,
         // as he reaches drawer 1 and the pads note drops on

@@ -202,11 +202,40 @@ function seq(root, items, end, o = {}) {
   list.forEach((it, i) => { if (!o.dissolves && !it.keepFi && !it.pin) it.fi = 0; it.prev = list[i - 1] || null; });
   // which Blender sequence plays each room still (on the shot's plain window), then the pins: a push into the screen
   // only pins when the shot under it IS the sequence the quad belongs to (else, e.g. after an insert, a cut)
-  list.forEach((it, i) => { const nx = list[i + 1]; it.bl = blenderFor(it.src, it.at, it.until != null ? it.until : nx ? nx.at + (nx.fi || 0) : end, o.scene); });
-  list.forEach(it => { if (!it.pin) return; it.quad = it.prev && it.prev.bl && it.prev.bl.id === it.pin.shot ? quadOf(it.pin.shot, it.at) : null; if (!it.quad) it.fi = 0; });
+  list.forEach((it, i) => { const nx = list[i + 1]; it.bl = blenderFor(it.src, it.at, it.until != null ? it.until : nx ? nx.at + (nx.fi || 0) : end, o.scene);
+    // an item may re-time its sequence where nothing but the light moves (blClock: t -> fractional frame)
+    if (it.bl) it.blFrame = it.blClock ? (t => clamp(Math.floor(it.blClock(t) + 1e-6), 1, it.bl.frames)) : seqClock(it.bl).frame; });
+  // v2.3: the monitor's glass in every room shot that has one (per Blender frame, or the still's screen_quad) shows the
+  // LIVE screen at that film time (item.screen {src, state, k}, or the pin item that follows). A pin (the push into
+  // the screen) runs over the room shot actually on screen: the composited room is scaled around its glass until the
+  // glass fills the frame, then the full-screen layer takes over; the content is the same on both sides.
   list.forEach((it, i) => {
     const nx = list[i + 1];
-    it.end = it.until != null ? it.until : nx ? nx.at + Math.max(nx.fi || 0, nx.quad ? (nx.fi || 0) + (nx.pin.d || .6) : 0, nx.open ? nx.open.d || .55 : 0) : end;
+    if (!isRoom(it.src)) return;
+    it.gq = glassOf(it);
+    if (!it.gq) return;
+    const scr = it.screen || (nx && nx.pin && isLive(nx.src) ? { src: nx.src, state: nx.state } : null);
+    if (scr) it.scrSrc = scr;
+    if (nx && nx.pin && scr) { it.pushInto = nx; nx.pushFrom = it; }
+  });
+  list.forEach(it => { if (!it.pin) return; it.fi = 0; if (it.pushFrom) it.showAt = it.at + (it.pin.d || .6); });
+  list.forEach((it, i) => {
+    const nx = list[i + 1];
+    it.end = it.until != null ? it.until : nx ? nx.at + Math.max(nx.fi || 0, nx.pushFrom === it ? nx.pin.d || .6 : 0, nx.open ? nx.open.d || .55 : 0, it.close ? it.close.d || .6 : 0) : end;
+    if (it.scrSrc) {                                   // the live screen, composited on the glass (an emissive layer)
+      it.scr = still(it.s.box, it.scrSrc.src);
+      css(it.scr.box, { display: 'block', zIndex: 5, pointerEvents: 'none' });
+      it.scr.layer.style.display = 'none';
+      it.glow = el('div', {}, it.scr.box);
+      css(it.glow, { position: 'absolute', left: '0', top: '0', width: it.scr.w + 'px', height: it.scr.h + 'px', transformOrigin: '0 0', pointerEvents: 'none',
+        mixBlendMode: 'screen', boxShadow: '0 0 140px 36px rgba(214,226,255,.16)',
+        background: 'radial-gradient(ellipse 80% 70% at 38% 30%, rgba(255,255,255,.10), rgba(255,255,255,.03) 55%, rgba(255,255,255,0) 80%)' });
+    }
+    if (it.close) {                                    // his mark, where the world closes back into his window
+      it.closeMark = el('div', { html: markSVG('#D3A14A') }, it.s.box);
+      css(it.closeMark, { position: 'absolute', width: '132px', height: '132px', left: (it.close.x - 66) + 'px', top: (it.close.y - 74) + 'px', zIndex: 60, pointerEvents: 'none',
+        filter: 'drop-shadow(0 0 18px rgba(211,161,74,.55))', display: 'none' });
+    }
     if (it.bl) { it.blDir = `../world/out/anim/${it.bl.id}/`; it.blN = -1; }
     if (isRoom(it.src) && !it.clean) it.finish = finish(it.s.box);
     if (isRoom(it.src) && !it.tripod) it.hh = handheld(it.src + '@' + it.at.toFixed(2));
@@ -221,7 +250,7 @@ function seq(root, items, end, o = {}) {
     list,
     render(t) {
       for (const it of list) {
-        const vis = t >= it.at - 1e-6 && t < it.end;
+        const vis = t >= (it.showAt != null ? it.showAt : it.at) - 1e-6 && t < it.end;
         if (!vis) { if (it.s.box.style.display !== 'none') it.s.box.style.display = 'none'; continue; }
         it.s.box.style.display = 'block';
         const fi = it.fi || 0;
@@ -230,9 +259,9 @@ function seq(root, items, end, o = {}) {
         if (fo > 0) op = Math.min(op, 1 - easeInOutSine(P(t, it.end - fo, fo)));
         it.s.box.style.opacity = op.toFixed(4);
         it.s.box.style.zIndex = it.z || 0;
-        let g = typeof it.grade === 'function' ? it.grade(t) : (it.grade || '');
+        let g = typeof it.grade === 'function' ? it.grade(t) : (it.grade || ''), r = null;
         if (it.bl) {                                     // the Blender sequence: its own camera and light
-          const n = seqClock(it.bl).frame(t);
+          const n = it.blFrame(t);
           if (n !== it.blN) {
             it.blN = n; it.s.img.src = it.blDir + String(n).padStart(4, '0') + '.jpg';
             const img = it.s.img, want = img.src;
@@ -242,21 +271,50 @@ function seq(root, items, end, o = {}) {
               if (img.src === want) { img.src = path(it.src); it.blN = -1; return img.decode().catch(() => {}); }
             }));
           }
-          it.s.place(t, null, it.fit);
+          r = it.s.place(t, null, it.fit);
           if (!it.keepGrade) g = '';
-        } else if (it.quad && t < it.at + (it.fi || 0) + (it.pin.d || .6)) {   // the push into the screen: it fades up
-          // on the glass first (opaque before it moves: no double image), then grows to full frame
-          const u = easeInOutCubic(clamp((t - it.at - (it.fi || 0)) / (it.pin.d || .6))), F = [[0, 0], [W, 0], [W, H], [0, H]];
-          // the glass as the operator's hand holds it in the shot underneath (the same overscan, drift and roll)
-          const hp = it.prev && it.prev.hh ? it.prev.hh(t) : null, ca = hp ? Math.cos(hp[2] * Math.PI / 180) : 1, sa = hp ? Math.sin(hp[2] * Math.PI / 180) : 0;
-          const glass = hp ? it.quad.map(p => { const x = 1.04 * (p[0] - W / 2), y = 1.04 * (p[1] - H / 2); return [W / 2 + hp[0] + ca * x - sa * y, H / 2 + hp[1] + sa * x + ca * y]; }) : it.quad;
-          const q = glass.map((p, k) => [lerp(p[0], F[k][0], u), lerp(p[1], F[k][1], u)]);
-          it.s.img.style.transform = it.s.layer.style.transform = pinMatrix(q, it.s.w, it.s.h);
-        } else it.s.place(t, typeof it.cam === 'function' ? it.cam(t, it) : it.cam, it.fit);
+        } else r = it.s.place(t, typeof it.cam === 'function' ? it.cam(t, it) : it.cam, it.fit);
+        let hp = null;
         if (it.hh) {                                     // the operator's hand, over the placement (frame px)
-          const h = it.hh(t), m = `translate(${(W / 2 + h[0]).toFixed(2)}px,${(H / 2 + h[1]).toFixed(2)}px) rotate(${h[2].toFixed(4)}deg) scale(1.04) translate(${-W / 2}px,${-H / 2}px) `;
+          const h = hp = it.hh(t), m = `translate(${(W / 2 + h[0]).toFixed(2)}px,${(H / 2 + h[1]).toFixed(2)}px) rotate(${h[2].toFixed(4)}deg) scale(1.04) translate(${-W / 2}px,${-H / 2}px) `;
           it.s.img.style.transform = m + it.s.img.style.transform;
           it.s.layer.style.transform = m + it.s.layer.style.transform;
+        }
+        if (it.gq) {                                     // the glass in frame px (camera, then the operator's hand)
+          const qs = it.gq(t);
+          let Gq = null, e = 0, boxT = '';
+          if (qs && r) {
+            Gq = qs.map(p => [r.L + r.k * p[0], r.T + r.k * p[1]]);
+            if (hp) { const ca = Math.cos(hp[2] * Math.PI / 180), sa = Math.sin(hp[2] * Math.PI / 180);
+              Gq = Gq.map(p => { const x = 1.04 * (p[0] - W / 2), y = 1.04 * (p[1] - H / 2); return [W / 2 + hp[0] + ca * x - sa * y, H / 2 + hp[1] + sa * x + ca * y]; }); }
+          }
+          let C = Gq;
+          const nx = it.pushInto;
+          if (nx && Gq && t >= nx.at) {                  // the camera goes into the monitor: a 2D scale around the glass
+            const d = nx.pin.d || .6; e = easeInOutCubic(clamp((t - nx.at) / d));
+            const cx = (Gq[0][0] + Gq[1][0] + Gq[2][0] + Gq[3][0]) / 4, cy = (Gq[0][1] + Gq[1][1] + Gq[2][1] + Gq[3][1]) / 4;
+            const bw = (Math.hypot(Gq[1][0] - Gq[0][0], Gq[1][1] - Gq[0][1]) + Math.hypot(Gq[2][0] - Gq[3][0], Gq[2][1] - Gq[3][1])) / 2;
+            const bh = (Math.hypot(Gq[3][0] - Gq[0][0], Gq[3][1] - Gq[0][1]) + Math.hypot(Gq[2][0] - Gq[1][0], Gq[2][1] - Gq[1][1])) / 2;
+            const Sf = Math.max(1, W / bw, H / bh), S = Math.pow(Sf, e), ox = lerp(cx, W / 2, e), oy = lerp(cy, H / 2, e);
+            boxT = `translate(${ox.toFixed(2)}px,${oy.toFixed(2)}px) scale(${S.toFixed(5)}) translate(${(-cx).toFixed(2)}px,${(-cy).toFixed(2)}px)`;
+            // the glass's corners ease onto the frame's (in box px), so at the end the screen is exactly full frame
+            const F = [[0, 0], [W, 0], [W, H], [0, H]].map(p => [cx + (p[0] - ox) / S, cy + (p[1] - oy) / S]), m = e * e * e;
+            C = Gq.map((p, k) => [lerp(p[0], F[k][0], m), lerp(p[1], F[k][1], m)]);
+          }
+          if (it.s.box.style.transform !== boxT) { it.s.box.style.transformOrigin = '0 0'; it.s.box.style.transform = boxT; }
+          if (it.scr) {
+            if (!C) { it.scr.box.style.display = 'none'; }
+            else {
+              it.scr.box.style.display = 'block';
+              it.scr.img.style.transform = it.glow.style.transform = pinMatrix(C, it.scr.w, it.scr.h);
+              const k = it.scrSrc.k == null ? 1 : typeof it.scrSrc.k === 'function' ? it.scrSrc.k(t) : it.scrSrc.k;
+              // emissive: a touch soft and lifted on the glass, crisp and plain by the time it fills the frame
+              const soft = (1 - e), bl = .7 * soft, br = k * (1 + .04 * soft);
+              it.scr.img.style.filter = `${bl > .02 ? `blur(${bl.toFixed(2)}px) ` : ''}brightness(${br.toFixed(3)}) saturate(${(1 - .06 * soft).toFixed(3)})`;
+              it.glow.style.opacity = (k * soft).toFixed(3);
+              if (it.scrSrc.state) it.scr.apply(it.scrSrc.state(t, t - it.at));
+            }
+          }
         }
         if (it.finish) it.finish(t);
         if (it.open) {                                   // Barnaby's window opening out of the screen
@@ -269,6 +327,21 @@ function seq(root, items, end, o = {}) {
           it.openMark.style.display = mk > .01 ? 'block' : 'none';
           it.openMark.style.opacity = mk.toFixed(3);
           it.openMark.style.transform = `scale(${(1 + .35 * (1 - mk)).toFixed(3)})`;
+        }
+        if (it.close) {                                  // the world closing back into his window: the open, reversed
+          const nx = list[list.indexOf(it) + 1], d = it.close.d || .6, u = nx ? clamp((t - nx.at) / d) : 0;
+          if (u > 0) {
+            const v = 1 - u, R = 2300 * easeInOutCubic(v) + 40 * (1 - v);
+            it.s.box.style.clipPath = `circle(${R.toFixed(1)}px at ${it.close.x}px ${it.close.y}px)`;
+            it.s.box.style.zIndex = 3;                  // over the screen it closes into
+            const mk = clamp((u - .1) / .5) * (1 - clamp((u - .85) / .15));
+            it.closeMark.style.display = mk > .01 ? 'block' : 'none';
+            it.closeMark.style.opacity = mk.toFixed(3);
+            it.closeMark.style.transform = `scale(${(1 + .35 * (1 - clamp((u - .1) / .5))).toFixed(3)})`;
+          } else {
+            if (!it.open && it.s.box.style.clipPath) it.s.box.style.clipPath = '';
+            it.closeMark.style.display = 'none';
+          }
         }
         const b = typeof it.blur === 'function' ? it.blur(t) : (it.blur || 0);
         const f = (g + (b > .05 ? ` blur(${b.toFixed(2)}px)` : '')).trim();
@@ -411,6 +484,40 @@ function quadOf(id, at) {
   if (q.length !== 4 || q.some(p => !Array.isArray(p) || p.length < 2)) return null;
   const norm = q.every(p => Math.abs(p[0]) <= 1.5 && Math.abs(p[1]) <= 1.5);
   return q.map(p => norm ? [p[0] * W, p[1] * H] : [+p[0], +p[1]]);
+}
+/** The monitor's glass in a room item, as a function of t -> [TL, TR, BR, BL] in the item's source px (the element's
+ * w x h), or null: from its Blender sequence's per-frame screen_quads (the nearest frame within 3) or screen_quad (on
+ * its frame), else from a still's screen_quad in shots.json. Quads are in 1920x1080 frame px (x w/1920 for bigger). */
+function glassOf(it) {
+  const m = blenderManifest(), [w, h] = sizeOf(it.src), sx = w / W, sy = h / H;
+  const norm = q => {
+    if (!q) return null; if (!Array.isArray(q)) q = [q.tl, q.tr, q.br, q.bl];
+    if (q.length !== 4 || q.some(p => !Array.isArray(p) || p.length < 2)) return null;
+    const n = q.every(p => Math.abs(p[0]) <= 1.5 && Math.abs(p[1]) <= 1.5);
+    return q.map(p => n ? [p[0] * w, p[1] * h] : [p[0] * sx, p[1] * sy]);
+  };
+  if (it.bl) {
+    const sh = it.bl, ck = { frame: it.blFrame || seqClock(sh, (m && m.fps) || FILM_FPS).frame };
+    if (sh.screen_quads) {
+      const keys = Object.keys(sh.screen_quads).map(Number).sort((a, b) => a - b), cache = {};
+      return t => {
+        const n = ck.frame(t);
+        if (n in cache) return cache[n];
+        let q = sh.screen_quads[n];
+        if (!q) { let best = null; for (const k of keys) if (best == null || Math.abs(k - n) < Math.abs(best - n)) best = k; if (best != null && Math.abs(best - n) <= 3) q = sh.screen_quads[best]; }
+        return (cache[n] = norm(q));
+      };
+    }
+    const q0 = sh.screen_quad || (sh.screen && sh.screen.quad), qf = sh.screen_quad_frame || sh.frames;
+    if (!q0) return null;
+    const q = norm(q0);
+    return t => (Math.abs(ck.frame(t) - qf) <= 3 ? q : null);
+  }
+  if (!m || !m.shots) return null;
+  const st = m.shots.find(x => x.kind === 'still' && x.file === it.src && (x.screen_quad || (x.screen && x.screen.quad)));
+  if (!st) return null;
+  const q = norm(st.screen_quad || st.screen.quad);
+  return q ? () => q : null;
 }
 /** Is the Blender shot `id` done (and on disk: render.js checks the frames)? */
 const shotDone = id => { const m = blenderManifest(); return !!(m && m.shots && m.shots.some(x => x.id === id && x.status === 'done')); };

@@ -43,9 +43,16 @@
     build(root) {
       stepAt = STEPS(); window.__typingFit = FIT;                  // < 1: Theo had to type faster than 7/s to fit
       const qOpen = M('queue') - .3;
+      // the main monitor before and as the app's tile slides in (secs: the clock gadget)
+      // Barnaby's log streaming into the tmux pane as Synapse reads Quorum (the log pane; later on the room's glass)
+      const logState = t => ({ preset: 'quorum', time: '09:40', secs: (2 + Math.floor((t - M('synapse_log')) * 2)) % 60, out: Math.floor(lerp(0, 10.99, clamp((t - M('synapse_log')) / 1.6))),
+            say: '', sayK: 0, plan: '', mode: 'thinking', level: 0, notify: 0 });
+      const mainState = t => ({ preset: 'realapp', app: +easeOutCubic(clamp((t - M('realapp') - .05) / .6)).toFixed(4), secs: (40 + Math.floor(t - M('realapp')) + 600) % 60 });
       const MATCH = pick('world/lisbon_match_day.png', ''), LW4K = pick('world/lisbon_01_wide_day_4k.png', ''), DAY = shotDone('s8_lisbon_day');
       run = seq(root, [
-        ...(MATCH ? [{ src: MATCH, at: S, cam: hold(960, 600, 1.12) }] : []),
+        // the match from Tuesday: 2/3 stop down to sit with s8_lisbon_day (x0.8 on the sRGB values = 2^-2/3 in linear
+        // light); the main monitor live on its glass
+        ...(MATCH ? [{ src: MATCH, at: S, cam: hold(960, 600, 1.12), grade: 'brightness(.8)', screen: { src: 'live/lis-main-empty', state: mainState } }] : []),
         // 8.1 with Blender's s8_lisbon_day: one continuous approach that lands on the monitor at 'realapp' for the push
         // (8.2, the nata insert, is the beat SHOTLIST says to drop first; the cup is on the desk in the approach);
         // without it, the 4K wide's pan (or the approved wide) and the nata insert, and a cut into the screen
@@ -53,8 +60,9 @@
           LW4K ? { src: LW4K, at: MATCH ? S + 1.6 : S, cam: pan((MATCH ? S + 1.6 : S) + .2, M('nata') - (MATCH ? S + 1.6 : S) - .5, 760, 520, 1160, 560, 1.2) }
             : { src: 'world/lisbon_01_wide_day.png', at: MATCH ? S + 1.6 : S, cam: move((MATCH ? S + 1.6 : S) + .4, M('nata') - (MATCH ? S + 1.6 : S) - .6, [970, 540, 1.0], [1000, 560, 1.12], 0) },
           { src: 'world/x_lisbon_detail_day.png', at: M('nata'), cam: hold(880, 580, 1.06) }]),
-        { src: 'live/lis-main-empty', at: M('realapp'), fi: .12, pin: { shot: 's8_lisbon_day', d: .6 }, cam: [960, 540, 1],
-          state: t => ({ preset: 'realapp', app: +easeOutCubic(clamp((t - M('realapp') - .05) / .6)).toFixed(4), secs: 40 + Math.floor(t - M('realapp')) }) },
+        // into the main monitor: the approach already shows this live screen on its glass; the room is scaled around it
+        // (from just before 'realapp', so the full-screen tile has a beat before the cut to the real app)
+        { src: 'live/lis-main-empty', at: M('realapp') - .2, pin: { d: .75 }, cam: [960, 540, 1], state: mainState },
         { src: 'rapp/base.jpg', at: M('realapp_full'), cam: [712, 560, 1],
           build: l => {
             forms = [];
@@ -74,16 +82,16 @@
             const c = hand(t, [from, BTN[0] + 330, BTN[1] + 150], [{ t: PRESS(), x: BTN[0] + 6, y: BTN[1] + 4 }]);
             fcur.at(c[0], c[1], true);
           } },
-        { src: 'live/lis-main', at: M('synapse_log') - .1, cam: [600, 700, 1.6],               // Barnaby's log pane, held
-          state: t => ({ preset: 'quorum', time: '09:40', secs: 2 + Math.floor((t - M('synapse_log')) * 2), out: Math.floor(lerp(0, 10.99, clamp((t - M('synapse_log')) / 1.6))),
-            say: '', sayK: 0, plan: '', mode: 'thinking', level: 0, notify: 0 }) },
+        // the whole tiling desktop for a second, then an eased push into Barnaby's log pane, held
+        { src: 'live/lis-main', at: M('synapse_log') - .1, cam: move(M('synapse_log') + .9, 1.4, [960, 540, 1], [600, 700, 1.6], 0),
+          state: logState },
         { src: TL, at: M('theo_world'), cam: [960, 540, 1], open: { x: 1650, y: 540, d: .6 },
           build: l => { rv = reveal(l, TL, [[1466, 884, 1840, 912], [1467, 922, 1846, 950], [1467, 959, 1604, 987]], { color: '#14110E', a: V(45), b: VE(45) - .1, chars: [30, 33, 11] }); },
           over: t => rv.render(t) },
         { src: 'live/lis-studio', at: V(48), cam: [960, 540, 1],
           state: t => ({ preset: 'comfy', queueOpen: +easeInOutCubic(clamp((t - qOpen + .45) / .55)).toFixed(4), queueHl: +clamp((t - qOpen - .2) / .4).toFixed(3),
             step: Math.min(28, 9 + Math.floor((t - V(48)) * 2)), frame: 123 + 2 * Math.floor((t - V(48)) * 6), secs: 3 + Math.floor(t - V(48)) }) },
-        { src: 'world/lisbon_02_medium_day.png', at: V(50), cam: hold(970, 560, 1.12) },
+        { src: 'world/lisbon_02_medium_day.png', at: V(50), cam: hold(970, 560, 1.12), screen: { src: 'live/lis-main', state: logState } },
       ], E, { scene: 8 });
       chip = label(root, 'The real Barnaby app', 'left:48px;top:40px;font:600 28px "Segoe UI",sans-serif;color:#24211C;background:rgba(241,229,201,.95);border:1px solid #A8772A;padding:6px 16px;border-radius:20px');
       disc = label(root, 'Quorum and ComfyUI scenes staged · endpoint counts from real Synapse scans',

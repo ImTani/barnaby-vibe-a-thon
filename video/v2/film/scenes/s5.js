@@ -50,7 +50,7 @@
         for (const [a, d] of walks) if (t >= a - .02) walk = clamp((t - a) / d);
         const w = walk < 0 ? 0 : easeInOutSine(walk);
         const after = t >= pa;
-        const st = { room: 0, side: 'handback', time: '14:20', foot: '', martinSay: t >= V(20) ? 'Go on.' : undefined, passage: +easeInOutCubic(clamp((t - pa) / pd)).toFixed(4),
+        const st = { room: 0, side: 'handback', time: '14:20', foot: '', martinSay: t >= V(20) ? CUES.voice[19].text : undefined, passage: +easeInOutCubic(clamp((t - pa) / pd)).toFixed(4),
           say: +clamp((t - V(19)) / (VE(19) - V(19) - .1)).toFixed(3), cards: +clamp((t - M('cards2')) / .5, 0, 2).toFixed(3),
           press: [+pressAt(t, sfxT('mouse_click', M('click_text'))).toFixed(3), +pressAt(t, sfxT('mouse_click', M('click_ready'))).toFixed(3)] };
         if (walk >= 0 && !after) {

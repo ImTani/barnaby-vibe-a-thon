@@ -7,6 +7,7 @@
 (function () {
   const C = CUES.scenes[3], S = C.start, E = C.end;
   const AT_DRAWER = .3936;
+  const SAID = n => CUES.voice[n - 1].text;
   let run, note, keyRing, flash, cur, mk, Y = null;
   Scene({
     id: '4', start: S, end: E, fadeIn: 0,
@@ -19,7 +20,7 @@
             say: +clamp((t - V(14)) / (VE(14) - V(14) - .15)).toFixed(3), time: t < arrive ? '08:54' : '08:55',
             press: +pressAt(t, cu).toFixed(3),
             keyRot: +(90 * easeInOutCubic(P(t, u, .4))).toFixed(2), given: t >= u + .42 ? 1 : 0,
-            martinSay: t >= V(17) ? 'Yes.' : t >= V(15) ? 'Go right ahead.' : undefined,
+            martinSay: t >= V(17) ? SAID(17) : t >= V(15) ? SAID(15) : undefined,      // his words as spoken (cue text)
           });
       run = seq(root, [
         // Martin's whole world, locked: Barnaby walks on to the back door, the key disc, his answer, the card, the
@@ -41,7 +42,8 @@
             cur.at(p[0], p[1], true);
           } },
         // "Ten pairs from Madison...": back to the whole world, locked
-        { src: 'comp/martin-key', at: V(16), cam: [960, 540, 1], state: keyState },
+        // ... and his world closes back into the 2009 screen (the open in scene 3, reversed)
+        { src: 'comp/martin-key', at: V(16), cam: [960, 540, 1], state: keyState, close: { x: 1542, y: 520, d: .6 } },
         { src: 'live/shop', at: M('click_order') - .02, cam: [960, 540, 1],
           state: t => {
             const a = M('po') + .3;

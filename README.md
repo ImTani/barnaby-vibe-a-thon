@@ -191,9 +191,10 @@ so the core needs no API key. A step-by-step demo, with what to say and what app
 - **Bring your own model:** `BARNABY_WORKER_BACKEND=byom` and `BARNABY_BYOM_MODEL=<provider>:<model>` in `.env`
   (that provider's pydantic-ai extra and key needed; only `anthropic` ships in `.venv`).
 - **Replay a recorded run** (no agent, no shop): `http://127.0.0.1:8700/?mock=1`.
-- **The film:** the v2 animatic renders with `node video/v2/animatic/render.js` (after `npm ci` in `video/`; it uses
-  the installed Chrome and `ffmpeg` on PATH). The v2 film engine and its output go in `video/v2/film/` (in production).
-  The v1 film: [`video/FRAMEWORK.md`](video/FRAMEWORK.md), `node render.js` in `video/`.
+- **The film:** `node video/v2/film/render.js` renders the v2 film to `video/v2/film/out/barnaby_v2.mp4`, with the
+  soundtrack from `video/v2/audio/` muxed in (the engine is still being finished); `node video/v2/animatic/render.js`
+  renders the low-res animatic. Both need `npm ci` in `video/` first, and use the installed Chrome and `ffmpeg` on
+  PATH. The v1 film: [`video/FRAMEWORK.md`](video/FRAMEWORK.md), `node render.js` in `video/`.
 
 ## Repo map
 

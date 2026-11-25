@@ -4,8 +4,9 @@
  *
  * A shot's `src` is one of
  *   'world/x.png' 'look/..' 'worlds/..' 'realapp/..' 'rapp/..'   a still (as the animatic). A world still is swapped for
- *        the Blender agent's sequence when ../world/anim/shots.json has a "done" shot that `replaces` it over this
- *        shot's time (frame = floor((t - start) * 24) + 1, clamped); the camera move is then dropped.
+ *        the Blender agent's sequence when ../world/anim/shots.json has a "done" shot that `replaces` it (a key or a
+ *        list of keys) over this shot's time (frame = floor((t - start) * 24) + 1, clamped); the camera move and the
+ *        grade are then dropped (the light is baked in), unless the item says keepGrade.
  *   'live/shop'  'live/lis-main'  'live/lis-studio'   an approved look-dev page in an <iframe>, driven every frame
  *        through its documented film API (PC / LX) with `state(t, lt)` -> {preset, ...keys}
  *   'comp/<name>'   a worlds2 comp in an <iframe>, driven through window.COMP.render(state) (defaults = approved frame)
@@ -34,6 +35,7 @@ const SIZE = {
 const LIVE = {
   shop: { url: '../look/shop-pc/index.html?state=desktop&blur=0', apply: (w, s) => w.pc.render(w.pc.preset(s.preset || 'desktop', s)) },
   'lis-main': { url: '../look/lisbon-pc/index.html?monitor=main', apply: (w, s) => w.desk.render(w.LX.preset(s.preset || 'rest', s)) },
+  'lis-main-empty': { url: '../look/lisbon-pc/index.html?monitor=main&realimg=empty', apply: (w, s) => w.desk.render(w.LX.preset(s.preset || 'rest', s)) },
   'lis-studio': { url: '../look/lisbon-pc/index.html?monitor=studio', apply: (w, s) => w.desk.render(w.LX.preset(s.preset || 'rest', s)) },
 };
 const path = key => {
@@ -63,7 +65,8 @@ function blenderFor(key, a, b) {
   if (!m || !m.shots || !key.startsWith('world/')) return null;
   let best = null, bestOv = 0;
   for (const s of m.shots) {
-    if (s.status !== 'done' || s.replaces !== key || !(s.frames > 0)) continue;
+    const rep = Array.isArray(s.replaces) ? s.replaces : [s.replaces];    // one shot may cover several stills in a row
+    if (s.status !== 'done' || !rep.includes(key) || !(s.frames > 0)) continue;
     const s0 = s.start, s1 = s.start + s.frames / (m.fps || FILM_FPS);
     const ov = Math.min(b, s1) - Math.max(a, s0);
     if (ov > bestOv && ov >= .5 * Math.min(b - a, s1 - s0)) { best = s; bestOv = ov; }

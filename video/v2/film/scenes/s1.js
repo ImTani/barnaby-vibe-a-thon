@@ -30,7 +30,7 @@
       const tabCam = [[M('screen'), 960, 540, 1.0], [M('tab9') + .2, 990, 470, 1.06], [M('tab5_active'), 900, 430, 1.1],
         [M('spanner') - .1, 860, 380, 1.16], [E, 640, 262, 2.5]];
       run = seq(root, [
-        { src: 'world/01_wide_night.png', at: S, keepGrade: true,
+        { src: 'world/01_wide_night.png', at: S,
           cam: [[M('light_up'), 960, 540, 1.0], [M('medium') + .5, 880, 455, 1.3]],
           grade: t => `brightness(${easeInOutSine(P(t, M('light_up'), 1.8)).toFixed(3)})` },
         { src: 'world/02_medium_night.png', at: M('medium'), fi: .45,
@@ -72,7 +72,7 @@
     }
     const nt9 = G.nt[9], x4 = G.tab.xls, x5 = G.tab.parts;
     if (t < a5 - .45) return path2(t, [[t9 + .25, nt9[0] + 2, nt9[1] + 3], [t9 + .5, nt9[0] - 40, nt9[1] + 70], [a4 - .05, x4[0] + 10, x4[1] + 2], [a5 - .45, x4[0] + 16, x4[1] + 6]]);
-    return path2(t, [[a5 - .45, x4[0] + 16, x4[1] + 6], [a5 - .05, x5[0] - 8, x5[1] + 2], [M('spanner'), x5[0] - 2, x5[1] + 4], [E, x5[0] + 30, x5[1] + 40]]);
+    return path2(t, [[a5 - .45, x4[0] + 16, x4[1] + 6], [a5 - .05, x5[0] - 8, x5[1] + 2], [M('spanner'), x5[0] - 2, x5[1] + 4], [E, x5[0] + 16, x5[1] + 13]]);
   }
 
   function state(t) {

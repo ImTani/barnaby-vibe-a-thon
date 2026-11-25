@@ -32,7 +32,7 @@
 | 30 | Barnaby | I could write it, if you like. | neutral | - | - | - | 196 | 3.27 | - | 2.33 |
 | 31 | Martin | You can do that? | surprised | - | - | - | 200 | 3.33 | - | 1.34 |
 | 32 | Barnaby | With your say-so. I'll work on a copy — nothing changes until you've seen it. | explain | - | - | - | 164 | 3.46 | - | 5.70 |
-| 33 | Barnaby | Done. It adds up each mechanic's hours for the week, the way Theo's notes count them. It only reads — it can't change a thing — and all of Theo's checks still pass. Shall I add it? | explain | - | - | - | 171 | 3.17 | - | 12.45 |
+| 33 | Barnaby | Done. It adds up each mechanic's hours, the way Theo's notes count them. It only reads, and all of Theo's checks still pass. Shall I add it? | explain | - | - | - | 165 | 3.16 | - | 9.96 |
 | 34 | Martin | Add it. | neutral | - | - | - | 158 | 2.63 | - | 0.85 |
 | 35 | Barnaby | That one needs your click, Martin. I don't change the system on a word. | neutral | - | - | - | 182 | 3.46 | - | 4.85 |
 | 36 | Martin | Fussy. | dry | - | - | - | 94 | 3.12 | - | 0.73 |

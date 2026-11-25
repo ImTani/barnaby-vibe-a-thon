@@ -296,11 +296,11 @@ def build(T: Timeline) -> float:
     m("two_desks", off(54) + .45)
     fx("bell", m("bell_final", T.marks["two_desks"] + .6), gain=.42, label="the real bell, once")
     m("title", T.marks["bell_final"] + .5)                 # Barnaby / Every system deserves a butler.
-    m("new_desk_fades", T.marks["title"] + 2.9)
+    m("new_desk_fades", T.marks["title"] + 2.5)
     m("old_ones", T.marks["new_desk_fades"] + .7)          # Even the old ones.
     m("credit", T.marks["old_ones"] + 2.0)                 # Built on Synapse · 2nd Brain Labs × Geek Room Vibe-a-thon
     m("small_print", T.marks["credit"] + .3)
-    m("fade_out", T.marks["credit"] + 2.6)
+    m("fade_out", T.marks["credit"] + 2.3)
     end = T.marks["fade_out"] + 1.0
     m("end", end)
     T.scenes[-1]["end"] = round(end, 3)

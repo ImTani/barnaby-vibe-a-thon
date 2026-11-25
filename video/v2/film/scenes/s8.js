@@ -43,8 +43,11 @@
     build(root) {
       stepAt = STEPS(); window.__typingFit = FIT;                  // < 1: Theo had to type faster than 7/s to fit
       const qOpen = M('queue') - .3;
+      const MATCH = pick('world/lisbon_match_day.png', ''), LW4K = pick('world/lisbon_01_wide_day_4k.png', '');
       run = seq(root, [
-        { src: 'world/lisbon_01_wide_day.png', at: S, cam: move(S + .4, M('nata') - S - .6, [970, 540, 1.0], [1000, 560, 1.12], 0) },
+        ...(MATCH ? [{ src: MATCH, at: S, cam: hold(960, 600, 1.12) }] : []),
+        LW4K ? { src: LW4K, at: MATCH ? S + 1.6 : S, cam: pan((MATCH ? S + 1.6 : S) + .2, M('nata') - (MATCH ? S + 1.6 : S) - .5, 760, 520, 1160, 560, 1.2) }
+          : { src: 'world/lisbon_01_wide_day.png', at: MATCH ? S + 1.6 : S, cam: move((MATCH ? S + 1.6 : S) + .4, M('nata') - (MATCH ? S + 1.6 : S) - .6, [970, 540, 1.0], [1000, 560, 1.12], 0) },
         { src: 'world/x_lisbon_detail_day.png', at: M('nata'), cam: hold(880, 580, 1.06) },
         { src: 'live/lis-main-empty', at: M('realapp'), fi: .12, pin: { shot: 's8_lisbon_day', d: .6 }, cam: [960, 540, 1],
           state: t => ({ preset: 'realapp', app: +easeOutCubic(clamp((t - M('realapp') - .05) / .6)).toFixed(4), secs: 40 + Math.floor(t - M('realapp')) }) },
@@ -77,7 +80,7 @@
           state: t => ({ preset: 'comfy', queueOpen: +easeInOutCubic(clamp((t - qOpen + .45) / .55)).toFixed(4), queueHl: +clamp((t - qOpen - .2) / .4).toFixed(3),
             step: Math.min(28, 9 + Math.floor((t - V(48)) * 2)), frame: 123 + 2 * Math.floor((t - V(48)) * 6), secs: 3 + Math.floor(t - V(48)) }) },
         { src: 'world/lisbon_02_medium_day.png', at: V(50), cam: hold(970, 560, 1.12) },
-      ], E);
+      ], E, { scene: 8 });
       chip = label(root, 'The real Barnaby app', 'left:48px;top:40px;font:600 28px "Segoe UI",sans-serif;color:#24211C;background:rgba(241,229,201,.95);border:1px solid #A8772A;padding:6px 16px;border-radius:20px');
       disc = label(root, 'Quorum and ComfyUI scenes staged · endpoint counts from real Synapse scans',
         'right:40px;top:1020px;font:500 22px "Segoe UI",sans-serif;color:rgba(255,255,255,.82);background:rgba(0,0,0,.55);padding:4px 12px;border-radius:4px');

@@ -93,7 +93,7 @@
         { src: 'world/04_medium_monday.png', at: S, grade: AFT, keepGrade: true, cam: hold(960, 600, 1.1) },
         planItem({ at: V(19) - .1, fi: .35, cam: [960, 540, 1] }),
         planItem({ at: M('walk1'), cam: move(M('passage') + .05, 2.2, [620, 540, 1.62], [600, 525, 1.8], 0) }),   // 5.4 the slow push as it forms
-      ], E);
+      ], E, { scene: 5 });
       plan = run.list[1].s;
       sw = sweep(root, { angle: 105, color: 'rgba(255,226,180,.5)' });
       note = label(root, 'synapse custom · composed from Theo’s own functions · 16 s',

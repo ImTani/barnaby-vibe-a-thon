@@ -41,7 +41,7 @@ function worldFiles() {
 const readBlender = () => {
   let m; try { m = JSON.parse(fs.readFileSync(BLENDER_JSON, 'utf8')); } catch (e) { return null; }
   for (const s of m.shots || []) {
-    if (s.status !== 'done') continue;
+    if (s.status !== 'done' || s.kind === 'still') continue;
     const dir = path.resolve(HERE, '../world/out/anim', s.id), f = n => path.join(dir, String(n).padStart(4, '0') + '.jpg');
     if (!(s.frames > 0 && fs.existsSync(f(1)) && fs.existsSync(f(s.frames)))) { s.status = 'done-but-frames-missing'; if (!readBlender.warned) console.log(`  blender: ${s.id} is "done" but its frames are not all there; using the stills`); }
   }

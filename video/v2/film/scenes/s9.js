@@ -5,7 +5,8 @@
  * black. Titles in Barnaby's own type and brass (ui/skins/app3.css), with his mark ringing once (its working animation). */
 (function () {
   const C = CUES.scenes[8], S = C.start, E = C.end, FI = .6;
-  let run, dimmer, rightOff, shade, title, mark, tag, old, credit, small;
+  let run, dimmer, rightOff, shade, title, mark, tag, old, card, cardParts;
+  const REPO = '';                                   // the public repo, once confirmed (no remote in this checkout)
   Scene({
     id: '9', start: S, end: E, fadeIn: 0,
     build(root) {
@@ -21,32 +22,58 @@
       ].concat(ASLEEP ? [{ src: ASLEEP, at: M('dim'), fi: 1.6, cam: hold(1010, 525, 1.06) }] : []).concat([
         // the last move: the two desks, closing gently as the bell rings and the titles come up
         { src: 'world/close_two_desks.png', at: M('two_desks'), fi: .9, cam: [[M('two_desks'), 960, 540, 1.0], [E, 960, 560, 1.04]] },
-      ]), E, { dissolves: true });
+      ]), E, { dissolves: true, scene: 9 });
       rightOff = el('div', { cls: 'ov' }, root);     // the new desk fades (right half, soft edge)
       css(rightOff, { background: 'linear-gradient(90deg, rgba(0,0,0,0) 900px, #000 1020px)', display: 'none' });
-      shade = el('div', { cls: 'ov' }, root);        // a little dark at the top for the titles
-      css(shade, { background: 'linear-gradient(180deg, rgba(0,0,0,.72) 0px, rgba(0,0,0,.45) 330px, rgba(0,0,0,0) 520px)', display: 'none' });
-      title = label(root, '<span class="m" style="display:inline-block;width:92px;height:92px;vertical-align:-14px;margin-right:26px"></span>Barnaby',
-        'left:0;width:1920px;top:118px;text-align:center;font:600 104px "Sitka Subheading","Sitka Text",Constantia,Georgia,serif;color:#EEEAE1;letter-spacing:-.005em');
-      mark = title.querySelector('.m'); mark.innerHTML = markSVG('#D3A14A');
-      tag = label(root, 'Every system deserves a butler.', 'left:0;width:1920px;top:268px;text-align:center;font:400 52px "Sitka Text",Constantia,Georgia,serif;color:#EEEAE1');
-      old = label(root, 'Even the old ones.', 'left:0;width:960px;top:356px;text-align:center;font:italic 400 50px "Sitka Text",Constantia,Georgia,serif;color:#D3A14A');
-      credit = label(root, 'Built on Synapse · 2nd Brain Labs × Geek Room Vibe-a-thon', 'left:0;width:1920px;top:930px;text-align:center;font:500 34px "Segoe UI",sans-serif;color:#EEEAE1;letter-spacing:.01em;text-shadow:0 2px 12px #000');
-      small = label(root, 'Recreated from a real recorded run. Quorum and ComfyUI staged. See the README.', 'left:0;width:1920px;top:990px;text-align:center;font:400 22px "Segoe UI",sans-serif;color:rgba(238,234,225,.72);text-shadow:0 1px 8px #000');
+      // the titles over the two desks (TITLES.md): a scrim, the lockup, the line, its coda; one centred column
+      shade = el('div', { cls: 'ov' }, root);
+      css(shade, { background: 'linear-gradient(180deg, rgba(12,11,10,.82) 0px, rgba(12,11,10,.64) 400px, rgba(12,11,10,0) 660px)', display: 'none' });
+      const T = el('div', { cls: 'ov t-titles' }, root);
+      T.innerHTML = `
+        <div class="lock"><span class="m"></span><span class="w">Barnaby</span></div>
+        <div class="line">Every system deserves a butler.</div>
+        <div class="line coda">Even the old ones.</div>`;
+      css(T, { display: 'none' });
+      title = T.querySelector('.lock'); tag = T.querySelectorAll('.line')[0]; old = T.querySelectorAll('.line')[1];
+      mark = T.querySelector('.m'); mark.innerHTML = markSVG('#D3A14A');
+      // the product end card: warm charcoal, a 12-column grid (192 px margins), brass only in the mark
+      card = el('div', { cls: 'ov t-card' }, root);
+      card.innerHTML = `
+        <div class="head"><span class="m"></span><div class="w">Barnaby</div>
+          <div class="what">A voice-first butler for the software your business already runs.</div></div>
+        <div class="grow">
+          <div><b>Ask</b><span>Answers from what your system can already do.</span></div>
+          <div><b>Unlock</b><span>Asks you for a key to what it could do.</span></div>
+          <div><b>Compose</b><span>Turns steps he keeps repeating into one.</span></div>
+          <div><b>Build</b><span>Writes what’s missing, and adds it when you say so.</span></div>
+        </div>
+        <div class="cred"><span><b>Built on Synapse</b></span><span class="ev">2nd Brain Labs × Geek Room Vibe-a-thon</span>${REPO ? `<span class="repo">${REPO}</span>` : ''}</div>
+        <div class="fine">Recreated from a real recorded run. Quorum and ComfyUI scenes are staged; endpoint counts come from real Synapse scans. Synthetic voices; Barnaby’s voice: ElevenLabs. Spokes &amp; Sprockets is a fictional shop.</div>`;
+      const cm = card.querySelector('.m'); cm.innerHTML = markSVG('#D3A14A'); markAnim(cm, 0, -100);   // at rest: no ring arcs
+      cardParts = [card.querySelector('.head'), card.querySelector('.grow'), card.querySelector('.cred'), card.querySelector('.fine')];
+      css(card, { display: 'none' });
     },
     render(t) {
       run.render(t);
-      const nd = M('new_desk_fades');
+      const nd = M('new_desk_fades'), EC = CUES.marks.end_card != null ? M('end_card') : M('credit') - .2, out = EC - .7;
       rightOff.style.display = t > nd ? 'block' : 'none';
       rightOff.style.opacity = (.94 * easeInOutSine(P(t, nd, 1.4))).toFixed(3);
-      shade.style.display = t > M('title') - .6 ? 'block' : 'none';
-      shade.style.opacity = easeInOutSine(P(t, M('title') - .6, 1.0)).toFixed(3);
-      fadeEl(title, t, M('title'), null, .8);
+      // titles: in on the music (the lockup, then its line), the coda as the new desk fades; out together, calmly
+      const tOut = 1 - easeInOutSine(P(t, out, .7));
+      const rise = (e, a, d) => { const k = easeOutCubic(P(t, a, d)) * tOut; e.style.opacity = k.toFixed(4); e.style.transform = `translateY(${((1 - easeOutCubic(P(t, a, d))) * 8).toFixed(2)}px)`; return k; };
+      const on = t > M('title') - .7 && t < out + .75;
+      shade.parentNode && (shade.style.display = on ? 'block' : 'none');
+      shade.style.opacity = (easeInOutSine(P(t, M('title') - .7, 1.2)) * tOut).toFixed(3);
+      title.parentNode.style.display = on ? 'flex' : 'none';
+      rise(title, M('title'), 1.1);
+      rise(tag, M('title') + 1.0, 1.0);
+      rise(old, M('old_ones'), 1.0);
       markAnim(mark, t, M('bell_final') + .55);            // the mark rings once, just after the real bell
-      fadeEl(tag, t, M('title') + .9, null, .8);
-      fadeEl(old, t, M('old_ones'), null, .9);
-      fadeEl(credit, t, M('credit'), null, .7);
-      fadeEl(small, t, M('small_print'), null, .7);
+      // the end card: a dissolve in over the titles' exit, then its rows settle in turn
+      const ck = easeInOutSine(P(t, EC - .1, .8));
+      card.style.display = ck > .001 ? 'block' : 'none';
+      card.style.opacity = ck.toFixed(4);
+      cardParts.forEach((e, i) => { const k = easeOutCubic(P(t, EC + [.0, .35, .6, .8][i], .7)); e.style.opacity = k.toFixed(4); e.style.transform = `translateY(${((1 - k) * 6).toFixed(2)}px)`; });
       Q.setBlack(easeInOutSine(P(t, M('fade_out'), M('end') - M('fade_out'))));
     },
   });

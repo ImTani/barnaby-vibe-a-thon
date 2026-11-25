@@ -13,10 +13,16 @@
     id: '3', start: S, end: E, fadeIn: 0,
     build(root) {
       const flip = M('clock') + .95, full = Math.max(V(9), M('clock') + 1.6);
+      const DAWN = pick('world/x_mug_dawn.png', '');            // the match cut on the mug (with the night one)
       run = seq(root, [
+      ].concat(DAWN ? [
+        { src: DAWN, at: S, cam: hold(960, 540, 1.0), keepGrade: true, grade: t => `brightness(${lerp(.05, 1, easeInOutSine(P(t, S + .5, M('monday') - S - .8))).toFixed(3)})` },
+        { src: 'world/04_medium_monday.png', at: M('monday'), cam: hold(960, 600, 1.12) },
+      ] : [
         { src: 'world/02_medium_night.png', at: S, cam: [960, 600, 1.12], grade: 'brightness(.16)' },
         { src: 'world/04_medium_monday.png', at: S + .35, fi: 1.5, keepFi: true, cam: hold(960, 600, 1.12, -.01),
           grade: t => `brightness(${lerp(1.35, 1, easeInOutSine(P(t, S + .6, 1.6))).toFixed(3)})` },
+      ]).concat([
         // 3.3 into the screen (the push, from the end of s3_timelapse): Theo's Back Office, full frame, locked, the
         // clock gadget readable as the taskbar turns 08:51 -> 08:52
         { src: 'live/shop', at: M('clock'), fi: .12, pin: { shot: 's3_timelapse', d: .6 }, cam: [960, 540, 1],
@@ -38,8 +44,8 @@
             css(ring, { display: 'block', left: (p[0] - r).toFixed(1) + 'px', top: (p[1] - r).toFixed(1) + 'px', width: 2 * r + 'px', height: 2 * r + 'px', opacity: (.8 * (1 - u)).toFixed(3) });
           } },
         { src: 'world/x_shelf_monday.png', at: M('shelf'), cam: hold(680, 400, 1.18) },
-      ], E);
-      mk = run.list[3].s;
+      ]), E, { scene: 3 });
+      mk = run.list.find(it => it.src === 'comp/martin-key').s;
       sw = sweep(root, { angle: 100, color: 'rgba(255,240,214,.6)' });
     },
     ready() {
@@ -47,6 +53,6 @@
       if (Math.abs(a - AT_DRAWER) > 1e-3) window.__errors.push('[s3] martin-key AT_DRAWER is ' + a);
       // the walk's start: the comp's marker, before he sets off, sits where the route starts
     },
-    render(t) { run.render(t); if (!run.list[1].bl) sw.render(t, S + .2, S + 2.6, .9); },     // Blender's time-lapse bakes its own light
+    render(t) { run.render(t); if (!run.list[1].bl && run.list[1].src === 'world/04_medium_monday.png' && run.list[1].keepFi) sw.render(t, S + .2, S + 2.6, .9); },     // Blender's time-lapse bakes its own light
   });
 })();

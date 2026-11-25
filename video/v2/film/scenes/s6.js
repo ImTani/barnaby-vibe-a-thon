@@ -16,7 +16,7 @@
     id: '6', start: S, end: E, fadeIn: 0,
     build(root) {
       const n37 = VE(37) - V(37);
-      const cb = sfxT('mouse_click', M('click_build')), cardAt = V(33);
+      const cb = sfxT('mouse_click', M('click_build')), cardAt = V(33), CHAIR = pick('world/x_chair_dusk.png', '');
       const MON = 'world/04_medium_monday.png', DUSK = pick('world/06_medium_dusk.png', MON), STICKY = pick('world/x_sticky_dusk.png', MON), GLASSES = pick('world/x_glasses_dusk.png', MON);
       const cardItem = at => ({ src: 'comp/martin-build', at, cam: [960, 540, 1],
           state: t => ({ room: 0, side: 'card', time: '16:16', foot: '', martinSay: t >= V(36) ? 'Fussy.' : t >= V(34) ? 'Add it.' : 'You can do that?', card: +clamp((t - cardAt - .3) / .6).toFixed(3), marker: [11.62, 2.45], passage: 1,
@@ -43,7 +43,7 @@
               cursor: { x: +(c[0] + wiggle(t, 31, 2, 1.2)).toFixed(2), y: +(c[1] + wiggle(t, 32, 1.7, 1)).toFixed(2) } };
           } },
         // 6.4 back to the dusk desk: "I could write it" / "You can do that?" / "With your say-so"
-        { src: DUSK, at: V(30), grade: DUSK === MON ? LATE : '', cam: hold(960, 610, 1.08) },
+        { src: DUSK, at: V(30), grade: DUSK === MON ? LATE : '', cam: pan(V(30) + .3, M('code') - V(30) - .8, 880, 610, 1040, 600, 1.1) },
         // 6.5 the change, written and checked (locked)
         { src: 'comp/same-butler', at: M('code'), cam: [314, 690, 3.0],
           state: t => ({ files: +clamp(3 * (t - filesA) / (filesB - filesA), 0, 3).toFixed(3), tests: +(22 * clamp((t - M('checks')) / (testsB - M('checks')))).toFixed(2) - (t < M('checks') ? 1 : 0),
@@ -68,7 +68,7 @@
         // 6.11 the jobs page: Dev -> Priya (locked, held)
         { src: 'live/shop', at: M('reassign') - .1, cam: [960, 540, 1],
           state: t => ({ preset: 'shop-jobs-after', reassign: +clamp((t - M('reassign') - .25) / 1.3).toFixed(3), secs: 5 + Math.floor(t - M('reassign')) }) },
-      ], E);
+      ].concat(CHAIR ? [{ src: CHAIR, at: Math.max(M('reassign') + 3.0, E - 1.6), cam: hold(960, 540, 1.0) }] : []), E, { scene: 6 });
       cardPlan = run.list[7].s;
     },
     ready() {

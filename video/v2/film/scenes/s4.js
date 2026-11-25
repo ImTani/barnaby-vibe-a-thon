@@ -48,7 +48,7 @@
             return { preset: 'shop-po', po: +easeOutCubic(clamp((t - a) / .45)).toFixed(4), poHl: +clamp((t - a) / .3).toFixed(3),
               loading: t >= M('po') && t < a ? +lerp(.2, 1, (t - M('po')) / .3).toFixed(3) : 0, secs: Math.floor(t - M('click_order')) + 20 };
           } },
-      ], E);
+      ], E, { scene: 4 });
       mk = run.list[0].s;
       // engine note (script, scene 4), in the Martin pages' footer style (worlds2 martin-page.css .foot)
       note = label(root, 'synapse · rebuilt with 1 more capability · 0.38 s',

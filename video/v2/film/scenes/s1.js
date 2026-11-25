@@ -30,14 +30,21 @@
     build(root) {
       // the screen is full frame and locked; the one move: on "It's the one with the spanner." a push to the spanner
       const tabCam = move(M('spanner'), Math.min(2.2, E - M('spanner') - .1), [960, 540, 1.0], [720, 262, 2.1], 0);
+      const WIDE4K = pick('world/01_wide_night_4k.png', ''), APPROACH = -.5 + 132 / 24;      // s1_open's approach: frame 133
       run = seq(root, [
+      ].concat(WIDE4K ? [
+        { src: WIDE4K, at: S, cam: pan(M('light_up') + 1.2, APPROACH - M('light_up') - 1.6, 640, 470, 1180, 560, 1.22),
+          grade: t => `brightness(${easeInOutSine(P(t, M('light_up'), 1.8)).toFixed(3)})` },
+        { src: 'world/01_wide_night.png', at: APPROACH, cam: hold(960, 540, 1.0) },
+      ] : [
         { src: 'world/01_wide_night.png', at: S, cam: hold(960, 540, 1.0),
           grade: t => `brightness(${easeInOutSine(P(t, M('light_up'), 1.8)).toFixed(3)})` },
+      ]).concat([
         { src: 'world/02_medium_night.png', at: M('medium'), cam: move(M('medium') + .4, M('screen') - M('medium') - .5, [880, 640, 1.04], [842, 626, 1.6], 0) },
         // 1.2 into the screen: the live desktop pinned on the monitor's glass grows to full frame (a cut without a quad)
         { src: 'live/shop', at: M('screen'), fi: .12, pin: { shot: 's1_open', d: .6 }, cam: tabCam, state: t => state(t) },
-      ], E);
-      live = run.list[2].s;
+      ]), E, { scene: 1 });
+      live = run.list.find(it => it.src === 'live/shop').s;
     },
     ready() {
       // geometry, read once from the live page (logical px = rect / 1.5): each tab's centre with all nine open

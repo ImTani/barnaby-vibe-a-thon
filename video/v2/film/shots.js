@@ -65,11 +65,13 @@ function blenderManifest() {
   catch (e) { G.BLENDER = null; }
   return G.BLENDER;
 }
-function blenderFor(key, a, b) {
+function blenderFor(key, a, b, scene) {
   const m = blenderManifest();
   if (!m || !m.shots || !key.startsWith('world/')) return null;
   let best = null, bestOv = 0;
   for (const s of m.shots) {
+    if (s.kind === 'still' || s.start == null) continue;                           // stills swap in by file (pick)
+    if (scene != null && s.scene != null && +s.scene !== +scene) continue;         // never another scene's shot
     const rep = Array.isArray(s.replaces) ? s.replaces : [s.replaces];    // one shot may cover several stills in a row
     if (s.status !== 'done' || !rep.includes(key) || !(s.frames > 0)) continue;
     const s0 = s.start, s1 = s.start + s.frames / (m.fps || FILM_FPS);
@@ -176,7 +178,7 @@ function seq(root, items, end, o = {}) {
   list.forEach((it, i) => {
     const nx = list[i + 1]; it.prev = list[i - 1] || null;
     it.end = it.until != null ? it.until : nx ? nx.at + Math.max(nx.fi || 0, nx.quad ? (nx.fi || 0) + (nx.pin.d || .6) : 0, nx.open ? nx.open.d || .55 : 0) : end;
-    it.bl = blenderFor(it.src, it.at, it.end);
+    it.bl = blenderFor(it.src, it.at, it.end, o.scene);
     if (it.bl) { it.blDir = `../world/out/anim/${it.bl.id}/`; it.blN = -1; }
     if (isRoom(it.src) && !it.clean) it.finish = finish(it.s.box);
     if (isRoom(it.src) && !it.tripod) it.hh = handheld(it.src + '@' + it.at.toFixed(2));
@@ -429,6 +431,8 @@ function finish(box) {
 /* ---- the director's camera rules (gate 4 notes): hold by default, motivated moves only, human-speed hands ---- */
 /** A held shot: (x, y, s) with at most an imperceptible drift over the whole shot (scale +k, default 1.2%). */
 const hold = (x, y, s = 1, k = 0) => (t, it) => { const u = easeInOutSine(clamp((t - it.at) / Math.max(.1, it.end - it.at))); return [x, y, s * (1 + k * u)]; };
+/** A pan or tilt: from (x0, y0) to (x1, y1) at scale s, starting at a (an action or a line), over d s, eased. */
+const pan = (a, d, x0, y0, x1, y1, s) => move(a, d, [x0, y0, s], [x1, y1, s], 0);
 /** One motivated move: holds `from` (with the drift) until a, eases to `to` over d, then holds `to`. */
 const move = (a, d, from, to, k = .006) => (t, it) => {
   if (t < a) { const u = easeInOutSine(clamp((t - it.at) / Math.max(.1, a - it.at))); return [from[0], from[1], from[2] * (1 + k * u)]; }
@@ -470,5 +474,5 @@ function typed(s, t, a, b) {
 }
 
 Object.assign(G, { SRC, SIZE, V, VE, M, still, seq, frameImg, label, fadeEl, markSVG, markAnim, sizeOf, imgPath: path, reveal, sweep,
-  cursor, path2, clickK, typed, LIVE_FRAMES: frames, FILM_FPS, hold, move, sfxT, sfxAll, hand, pressAt, pick, quadOf });
+  cursor, path2, clickK, typed, LIVE_FRAMES: frames, FILM_FPS, hold, move, pan, sfxT, sfxAll, hand, pressAt, pick, quadOf });
 })(window);

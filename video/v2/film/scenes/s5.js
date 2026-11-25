@@ -2,8 +2,9 @@
  * world LIVE (worlds2 martin-build, before the Workload room exists): "Sofia's bike's done." in the side panel,
  * Barnaby's answer typing as he says it, the two quick cards from the script sliding in ("Let Barnaby text
  * customers." "Let Barnaby mark bikes ready."); "Go on." -> the cursor clicks Allow on each -> on the plan, Barnaby
- * walks the four stops of a hand-back (the job, the customer, a text, the status) and back to the stand; the clunk
- * cuts (Kwame's, Jana's) and the same walk, quicker each time -> "the same four steps" (the stops pulse in turn) ->
+ * walks the four stops of a hand-back (the job, the customer, a text, the status) and back to the stand; at each clunk
+ * (Kwame's, Jana's) a ring at Ravi's stand and the same walk, quicker each time, all on the plan -> "the same four
+ * steps" (the stops pulse in turn) ->
  * "Give me a moment." -> the passage draws through them: Hand back a bike + the script's engine note -> Tom's
  * Brompton: one step along the passage. */
 (function () {
@@ -34,10 +35,10 @@
       const walks = [[M('walk1'), 1.55], [M('walk2'), .85], [M('walk3') + .05, .62]];       // quicker each time
       const four = V(23) + 2.0;                                                               // "...the same four steps"
       const pa = M('passage') + .05, pd = .85, w4 = M('walk4');
+      // one shot on the plan from Sofia's cards to Tom's: a slow push in over the three walks, closer for the passage
       const planCam = [[V(19) - .1, 1480, 450, 1.6], [M('cards2') + .9, 1500, 455, 1.62], [M('walk1') - .25, 1480, 470, 1.6],
-        [M('walk1') + .25, 640, 560, 1.62], [M('clunk2'), 630, 560, 1.68]];
-      const plan2 = [[M('walk2'), 640, 560, 1.66], [M('clunk3'), 630, 555, 1.7]];
-      const plan3 = [[M('walk3'), 640, 560, 1.66], [four, 600, 540, 1.85], [M('passage'), 590, 520, 1.95], [w4, 600, 520, 2.0], [E, 620, 520, 1.92]];
+        [M('walk1') + .25, 640, 560, 1.6], [four, 600, 540, 1.85], [M('passage'), 590, 520, 1.95], [w4, 600, 520, 2.0], [E, 620, 520, 1.92]];
+      const CLUNKS = [M('clunk2'), M('clunk3'), M('clunk4')];                                 // a bike comes off Ravi's stand
       function planState(t) {
         let walk = -1;                                    // which loop is up, and how far along
         for (const [a, d] of walks) if (t >= a - .02) walk = clamp((t - a) / d);
@@ -60,9 +61,15 @@
         } else st.marker = [10.6, 6.9];
         return st;
       }
-      const planItem = o => { let cur, pulses; return Object.assign({ src: 'comp/martin-build', state: planState,
-        build: l => { cur = cursor(l, 1.5); pulses = STOPS.map(() => { const e = el('div', {}, l); css(e, { borderRadius: '50%', border: '4px solid #E2B54E', display: 'none' }); return e; }); },
+      const planItem = o => { let cur, pulses, stand; return Object.assign({ src: 'comp/martin-build', state: planState,
+        build: l => { cur = cursor(l, 1.5); pulses = STOPS.map(() => { const e = el('div', {}, l); css(e, { borderRadius: '50%', border: '4px solid #E2B54E', display: 'none' }); return e; });
+          stand = el('div', {}, l); css(stand, { borderRadius: '50%', border: '4px solid #83400F', display: 'none' }); },
         over: (t, l) => {
+          // the clunk: the next bike off Ravi's stand (the workshop's own ink), as Martin calls it
+          const ck = CLUNKS.map(c => P(t, c, .6)).find(k => k > 0 && k < 1);
+          if (ck == null) stand.style.display = 'none';
+          else { const r = lerp(18, 64, easeOutCubic(ck)), p = [90 + 10.6 * 60, 286 + 6.9 * 60];
+            css(stand, { display: 'block', left: (p[0] - r) + 'px', top: (p[1] - r) + 'px', width: 2 * r + 'px', height: 2 * r + 'px', opacity: (.9 * (1 - ck)).toFixed(3) }); }
           // the four stops pulse in turn as he says "the same four steps"
           STOPS.forEach((s, i) => {
             const a = four + i * .32, k = P(t, a, .7), e = pulses[i];
@@ -78,10 +85,6 @@
       run = seq(root, [
         { src: 'world/04_medium_monday.png', at: S - FI, grade: AFT, cam: [[S - FI, 1000, 560, 1.08], [V(19) - .1, 900, 620, 1.25]] },
         planItem({ at: V(19) - .1, fi: .35, cam: planCam }),
-        { src: 'world/x_pot_monday.png', at: M('clunk2'), grade: AFT, cam: [[M('clunk2'), 960, 560, 1.1], [M('walk2'), 990, 540, 1.16]] },
-        planItem({ at: M('walk2') - .05, cam: plan2 }),
-        { src: 'world/x_drawer_monday.png', at: M('clunk3'), grade: AFT, cam: [[M('clunk3'), 960, 560, 1.1], [M('walk3'), 930, 560, 1.16]] },
-        planItem({ at: M('walk3') - .05, cam: plan3 }),
       ], E);
       plan = run.list[1].s;
       sw = sweep(root, { angle: 105, color: 'rgba(255,226,180,.5)' });

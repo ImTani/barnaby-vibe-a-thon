@@ -212,6 +212,7 @@ class Shot:
         self.black_until = None     # film time before which the frame is pure black (written, not rendered)
         self.render_until = None    # film time after which the last rendered frame is held (hidden by the film)
         self.upscale_to = None      # (w, h): lanczos-upscale the finished frames (rendered smaller for time)
+        self.active = None          # held shots: [(t0, t1)] where something changes; other frames are exact copies
         self.segments = []          # [(time the segment starts, setup())]
         self.frame_fn = None        # (t) -> None, continuous state for film time t
         self.out_dir = os.path.join(OUT_ANIM, sid)
@@ -289,15 +290,33 @@ def render_shot(sh, args, test=None):
                 lo = f + 1
     if sh.render_until is not None and not args.range:
         hi = max(f for f in range(1, sh.frames + 1) if sh.time(f) <= sh.render_until)
+    need = set(range(lo, hi + 1))
+    if sh.active is not None and not args.range:          # a held frame with nothing changing: render it once
+        act = [any(a <= sh.time(f) <= b for a, b in sh.active) for f in range(sh.frames + 2)]
+        need = {f for f in range(lo, hi + 1) if act[f] or f == lo or act[f - 1]}
     for fa, fb, setup in sh.seg_ranges():
         fa, fb = max(fa, lo), min(fb, hi)
         if fb < fa:
             continue
+        frs = sorted(f for f in need if fa <= f <= fb)
+        if not frs:
+            continue
         setup()
-        sc.frame_start, sc.frame_end = fa, fb
-        sc.frame_set(fa)
-        sc.render.filepath = os.path.join(out_dir, "####")
-        bpy.ops.render.render(animation=True)
+        runs, a = [], frs[0]
+        for x, y in zip(frs, frs[1:] + [None]):
+            if y != x + 1:
+                runs.append((a, x))
+                a = y
+        for ra, rb in runs:
+            sc.frame_start, sc.frame_end = ra, rb
+            sc.frame_set(ra)
+            sc.render.filepath = os.path.join(out_dir, "####")
+            bpy.ops.render.render(animation=True)
+    if sh.active is not None and not args.range:
+        import shutil
+        for f in range(lo, hi + 1):
+            if f not in need:
+                shutil.copyfile(os.path.join(out_dir, f"{f - 1:04d}.jpg"), os.path.join(out_dir, f"{f:04d}.jpg"))
     if sh.render_until is not None and not args.range:
         import shutil
         for f in range(hi + 1, sh.frames + 1):
@@ -327,6 +346,82 @@ def upscale(d, size):
     for f in os.listdir(tmp):
         shutil.move(os.path.join(tmp, f), os.path.join(d, f))
     os.rmdir(tmp)
+
+
+class Still:
+    """A held frame (B-still): its own camera pose, state, resolution and samples; written to out/<file>."""
+    def __init__(self, sid, scene, file, setup, cam, res=(2560, 1440), samples=32, notes="", ev=0.0, probe=True):
+        self.id, self.scene, self.file, self.setup, self.cam = sid, scene, file, setup, cam
+        self.res, self.samples, self.notes, self.ev, self.probe = res, samples, notes, ev, probe
+
+
+def render_still(st, args, test=None):
+    sc = bpy.context.scene
+    st.setup()
+    sc.view_settings.exposure += st.ev
+    c = st.cam() if callable(st.cam) else st.cam
+    set_cam(c["loc"], c["tgt"], c["lens"], c["focus"], c["fstop"])
+    if "grid" in RIG:
+        RIG["grid"]()
+    sc.camera = RIG["cam"]
+    pr = bpy.data.objects.get("screen_probe")
+    if pr:
+        pr.hide_render = not st.probe
+    sc.render.resolution_x, sc.render.resolution_y = st.res
+    sc.render.resolution_percentage = 25 if test else 100
+    sc.render.image_settings.file_format = "PNG"
+    sc.render.image_settings.color_mode = "RGB"
+    keep = sc.eevee.taa_render_samples
+    sc.eevee.taa_render_samples = 4 if test else st.samples
+    CUR["shot"] = None
+    path = os.path.join(OUT_ANIM, "_test", st.file) if test else os.path.join(HERE, "out", st.file)
+    sc.render.filepath = path
+    t1 = time.time()
+    bpy.ops.render.render(write_still=True)
+    sc.eevee.taa_render_samples = keep
+    print(f"STILL {st.id} -> {st.file} in {time.time() - t1:.0f}s")
+    if not test:
+        m = manifest_load()
+        e = dict(id=st.id, kind="still", scene=st.scene, file="world/" + st.file, start=None, frames=1,
+                 res=list(st.res), status="done", notes=st.notes)
+        m["shots"] = [x for x in m["shots"] if x["id"] != st.id] + [e]
+        manifest_save(m)
+
+
+class Task:
+    """Something to run in order with the renders (e.g. measuring the screen's corners)."""
+    def __init__(self, fn):
+        self.fn = fn
+
+
+def screen_quad(sh, f, ob, uv_corners=((0, 1), (1, 1), (1, 0), (0, 0))):
+    """The four corners of the visible picture (image UV corners: top-left, top-right, bottom-right, bottom-left)
+    in 1920x1080 output pixels at frame f of shot sh. Saved into the shot's manifest entry as screen_quad."""
+    from bpy_extras.object_utils import world_to_camera_view
+    sc = bpy.context.scene
+    sh.segments[-1 if f > sh.seg_ranges()[-1][0] - 1 else 0][1]()
+    sh.frame_fn(sh.time(f))
+    bpy.context.view_layer.update()
+    sc.render.resolution_x, sc.render.resolution_y, sc.render.resolution_percentage = 1920, 1080, 100
+    me = ob.data
+    uvl = me.uv_layers.active.data
+    mw = ob.matrix_world
+    quad = []
+    for cu, cv in uv_corners:
+        best = min(range(len(me.loops)), key=lambda i: (uvl[i].uv[0] - cu) ** 2 + (uvl[i].uv[1] - cv) ** 2)
+        co = mw @ me.vertices[me.loops[best].vertex_index].co
+        v = world_to_camera_view(sc, RIG["cam"], co)
+        quad.append([round(v.x * 1920, 1), round((1 - v.y) * 1080, 1)])
+    m = manifest_load()
+    for e in m["shots"]:
+        if e["id"] == sh.id:
+            e["screen_quad"] = quad
+            e.pop("screen_quad_frame", None)
+            if f != sh.frames:
+                e["quad_frame"] = f
+    manifest_save(m)
+    print(f"QUAD {sh.id} frame {f}: {quad}")
+    return quad
 
 
 # ------------------------------------------------------------------------------------------------ the manifest
@@ -403,6 +498,10 @@ def add_flash():
     RIG["flash"] = DM.sock(mx.inputs, "Factor_Float")
 
 
+def COLL_OF(ob):
+    return ob.users_collection[0].name if ob.users_collection else ""
+
+
 def shop_shots(DM, M, hands):
     L = DM.LIGHTS
     sc = bpy.context.scene
@@ -421,10 +520,16 @@ def shop_shots(DM, M, hands):
         r = random.Random(int(round(t * FPS)) * 7919 + 17)
         streaks.location = streaks_rest + Vector((0.0, r.uniform(-0.12, 0.12), r.uniform(-0.3, 0.3)))
 
+    L0 = {k: (ob.data.energy, tuple(ob.data.color)) for k, ob in L.items()}
+
     def preset(name, ev=0.0):
         def setup():
             for ob, lc, rt in rest:                        # every animated prop back to its approved place
                 ob.location, ob.rotation_euler = Vector(lc), rt.copy()
+            for k, (en, col) in L0.items():                # every light back to its built level (dusk moves some)
+                if k in L:
+                    L[k].data.energy, L[k].data.color = en, col
+            bpy.data.objects["rain_streaks"].hide_render = False
             for nm in ("A_sweep", "A_car"):
                 if nm in L:
                     L[nm].data.energy = 0.0
@@ -586,14 +691,18 @@ def shop_shots(DM, M, hands):
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 4 · s3 time-lapse: Thursday night -> Monday
-    sh = Shot("s3_timelapse", 3, ["world/02_medium_night.png", "world/04_medium_monday.png"], 40.34, 43.24,
-              notes="Thursday night (lamp off, as s2 ends) -> daylight rakes across the desk and blows out -> "
-                    "Monday 08:52 (props swapped inside the white flash, ~41.35) -> push toward the screen's clock "
-                    "for the cut to shop-pc-04 at 'clock'. Brightness and the light sweep are baked in: drop the "
-                    "still's brightness grade and the CSS sweep overlay.")
+    sh = Shot("s3_timelapse", 3, ["world/02_medium_night.png", "world/04_medium_monday.png"], 40.34, 48.34,
+              res=LONG_RES)
+    sh.upscale_to = (1920, 1080)
     Mm = pose("CAM_medium")
-    Mm2 = pushed(Mm, 1040, 690, 1.5)                    # toward the taskbar clock: the cut is to the screen clock
-    T_SWAP = 41.35
+    Mm2 = Mm                                            # held (SHOTLIST 3.1): the film corner-pins into the screen
+    T_DAWN, T_SWAP, T_SETTLE = 41.6, 43.6, 44.6
+    sh.notes = (f"Held on the desk. Thursday night with the lamp off (as s2 ends) to frame {sh.frame(T_DAWN)}; a blue "
+                f"dawn rakes in and blooms to white (props swap inside the bloom at frame {sh.frame(T_SWAP)}); Monday "
+                f"08:52 settles by frame {sh.frame(T_SETTLE)} and holds to the end (the Monday desk, SHOTLIST 3.2). "
+                f"Brightness and the light are baked in: no brightness grade or sweep overlay on top. 1600x900 at 12 "
+                f"samples, upscaled. screen_quad = the monitor's picture on the last frame.")
+    sh.active = [(T_DAWN - 0.1, T_SETTLE + 0.1)]
     sun = L["L_sun"]
     sweep = DM.light("A_sweep", "SUN", (0, 0, 3), 0.0, (1.0, 0.93, 0.82), "SET")
     sweep.data.angle = radians(2.5)
@@ -609,8 +718,7 @@ def shop_shots(DM, M, hands):
         base["lamp_off"] = True
 
     def f3(t):
-        u = DRIFT(P(t, 40.34, 43.3 - 40.34))
-        cam_between(Mm, Mm2, u * u * (1.6 - 0.6 * u))   # creeps first, then pushes in toward the clock
+        cam_between(Mm, Mm2, 0.0)
         RIG["flash"].default_value = sine(1 - abs(t - T_SWAP) / 0.45)   # a soft bloom to white and back
         if t < T_SWAP:
             rain(t)
@@ -619,18 +727,19 @@ def shop_shots(DM, M, hands):
             L["L_floor_spill"].data.energy = 2.5
             L["L_bounce"].data.energy = 2.0
             L["L_box_kick"].data.energy = 2.0
-            dawn = sine(P(t, 40.45, T_SWAP - 40.45))
+            dawn = sine(P(t, T_DAWN, T_SWAP - T_DAWN))
             sweep.data.energy = 30.0 * dawn
             sweep.rotation_euler = sundir(0.35 * dawn).to_track_quat("-Z", "Y").to_euler()
             sc.view_settings.exposure = base["exp"] + LAMP_OFF_EV + (5.0 - LAMP_OFF_EV) * dawn ** 2.2
         else:
-            k = sine(P(t, T_SWAP, 42.15 - T_SWAP))
+            k = sine(P(t, T_SWAP, T_SETTLE - T_SWAP))
             sweep.data.energy = 0.0
             sun.rotation_euler = sundir(lerp(0.35, 1.0, k)).to_track_quat("-Z", "Y").to_euler()
             sc.view_settings.exposure = base["exp"] + 4.0 * (1 - k) ** 2.0
         grid()
     sh.segments = [(sh.start, setup_night), (T_SWAP, preset("monday"))]
     sh.frame_fn = f3
+    sh3 = sh
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 5 · s3 shelf: drawer 1 slides open
@@ -676,13 +785,14 @@ def shop_shots(DM, M, hands):
     sh = Shot("s9_shop_night", 9, ["world/x_close_night.png"], 199.7, 199.7 + 2 * 5.11, res=LONG_RES)
     sh.upscale_to = (1920, 1080)
     C0 = pose("CAM_medium")
-    C1 = pushed(C0, 900, 600, 1.10)
+    C1 = C0                                              # held (SHOTLIST 9.1)
     tue = DM.SCREEN_PATHS["tuesday"]
     T_DIM, T_OFF = 199.7 + 3.6, 199.7 + 5.2
     sh.notes = (f"18:40, Martin gone, lamp off. The monitor (Tuesday's jobs page) dims at frame {sh.frame(T_DIM)}, "
                 f"goes dark at frame {sh.frame(T_OFF)}, then Barnaby's bell glows up in the corner (full by frame "
                 f"{sh.frame(T_OFF + 2.2)}); the power LEDs go blue -> amber as it sleeps. Ends on the approved "
-                f"still's state. A calm push (~10%). Rendered 1600x900 at 12 samples, upscaled.")
+                f"still's state. Held. Rendered 1600x900 at 12 samples, upscaled.")
+    sh.active = [(T_DIM - 0.1, T_OFF + 0.6 + 1.6 + 0.1)]
 
     def setup_awake():
         preset("close", 0.0)()
@@ -725,6 +835,102 @@ def shop_shots(DM, M, hands):
     sh.segments = [(sh.start, preset("close"))]
     sh.frame_fn = f9
     shots[sh.id] = sh
+
+    # ================================================================ dusk: Mon 16:08 (a new lighting state)
+    NIGHT_KEEP = ("L_lamp", "L_floor_spill", "L_bounce", "L_screen", "L_street")
+    night_lights = [k for k, ob in L.items() if COLL_OF(ob) == "NIGHT"]
+
+    def dusk(lamp):
+        """Monday's props and screen; just after a late-November sunset: the window deep blue, rain stopped, the lit
+        window opposite, the workshop strip on; the desk lamp at `lamp` (0 off .. 1 on, the 2700 K pool as at
+        night); the wall clock at 16:08."""
+        preset("monday")()
+        DM.COLL["NIGHT"].hide_render = False
+        for k in night_lights:
+            if k not in NIGHT_KEEP:
+                L[k].data.energy = 0.0
+        L["L_sun"].data.energy = 0.0
+        L["L_window_day"].data.energy, L["L_window_day"].data.color = 26.0, (0.42, 0.53, 0.95)
+        L["L_room_fill"].data.energy, L["L_room_fill"].data.color = 5.0, (0.55, 0.65, 1.0)
+        L["L_drawer_bounce"].data.energy = 1.2
+        L["L_street"].data.energy = 6.0
+        L["L_worklamp"].data.energy, L["L_pegboard"].data.energy = 30.0, 12.0
+        sky = DM.principled(M["outside_sky"])
+        sky.inputs["Emission Color"].default_value = DM.rgba("#20366a")
+        sky.inputs["Emission Strength"].default_value = 1.5
+        DM.principled(M["outside_win"]).inputs["Emission Strength"].default_value = 3.0
+        bg = sc.world.node_tree.nodes["Background"]
+        bg.inputs[0].default_value = DM.rgba("#28344f")
+        bg.inputs[1].default_value = 0.32
+        bpy.data.objects["rain_streaks"].hide_render = True
+        DM.SCREEN["bright"].outputs[0].default_value = 0.95
+        base["sbright"] = 0.95
+        screen_light(0.95)
+        L["L_screen_day"].data.energy = 0.0
+        for bs, st in DM.REFLECT_EMIT:
+            bs.inputs["Emission Strength"].default_value = st * 0.12
+        sc.view_settings.exposure = 0.3
+        base["exp"] = 0.3
+        hands["hour"].rotation_euler = (0, 0, -2 * pi * (4 + 8 / 60) / 12)
+        hands["minute"].rotation_euler = (0, 0, -2 * pi * 8 / 60)
+        lamp_set(lamp)
+
+    def lamp_set(lv):
+        L["L_lamp"].data.energy = 40.0 * lv
+        bulb.default_value = 20.0 * lv
+        L["L_floor_spill"].data.energy = lerp(1.0, 9.0, lv)
+        L["L_bounce"].data.energy = lerp(0.8, 7.0, lv)
+
+    D0 = pose("CAM_medium_monday")
+    sh = Shot("s6_lamp_on", 6, ["world/04_medium_monday.png"], 104.78, 104.78 + 6.0)
+    T_CLICK = 104.78 + 0.5
+    sh.notes = (f"NEW (SHOTLIST 6.1): dusk, Mon 16:08. Held on CAM_medium_monday's frame: a dim blue room, then the "
+                f"desk lamp clicks on at frame {sh.frame(T_CLICK)} (0.5 s after the on-screen start, frame 13) and "
+                f"the room warms; matches 06_medium_dusk from frame {sh.frame(T_CLICK + 0.3)}. 1920x1080, 12 "
+                f"samples. 'replaces' is the nearest old still; start is scene 6's old start.")
+    sh.active = [(T_CLICK - 0.1, T_CLICK + 0.35)]
+    sw6 = bpy.data.objects["lamp_switch"]
+    sw6_rest = Vector(sw6.location)
+
+    def f6on(t):
+        cam_between(D0, D0, 0.0)
+        dt = t - T_CLICK
+        lamp_set(0.0 if dt < 0 else 1.0 - exp(-dt / 0.045))
+        press = clamp01(1 - abs(t - (T_CLICK - 0.02)) / 0.07)
+        sw6.location = sw6_rest - Vector((0, 0, 0.0018 * press))
+        grid()
+    sh.segments = [(sh.start, lambda: dusk(0.0))]
+    sh.frame_fn = f6on
+    shots[sh.id] = sh
+
+    shots["06_medium_dusk"] = Still("06_medium_dusk", 6, "06_medium_dusk.png", lambda: dusk(1.0), D0,
+                                    notes="NEW (SHOTLIST 6.1/6.4): the dusk desk, lamp on, Mon 16:08; the same frame "
+                                          "as s6_lamp_on's end and CAM_medium_monday. 2560x1440, 32 samples.")
+    bpy.context.view_layer.update()
+    note = bpy.data.objects["note_paper"]
+    nc = sum((note.matrix_world @ Vector(c) for c in note.bound_box), Vector()) / 8
+    nn = (note.matrix_world.to_3x3() @ Vector((0, 0, 1))).normalized()
+    if nn.y > 0:
+        nn = -nn
+    sticky_cam = dict(loc=nc + nn * 0.2 + Vector((-0.07, 0.0, 0.035)), tgt=nc, lens=75.0, fstop=2.0, focus=nc)
+    shots["x_sticky_dusk"] = Still("x_sticky_dusk", 6, "x_sticky_dusk.png", lambda: dusk(1.0), sticky_cam,
+                                   notes="NEW (SHOTLIST 6.2): Theo's sticky note on the bezel at dusk, the lamp on, "
+                                         "shallow focus. 2560x1440, 32 samples.")
+    gl = bpy.data.objects["glasses"]
+    gc = gl.matrix_world.translation.copy() + Vector((0, 0, 0.006))
+    glasses_cam = dict(loc=gc + Vector((0.2, -0.2, 0.11)), tgt=gc + Vector((0.0, 0.01, 0.0)), lens=65.0, fstop=2.0,
+                       focus=gc)
+    shots["x_glasses_dusk"] = Still("x_glasses_dusk", 6, "x_glasses_dusk.png", lambda: dusk(1.0), glasses_cam,
+                                    notes="NEW (SHOTLIST 6.6): Martin's reading glasses on job card 4478 at dusk, in "
+                                          "the lamp's pool, shallow focus. 2560x1440, 32 samples.")
+    shots["x_close_half_shop_2x"] = Still("x_close_half_shop_2x", 9, "x_close_half_shop_2x.png", preset("close"),
+                                          pose("CAM_close_half"), res=(1920, 2160),
+                                          notes="SHOTLIST 9.3: the approved shop half at 2x (1920x2160) for the film's "
+                                                "slow matched push; asleep, as approved. 32 samples.")
+    scr = bpy.data.objects["screen"]
+    RIG["grid"] = grid
+    shots["quad_s1_open"] = Task(lambda: screen_quad(shots["s1_open"], shots["s1_open"].frames, scr))
+    shots["quad_s3_timelapse"] = Task(lambda: screen_quad(sh3, sh3.frames, scr))
 
     # ================================================================ Tier B
     def drift_shot(sid, scene, still, cam, t0, t1, px, py, s, preset_name, ev, notes, no_probe=True, extra=None):
@@ -843,6 +1049,13 @@ def lisbon_shots(LM, DM, cap):
               "laptop": os.path.join(LM.SCREEN_DIR, "lisbon-black.png")}
     aspects = {"main": 16 / 9, "studio": 16 / 9, "laptop": 16 / 10}
     ASLEEP_MAIN = 0.5                                   # the bell's glow level on the sleeping main monitor
+    STREET, ADAPT = 140.0, 0.8
+    street = DM.light("A_street", "SPOT", (-1.7, 1.15, 1.6), 0.0, (1.0, 0.64, 0.32), "NIGHT", spot=50, blend=0.85,
+                      radius=0.35)
+    DM.aim(street, (1.5, 2.45, 0.72))
+
+    def night_extra():
+        L["A_street"].data.energy = STREET
 
     def outside_for(cam_p, wide):
         for ob in LM.COLL["OUTSIDE"].objects:
@@ -861,6 +1074,7 @@ def lisbon_shots(LM, DM, cap):
     def preset(name):
         def setup():
             LM.apply_preset(name, M, cap["sky_m"], cap["lit_m"])
+            night_extra()
             outside_for(None, False)
             base.clear()
             base["exp"] = sc.view_settings.exposure
@@ -877,6 +1091,7 @@ def lisbon_shots(LM, DM, cap):
 
     def sleep_setup():
         LM.apply_preset("night", M, cap["sky_m"], cap["lit_m"])
+        night_extra()
         outside_for(None, False)
         for slot in ("main", "studio", "laptop"):
             LM.set_panel(slot, asleep[slot], aspects[slot])
@@ -888,15 +1103,19 @@ def lisbon_shots(LM, DM, cap):
     sh.upscale_to = (1920, 1080)
     sh8 = sh
     N0 = pose("LCAM_medium")
-    N1 = pushed(N0, 1040, 540, 1.10)
+    N1 = N0                                              # held (SHOTLIST 9.2)
     T_DIM, T_DARK = 204.31 + 2.5, 204.31 + 5.0
     sh.notes = (f"20:07: starts on the approved still; from frame {sh.frame(T_DIM)} the two monitors and the "
                 f"laptop dim and go dark (frame {sh.frame(T_DARK)}), then the main monitor shows Barnaby's bell, "
                 f"small, bottom right (the shop's sleep screen's twin), full by frame {sh.frame(T_DARK + 1.95)}. "
-                f"Baked in: drop the CSS dimmer overlay. A calm push (~10%). 1600x900 at 12 samples, upscaled.")
+                f"A sodium street lamp below the window rakes the desk and tiles, and the exposure adapts +{ADAPT} "
+                f"EV as the monitors go out, so the room stays legible. Baked in: drop the CSS dimmer overlay. Held. "
+                f"1600x900 at 12 samples, upscaled.")
+    sh.active = [(T_DIM - 0.1, T_DARK + 0.35 + 1.6 + 0.1)]
 
     def f8(t):
         cam_between(N0, N1, CALM(P(t, sh8.start, sh8.frames / FPS)))
+        sc.view_settings.exposure = base["exp"] + ADAPT * sine(P(t, T_DIM, T_DARK + 1.5 - T_DIM))
         if t < T_DARK:
             k = 1 - sine(P(t, T_DIM, T_DARK - T_DIM))
             for slot in ("main", "studio", "laptop"):
@@ -923,6 +1142,7 @@ def lisbon_shots(LM, DM, cap):
 
     def f9(t):
         cam_between(H0, H1, CALM(P(t, sh9.start, sh9.frames / FPS)))
+        sc.view_settings.exposure = base["exp"] + ADAPT
         LM.PANELS["main"]["bright"].outputs[0].default_value = ASLEEP_MAIN
         glow("main", ASLEEP_MAIN)
         for slot in ("studio", "laptop"):
@@ -955,6 +1175,33 @@ def lisbon_shots(LM, DM, cap):
     sh.segments = [(sh.start, setup_wide)]
     sh.frame_fn = f10
     shots[sh.id] = sh
+    sh8d = sh
+    main_panel = next(o for o in bpy.data.objects if o.type == "MESH" and o.data.materials
+                      and o.data.materials[0] == LM.PANELS["main"]["mat"])
+    shots["quad_s8_lisbon_day"] = Task(lambda: screen_quad(sh8d, sh8d.frame(T8[1]), main_panel))
+
+    def asleep_state():
+        sleep_setup()
+        LM.PANELS["main"]["bright"].outputs[0].default_value = ASLEEP_MAIN
+        glow("main", ASLEEP_MAIN)
+        for slot in ("studio", "laptop"):
+            LM.PANELS[slot]["bright"].outputs[0].default_value = 0.0
+            L[f"LL_glow_{slot}"].data.energy = 0.0
+        sc.view_settings.exposure = base["exp"] + ADAPT
+
+    shots["x_close_half_lisbon_2x"] = Still(
+        "x_close_half_lisbon_2x", 9, "x_close_half_lisbon_2x.png", asleep_state, pose("LCAM_close_half"),
+        res=(1920, 2160), notes="SHOTLIST 9.3: the Lisbon half at 2x (1920x2160) for the film's slow matched push, "
+                                "the monitors asleep (bell glyph bottom right; laptop and studio dark). 32 samples.")
+    shots["lisbon_03_medium_night_asleep"] = Still(
+        "lisbon_03_medium_night_asleep", 9, "lisbon_03_medium_night_asleep.png", asleep_state, pose("LCAM_medium"),
+        res=(1920, 1080), samples=64,
+        notes="SHOTLIST 9.2: lisbon_03_medium_night with the monitors asleep (bell glyph bottom right; laptop and "
+              "studio dark); crossfade from lisbon_03_medium_night.png (monitors on). 64 samples, as the approved still.")
+    shots["lisbon_03_medium_night_on"] = Still(
+        "lisbon_03_medium_night_on", 9, "lisbon_03_medium_night_on.png", preset("night"), pose("LCAM_medium"),
+        res=(1920, 1080), notes="SHOTLIST 9.2: lisbon_03_medium_night, monitors on, rendered with the same settings "
+                                "as the asleep still so the crossfade is only the light. 32 samples.")
 
     # ---------------------------------------------------------------- Tier B · s8 the nata detail
     sh = Shot("s8_nata", 8, ["world/x_lisbon_detail_day.png"], 178.97, 180.47,
@@ -1089,7 +1336,13 @@ def main():
     test = [x for x in args.test.split(",") if x] or None
     for sid in [s for s in (args.shots or TIER_A[args.set]).split(",") if s]:
         try:
-            render_shot(shots[sid], args, test)
+            it = shots[sid]
+            if isinstance(it, Still):
+                render_still(it, args, test)
+            elif isinstance(it, Task):
+                it.fn()
+            else:
+                render_shot(it, args, test)
         except Exception as e:                            # one bad shot must not stop the rest of the run
             import traceback
             traceback.print_exc()

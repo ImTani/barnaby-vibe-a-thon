@@ -1,0 +1,84 @@
+{
+ "complete": false,
+ "fps": 24,
+ "shots": [
+  {
+   "id": "s1_open",
+   "scene": 1,
+   "replaces": [
+    "world/01_wide_night.png",
+    "world/02_medium_night.png"
+   ],
+   "start": -0.5,
+   "frames": 384,
+   "status": "done",
+   "notes": "16 s, lived in: up from black (0.7-3.2 s, frames 30-90; baked in, drop the still's brightness grade), the room sits in lamp and monitor light with rain on the window and a car's lights sweeping the wall (frames 107-159), then one slow approach from the wide (frame 133) that lands framed on the monitor by frame 368 for the cut to the full-screen PC. Covers both s1 stills; full frame, no cam crop. 1920x1080, 12 samples.",
+   "screen_quad": [
+    [
+     332.2,
+     88.1
+    ],
+    [
+     1696.7,
+     135.0
+    ],
+    [
+     1628.1,
+     1020.9
+    ],
+    [
+     351.5,
+     874.5
+    ]
+   ]
+  },
+  {
+   "id": "s2_key_lamp",
+   "scene": 2,
+   "replaces": "world/03_keys_night.png",
+   "start": 37.54,
+   "frames": 79,
+   "status": "done",
+   "notes": "Theo's BACK OFFICE key drops in from above frame and lands on the keyboard on the key_tap (38.59) with a small bounce, the tag settling after; the desk lamp clicks off on lamp_click (39.79) and the room drops to the monitor's glow (baked in: drop the still's brightness grade). Slow push toward the key."
+  },
+  {
+   "id": "s3_timelapse",
+   "scene": 3,
+   "replaces": [
+    "world/02_medium_night.png",
+    "world/04_medium_monday.png"
+   ],
+   "start": 39.84,
+   "frames": 94,
+   "status": "rendering",
+   "notes": "Thursday night (lamp off, as s2 ends) -> daylight rakes across the desk and blows out -> Monday 08:52 (props swapped inside the white flash, ~41.35) -> push toward the screen's clock for the cut to shop-pc-04 at 'clock'. Brightness and the light sweep are baked in: drop the still's brightness grade and the CSS sweep overlay."
+  },
+  {
+   "id": "s3_shelf",
+   "scene": 3,
+   "replaces": "world/x_shelf_monday.png",
+   "start": 55.71,
+   "frames": 80,
+   "status": "done",
+   "notes": "Drawer 1 (BRAKE PADS) slides open from shut, one pair inside; ends on the approved still's state. Slow push toward the open drawer."
+  },
+  {
+   "id": "s5_afternoon",
+   "scene": 5,
+   "replaces": "world/04_medium_monday.png",
+   "start": 77.22,
+   "frames": 102,
+   "status": "done",
+   "notes": "Monday afternoon: the window sun slides slowly across the desk; slow push toward the monitor. Colour as approved (keep the film's AFT grade on top; drop the CSS sweep overlay)."
+  },
+  {
+   "id": "s9_shop_night",
+   "scene": 9,
+   "replaces": "world/x_close_night.png",
+   "start": 199.2,
+   "frames": 147,
+   "status": "rendering",
+   "notes": "18:40, Martin gone (keys_jingle 200.7), lamp off. The monitor (Tuesday's jobs page) dims at 201.5, goes dark at 202.6, then Barnaby's bell glows up in the corner; the power LEDs go blue -> amber as it sleeps. Ends on the approved still. Slow push."
+  }
+ ]
+}

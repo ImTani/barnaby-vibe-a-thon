@@ -41,6 +41,9 @@
         if (!sys.endpoints.find(x => x.key === k)) sys.endpoints.push({ key: k, tool: (d.tools[0] || '').split('__').pop(), method: 'GET', read_only: true, exposed: true, description: 'Written by Barnaby' });
       }
     }
+    if (ev.type === 'growth.compose.done' && sys) {
+      sys.skills = (sys.skills || []).concat([{ server: d.server, tool: d.tool, description: 'Composed by Synapse' }]);
+    }
     B.onEvent(ev);
   }
 

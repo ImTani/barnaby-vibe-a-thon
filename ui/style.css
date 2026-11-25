@@ -101,6 +101,7 @@ body.s-growing .status .dot{background:var(--build);animation:pulse .7s ease-in-
 .ep{font:11.5px var(--mono);padding:5px 8px;border-radius:7px;border:1px solid var(--hair);color:var(--muted);background:var(--bg)}
 .ep.exposed{border-color:var(--brass-mark);color:var(--ink);background:rgba(212,168,90,.08)}
 .ep.denied{text-decoration:line-through;opacity:.6}
+.ep.skill{border-style:solid;border-color:var(--brass-mark);color:var(--brass)}
 .ep.fresh{border-color:var(--build);color:var(--ink);box-shadow:0 0 0 3px rgba(144,133,233,.2)}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);padding:0 20px 8px}
 .connect{margin:6px 20px 24px;padding:14px;border:1px dashed var(--base);border-radius:12px;display:grid;gap:8px}

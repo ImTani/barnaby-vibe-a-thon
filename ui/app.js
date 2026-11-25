@@ -118,6 +118,10 @@
         const c = el('span', 'ep' + (e.exposed ? ' exposed' : '') + (e.denied ? ' denied' : '') + (S.fresh.has(e.key) ? ' fresh' : ''), e.key);
         c.title = e.description; eps.append(c);
       }
+      for (const k of s.skills || []) {               // composed skills (Synapse Custom mode)
+        const c = el('span', 'ep skill exposed' + (S.fresh.has('skill:' + k.tool) ? ' fresh' : ''), '✦ ' + k.tool);
+        c.title = k.description; eps.append(c);
+      }
       sec.append(eps); body.append(sec);
     }
   }
@@ -137,8 +141,10 @@
         setStatus('speaking'); break;
       case 'tool.call': {
         const ep = endpointFor(d.system, d.tool);
+        const skill = /-k\d+$/.test(d.system || '');     // a composed skill's own server, e.g. shop-k1
         const tier = !d.system || d.system === 'barnaby' ? (d.tool === 'build' ? 'build' : 'grow') : (ep && ep.read_only ? 'read' : 'write');
-        const label = d.system === 'barnaby' || !d.system ? `<b>Barnaby</b> · ${esc(d.tool)}` : `<b>${esc(d.system)}</b> · ${esc(d.tool)}`;
+        const label = d.system === 'barnaby' || !d.system ? `<b>Barnaby</b> · ${esc(d.tool)}`
+          : skill ? `<b>${esc(d.system.replace(/-k\d+$/, ''))}</b> · ✦ ${esc(d.tool)}` : `<b>${esc(d.system)}</b> · ${esc(d.tool)}`;
         const args = Object.keys(d.input || {}).length ? JSON.stringify(d.input) : (ep ? ep.key : '');
         const row = traceRow(tier + ' pending', label, args, tier);
         S.calls.set(d.id, row); showThinking(); break;
@@ -157,6 +163,11 @@
         traceRow('grow', `<b>Unlock</b> · ${esc(d.endpoint)}`, d.reason, 'proposed'); setStatus('growing'); break;
       case 'growth.unlock.done':
         S.fresh.add(d.endpoint); traceRow('grow ok', `<b>Unlocked</b> · ${esc(d.tool)}`, `Synapse rebuilt the server in ${d.seconds}s`, 'live'); refreshState(); break;
+      case 'growth.compose.proposed':
+        traceRow('grow', '<b>Compose</b> · a new skill', d.description, 'proposed'); setStatus('growing', 'composing'); break;
+      case 'growth.compose.done':
+        S.fresh.add('skill:' + d.tool);
+        traceRow('grow ok', `<b>Composed</b> · ${esc(d.tool)}`, `Synapse Custom mode, ${d.seconds}s`, 'live'); refreshState(); break;
       case 'growth.build.started':
         traceRow('build', `<b>Build</b> · ${esc(d.method)} ${esc(d.path)}`, d.spec, 'writing'); setStatus('growing', 'writing code'); break;
       case 'growth.build.step':

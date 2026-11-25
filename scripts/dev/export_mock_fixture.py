@@ -46,6 +46,7 @@ def main() -> int:
         for ep in summ["endpoints"]:
             ep["exposed"] = ep["key"] in connected["exposed"]
         summ["exposed"] = list(connected["exposed"])
+        summ["skills"] = []                                   # composed during the run, not before
         systems.append(summ)
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)

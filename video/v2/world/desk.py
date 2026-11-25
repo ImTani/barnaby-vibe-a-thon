@@ -1,7 +1,8 @@
 """Barnaby film v2: the back-office desk diorama at Spokes & Sprockets.
 
-Builds the whole set procedurally (no external assets except Windows fonts and the screen PNG) and renders stills
-with Eevee. Everything is reproducible from this file. See video/v2/WORLD.md for the world it depicts.
+Builds the whole set procedurally (no external assets except Windows fonts, the screen PNGs and Theo's handwriting
+on the sticky note, note_theo.png from make_note.py) and renders stills with Eevee. Everything is reproducible from
+this file. See video/v2/WORLD.md for the world it depicts.
 
 Run from the repo root (Git Bash):
     source scripts/env.sh
@@ -53,6 +54,7 @@ PLACEHOLDER = os.path.join(HERE, "screen_placeholder.png")
 FRAMES = os.path.normpath(os.path.join(HERE, "..", "look", "frames"))
 SCREEN_DIR = os.path.join(HERE, "screens")                  # made by make_screens.py (Tuesday patch, asleep)
 PHOTO_2009 = os.path.join(OUT, "photo_2009.png")            # rendered from the mini-set on first run
+NOTE_TEX = os.path.join(HERE, "note_theo.png")              # Theo's handwriting on the sticky note (make_note.py)
 FONT_DIR = r"C:\Windows\Fonts"
 
 # shot name -> (camera, lighting preset, output file, exposure offset)
@@ -4724,24 +4726,48 @@ def build_note(M, head):
     g = grp("sticky_note", (0.122, -0.0312, -0.168), (90, -4, 0), parent=head)
     s = 0.076
     bm = bmesh.new()
-    nx = 5
+    uvl = bm.loops.layers.uv.new("UVMap")
+    nx = 10                                                   # (the same curl as before, on a finer grid)
     vs = [[bm.verts.new((-s / 2 + s * i / nx, -s / 2 + s * j / nx,
                          0.0 if (-s / 2 + s * j / nx) > -0.02 else 0.011 * ((-0.02 - (-s / 2 + s * j / nx)) / 0.018) ** 2))
            for i in range(nx + 1)] for j in range(nx + 1)]
     for j in range(nx):
         for i in range(nx):
-            bm.faces.new((vs[j][i], vs[j][i + 1], vs[j + 1][i + 1], vs[j + 1][i]))
+            f = bm.faces.new((vs[j][i], vs[j][i + 1], vs[j + 1][i + 1], vs[j + 1][i]))
+            for lp in f.loops:                                # UV = the flat sheet: (0, 0) bottom left, top = v 1
+                lp[uvl].uv = (lp.vert.co.x / s + 0.5, lp.vert.co.y / s + 0.5)
     for f in bm.faces:
         f.normal_update()
         if f.normal.z < 0:
             f.normal_flip()
-    note = finish("note_paper", bm, M["sticky"], g, smooth=True)
+    hand = os.path.exists(NOTE_TEX)
+    note = finish("note_paper", bm, note_material(M) if hand else M["sticky"], g, smooth=True)
     sd = note.modifiers.new("Solid", "SOLIDIFY")
     sd.thickness = 0.0006
     sd.offset = -1
-    text("note_text", "Reports:\ncoming soon\n(sorry Uncle M)", "segoepr.ttf", 0.0115, (0.0, 0.009, 0.0004),
-         M["marker"], parent=g, line=0.8, fit=0.07, rot=(0, 0, 2))
+    if not hand:                                              # fallback: the font, if make_note.py hasn't run
+        text("note_text", "Reports:\ncoming soon\n(sorry Uncle M)", "segoepr.ttf", 0.0115, (0.0, 0.009, 0.0004),
+             M["marker"], parent=g, line=0.8, fit=0.07, rot=(0, 0, 2))
     return g
+
+
+def note_material(M):
+    """The sticky note's paper with Theo's felt-tip writing in it (note_theo.png, ink density from make_note.py):
+    black dye over the yellow, the heavy ink a touch glossier than the paper, pressed very slightly into it."""
+    m = mat("sticky_note", "#ebd062", 0.7, spec=0.35)
+    nt, b = m.node_tree, principled(m)
+    uvn = nt.nodes.new("ShaderNodeUVMap")
+    tx = nt.nodes.new("ShaderNodeTexImage")
+    tx.image = bpy.data.images.load(NOTE_TEX, check_existing=True)
+    tx.image.colorspace_settings.name = "Non-Color"
+    tx.interpolation = "Cubic"
+    tx.extension = "CLIP"
+    nt.links.new(uvn.outputs["UV"], tx.inputs["Vector"])
+    ink = _math(nt, "SUBTRACT", 1.0, tx.outputs["Color"])
+    nt.links.new(_mixc(nt, ink, "#ebd062", "#16181f"), b.inputs["Base Color"])
+    nt.links.new(_math(nt, "SUBTRACT", 0.7, _math(nt, "MULTIPLY", ink, 0.16)), b.inputs["Roughness"])
+    _bump(nt, b, _math(nt, "MULTIPLY", ink, -1.0), 0.05, 0.0002)
+    return m
 
 
 # ================================================================ lights, cameras, presets
@@ -5027,6 +5053,7 @@ WEAR_RULES = [
     (("cork", "mousepad", "felt_grey"), dict(rv=0.06, cv=0.03)),
     (("mouse2009",), dict(rv=0.05, smudge=0.55, scratch=0.35)),
     (("gloss",), dict(rv=0.04, smudge=0.3, scratch=0.12)),
+    (("sticky_note",), dict(rv=0.03)),
     (("bin_metal",), dict(rv=0.1, scratch=0.7, scuff=0.45, grime=0.5, smudge=0.2)),
     (("mustard",), dict(rv=0.05, scratch=0.15, smudge=0.15, edge=0.3, edge_val=1.2)),
     (("pc_dk", "key_worn", "bell_enamel", "helmet_shell", "ceramic", "teal", "bikered", "paper_cup",

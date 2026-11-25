@@ -35,7 +35,7 @@ render against this page.
 | Snake plant in a terracotta pot | Theo | shop: in the moving box; Lisbon: on the window sill ("plant survived the flight") |
 | 2009 photo, walnut frame, easel back | Theo | shop: standing on the right of the desk; Lisbon: on the desk by the monitors |
 | Moving box "THEO, LISBON" (plant, poster tube, hoodie) | Theo | Thursday only |
-| Sticky note "Reports: coming soon (sorry Uncle M)" | Theo | the only sticky note in the film; Martin peels it off once the report is built (Monday) |
+| Sticky note "Reports: coming soon (sorry Uncle M)" | Theo | the only sticky note in the film; Martin peels it off once the report is built (Monday). Written in black felt-tip: "Reports:" bigger with a quick underline, "coming soon", "(sorry Uncle M)" squeezed in smaller with a tiny sad face (`make_note.py` -> `note_theo.png`, mapped onto the curled note) |
 | README (pinned) | Theo | item 2: backup USB stick, desk drawer 2; item 3: supplier logins in the red binder; item 4: never trust the stock count on a Friday |
 | Backup USB stick, paper tag "BACKUP (Fridays!)" | Theo | desk drawer 2, left open, except on Tuesday morning when it's shut (Martin tidied up for Priya) |
 | Corkboard calendar (Wheelwright, Nov 2026) | Martin's (red pen, Ink Free) | Mon 16–Wed 18 crossed off, Fri 20 circled "THEO'S LAST DAY :("; Martin doesn't cross days off, so it's unchanged on Monday/Tuesday |

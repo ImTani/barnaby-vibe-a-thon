@@ -1,7 +1,8 @@
 /* 6 · A room Theo never built. Mon 23 Nov, 16:08-16:21. Late light on the desk -> the one sticky note on the bezel ->
  * the shop PC LIVE at 16:08: Theo's marquee crawling, the cursor drifting up to the tab "Reports (coming soon!!)" ->
- * Martin at the desk -> Theo's world LIVE (same-butler, his panel): the change written file by file, each count
- * climbing as its line types, then the checks running, one mark each, to "22 passed" -> Martin's glasses -> Martin's
+ * Martin at the desk (Theo's system live on the glass) -> on a copy: tracing paper over Martin's plan, the Workload
+ * room drafted in pencil, the code typed in the margin, the title block counting each file's lines, then Theo's 22
+ * checks stamped, "22 PASSED" (drafting()) -> Martin's glasses -> Martin's
  * world LIVE (martin-build): Barnaby's explanation card slides in (story.js build.card); "That one needs your click"
  * -> the cursor goes to "Add it"; "Fussy." -> the click -> Theo's system reloads (16:16): the status bar loads and
  * the tab "Reports (coming soon!!)" now says Reports -> on the plan the Workload room fills in where Reports was

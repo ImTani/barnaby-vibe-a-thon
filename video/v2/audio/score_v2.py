@@ -18,7 +18,10 @@ sum to the soundtrack), with sfx.wav also split into effects.wav and ambience.wa
   Lisbon; resolves with the bell and the titles. The run prints each section's cue time against its bar line.
 - Sound effects and ambience follow cues.json -> sfx (foley.py; sources and processing in SOUND.md).
 - Voices from video/v2/audio/voice/manifest.json (video/audio/voices.py, which also takes recorded lines via --takes).
-  Every line is levelled to the same loudness (BS.1770, gated; takes and TTS alike).
+  One chain for every line (v2.4, see voices()): HP 75 Hz; Supertone Clear (VST3, offline, cached in
+  .cache/audio/voice_chain/) on the recorded takes, Martin fully and Theo and Priya lightly; a 1/3-octave match EQ moving
+  each human speaker toward Barnaby's long-term spectrum (+-6 dB); a 5-9 kHz de-esser; 2.5:1 compression (~3-4 dB);
+  every line levelled to the same loudness (BS.1770, gated); one short room shared by all four voices.
   Off-screen lines (Martin from the workshop, the two goodnights from the door) are pushed back: high-cut and more
   room. Under speech (60 ms look-ahead) the music ducks -8 dB (up to 4 dB more where it runs hot) with a further -3 dB
   presence dip around 2.5 kHz, the ambience -4 dB and the effects -2 dB; the score steps back for the key turning, the
@@ -341,6 +344,199 @@ def envelope(x: np.ndarray, attack: float, release: float) -> np.ndarray:
 
 # ── voices ──
 VOICE_LEVEL = -20.5                                    # each line's loudness before the master (LUFS)
+CLEAR = PLUGINS / "VST3" / "Clear.vst3"                # Supertone Clear (AI noise reduction), hosted offline
+VOICE_CACHE = V2.parents[1] / ".cache" / "audio" / "voice_chain"
+# Clear's Ambience Gain (normalised): 0.0 = -60 dB (Martin's noisy mic), 0.1 = -20.7 dB (a light clean on the others);
+# Voice and Voice Reverb stay at 0 dB. Barnaby (ElevenLabs) is the reference and is not cleaned.
+CLEAR_AMB = {"Martin": 0.0, "Theo": 0.1, "Priya": 0.1}
+EQ_LIMIT = 6.0                                         # the match EQ's correction, at most +-6 dB per 1/3-octave band
+COMP = dict(ratio=2.5, attack=.015, release=.15, gr=3.0)   # gentle: ~3-4 dB of gain reduction on the louder words
+DEESS = (5000, 9000)                                   # the de-esser's band
+
+
+def _read_mono(p: Path) -> np.ndarray:
+    from scipy.signal import resample_poly
+    y, sr = sf.read(p, dtype="float32", always_2d=True)
+    if sr != SR:
+        y = resample_poly(y, SR // np.gcd(SR, sr), sr // np.gcd(SR, sr), axis=0).astype(np.float32)
+    return y.mean(1).astype(np.float32)
+
+
+def clear_takes(man: list[dict]) -> dict[str, np.ndarray]:
+    """Supertone Clear on the recorded takes (Martin, Theo, Priya), offline in DawDreamer, latency removed by
+    cross-correlation; cached under .cache/audio/voice_chain/ by the take's bytes and the setting."""
+    from scipy.signal import correlate
+    out, need = {}, []
+    for line in man:
+        who = line["who"]
+        if who not in CLEAR_AMB:
+            continue
+        p = HERE / line["file"]
+        key = hashlib.sha1(p.read_bytes() + f"clear1|{CLEAR_AMB[who]}".encode()).hexdigest()[:16]
+        c = VOICE_CACHE / f"{p.stem}_{key}.wav"
+        if c.exists():
+            out[line["file"]] = sf.read(c, dtype="float32")[0]
+        else:
+            need.append((line, p, c))
+    if not need:
+        return out
+    import dawdreamer as daw
+    VOICE_CACHE.mkdir(parents=True, exist_ok=True)
+    print(f"  Supertone Clear on {len(need)} takes ...")
+    eng = daw.RenderEngine(SR, BLOCK)
+    pl = eng.make_plugin_processor("clear", str(CLEAR))
+    src = eng.make_playback_processor("src", np.zeros((2, SR), np.float32))
+    eng.load_graph([(src, []), (pl, ["src"])])
+    pre, post = int(.3 * SR), int(.6 * SR)
+    for line, p, c in need:
+        y = _read_mono(p)
+        x = np.concatenate([np.zeros(pre, np.float32), y, np.zeros(post, np.float32)])
+        src.set_data(np.vstack([x, x]))
+        pl.set_parameter(0, CLEAR_AMB[line["who"]])          # ambience
+        pl.set_parameter(4, .5)                              # voice 0 dB
+        pl.set_parameter(8, .5)                              # voice reverb 0 dB
+        pl.set_parameter(15, 0.0)                            # not bypassed
+        eng.render(len(x) / SR)
+        a = eng.get_audio()[:, :len(x)].mean(0).astype(np.float32)
+        # the plugin's latency: the lag (0-200 ms) that best lines the output up with the input
+        L, maxlag = min(len(y), 4 * SR), int(.2 * SR)
+        cc = correlate(a[pre: pre + L + maxlag], x[pre: pre + L], mode="valid")
+        lag = int(np.argmax(cc[: maxlag + 1]))
+        z = a[pre + lag: pre + lag + len(y)]
+        z = np.pad(z, (0, len(y) - len(z))).astype(np.float32)
+        sf.write(c, z, SR, subtype="FLOAT")
+        out[line["file"]] = z
+        print(f"    {p.name}: latency {lag} samples")
+    return out
+
+
+def _voiced(x: np.ndarray, hop: int = 1024) -> np.ndarray:
+    """Frames (hop samples) that carry speech: within 30 dB of the line's loudest frames."""
+    m = len(x) // hop
+    r = 10 * np.log10((x[: m * hop].reshape(m, hop).astype(np.float64) ** 2).mean(1) + 1e-14)
+    return r > np.percentile(r, 95) - 30
+
+
+THIRD_OCT = 1000 * 2 ** (np.arange(-14, 13) / 3)        # 1/3-octave centres, 40 Hz - 16 kHz
+
+
+def ltas(xs: list[np.ndarray]) -> np.ndarray:
+    """Long-term average spectrum over the voiced frames, in 1/3-octave bands (dB)."""
+    nfft, hop = 4096, 1024
+    win = np.hanning(nfft)
+    acc, k = np.zeros(nfft // 2 + 1), 0
+    for x in xs:
+        v = _voiced(x, hop)
+        for i in np.nonzero(v)[0]:
+            f = x[i * hop: i * hop + nfft]
+            if len(f) < nfft:
+                break
+            acc += np.abs(np.fft.rfft(f * win)) ** 2
+            k += 1
+    acc /= max(k, 1)
+    fr = np.fft.rfftfreq(nfft, 1 / SR)
+    bands = []
+    for fc in THIRD_OCT:
+        sel = (fr >= fc * 2 ** (-1 / 6)) & (fr < fc * 2 ** (1 / 6))
+        bands.append(10 * np.log10(acc[sel].mean() + 1e-20))
+    return np.array(bands)
+
+
+def f0_median(xs: list[np.ndarray]) -> float:
+    """A speaker's median pitch (Hz): autocorrelation over 40 ms voiced frames, 70-400 Hz, frames with a clear period."""
+    from scipy.signal import decimate
+    f0s, n = [], 1920
+    for x in xs:
+        y = decimate(x.astype(np.float64), 4)                   # 12 kHz is plenty for a pitch estimate
+        v = _voiced(y, n // 4)
+        for i in np.nonzero(v)[0]:
+            f = y[i * n // 4: i * n // 4 + n // 4 * 2]
+            if len(f) < n // 2:
+                break
+            f = f - f.mean()
+            ac = np.correlate(f, f, "full")[len(f) - 1:]
+            lo, hi = int(12000 / 400), int(12000 / 70)
+            k = lo + int(np.argmax(ac[lo:hi]))
+            if ac[k] > .45 * ac[0]:
+                f0s.append(12000 / k)
+    return float(np.median(f0s)) if f0s else 120.0
+
+
+def match_curve(ref: np.ndarray, spk: np.ndarray, f0: float = 80.0) -> np.ndarray:
+    """The 1/3-octave correction moving a speaker's tonal balance toward the reference: level-matched over the bands
+    from 150 Hz (or 1.25 x the speaker's pitch) to 6 kHz, smoothed across neighbouring bands, held to +-EQ_LIMIT, and
+    eased to 0 dB below the speaker's own pitch (a voice has nothing there to match: Priya's sits an octave above
+    Barnaby's) and above 12 kHz."""
+    d = ref - spk
+    core = (THIRD_OCT >= max(150.0, 1.25 * f0)) & (THIRD_OCT <= 6000)
+    d = d - d[core].mean()
+    d = np.convolve(np.pad(d, 1, mode="edge"), [.25, .5, .25], mode="valid")
+    d = np.clip(d, -EQ_LIMIT, EQ_LIMIT)
+    edge = max(80.0, f0)
+    lo = np.clip(np.log2(THIRD_OCT / (edge * 2 ** (-1 / 3))) / (1 / 3), 0, 1)      # 0 a third below, 1 at the edge
+    hi = np.clip(np.log2(16000 / THIRD_OCT) / np.log2(16000 / 12000), 0, 1)
+    return d * lo * hi
+
+
+def apply_eq(x: np.ndarray, curve_db: np.ndarray) -> np.ndarray:
+    """A linear-phase FIR (4095 taps) through the 1/3-octave gains."""
+    from scipy.signal import firwin2, oaconvolve
+    f = np.concatenate([[0], THIRD_OCT, [SR / 2]])
+    g = np.concatenate([[curve_db[0]], curve_db, [curve_db[-1]]])
+    h = firwin2(4095, f / (SR / 2), 10 ** (g / 20))
+    return oaconvolve(x, h, mode="same").astype(np.float32)
+
+
+def _smooth_gain(gdb: np.ndarray, attack: float, release: float, hop: int) -> np.ndarray:
+    """One-pole attack/release smoothing of a gain-reduction curve (dB, <= 0) at `hop`-sample resolution."""
+    a_a, a_r = np.exp(-hop / (attack * SR)), np.exp(-hop / (release * SR))
+    out, cur = np.empty_like(gdb), 0.0
+    for i, g in enumerate(gdb):
+        cur = g + (a_a if g < cur else a_r) * (cur - g)
+        out[i] = cur
+    return out
+
+
+def _env_db(x: np.ndarray, hop: int, win: float = .01) -> np.ndarray:
+    m = len(x) // hop + 1
+    e = uniform_filter1d(x.astype(np.float64) ** 2, max(1, int(win * SR)))
+    e = np.pad(e, (0, m * hop - len(e)), mode="edge")[: m * hop].reshape(m, hop).max(1)
+    return 10 * np.log10(e + 1e-14)
+
+
+def deess(x: np.ndarray, pct=92.0, rel=3.0, ratio=.6, cap=6.0) -> tuple[np.ndarray, float]:
+    """A split-band de-esser: the 5-9 kHz band (zero-phase FIR split, so band + rest = the line exactly) comes down only
+    on the sibilants - where it runs above its own `pct` percentile in the line's voiced frames, or comes within `rel` dB
+    of the whole voice (an "s" dominating) - by (excess x `ratio`), at most `cap` dB; 2 ms attack, 60 ms release.
+    Returns (audio, the deepest cut in dB)."""
+    from scipy.signal import firwin, oaconvolve
+    h = firwin(1023, DEESS, pass_zero=False, fs=SR)
+    s = oaconvolve(x, h, mode="same").astype(np.float32)
+    rest = x - s
+    hop = 48
+    es, ef = _env_db(s, hop, .005), _env_db(x, hop, .005)
+    v = ef > ef.max() - 30
+    thr = np.percentile(es[v], pct) if v.any() else es.max()
+    over = np.maximum(np.maximum(es - thr, 0), np.maximum(es - (ef - rel), 0)) * ratio
+    gdb = _smooth_gain(-np.minimum(over, cap), .002, .06, hop)
+    g = np.repeat(10 ** (gdb / 20), hop)[: len(x)]
+    return (rest + s * g).astype(np.float32), float(-gdb.min())
+
+
+def compress(x: np.ndarray, ratio=2.5, attack=.015, release=.15, gr=3.5):
+    """A gentle RMS compressor, its threshold set per line so the louder words (90th percentile of the voiced
+    envelope) see about `gr` dB of gain reduction; 6 dB soft knee; makeup is left to the levelling that follows.
+    Returns (audio, gain reduction at the louder words in dB)."""
+    hop = 48
+    e = _env_db(x, hop, .02)
+    v = e > e.max() - 30
+    thr = np.percentile(e[v], 90) - gr / (1 - 1 / ratio)
+    over, knee = e - thr, 6.0
+    red = np.where(over <= -knee / 2, 0.0,
+                   np.where(over >= knee / 2, over, (over + knee / 2) ** 2 / (2 * knee))) * (1 - 1 / ratio)
+    gdb = _smooth_gain(-red, attack, release, hop)
+    g = np.repeat(10 ** (gdb / 20), hop)[: len(x)]
+    return (x * g).astype(np.float32), float(-np.percentile(gdb[v], 10))
 
 
 def offscreen(line: dict) -> float:
@@ -354,16 +550,45 @@ def offscreen(line: dict) -> float:
 
 
 def voices() -> np.ndarray:
+    """The dialogue: every line through one chain - high-pass 75 Hz, Supertone Clear on the recorded takes (Martin
+    fully, Theo and Priya lightly), a 1/3-octave match EQ moving each human speaker toward Barnaby's long-term spectrum
+    (+-6 dB), a 5-9 kHz de-esser, gentle 2.5:1 compression, the same loudness for every line, and one short room for
+    everyone (off-screen lines keep their high-cut and the bigger, farther room)."""
     man = json.loads((HERE / "voice" / "manifest.json").read_text(encoding="utf-8"))
-    from scipy.signal import resample_poly
-    out, far = cq.bus(), cq.bus()
+    out, far, near = cq.bus(), cq.bus(), cq.bus()
     import pyloudnorm as pyln
     meter = pyln.Meter(SR)
+    cleaned = clear_takes(man)
+    raw = {}
+    for line in man:
+        y = cleaned.get(line["file"])
+        if y is None:
+            y = _read_mono(HERE / line["file"])
+        raw[line["file"]] = cq.sos_filter(y, "highpass", 75).astype(np.float32)    # a recorded take may bring rumble
+    by = {}
+    for line in man:
+        by.setdefault(line["who"], []).append(raw[line["file"]])
+    curves = {}
+    if "Barnaby" in by:
+        ref = ltas(by["Barnaby"])
+        for who, xs in by.items():
+            if who == "Barnaby":
+                continue
+            f0 = f0_median(xs)
+            c = curves[who] = match_curve(ref, ltas(xs), f0)
+            show = [(f, g) for f, g in zip(THIRD_OCT, c) if min(abs(f / q - 1) for q in
+                                                                (100, 200, 400, 800, 1600, 3150, 5000, 8000, 12500)) < .06]
+            print(f"  match EQ {who:6} (pitch ~{f0:.0f} Hz): " + "  ".join(f"{f:,.0f} {g:+.1f}" for f, g in show) +
+                  f"  (dB; largest {np.abs(c).max():.1f})")
+    grs, ess = [], {}
     for i, line in enumerate(man, 1):
-        y, sr = sf.read(HERE / line["file"], dtype="float32", always_2d=True)
-        if sr != SR:
-            y = resample_poly(y, SR // np.gcd(SR, sr), sr // np.gcd(SR, sr), axis=0).astype(np.float32)
-        mono = cq.sos_filter(y.mean(1), "highpass", 75).astype(np.float32)     # a recorded take may bring rumble
+        mono = raw[line["file"]]
+        if line["who"] in curves:
+            mono = apply_eq(mono, curves[line["who"]])
+        mono, e = deess(mono)
+        ess.setdefault(line["who"], []).append(e)
+        mono, gr = compress(mono, **COMP)
+        grs.append(gr)
         # every line to the same loudness (BS.1770 integrated, block-gated, so pauses don't count): TTS lines and recorded
         # takes (the ElevenLabs Barnaby is mastered louder and more compressed) sit level with each other
         lk = meter.integrated_loudness(mono.astype(np.float64)) if len(mono) > .6 * SR else -99.0
@@ -380,10 +605,16 @@ def voices() -> np.ndarray:
             cq.place(far, mono, float(line["t"]), .55 * d, pan)
         else:
             cq.place(out, mono, float(line["t"]), 1.0, pan)
-            cq.place(far, mono, float(line["t"]), .07, pan)
+        cq.place(near, mono, float(line["t"]), .16, pan)                 # one short room for all four voices
+    print(f"  compression: {np.median(grs):.1f} dB median gain reduction on the louder words "
+          f"(range {min(grs):.1f}-{max(grs):.1f})")
+    print("  de-esser, deepest cut per line (median / max): " + ", ".join(
+        f"{w} {np.median(v):.1f}/{max(v):.1f} dB" for w, v in ess.items()))
     far = cq.sos_filter(far, "highpass", 220).astype(np.float32)
     room = cq.convolve(far, cq.make_ir(0.55, 1.2, "office", lp=6000, predelay=.008)) * .5
-    out = out + room.astype(np.float32)
+    near = cq.sos_filter(near, "highpass", 250).astype(np.float32)
+    small = cq.convolve(near, cq.make_ir(0.28, .6, "booth", lp=6500, predelay=.004)) * .5
+    out = out + room.astype(np.float32) + small.astype(np.float32)
     pk = float(np.abs(out).max())
     return out * cq.limiter_gain(out, 20 * np.log10(pk) - 6.0)
 

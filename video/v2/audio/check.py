@@ -214,9 +214,10 @@ def write_sound_md(res: dict) -> None:
         L += ["## Levels by category, against the dialogue", "",
               f"Each category re-rendered alone with the mix's ducking and master gain. The dialogue's reference: its typical "
               f"short-term (3 s) level {d['st_typ']} LUFS and typical momentary (400 ms) level {d['mom_typ']} LUFS while someone "
-              f"speaks (voice stem: peak {d['peak']} dBFS, integrated {d['integrated']} LUFS). Targets: beds -14 to -20 LU under "
-              "the dialogue (short-term max), the opening's rain and fan at the quiet end; foley and UI never louder than a "
-              "voice (momentary max under the dialogue's typical momentary level).", "",
+              f"speaks (voice stem: peak {d['peak']} dBFS, integrated {d['integrated']} LUFS). Targets (v2.4): beds 4-6 dB "
+              "under v2.3's -14 to -20 LU, so about -20 to -30 LU under the dialogue (short-term max), the opening's rain and "
+              "fan at the quiet end; foley and UI never louder than a voice (momentary max under the dialogue's typical "
+              "momentary level).", "",
               "| category | peak dBFS | short-term max LUFS (vs dialogue) | momentary max LUFS (vs dialogue) | integrated while playing LUFS (vs dialogue) |",
               "|---|---|---|---|---|"]
         for r in lv[1:]:

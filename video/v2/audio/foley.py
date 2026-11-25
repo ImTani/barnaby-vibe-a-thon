@@ -641,8 +641,40 @@ def radio_speaker(x):
     return filt(y.astype(np.float32), "lowpass", 2400)
 
 
-def bed(typ: str, n: int, seed: int) -> np.ndarray:
-    """A stereo ambience bed of n samples, normalised to unit RMS (levels are set in BED_GAIN)."""
+def clear_of_words(hush: np.ndarray | None, n: int) -> np.ndarray:
+    """1 where nobody speaks, 0 under the words (and 0.5 s before / 0.4 s after them), with 120 ms ramps: the voice
+    envelope (0-1) over a bed's span, widened. Used to keep the workshop's tool clinks out from under the dialogue."""
+    if hush is None:
+        return np.ones(n, np.float32)
+    h = np.pad(np.asarray(hush, np.float32)[:n], (0, max(0, n - len(hush))))
+    busy = (h > .05).astype(np.float32)
+    busy = maximum_filter1d(busy, int(.9 * SR), origin=-int(.05 * SR))       # 0.5 s ahead, 0.4 s behind
+    return (1 - uniform_filter1d(busy, int(.12 * SR))).clip(0, 1).astype(np.float32)
+
+
+CLINK = .55                                            # the workshop's tool clinks against its room tone (.7)
+
+
+def work_in_pauses(free: np.ndarray, seed: int, p: float, min_gap: float = 1.2, burst=(.6, 1.6)) -> np.ndarray:
+    """Someone at the parts trays, only between lines: each pause in the dialogue (`free` ~ 1) of at least `min_gap` s
+    gets one short burst with probability `p`, `burst` s long, somewhere inside the pause; 150 ms fades; 0 elsewhere."""
+    r = rng("pauses", seed)
+    n = len(free)
+    d = np.diff(np.concatenate([[0], (free > .99).astype(np.int8), [0]]))
+    g = np.zeros(n, np.float32)
+    for a, b in zip(np.nonzero(d == 1)[0], np.nonzero(d == -1)[0]):
+        L = (b - a) / SR
+        if L < min_gap or r.random() >= p:
+            continue
+        dur = min(L - .3, r.uniform(*burst))
+        s0 = a + int(r.uniform(.15, max(.15, L - dur - .15)) * SR)
+        g[s0: s0 + int(dur * SR)] = 1.0
+    return (uniform_filter1d(g, int(.15 * SR)) * free).astype(np.float32)
+
+
+def bed(typ: str, n: int, seed: int, hush: np.ndarray | None = None) -> np.ndarray:
+    """A stereo ambience bed of n samples, normalised to unit RMS (levels are set in BED_GAIN). `hush`: the voice
+    envelope over the bed's span (the workshop's clinks stay out from under it)."""
     def unit(x):
         x = filt(x, "highpass", 45)
         return x / (np.sqrt((x ** 2).mean()) + 1e-12)
@@ -673,15 +705,25 @@ def bed(typ: str, n: int, seed: int) -> np.ndarray:
         busy = typ == "bustle"
         tone = room_tone(n, seed, lp=220)
         nuts = loop_to(S("nuts"), n, seed + 1, xf=1.0)
-        nuts = tame(filt(filt(nuts, "lowpass", 5000), "highpass", 300), -30, 4) * gate_env(
-            n, seed + 2, on=.4 if busy else .25, min_len=1.5, max_len=4.0, floor=.05)
-        nuts = nuts / (np.sqrt((nuts ** 2).mean()) + 1e-12)
-        y = .7 * tone + .45 * nuts
+        # v2.4: the clinks thinned - fewer, quieter, and never under the dialogue. With the voice envelope (`hush`) they
+        # come only in the pauses between lines (a short burst in some of the pauses, see work_in_pauses); without it,
+        # on a sparse random gate. The bed's level is the room tone's, so taking clinks out doesn't lift the rest.
+        k = 1 / (np.sqrt((filt(.7 * tone, "highpass", 45) ** 2).mean()) + 1e-12)
+        nuts = tame(filt(filt(nuts, "lowpass", 5000), "highpass", 300), -30, 4)
+        nuts = nuts / (np.sqrt((nuts ** 2).mean()) + 1e-12)               # unit RMS while they sound
+        free = clear_of_words(hush, n)
+        if hush is not None:
+            gate = work_in_pauses(free, seed + 2, p=.65 if busy else .5)
+        else:
+            gate = gate_env(n, seed + 2, on=.22 if busy else .12, min_len=1.0, max_len=2.5, floor=0.0)
+        y = .7 * tone + CLINK * nuts * gate
         if busy:                                       # Tuesday: more hands at the trays, a mug now and then
-            cups = filt(loop_to(S("cups"), n, seed + 5, xf=.5), "lowpass", 6000) * gate_env(n, seed + 6, on=.15, floor=0)
+            cups = filt(loop_to(S("cups"), n, seed + 5, xf=.5), "lowpass", 6000)
             cups = cups / (np.sqrt((cups ** 2).mean()) + 1e-12)
-            y = y + .2 * cups
-        return unit(y)
+            cg = (work_in_pauses(free, seed + 6, p=.2, burst=(.4, .9)) if hush is not None
+                  else gate_env(n, seed + 6, on=.08, floor=0))
+            y = y + .5 * CLINK * cups * cg
+        return (filt(y, "highpass", 45) * k).astype(np.float32)
     if typ in ("street", "street_night"):              # below Theo's window in Lisbon: traffic, birds, night air
         night = typ == "street_night"
         y = traffic(n, seed, night)
@@ -711,8 +753,10 @@ CATEGORIES = {
 }
 
 # ambience levels as RMS before the master (the voices sit near -20 dBFS RMS)
-BED_GAIN = {"rain": .006, "fan": .004, "radio": .0035, "office_night": .005, "workshop": .0065, "bustle": .009,
-            "street": .008, "street_night": .0065}   # v2.3: the beds well under the dialogue (SOUND.md, levels table)
+# v2.4: every bed 4.4 dB lower than v2.3 (x 0.6), the opening rain and the PC fan 6 dB lower (x 0.5). The workshop
+# beds are now levelled by their room tone alone (3 dB under its v2.3 share); most of their drop is the thinned clinks.
+BED_GAIN = {"rain": .003, "fan": .002, "radio": .0021, "office_night": .003, "workshop": .0039, "bustle": .0054,
+            "street": .0048, "street_night": .0039}   # the beds well under the dialogue (SOUND.md, levels table)
 BED_PAN = {"fan": -.25, "radio": .45}
 
 SOURCES = {
@@ -821,9 +865,10 @@ PROCESS = {
     "radio": "the radio recording through a small speaker (BP 450 Hz-3 kHz, +4 dB at 1.1 kHz, soft saturation, LP 2.4 "
              "kHz), panned right, very low",
     "office_night": "a low room tone (synth: brown noise LP 160 Hz) with the machine loop -5 st LP 400 Hz under it",
-    "workshop": "room tone (synth) + tools now and then (the parts trays: nuts and bolts, BP 300 Hz-5 kHz, peak-compressed, "
-                "on a slow random gate ~25 % on, peak-compressed hard so no clink pokes out); no voices, no radio",
-    "bustle": "the same, busier (gate ~40 % on), and a mug now and then; no voices",
+    "workshop": "room tone (synth) + tools now and then (the parts trays: nuts and bolts, BP 300 Hz-5 kHz, peak-compressed "
+                "hard so no clink pokes out), thinned in v2.4: only in the pauses between lines (from 0.4 s after one to "
+                "0.5 s before the next), a 0.6-1.6 s burst in half the pauses of 1.2 s or more, quieter; no voices, no radio",
+    "bustle": "the same, busier (a burst in 65 % of the pauses), and a mug now and then (20 % of the pauses); no voices",
     "street": "traffic below the window (synth: a rumble and passing cars, each a filtered noise swell with a slow pan) + "
               "birds (HP 1.5 kHz); LP 6 kHz (the window); no voices",
     "street_night": "sparser traffic (synth) + night air (wind, LP 2.5 kHz); LP 4.5 kHz",
@@ -912,7 +957,8 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None, only: set | 
             if typ == "radio" and radio_off_t and t < radio_off_t < until:
                 until, fo = radio_off_t + .02, .03    # switched off: it stops on the click
             m = int((until - t) * SR)
-            y = bed(typ, m, k)
+            i0 = int(round(t * SR))
+            y = bed(typ, m, k, None if voice_env is None else voice_env[i0: i0 + m])
             tt = np.arange(m) / SR
             e = np.minimum(1, tt / fi) * np.clip((until - t - tt) / fo, 0, 1)
             y = y * (e * BED_GAIN[typ] * float(s.get("level", 1.0))).astype(np.float32)

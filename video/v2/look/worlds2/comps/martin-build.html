@@ -71,7 +71,7 @@
     d.querySelectorAll('.bell-dot').forEach(b => { const s = W2.svg(b, 40, 40); bell(s, 20, 20.5, 24.8, M.GOLD_LT); }); return d; };
   const C = S.card;
   const sideCard = alt(`<div class="here" style="background:${room('reports').hue}"><div class="dot bell-dot"></div><div><b>Reports</b><span>planned 2011</span></div></div>
-    <div class="who">Martin · 16:08</div><div class="martin-says">“${esc(S.martin)}”</div>
+    <div class="who">Martin</div><div class="martin-says">“${esc(S.martin)}”</div>
     <div class="card" style="border:3px solid ${room('reports').hue}"><h2 style="color:${room('reports').deep}">${esc(C.title)}</h2>
       <dl>${C.lines.map(([k, v]) => `<div><dt style="color:${room('reports').deep}">${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
       <div class="btns"><button class="btn yes" style="background:${room('reports').hue};border-color:${room('reports').hue}">${esc(C.yes)}</button><button class="btn">${esc(C.no)}</button></div></div>`);
@@ -83,6 +83,7 @@
     <div class="who">Martin</div><div class="martin-says">“${esc(HB.martin)}”</div>
     <div class="barnaby-says"><div class="bell bell-dot"></div><div class="hb-say"></div></div>${HB.cards.map(quick).join('')}`);
   const hbSay = sideHB.querySelector('.hb-say'), hbCards = [...sideHB.querySelectorAll('.card')], cardEl = sideCard.querySelector('.card');
+  const sayEls = { card: [sideCard.querySelector('.martin-says'), S.martin], handback: [sideHB.querySelector('.martin-says'), HB.martin] };
 
   const PASSAGE = [[10.55, 6.22], [6.95, 6.02], [5.05, 4.1]];
   /* film state (all optional; none = the approved frame, 16:16): room 0..1 the Workload room built (0 = "Reports,
@@ -133,6 +134,7 @@
       hbSay.parentNode.style.opacity = say > 0 ? '' : '0';
       hbCards.forEach((c, i) => { slide(c, n - i); pressBtn(c.querySelector('.yes'), press[i] || 0); });
     }
+    if (sayEls[which]) sayEls[which][0].textContent = '“' + (st.martinSay || sayEls[which][1]) + '”';   // his latest line
     when.textContent = st.time || '16:16';
     engine.textContent = st.foot == null ? FOOT : st.foot;
   }

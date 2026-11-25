@@ -23,6 +23,7 @@
             say: +clamp((t - V(14)) / (VE(14) - V(14) - .15)).toFixed(3), time: t < arrive ? '08:54' : '08:55',
             press: +(clamp((t - cu + .02) / .06) * (1 - clamp((t - cu - .16) / .14))).toFixed(3),
             keyRot: +(90 * easeInOutCubic(P(t, u, .4))).toFixed(2), given: t >= u + .42 ? 1 : 0,
+            martinSay: t >= V(17) ? 'Yes.' : t >= V(15) ? 'Go on, then.' : undefined,
           }),
           build: l => {
             flash = el('div', {}, l); css(flash, { left: '1251px', top: '669px', width: '80px', height: '80px', borderRadius: '50%', background: '#fff', mixBlendMode: 'screen' });

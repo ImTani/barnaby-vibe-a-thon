@@ -126,7 +126,7 @@ BUILD = r"""<script>
     d.querySelectorAll('.bell-dot').forEach(b => { const s = W2.svg(b, 40, 40); bell(s, 20, 20.5, 24.8, M.GOLD_LT); }); return d; };
   const C = S.card;
   const sideCard = alt(`<div class="here" style="background:${room('reports').hue}"><div class="dot bell-dot"></div><div><b>Reports</b><span>planned 2011</span></div></div>
-    <div class="who">Martin · 16:08</div><div class="martin-says">“${esc(S.martin)}”</div>
+    <div class="who">Martin</div><div class="martin-says">“${esc(S.martin)}”</div>
     <div class="card" style="border:3px solid ${room('reports').hue}"><h2 style="color:${room('reports').deep}">${esc(C.title)}</h2>
       <dl>${C.lines.map(([k, v]) => `<div><dt style="color:${room('reports').deep}">${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
       <div class="btns"><button class="btn yes" style="background:${room('reports').hue};border-color:${room('reports').hue}">${esc(C.yes)}</button><button class="btn">${esc(C.no)}</button></div></div>`);

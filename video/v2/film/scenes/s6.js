@@ -34,7 +34,7 @@
         { src: 'world/04_medium_monday.png', at: M('glasses'), fi: .35, grade: LATE, cam: [[M('glasses'), 600, 860, 2.0], [cardAt, 700, 880, 2.1]] },
         { src: 'comp/martin-build', at: cardAt, fi: .4,
           cam: [[cardAt, 1180, 560, 1.25], [cardAt + 1.2, 1500, 560, 1.5], [V(35), 1520, 600, 1.55], [cb, 1460, 700, 1.6]],
-          state: t => ({ room: 0, side: 'card', time: '16:16', foot: '', card: +clamp((t - cardAt - .3) / .6).toFixed(3), marker: [11.62, 2.45], passage: 1,
+          state: t => ({ room: 0, side: 'card', time: '16:16', foot: '', martinSay: t >= V(36) ? 'Fussy.' : t >= V(34) ? 'Add it.' : 'You can do that?', card: +clamp((t - cardAt - .3) / .6).toFixed(3), marker: [11.62, 2.45], passage: 1,
             press: [+(clamp((t - cb + .02) / .06) * (1 - clamp((t - cb - .14) / .14))).toFixed(3), 0] }),
           build: l => { rv.cur = cursor(l, 1.5); },
           over: t => {

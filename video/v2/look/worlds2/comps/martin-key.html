@@ -99,6 +99,7 @@
     // the side: Martin's line, Barnaby's (typed as he says it), the card sliding in, Allow pressed
     const say = st.say == null ? 1 : st.say, cardK = st.card == null ? 1 : st.card, press = st.press || 0;
     martinEl.style.opacity = st.martin == null || st.martin >= 1 ? '' : String(st.martin);
+    martinEl.textContent = '“' + (st.martinSay || S.martin) + '”';          // film: his latest line, as he says it
     barnabyEl.textContent = say >= 1 ? S.barnaby : S.barnaby.slice(0, Math.round(S.barnaby.length * Math.max(0, say)));
     barnabyEl.parentNode.style.opacity = say > 0 ? '' : '0';
     const ce = 1 - Math.pow(1 - cardK, 3);

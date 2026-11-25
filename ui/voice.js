@@ -11,6 +11,7 @@
   const audio = new Audio(); audio.autoplay = true;
   let pc = null, micTrack = null, connecting = null, holding = false;
   const handsfree = params.has('handsfree');
+  const APP = document.documentElement.dataset.skin === 'app';   // the app look says "Listening…" on the button while held
 
   async function connect() {
     if (pc && pc.connectionState === 'connected') return;
@@ -47,12 +48,13 @@
     holding = true;
     btn.classList.add('on'); B.setStatus('listening');
     await connect();
-    if (micTrack && holding) micTrack.enabled = true;
+    if (micTrack && holding) { micTrack.enabled = true; if (APP && !handsfree) label.textContent = 'Listening…'; }
   }
   function up() {
     if (!holding) return;
     holding = false;
     btn.classList.remove('on');
+    if (APP && label.textContent === 'Listening…') label.textContent = 'Hold to talk';
     if (micTrack && !handsfree) setTimeout(() => { if (!holding) micTrack.enabled = false; }, 350); // keep the tail of the word
     B.setStatus(null);
   }

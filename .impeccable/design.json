@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-25T00:00:00Z",
+  "title": "Design System: Barnaby · App",
+  "status": "pending the director's approval (?skin=app, ui/skins/app.css)",
+  "extensions": {
+    "colorMeta": {
+      "canvas": { "role": "neutral", "displayName": "Canvas" },
+      "panel": { "role": "neutral", "displayName": "Panel", "tonalRamp": ["#2B2A27", "#45433F", "#625F5A", "#86837C", "#AEABA4", "#D6D4CE", "#EEEDE9", "#F6F5F3"] },
+      "ink": { "role": "primary", "displayName": "Ink", "tonalRamp": ["#1D1C1A", "#3A3834", "#4F4D48", "#6B6963", "#8C8A83", "#C4C2BB", "#E6E4DF", "#F6F5F3"] },
+      "brass": { "role": "secondary", "displayName": "Bell brass", "tonalRamp": ["#3D2C0B", "#5E4411", "#8A6318", "#AA7C27", "#C69A4B", "#DCBE84", "#F0E1BD", "#F7F0E0"] },
+      "ok": { "role": "tertiary", "displayName": "Checks pass" },
+      "bad": { "role": "tertiary", "displayName": "Kept shut / error" }
+    },
+    "typographyMeta": {
+      "answer": { "displayName": "Answer", "purpose": "Barnaby's words in the current exchange; read from a step back." },
+      "card-title": { "displayName": "Card title", "purpose": "What he is asking for, in plain words." },
+      "question": { "displayName": "Question", "purpose": "What you asked; the subject of an exchange." },
+      "history": { "displayName": "History", "purpose": "Earlier answers in ink-2; card lead lines." },
+      "code": { "displayName": "Code", "purpose": "The diff, technical records and technical names only." }
+    },
+    "shadows": [
+      { "name": "card", "value": "0 1px 2px rgba(29,28,26,.06), 0 10px 28px -8px rgba(29,28,26,.16)", "purpose": "The decision card only: the one raised thing." },
+      { "name": "control", "value": "0 1px 2px rgba(29,28,26,.06)", "purpose": "Toolbar button and composer field." },
+      { "name": "pressed", "value": "inset 0 1px 2px rgba(29,28,26,.06)", "purpose": "Toolbar button while its panel is open." },
+      { "name": "sheet", "value": "-12px 0 32px -12px rgba(29,28,26,.25)", "purpose": "What he can do as a sheet below 960px." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(.22, .9, .3, 1)", "purpose": "Card arrival (rise 6px, 220ms), disclosure chevrons (150ms)." },
+      { "name": "state", "value": "150ms", "purpose": "Hover and pressed colour changes." },
+      { "name": "spinner", "value": "spin .9s linear infinite", "purpose": "The one moving indicator: the pending line in the conversation." },
+      { "name": "level", "value": "level 1s, staggered 120ms", "purpose": "Talk button level bars while held." }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "body.overlay (about 560px)" },
+      { "name": "narrow", "value": "960px" },
+      { "name": "phone", "value": "600px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The yes on a decision card, Connect. Always rightmost in a footer.",
+      "html": "<button class=\"ds-btn-primary\">Yes, go ahead</button>",
+      "css": ".ds-btn-primary { height: 44px; padding: 0 20px; border: 1px solid #1D1C1A; border-radius: 8px; background: #1D1C1A; color: #fff; font: 600 16px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; transition: background-color .15s; } .ds-btn-primary:hover { background: #3A3834; border-color: #3A3834; } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid #A67A26; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Not now, Decline, Close.",
+      "html": "<button class=\"ds-btn-secondary\">Not now</button>",
+      "css": ".ds-btn-secondary { height: 44px; padding: 0 20px; border: 1px solid #D6D4CE; border-radius: 8px; background: #fff; color: #1D1C1A; font: 600 16px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; transition: background-color .15s; } .ds-btn-secondary:hover { background: #EEEDE9; } .ds-btn-secondary:focus-visible { outline: 2px solid #A67A26; outline-offset: 2px; }"
+    },
+    {
+      "name": "Hold to Talk",
+      "kind": "button",
+      "refersTo": "button-talk",
+      "description": "The composer's main control; brass-ink with level bars while held.",
+      "html": "<button class=\"ds-talk\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5.5 11a6.5 6.5 0 0 0 13 0\"/><path d=\"M12 17.5V21\"/><path d=\"M9 21h6\"/></svg>Hold to talk</button>",
+      "css": ".ds-talk { display: inline-flex; align-items: center; gap: 10px; height: 52px; min-width: 158px; padding: 0 20px 0 16px; border: 1px solid #1D1C1A; border-radius: 12px; background: #1D1C1A; color: #fff; font: 600 16px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; transition: background-color .15s; } .ds-talk:hover { background: #3A3834; } .ds-talk:active { background: #8A6318; border-color: #8A6318; } .ds-talk:focus-visible { outline: 2px solid #A67A26; outline-offset: 2px; }"
+    },
+    {
+      "name": "Composer Field",
+      "kind": "input",
+      "refersTo": "composer-field",
+      "description": "Type a question; Ask turns primary when there is text.",
+      "html": "<form class=\"ds-ask\"><input placeholder=\"Ask Barnaby…\"><button type=\"button\">Ask</button></form>",
+      "css": ".ds-ask { display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 6px 0 16px; border: 1px solid #D6D4CE; border-radius: 12px; background: #fff; box-shadow: 0 1px 2px rgba(29,28,26,.06); } .ds-ask:hover { border-color: #C4C2BB; } .ds-ask:focus-within { border-color: #A67A26; box-shadow: 0 0 0 1px #A67A26; } .ds-ask input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: 400 17px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; color: #1D1C1A; } .ds-ask input::placeholder { color: #6B6963; } .ds-ask button { height: 40px; padding: 0 16px; border: 0; border-radius: 8px; background: #EEEDE9; color: #4F4D48; font: 600 15px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; } .ds-ask:has(input:not(:placeholder-shown)) button { background: #1D1C1A; color: #fff; }"
+    },
+    {
+      "name": "Decision Card",
+      "kind": "card",
+      "refersTo": "decision-card",
+      "description": "What he wants to do, why, the facts, the change behind a disclosure, and the yes and no with how they may be given.",
+      "html": "<section class=\"ds-card\"><div class=\"ds-head\"><span class=\"ds-kind\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"7.5\" cy=\"15.5\" r=\"3.5\"/><path d=\"M10 13l9-9\"/><path d=\"M16 7l2.2 2.2\"/><path d=\"M13.6 9.4l1.6 1.6\"/></svg></span><h3>Let Barnaby order parts from your suppliers</h3></div><p class=\"ds-lede\">To order ten pairs of brake pads from Madison for tomorrow's brake job.</p><dl class=\"ds-facts\"><dt>Each time</dt><dd>He still asks you before he does it.</dd></dl><div class=\"ds-foot\"><span>A new key needs a click, not a spoken yes.</span><button class=\"ds-no\">Not now</button><button class=\"ds-yes\">Yes, go ahead</button></div></section>",
+      "css": ".ds-card { max-width: 760px; background: #fff; border: 1px solid #D6D4CE; border-radius: 14px; box-shadow: 0 1px 2px rgba(29,28,26,.06), 0 10px 28px -8px rgba(29,28,26,.16); padding: 22px 24px 0; font-family: 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; color: #1D1C1A; } .ds-head { display: flex; gap: 14px; align-items: flex-start; } .ds-kind { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #F7F0E0; color: #8A6318; flex: none; } .ds-head h3 { margin: 0; padding-top: 6px; font: 600 21px/1.35 'Segoe UI Variable Display','Segoe UI',system-ui,sans-serif; letter-spacing: -.01em; } .ds-lede { margin: 6px 0 0 54px; font-size: 18px; line-height: 1.5; color: #4F4D48; } .ds-facts { margin: 18px 0 0 54px; padding-top: 16px; border-top: 1px solid #E6E4DF; display: grid; grid-template-columns: max-content 1fr; gap: 10px 24px; } .ds-facts dt { font-size: 15px; line-height: 26px; color: #6B6963; } .ds-facts dd { margin: 0; font-size: 17px; line-height: 26px; } .ds-foot { display: flex; align-items: center; gap: 10px; margin: 20px -24px 0; padding: 14px 24px; border-top: 1px solid #E6E4DF; background: #F6F5F3; border-radius: 0 0 14px 14px; } .ds-foot span { margin-right: auto; font-size: 15px; color: #4F4D48; } .ds-foot button { height: 44px; padding: 0 20px; border-radius: 8px; font: 600 16px/1 inherit; cursor: pointer; } .ds-no { border: 1px solid #D6D4CE; background: #fff; color: #1D1C1A; } .ds-no:hover { background: #EEEDE9; } .ds-yes { border: 1px solid #1D1C1A; background: #1D1C1A; color: #fff; } .ds-yes:hover { background: #3A3834; }"
+    },
+    {
+      "name": "Activity Step",
+      "kind": "custom",
+      "refersTo": "inspector",
+      "description": "One thing he did, in plain words, in the inspector; the technical record opens from a chevron on hover.",
+      "html": "<ul class=\"ds-steps\"><li class=\"ds-step\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg><div><div class=\"ds-say\">Looked at repair jobs due on Tue 24 Nov</div></div></li><li class=\"ds-step ds-ask\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"7.5\" cy=\"15.5\" r=\"3.5\"/><path d=\"M10 13l9-9\"/><path d=\"M16 7l2.2 2.2\"/><path d=\"M13.6 9.4l1.6 1.6\"/></svg><div><div class=\"ds-say\">Asked you for a key: order parts from your suppliers</div></div></li></ul>",
+      "css": ".ds-steps { list-style: none; margin: 0; padding: 8px; width: 380px; background: #F6F5F3; font-family: 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; } .ds-step { display: grid; grid-template-columns: 20px 1fr; gap: 10px; padding: 7px 8px; border-radius: 8px; color: #6B6963; } .ds-step:hover { background: #EEEDE9; } .ds-step svg { margin-top: 2px; } .ds-say { font-size: 16px; line-height: 1.4; color: #1D1C1A; } .ds-ask, .ds-ask .ds-say { color: #8A6318; font-weight: 600; }"
+    },
+    {
+      "name": "Toolbar Button",
+      "kind": "nav",
+      "refersTo": "button-toolbar",
+      "description": "What he can do; pressed while the panel is open.",
+      "html": "<button class=\"ds-tool\" aria-expanded=\"false\">What he can do</button>",
+      "css": ".ds-tool { height: 36px; padding: 0 14px; border: 1px solid #D6D4CE; border-radius: 8px; background: #fff; color: #1D1C1A; font: 600 15px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; box-shadow: 0 1px 1px rgba(29,28,26,.06); cursor: pointer; } .ds-tool:hover { background: #F6F5F3; } .ds-tool[aria-expanded=\"true\"] { background: #EEEDE9; box-shadow: inset 0 1px 2px rgba(29,28,26,.06); } .ds-tool:focus-visible { outline: 2px solid #A67A26; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A careful colleague's desk.",
+    "overview": "Barnaby's display is the one part of the product that is the app, so it is a real professional app, played straight: the conventions of Mail, Linear, Things 3 and the Claude desktop app, at their craft level, light by default. Nothing is a costume. Barnaby lives in the details: the bell tile, one brass accent, his words in every label and empty state, approvals that read like a colleague asking before he does something, and a voice control that feels native.",
+    "keyCharacteristics": [
+      "Light white canvas, a warm-neutral inspector, hairlines; one soft shadow, only on the card that needs an answer.",
+      "Segoe UI throughout (Variable on Windows 11), one fixed scale; mono only for code and technical names.",
+      "The current answer is the largest text on screen (22px); history steps back to 18px in a softer ink.",
+      "Plain words first everywhere; the technical record is one disclosure away, never in the way.",
+      "Brass means \"Barnaby\" or \"your turn\", and nothing else."
+    ],
+    "rules": [
+      { "name": "The Brass Rule", "body": "Brass appears only on his mark, the waiting and listening states, focus and selection. If brass shows up anywhere else, it is decoration and comes out.", "section": "colors" },
+      { "name": "The Never-Colour-Alone Rule", "body": "Every state carries an icon and a word: a tick and \"You said yes\", a key and \"Asks first\", a no-entry sign and \"Kept shut\".", "section": "colors" },
+      { "name": "The One Face Rule", "body": "One family carries every word; scale and weight make the hierarchy. Mono is for code only.", "section": "typography" },
+      { "name": "The Fixed Scale Rule", "body": "Sizes are fixed pixels, not fluid: a pixel on the shop's 19-inch 1440×900 panel is as large as on a 24-inch 1080p screen, so nothing shrinks for the smaller screen.", "section": "typography" },
+      { "name": "The One Raised Thing Rule", "body": "Only a card that needs an answer casts a real shadow. Never a zero-offset glow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do speak in the household's words on every surface the owner sees; technical names only in Details, \"See the change\" and \"Show technical names\".",
+      "Do say the status as a sentence in the present tense (\"Looking at repair jobs due on Tue 24 Nov\").",
+      "Do keep every yes and no in the thread, naming the thing, not its arguments.",
+      "Do keep the decision reachable: the card's footer docks while the card runs past the fold.",
+      "Do give every state an icon and a word; keep body text at ink or ink-2.",
+      "Do honour reduced motion (all animation off) and keep transitions at 150-220ms."
+    ],
+    "donts": [
+      "Don't add themes or costumes: road signs, tickets, liveries, paper, enamel, brass gradients.",
+      "Don't bring back the AI tell: dark navy and brass, italic serif bot voice, bubbles left and right, status pills, a monospace live trace.",
+      "Don't put a kicker or eyebrow above a heading, or a capsule around a state word.",
+      "Don't use brass for anything but his mark, the waiting and listening states, focus and selection.",
+      "Don't run more than one moving indicator at a time.",
+      "Don't promise what the app can't do: there is no way to take a key back yet, so no card says there is.",
+      "Don't call Barnaby's 3 new tests Theo's: \"Theo's 19 checks still pass, and so do the 3 new ones.\""
+    ]
+  }
+}

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barnaby's display, as a real app (pending approval)</title>
+<style>
+  :root { --ink: #1D1C1A; --ink-2: #4F4D48; --ink-3: #6B6963; --hair: #E6E4DF; --panel: #F6F5F3; --brass: #AA7C27;
+    --ui: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; --display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: var(--ink); font: 16px/1.55 var(--ui); -webkit-font-smoothing: antialiased; }
+  ::selection { background: #F0E1BD; }
+  main { max-width: 1480px; margin: 0 auto; padding: 48px 48px 96px; }
+  header { display: flex; align-items: center; gap: 14px; }
+  header .mark { width: 40px; height: 40px; border-radius: 10px; background: var(--brass) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4.6 16.4a7.4 7.4 0 0 1 14.8 0z' fill='white'/%3E%3Crect x='2.6' y='17.3' width='18.8' height='2.8' rx='1.3' fill='white'/%3E%3Cpath d='M12 9.1V6.9' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='5.4' r='1.7' fill='white'/%3E%3C/svg%3E") center / 24px no-repeat; }
+  h1 { margin: 0; font: 600 32px/1.2 var(--display); letter-spacing: -.015em; }
+  h2 { margin: 64px 0 12px; font: 600 22px/1.3 var(--display); }
+  h3 { margin: 28px 0 8px; font: 600 17px/1.3 var(--ui); }
+  p, li { max-width: 76ch; }
+  .lede { margin: 16px 0 0; font-size: 19px; color: var(--ink-2); max-width: 70ch; }
+  .pending { display: inline-block; margin-top: 14px; font-size: 14px; font-weight: 600; color: #8A6318; }
+  code { font: 14px "Cascadia Mono", Consolas, monospace; background: var(--panel); padding: 1px 5px; border-radius: 4px; }
+  .open { margin: 20px 0 0; padding: 16px 20px; background: var(--panel); border-radius: 12px; max-width: 900px; }
+  .open p { margin: 4px 0; }
+  ul.tight li { margin: 6px 0; }
+  table { border-collapse: collapse; margin-top: 8px; font-size: 15px; max-width: 1100px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--hair); }
+  th { font-weight: 600; color: var(--ink-2); }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 24px; margin-top: 16px; }
+  .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+  figure { margin: 0; }
+  figure img { display: block; width: 100%; height: auto; border: 1px solid var(--hair); border-radius: 8px; }
+  figure.narrow img { width: auto; max-width: 100%; max-height: 640px; }
+  figcaption { margin-top: 8px; font-size: 14px; color: var(--ink-2); }
+  figcaption a { color: inherit; }
+  .lead-shot img { border-radius: 10px; }
+  @media (max-width: 1000px) { .grid, .grid.three { grid-template-columns: 1fr; } main { padding: 32px 20px 64px; } }
+</style>
+</head>
+<body>
+<main>
+<header><span class="mark" aria-hidden="true"></span><h1>Barnaby's display, as a real app</h1></header>
+<p class="lede">The director's verdict on the last round: the default has the AI tell, and the road-sign and ticket skins are
+gimmicks, "and not like real apps". This round plays the category standard straight, at the craft level of Linear,
+Things 3, Messages and Mail on macOS, and the Claude desktop app. Barnaby lives in the details: the bell mark, one brass
+accent, his voice in the copy, approvals that read like a careful colleague asking, and a voice control that feels
+native. Every picture is the real <code>ui/</code> replaying the recorded run.</p>
+<span class="pending">Pending the director's approval. Nothing changes for anyone until it is approved.</span>
+<div class="open">
+  <p><b>Open it:</b> <code>.venv/Scripts/python -m barnaby serve</code>, then <code>http://127.0.0.1:8700/?skin=app</code>.
+  Add <code>&amp;mock=1</code> to replay the run, <code>&amp;turn=4</code> for the Build, <code>&amp;overlay=1</code> for the compact window.</p>
+  <p><b>Compare:</b> <code>/</code> is the old default, unchanged; <code>?skin=signpost</code> and <code>?skin=ticket</code> are last round's skins.</p>
+</div>
+
+<h2>An answer, at the owner's 1440×900</h2>
+<figure class="lead-shot"><img src="frames/app-answer-1440.png" alt="The app look at 1440 by 900: toolbar, the conversation with the latest answer large, the activity inspector on the right, the composer"><figcaption>Ask: the latest answer is the largest thing on screen, earlier exchanges step back, and what he did sits in plain words on the right · <a href="frames/app-answer-1920.png">1920×1080</a></figcaption></figure>
+
+<h2>In product terms</h2>
+<p>Written before any pixels: <a href="PRODUCT-NOTES.md">PRODUCT-NOTES.md</a>. In short:</p>
+<ul class="tight">
+  <li><b>Who and where.</b> The owner, 61, talking from a step back to a 2009-era PC at about 1440×900 (a pixel there is as big as on a modern 24-inch 1080p screen, so type is not scaled down for it); staff on the same machine; a developer at 1920×1080; a compact window about 560 wide.</li>
+  <li><b>Jobs, in order.</b> Talk (voice first, typing equal); read the answer; know what he is doing without noise; say yes or no with full understanding; see what he can do; connect a system.</li>
+  <li><b>States.</b> Empty, ready, working, waiting for your say-so, listening, error: each has one calm, legible form.</li>
+</ul>
+
+<h2>Design decisions, and why</h2>
+<table>
+  <tr><th>Decision</th><th>Why</th></tr>
+  <tr><td>Light, white canvas; a neutral inspector; one soft shadow, only on the card that needs you</td><td>Daylight, strip lights and a glossy panel; a 61-year-old reader. The card is the one raised thing because it is the one thing asking.</td></tr>
+  <tr><td>Segoe UI throughout (Variable on Windows 11), one fixed scale; mono only for code</td><td>The platform's own face reads as a real Windows app and is on every machine it runs on. No font download, no costume face.</td></tr>
+  <tr><td>Toolbar · conversation · inspector · composer</td><td>The conventions of Mail, Linear and the Claude app: you know where everything is before you notice the look.</td></tr>
+  <tr><td>Author lines, no bubbles; current answer 22px, history 18px</td><td>Bubbles and italic "bot voice" were the AI tell. A thread with names and times reads like Mail; the size step is how the owner finds the answer from a step back.</td></tr>
+  <tr><td>Status as one sentence in the present tense ("Looking at repair jobs due on Tue 24 Nov", "Waiting for your say-so")</td><td>Know what he is doing without noise. Only the line in the conversation moves; the toolbar and the step hold still.</td></tr>
+  <tr><td>"What he did" in plain words, a disclosure on each step for the technical record; earlier requests fold to short lines; a yes is listed before the act it allowed</td><td>"Show where he has been" without a developer trace on the owner's screen.</td></tr>
+  <tr><td>The decision card: icon, plain title, the why or what-it-does as a lead line, a facts table, "See the change" (with its size) and "Technical detail" folded, then a footer with how it may be answered and Not now / Yes</td><td>Reads top to bottom the way a decision is made. The footer docks to the bottom edge while the change is open, so yes and no are never scrolled away. Code and keys need a click; ordinary changes accept a spoken yes, and the card says which.</td></tr>
+  <tr><td>Every yes and no stays in the thread, naming the thing ("You said yes: Ten pairs of the Shimano resin pads from Madison…")</td><td>Consent is visible afterwards, in his words, not the system's arguments.</td></tr>
+  <tr><td>Hold to talk is the composer's primary control, with "or hold the space bar"; held, it turns brass, shows the level and says "Listening…"; "Let go when you've finished."</td><td>Voice is the main input; it should feel like dictation on a phone, not a feature.</td></tr>
+  <tr><td>"What he can do" takes the inspector's place: an inset grouped list by area, a state word on every ability, technical names behind one switch</td><td>Martin reads states; the developer turns the names on.</td></tr>
+  <tr><td>Brass (#AA7C27) only for his mark, the waiting state, listening, focus and selection</td><td>Identity in precise details, not a costume; the colour means "Barnaby" or "your turn".</td></tr>
+</table>
+
+<h2>Approvals</h2>
+<div class="grid">
+  <figure><img src="frames/app-unlock-1440.png" alt=""><figcaption>Unlock: a key to something the system already does · <a href="frames/app-unlock-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app-build-1440.png" alt=""><figcaption>Build: what it does, reads, changes, the checks, the undo; "a click, not a spoken yes" · <a href="frames/app-build-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app-change-1440.png" alt=""><figcaption>"See the change" open: the diff, with the decision docked in view · <a href="frames/app-change-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app-compose-1440.png" alt=""><figcaption>Compose: one step instead of several · <a href="frames/app-compose-1920.png">1920</a></figcaption></figure>
+</div>
+
+<h2>States</h2>
+<div class="grid">
+  <figure><img src="frames/app-empty-1440.png" alt=""><figcaption>Empty: a welcome that teaches the two controls, and the way in · <a href="frames/app-empty-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app-connect-1440.png" alt=""><figcaption>Connecting a system · <a href="frames/app-connect-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app-working-1440.png" alt=""><figcaption>Working: mid-build, the status and the pending line say what he is doing · <a href="frames/app-working-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app-listening-1440.png" alt=""><figcaption>Listening: held (with a stand-in voice bot, so the state is the one a connected bot gives) · <a href="frames/app-listening-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app-error-1440.png" alt=""><figcaption>Error: voice not running, said plainly, the raw message under Details · <a href="frames/app-error-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app-detail-1440.png" alt=""><figcaption>A step opened to its technical record (for the developer) · <a href="frames/app-detail-1920.png">1920</a></figcaption></figure>
+</div>
+
+<h2>What he can do</h2>
+<div class="grid">
+  <figure><img src="frames/app-map-1440.png" alt=""><figcaption>After the run, as the owner sees it · <a href="frames/app-map-1920.png">1920</a></figcaption></figure>
+  <figure><img src="frames/app-map-today-1440.png" alt=""><figcaption>Technical names on, scrolled to today's keys and the new report · <a href="frames/app-map-today-1920.png">1920</a></figcaption></figure>
+</div>
+
+<h2>Compact window (?overlay=1, 560 wide), and a phone-width check</h2>
+<div class="grid three">
+  <figure class="narrow"><img src="frames/app-overlay-560.png" alt=""><figcaption>The key card</figcaption></figure>
+  <figure class="narrow"><img src="frames/app-overlay-build-560.png" alt=""><figcaption>The Build card</figcaption></figure>
+  <figure class="narrow"><img src="frames/app-unlock-390.png" alt=""><figcaption>390 wide (not a target; it holds)</figcaption></figure>
+</div>
+
+<h2>Review and checks</h2>
+<ul class="tight">
+  <li><b>Finish review</b> by a fresh reviewer that saw only the screenshots and files: <b>fix</b>, with 8 material items
+  (kept decisions quoted the system's arguments; the toolbar count was the server's, not the replay's; capsule badges;
+  a narrow inspector; "One click." hints; technical names unfolded; compact-width hierarchy; FORM's pin). One fix batch,
+  then the verdict pass: 7 resolved, 1 partial, 3 small regressions, <b>disposition: fix</b>. The four open items (the
+  docked footer sits flush, the compact window keeps "Barnaby", the count keeps its noun, the status wraps at phone width)
+  were then fixed and checked by recapture and scripts. The reviewer has not scored them.</li>
+  <li><b>Behaviour:</b> <code>app/check.js --skins app</code> 31/31; <code>app2/check.js</code> 40/40 (the welcome,
+  present-tense status, the docked decision, listening, the plain voice error, Ask, keyboard focus, the abilities' state
+  words, technical names on request, plain kept decisions, the yes before the act, the toolbar count, no overflow at
+  1920, 1440 and 560). The old default, signpost and ticket still pass the original checks.</li>
+  <li><b>Detector</b> on the changed files: nothing material in the app look. The only material findings are in the
+  old default look (Palatino, Roboto, a pulsing dot), which is kept unchanged for comparison.</li>
+</ul>
+
+<h2>To make it the default</h2>
+<ul class="tight">
+  <li>In <code>ui/index.html</code>, set <code>var DEFAULT = 'app';</code>. The old look then stays at <code>?skin=classic</code>; signpost and ticket stay where they are.</li>
+  <li>Optionally, later: fold <code>ui/skins/app.css</code> into <code>ui/style.css</code> and drop the <code>APP</code> gates in <code>app.js</code>. Not needed to ship.</li>
+  <li>The film's screens and the walkthrough recording would then show this look by default.</li>
+</ul>
+<p style="color: var(--ink-3); font-size: 14px; margin-top: 40px">Frames: <code>node video/v2/look/app2/capture.js</code>. Checks: <code>node video/v2/look/app/check.js --skins app</code> and <code>node video/v2/look/app2/check.js</code> (both need the server running).</p>
+</main>
+</body>
+</html>

@@ -3,7 +3,10 @@
    ?overlay=1 gives the compact HUD for the hotkey window.
    ?skin=<name> (index.html loads ui/skins/<name>.css) turns on the household view: what Barnaby did in plain words
    with the technical detail folded under each step, every yes and no kept in the conversation, and cards that lead
-   with what it does, what it reads and changes, the checks and the undo. Without a skin nothing here changes. */
+   with what it does, what it reads and changes, the checks and the undo. Without a skin nothing here changes.
+   ?skin=app is the professional app look: the same household view, plus a few things only it uses (a lead line on
+   each card, the disclosures above the decision, a state word on every ability, a welcome that teaches the controls,
+   errors in plain words). Those are marked APP below. */
 (() => {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -12,10 +15,11 @@
   if (params.has('overlay')) document.body.classList.add('overlay');
   const SKIN = document.documentElement.dataset.skin || '';
   const HUMAN = !!SKIN;
+  const APP = SKIN === 'app';
   const COPY = { signpost: { trace: 'Where he went' }, ticket: { trace: 'Work done' } }[SKIN] || { trace: 'What he did' };
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const S = { systems: [], calls: new Map(), turn: 0, lastSaid: '', fresh: new Set(), busy: false,
+  const S = { systems: [], calls: new Map(), turn: 0, lastSaid: '', fresh: new Set(), keyed: new Set(), busy: false,
     now: Date.now(), titles: {}, rows: {}, grow: {}, skillNames: {}, built: '', pendingGrow: null, buildRow: null, group: null };
   const messages = $('#messages'), trace = $('#trace'), cards = $('#cards');
   const convo = messages.parentElement;
@@ -46,10 +50,21 @@
       li.append(el('span', 'when', clock()));
       if (/^user\b/.test(kind)) li.append(el('span', 'no', String(S.turn)));
     }
-    li.append(el('div', 'who', who), el('div', 'text', text));
+    if (APP && /\berror\b/.test(kind)) {
+      const [head, next] = plainError(who);
+      li.append(el('div', 'who', head), el('div', 'text', next));
+      if (text) li.append(fold('tech', 'Details', el('pre', 'technical-body', String(text))));
+    } else li.append(el('div', 'who', who), el('div', 'text', text));
+    if (APP) li.dataset.who = who;
     messages.append(li);
     settle();
     return li;
+  }
+  // APP: an error says what happened and what to do next; the raw message is folded under Details
+  function plainError(who) {
+    if (who === 'Voice') return ['Voice isn’t available just now', 'I can’t hear you at the moment. Type your question below instead, and I’ll answer as usual.'];
+    if (who === 'Mock') return ['The recorded run couldn’t be loaded', 'The replay needs ui/fixtures/demo-run.json.'];
+    return ['Something went wrong', 'I couldn’t finish that. Ask again in a moment, or see the details below.'];
   }
   function showThinking() {
     if (thinkingRow) return;
@@ -119,6 +134,12 @@
     return li;
   }
 
+  // the status says what he is doing now: "Looked at repair jobs…" (the step, once done) -> "Looking at repair jobs…"
+  const NOW = { Looked: 'Looking', Gave: 'Giving', Added: 'Adding', Booked: 'Booking', Changed: 'Changing', Marked: 'Marking',
+    Raised: 'Raising', Cancelled: 'Cancelling', Ordered: 'Ordering', Sent: 'Sending', Set: 'Setting', Made: 'Making',
+    Moved: 'Moving', Updated: 'Updating', Created: 'Creating', Removed: 'Removing', Deleted: 'Deleting', Recorded: 'Recording',
+    Assigned: 'Assigning', Used: 'Using', Checked: 'Checking' };
+  const doingNow = line => String(line || '').replace(/^\w+/, w => NOW[w] || w);
   const lowerFirst = s => (s ? s[0].toLowerCase() + s.slice(1) : s);
   const upperFirst = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -163,7 +184,11 @@
     return { line, sub };
   }
   function previewText(preview) {
-    try { const j = JSON.parse(preview); return j.map ? j.map(x => x.text || '').join('\n') : preview; } catch (_) { return preview; }
+    try { const j = JSON.parse(preview); return j.map ? j.map(x => x.text || '').join('\n') : preview; } catch (_) {
+      // a preview cut short is no longer JSON: still unwrap the text it carries, so the record reads as the system wrote it
+      const m = /^\[\{"type":\s*"text",\s*"text":\s*"([\s\S]*)$/.exec(preview || '');
+      return m ? m[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\') + ' …' : preview;
+    }
   }
   function failed(preview) {           // a system's own "ok": false, when the preview is whole enough to read
     try { const j = JSON.parse(preview); const f = JSON.parse(j[0].text); return f && f.ok === false ? (f.error || f.detail || 'It didn’t work') : ''; } catch (_) { return ''; }
@@ -231,7 +256,7 @@
   // the test line (technical) and the diff sit folded underneath.
   function showCard(a) {
     if (document.getElementById('card-' + a.id)) return;
-    S.titles[a.id] = a.title;
+    S.titles[a.id] = APP && a.tier === 'write' && a.detail ? plainAsk(a.detail) : a.title;
     if (HUMAN) return showCardHuman(a);
     const labels = { write: 'Confirm a change', grow: 'Barnaby would like a new ability', build: 'Barnaby made something new' };
     const card = el('div', 'card ' + a.tier); card.id = 'card-' + a.id;
@@ -249,6 +274,7 @@
     card.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
   function showCardHuman(a) {
+    if (APP) return showCardApp(a);
     const f = cardFacts(a);
     const card = el('section', `card ${a.tier} k-${a.kind || 'call'}`); card.id = 'card-' + a.id;
     card.setAttribute('aria-label', f.head);
@@ -278,20 +304,77 @@
     cards.append(card);
     bringIntoView(card);
   }
+  // APP: the card reads top to bottom the way a decision is made: what and why, the facts, the change and the
+  // technical record for whoever wants them, and last the yes and the no, with how they may be given.
+  function diffMeta(diff) {
+    const lines = diff.split('\n');
+    const files = lines.filter(l => l.startsWith('diff --git')).length;
+    const added = lines.filter(l => l.startsWith('+') && !l.startsWith('+++')).length;
+    const removed = lines.filter(l => l.startsWith('-') && !l.startsWith('---')).length;
+    return `${files} file${files === 1 ? '' : 's'}, ${added} line${added === 1 ? '' : 's'} added, ${removed ? removed + ' removed' : 'nothing removed'}`;
+  }
+  function showCardApp(a) {
+    const f = cardFacts(a);
+    let rows = f.rows, lede = '';
+    if (rows.length && /^(What it does|Why|)$/.test(rows[0][0])) { lede = rows[0][1]; rows = rows.slice(1); }
+    const card = el('section', `card ${a.tier} k-${a.kind || 'call'}`); card.id = 'card-' + a.id;
+    card.setAttribute('aria-label', f.head);
+    const head = el('div', 'head'); head.append(icon(KIND_ICON[a.kind] || 'pen', 'kind'), el('h3', 'title', f.head));
+    card.append(head);
+    if (lede) card.append(el('p', 'lede', lede));
+    if (rows.length) {
+      const dl = el('dl', 'facts');
+      for (const [k, v] of rows) {
+        const r = el('div', 'fact' + (k === 'Checks' ? ' checks' : ''));
+        const dd = el('dd'); if (k === 'Checks') dd.append(icon('done', 'ok')); dd.append(document.createTextNode(v));
+        r.append(el('dt', '', k), dd); dl.append(r);
+      }
+      card.append(dl);
+    }
+    if (a.diff) {
+      const body = el('div', 'change-body'); body.append(renderDiff(a.diff));
+      const d = fold('change', '', body), sum = d.querySelector('summary'), lab = el('span', 'lab', 'See the change');
+      sum.append(lab, el('span', 'meta', diffMeta(a.diff)));
+      d.addEventListener('toggle', () => {
+        lab.textContent = d.open ? 'Hide the change' : 'See the change';
+        if (d.open) bringIntoView(card);
+      });
+      card.append(d);
+    }
+    if (a.technical) card.append(fold('technical', 'Technical detail', el('div', 'technical-body', a.technical)));
+    const actions = el('div', 'actions');
+    const yes = el('button', 'primary', a.tier === 'build' ? 'Yes, add it' : a.tier === 'grow' ? 'Yes, go ahead' : 'Approve');
+    const no = el('button', 'secondary', a.tier === 'write' ? 'Decline' : 'Not now');
+    yes.type = no.type = 'button';
+    yes.onclick = () => decide(a.id, true); no.onclick = () => decide(a.id, false);
+    const hint = el('span', 'hint', a.voice_ok ? 'Or just say “yes”.' : a.tier === 'build' ? 'A change like this needs a click, not a spoken yes.'
+      : a.kind === 'unlock' ? 'A new key needs a click, not a spoken yes.' : 'A new step like this needs a click, not a spoken yes.');
+    actions.append(hint, no, yes);
+    card.append(actions);
+    cards.append(card);
+    bringIntoView(card);
+  }
+  function plainAsk(t) {
+    return upperFirst(String(t).trim().replace(/,?\s*shall I\??$/i, '').replace(/^I(?:'|’)ll\s+/, '').replace(/\.$/, ''));
+  }
   async function decide(id, approved) {
     document.querySelectorAll(`#card-${id} button`).forEach(b => (b.disabled = true));
     await fetch(`/api/approvals/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ approved, via: 'click' }) });
   }
 
   // ── systems ──
+  let stateAsked = 0;
   async function refreshState() {
+    const n = ++stateAsked;
     const r = await fetch('/api/state'); const st = await r.json();
+    if (n !== stateAsked) return;
     S.systems = st.systems; S.busy = st.busy;
     renderChips(); renderMap();
     st.approvals.forEach(showCard);
   }
   function renderChips() {
     const box = $('#systems-chips'); box.textContent = '';
+    if (APP) document.body.classList.toggle('no-system', !S.systems.length);
     if (HUMAN && !S.systems.length) {
       const chip = el('div', 'sys-chip none'); chip.append(el('b', '', 'No system yet'), el('span', '', 'Point him at one to begin'));
       box.append(chip);
@@ -300,7 +383,7 @@
       const chip = el('div', 'sys-chip');
       const n = s.endpoints.length, x = s.exposed.length;
       if (HUMAN) {
-        chip.append(el('b', '', upperFirst(s.title || s.name)), el('span', '', `he can use ${x} of ${n} things`));
+        chip.append(el('b', '', upperFirst(s.title || s.name)), el('span', '', APP ? `He can use ${x} of its ${n} things` : `he can use ${x} of ${n} things`));
         box.append(chip); continue;
       }
       chip.innerHTML = `<b>${esc(s.name)}</b><span>${x} of ${n} tools</span>`;
@@ -329,18 +412,30 @@
       sec.append(eps); body.append(sec);
     }
   }
+  // APP: a technical name may break after a slash or an underscore (a <wbr>, so a copied name stays whole)
+  function techName(t) {
+    const c = el('code', 'tech');
+    String(t).split(/(?<=[/_])/).forEach((part, i) => { if (i) c.append(document.createElement('wbr')); c.append(part); });
+    return c;
+  }
   // the plan of the house, in plain words: every thing the system can do, by area, with its state as a mark and a word
   function renderMapHuman() {
     const body = $('#map-body'); body.textContent = '';
     if (!S.systems.length) {
-      body.append(el('p', 'sys empty', 'No system yet. Point Barnaby at one below: he reads its code and lists everything it can do, and to start he only uses the things that look something up.'));
+      body.append(el('p', 'sys empty', APP ? 'No system connected yet.' : 'No system yet. Point Barnaby at one below: he reads its code and lists everything it can do, and to start he only uses the things that look something up.'));
       return;
     }
     const legend = el('ul', 'legend');
-    for (const [ico, cls, txt] of [['use', 'use', 'He can use it'], ['key', 'key', 'He asks you first'], ['shut', 'shut', 'Kept shut, whoever asks'], ['room', 'new', 'New today']]) {
+    for (const [ico, cls, txt] of [[APP ? 'can' : 'use', 'use', 'He can use it'], ['key', 'key', 'He asks you first'], ['shut', 'shut', 'Kept shut, whoever asks'], ['room', 'new', APP ? 'Added today' : 'New today']]) {
       const li = el('li', cls); li.append(icon(ico), el('span', '', txt)); legend.append(li);
     }
     body.append(legend);
+    if (APP) {                       // for whoever looks after the code: the technical name under each ability, on request
+      const t = el('button', 'tech-toggle', 'Show technical names'); t.type = 'button';
+      const show = on => { S.showTech = on; $('#map').classList.toggle('show-tech', on); t.setAttribute('aria-pressed', String(on)); t.textContent = on ? 'Hide technical names' : 'Show technical names'; };
+      t.onclick = () => show(!S.showTech); show(!!S.showTech);
+      body.append(t);
+    }
     for (const s of S.systems) {
       const sec = el('section', 'sys');
       sec.append(el('h3', '', upperFirst(s.title || s.name)), el('p', 'sub', `He can use ${s.exposed.length} of the ${s.endpoints.length} things it can do.`));
@@ -357,11 +452,12 @@
         const ul = el('ul', 'abilities');
         for (const e of list) {
           const state = e.denied ? 'shut' : e.exposed ? 'use' : 'key';
-          const fresh = S.fresh.has(e.key);
+          const fresh = S.fresh.has(e.key), keyed = APP && S.keyed.has(e.key);   // APP: a key given today is not a new piece
           const li = el('li', `ab ${state}${fresh ? ' new' : ''}`);
-          li.append(icon(fresh ? 'room' : state), el('span', 'what', upperFirst(sentence(e.description) || e.tool.replace(/_/g, ' '))));
-          if (fresh) li.append(el('span', 'today', 'today'));
-          li.append(el('code', 'tech', e.key));
+          li.append(icon(APP && (keyed || (state === 'use' && !fresh)) ? 'can' : fresh ? 'room' : state), el('span', 'what', upperFirst(sentence(e.description) || e.tool.replace(/_/g, ' '))));
+          if (APP) li.append(el('span', fresh ? 'today' : 'state', keyed ? 'Key given today' : fresh ? 'Added today' : { use: 'Can use', key: 'Asks first', shut: 'Kept shut' }[state]));
+          else if (fresh) li.append(el('span', 'today', 'today'));
+          li.append(APP ? techName(e.key) : el('code', 'tech', e.key));
           li.title = e.description || '';
           ul.append(li);
         }
@@ -374,8 +470,9 @@
           const fresh = S.fresh.has('skill:' + k.tool);
           const li = el('li', `ab use${fresh ? ' new' : ''}`);
           li.append(icon('passage'), el('span', 'what', S.skillNames[k.tool] || k.name || upperFirst(k.tool.replace(/_/g, ' '))));
-          if (fresh) li.append(el('span', 'today', 'today'));
-          li.append(el('code', 'tech', k.tool));
+          if (APP) li.append(el('span', fresh ? 'today' : 'state', fresh ? 'Added today' : 'Can use'));
+          else if (fresh) li.append(el('span', 'today', 'today'));
+          li.append(APP ? techName(k.tool) : el('code', 'tech', k.tool));
           ul.append(li);
         }
         sec.append(ul);
@@ -461,7 +558,8 @@
         const own = !d.text.startsWith('[Barnaby system]');
         if (own) addMsg('user', 'You', d.text);
         const sep = el('li', 'turn-sep');
-        sep.append(el('span', 'no', `No. ${d.turn} · ${clock()}`), el('span', 'q', own ? d.text : 'Getting started'));
+        if (APP) sep.append(el('span', 'q', own ? d.text : 'Getting started'), el('span', 'when', clock()));
+        else sep.append(el('span', 'no', `No. ${d.turn} · ${clock()}`), el('span', 'q', own ? d.text : 'Getting started'));
         trace.append(sep);
         setStatus('thinking'); showThinking(); break;
       }
@@ -477,22 +575,29 @@
         }
         const ep = endpointFor(d.system, d.tool);
         const p = plainCall(d, ep);
-        const row = stepRow('doing', p.line, p.sub,
+        const row = stepRow('doing', APP ? doingNow(p.line) : p.line, p.sub,
           `${d.system} · ${d.tool}${ep ? ' · ' + ep.key : ''}\n${JSON.stringify(d.input || {})}`, ep && !ep.read_only ? 'pen' : 'look');
-        row.dataset.sub = p.sub;
-        S.calls.set(d.id, row); setStatus('thinking', p.line); showThinking(); break;
+        row.dataset.sub = p.sub; row.dataset.line = p.line; S.lastCall = row;
+        S.calls.set(d.id, row); setStatus('thinking', doingNow(p.line)); showThinking(); break;
       }
       case 'tool.result': {
         const row = S.calls.get(d.id); if (!row) break;
         const why = d.ok ? failed(d.preview) : (previewText(d.preview) || 'It didn’t work');
-        setStep(row, why ? 'err' : 'done', null, why ? why.slice(0, 120) : row.dataset.sub || '');
+        setStep(row, why ? 'err' : 'done', APP ? row.dataset.line : null, why ? why.slice(0, 120) : row.dataset.sub || '');
         addTech(row, '→ ' + previewText(d.preview).slice(0, 1600)); break;
       }
       case 'approval.requested': {
         if (thinkingRow) { thinkingRow.remove(); thinkingRow = null; }
         showCard(d);
         if ((d.kind === 'unlock' || d.kind === 'compose') && S.pendingGrow) { S.rows[d.id] = S.pendingGrow; S.pendingGrow = null; }
-        else S.rows[d.id] = stepRow('ask', `Asked you: ${d.title}`, '', null, KIND_ICON[d.kind] || 'pen');
+        else {
+          S.rows[d.id] = stepRow('ask', `Asked you: ${S.titles[d.id] || d.title}`, '', null, KIND_ICON[d.kind] || 'pen');
+          const call = S.lastCall;                     // APP: the order or the change waits under the yes it needs
+          if (APP && call && call.classList.contains('doing') && call.nextElementSibling === S.rows[d.id]) {
+            trace.insertBefore(S.rows[d.id], call);
+            if (d.detail) { call.dataset.sub = S.titles[d.id]; setStep(call, 'doing', null, S.titles[d.id]); }
+          }
+        }
         setStatus('growing'); break;
       }
       case 'approval.resolved': case 'approval.auto': {
@@ -514,7 +619,7 @@
         S.grow['row:' + d.endpoint] = S.pendingGrow;
         setStatus('growing'); break;
       case 'growth.unlock.done': {
-        S.fresh.add(d.endpoint);
+        S.fresh.add(d.endpoint); S.keyed.add(d.endpoint);
         const row = S.grow['row:' + d.endpoint], ability = S.grow[d.endpoint] || d.tool;
         if (row) { setStep(row, 'done', `Key given: ${ability}`, '', 'key'); addTech(row, `unlocked ${d.endpoint} as ${d.tool} (${d.seconds}s)`); }
         else stepRow('done', `Key given: ${ability}`, '', `unlocked ${d.endpoint}`, 'key');
@@ -613,11 +718,27 @@
     const tr = trace.closest('section'); tr.setAttribute('aria-label', COPY.trace); $('h2', tr).textContent = COPY.trace;
     const talk = $('#talk'); talk.prepend(icon('mic', 'mic'));
     talk.after(el('span', 'talk-hint', 'or hold the space bar'));
+    if (APP) {
+      $('#toggle-map').prepend(icon('plan'));
+      const h = $('#connect-form h3');
+      h.textContent = 'Connect a system';
+      h.after(el('p', 'help', 'Barnaby reads its code and lists everything it can do. To begin, he only uses the things that look something up.'));
+    }
     setStatus(null);
   }
 
   // empty state: Barnaby introduces himself (removed by the first real message)
   const hello = addMsg('barnaby intro', 'Barnaby', 'Good day. Point me at a system and ask me anything about it; if it can’t do what you need yet, I’ll see what can be done.');
+  if (APP) {                       // a welcome that teaches the two controls, and the way in when there is no system yet
+    const how = el('ul', 'how');
+    for (const [ico, txt] of [['mic', 'Hold the button below, or the space bar, and ask out loud.'], ['keys', 'Or type your question and press Enter.']]) {
+      const li = el('li'); li.append(icon(ico), el('span', '', txt)); how.append(li);
+    }
+    const go = el('button', 'connect-first', 'Connect a system'); go.type = 'button';
+    go.prepend(icon('plug'));
+    go.onclick = () => { toggleMap(true); const f = $('#connect-form input'); if (f) f.focus(); };
+    hello.append(how, go);
+  }
   const observer = new MutationObserver(() => { if (messages.children.length > 1) { hello.remove(); observer.disconnect(); } });
   observer.observe(messages, { childList: true });
 

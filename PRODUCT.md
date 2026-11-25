@@ -89,6 +89,13 @@ before he goes anywhere new.
   Build = a new room.
 - **Not** a generic AI dashboard: no assistant clichés (glowing orbs, sparkles, gradients), and no developer trace on the
   owner's or staff's screen (it lives in the developer's view).
+- **The display is a real professional app; identity in precise details, not a costume** (director, 25 Nov, choosing
+  the standing exit after the themed skins read as gimmicks). Barnaby's display is the one part of the product that is
+  actually the app, so it plays the category standard straight, at full fidelity: light by default, a workhorse UI
+  face, familiar conventions, real typography and spacing. The craft bar is the products it should sit alongside:
+  **Linear, Things 3, Apple Messages and Mail on macOS, and the Claude desktop app.** Barnaby lives in the details: the
+  bell mark, one restrained warm accent, his voice in the copy, approvals that feel trustworthy, a native voice
+  control. No themed worlds (signs, tickets, liveries) on the working display.
 
 ## Evidence on Hand
 

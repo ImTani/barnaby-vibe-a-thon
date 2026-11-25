@@ -6,7 +6,7 @@
  * (Kwame's, Jana's) a ring at Ravi's stand and the same walk, quicker each time, all on the plan -> "the same four
  * steps" (the stops pulse in turn) ->
  * "Give me a moment." -> the passage draws through them: Hand back a bike + the script's engine note -> Tom's
- * Brompton: one step along the passage. */
+ * Brompton (Dev's job 4481: the ring at Dev's stand, Barnaby goes over): one step along the passage. */
 (function () {
   const C = CUES.scenes[4], S = C.start, E = C.end, FI = .4;
   const AFT = 'sepia(.22) saturate(1.12) hue-rotate(-6deg) brightness(1.02)';
@@ -38,7 +38,10 @@
       // one shot on the plan from Sofia's cards to Tom's: a slow push in over the three walks, closer for the passage
       const planCam = [[V(19) - .1, 1480, 450, 1.6], [M('cards2') + .9, 1500, 455, 1.62], [M('walk1') - .25, 1480, 470, 1.6],
         [M('walk1') + .25, 640, 560, 1.6], [four, 600, 540, 1.85], [M('passage'), 590, 520, 1.95], [w4, 600, 520, 2.0], [E, 620, 520, 1.92]];
-      const CLUNKS = [M('clunk2'), M('clunk3'), M('clunk4')];                                 // a bike comes off Ravi's stand
+      // a bike comes off a stand: Kwame's 4490 and Jana's 4488 are Ravi's, Tom's 4481 is Dev's (shop-data.js)
+      const RAVI = [10.6, 6.9], DEV = [8.2, 6.9];
+      const CLUNKS = [[M('clunk2'), RAVI], [M('clunk3'), RAVI], [M('clunk4'), DEV]];
+      const TOM = [DEV, [8.2, 6.09]].concat(PASSAGE.slice(1));                               // from Dev's stand onto the passage
       function planState(t) {
         let walk = -1;                                    // which loop is up, and how far along
         for (const [a, d] of walks) if (t >= a - .02) walk = clamp((t - a) / d);
@@ -56,7 +59,9 @@
         } else if (after) {                               // the passage: his walk fades, the band draws, Tom's in one step
           const fade = 1 - clamp((t - pa) / .5);
           if (fade > 0) { st.route = ROUTE; st.stops = STOPS.map(s => [ROUTE[s[0]][0], ROUTE[s[0]][1], s[1], s[2], s[3]]); st.routeOpacity = +(.55 * fade).toFixed(3); }
-          const k = easeInOutCubic(clamp((t - w4) / .7)), p = along([[10.6, 6.9]].concat(PASSAGE), k);
+          // to Dev's stand on Tom's clunk, then the one step: from there along the passage to the counter
+          const g = easeInOutSine(clamp((t - M('clunk4') - .05) / .5)), k = easeInOutCubic(clamp((t - w4) / .7));
+          const p = k > 0 ? along(TOM, k) : [lerp(RAVI[0], DEV[0], g), lerp(RAVI[1], DEV[1], g)];
           st.marker = [+p[0].toFixed(3), +p[1].toFixed(3)];
         } else st.marker = [10.6, 6.9];
         return st;
@@ -66,9 +71,9 @@
           stand = el('div', {}, l); css(stand, { borderRadius: '50%', border: '4px solid #83400F', display: 'none' }); },
         over: (t, l) => {
           // the clunk: the next bike off Ravi's stand (the workshop's own ink), as Martin calls it
-          const ck = CLUNKS.map(c => P(t, c, .6)).find(k => k > 0 && k < 1);
+          const cl = CLUNKS.find(c => P(t, c[0], .6) > 0 && P(t, c[0], .6) < 1), ck = cl ? P(t, cl[0], .6) : null;
           if (ck == null) stand.style.display = 'none';
-          else { const r = lerp(18, 64, easeOutCubic(ck)), p = [90 + 10.6 * 60, 286 + 6.9 * 60];
+          else { const r = lerp(18, 64, easeOutCubic(ck)), p = [90 + cl[1][0] * 60, 286 + cl[1][1] * 60];
             css(stand, { display: 'block', left: (p[0] - r) + 'px', top: (p[1] - r) + 'px', width: 2 * r + 'px', height: 2 * r + 'px', opacity: (.9 * (1 - ck)).toFixed(3) }); }
           // the four stops pulse in turn as he says "the same four steps"
           STOPS.forEach((s, i) => {

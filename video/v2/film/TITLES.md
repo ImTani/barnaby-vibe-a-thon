@@ -34,12 +34,12 @@ accent; warm ivory on warm charcoal). Built in `scenes/s9.js` and the `.t-titles
 - **Head, centred:** the mark (92 px), "Barnaby" (Sitka Subheading 600, 88 px), and one line in his serif saying what
   he is: "A voice-first butler for the software your business already runs." (PRODUCT.md's purpose, 34 px, ink 2).
 - **The four ways he grows**, a quiet row under a hairline: Ask / Unlock / Compose / Build in Sitka Subheading 34 px,
-  each with one plain sentence in Segoe UI 20 px (ink 3): what it means for the owner, not how it works.
+  each with one plain sentence in Segoe UI 21 px (#B1AA9C, about 7:1): what it means for the owner, not how it works.
 - **Credits** under a second hairline: **Built on Synapse** (600) and the event, 2nd Brain Labs × Geek Room
   Vibe-a-thon; under them, its own quiet line in the same sans and grey, the repo: github.com/ImTani/barnaby-vibe-a-thon.
 - **One spacing scale** (round 2): 48 between tiers, 32 from a rule to its content, 24 to the small print, 12 inside
   a step; the whole card is one column on the grid, centred in the frame.
-- **Small print** (16 px, #8A847A, 4.6:1): recreated from a real recorded run; Quorum and ComfyUI staged; endpoint
+- **Small print** (16 px, #A39C8F, about 6:1): recreated from a real recorded run; Quorum and ComfyUI staged; endpoint
   counts from real Synapse scans; synthetic voices; Barnaby's voice: ElevenLabs; a fictional shop.
 - **Brass appears once, in the mark** (the One Brass Rule). No icons, no boxes, no gradients, no decoration.
 - **Motion:** the card dissolves in over 0.8 s as the titles leave; then a calm build in reading order: the mark and

@@ -1,0 +1,1 @@
+Schibsted Grotesk (SIL Open Font License 1.1), copied from the Quorum app (X:\Projects_X\code_cubicle_6) so the laptop screen renders in Quorum's real typeface.

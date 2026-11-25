@@ -32,24 +32,25 @@
   /* ------------------------------------------------------------------ state ------------------------------------- */
   const DEFAULT = {
     date: '2026-11-24', time: '09:15', secs: 0,   // Tue 24 Nov 2026: Theo's second day (scene 8), same as the closing night
-    evening: 0,              // 0 = the working morning (09:15-09:43), 1 = the evening (20:07): todo.txt, git signs, dailies note
+    evening: 0,              // 0 = the working morning (09:15-09:43), 1 = the evening (20:07): shell, git signs, chat, dailies note
     cpu: .07, mem: 6.1, netDown: .4, netUp: .1, nata: 1,
     temp: 17,                // Lisbon outside, °C (17 on a late-November morning, 13 in the evening)
     // main monitor (DP-1)
-    focus: 'edit',           // focused tile: term | edit | todo | barnaby | web
+    focus: 'edit',           // focused: term (tmux zsh pane) | log (tmux blog pane) | edit | chat | barnaby | web
     term: 'fetch',           // Theo's shell: fetch (09:15) | idle (09:38) | comfy (09:42, the curl) | night
     type: 1,                 // 0..1 the shell's current command being typed
     split: 0,                // 0..1 the second terminal opening under the shell: Barnaby's log (`blog`)
     out: 0,                  // Barnaby's log: event lines shown (beats end at LX.marks(): connectQ, quorum, theo, connectC, comfy)
     blink: 1,                // 0|1 terminal cursor
     edTop: 1, edLine: 14,    // editor: first visible line, cursor line
-    tick: 0,                 // todo.txt: Barnaby items ticked (0, 1, 2)
+    tick: 0,                 // systems Barnaby has read on this desk (0, 1, 2): his idle list
     barnaby: 'placeholder',  // Barnaby's slot: off | slot (dashed guide) | frame (empty tile, mount his UI) | placeholder
     say: '', sayK: 1,        // Barnaby's line (a LX_CONTENT.SAY key or literal text) and its reveal 0..1
     plan: '', planK: 1,      // the endpoints he read: '' | quorum | comfy, and their reveal 0..1
     mode: 'idle',            // presence: idle | listening | thinking | speaking
     level: 0,                // 0..1 voice level (drive it from the audio)
     app: 0,                  // 0..1 the browser tile with the REAL Barnaby app sliding in beside the terminal
+    notify: 0,               // 0..1 the calendar notification (mako) for the 10:00 dailies
     // studio monitor (DP-2)
     queueOpen: 0,            // 0..1 the queue sidebar sliding open
     queueHl: 0,              // 0..1 highlight on "3 waiting"
@@ -71,8 +72,8 @@
     // 09:39: Theo fills in the real app's Connect form; the log terminal is open and waiting under his shell
     realapp: { time: '09:39', cpu: .11, focus: 'web', term: 'idle', split: 1, out: 0, app: 1, job: 2, step: 11, frame: 115, lap: 'quorum', synced: '09:38' },
     // 09:41: Connect ran at 09:39:58 (Barnaby's own two Synapse runs, in the log), Theo spoke, Barnaby answers
-    quorum: { time: '09:41', cpu: .24, focus: 'log', term: 'idle', split: 1, out: M.quorum, tick: 1, say: 'quorum', plan: 'quorum', mode: 'speaking', level: .55, secs: 7, job: 2, step: 22, frame: 119, lap: 'quorum', qHl: 1 },
-    'quorum-theo': { time: '09:41', cpu: .2, focus: 'log', term: 'idle', split: 1, out: M.theo, tick: 1, say: 'theo', plan: 'quorum', mode: 'speaking', level: .4, secs: 9, job: 2, step: 23, frame: 119, lap: 'quorum', qHl: 1 },
+    quorum: { time: '09:41', cpu: .24, focus: 'log', term: 'idle', split: 1, out: M.quorum, tick: 1, say: 'quorum', plan: 'quorum', mode: 'speaking', level: .55, secs: 7, job: 2, step: 22, frame: 119, lap: 'quorum', qHl: 1, notify: 1 },
+    'quorum-theo': { time: '09:41', cpu: .2, focus: 'log', term: 'idle', split: 1, out: M.theo, tick: 1, say: 'theo', plan: 'quorum', mode: 'speaking', level: .4, secs: 9, job: 2, step: 23, frame: 119, lap: 'quorum', qHl: 1, notify: 1 },
     // 09:42 Theo connects the render box with curl (shell); 09:43 he asks, Barnaby reads the card and the queue
     comfy: { time: '09:43', cpu: .19, focus: 'log', term: 'comfy', split: 1, out: M.comfy, tick: 2, say: 'comfy', plan: 'comfy', mode: 'speaking', level: .5, secs: 3, queueOpen: 1, queueHl: 1, job: 3, step: 9, frame: 123, lap: 'quorum', edTop: 11, edLine: 33 },
     night: { evening: 1, time: '20:07', temp: 13, cpu: .04, nata: 3, focus: 'term', term: 'night', tick: 2, mode: 'idle', edTop: 1, edLine: 1,
@@ -88,13 +89,11 @@
     const W = LW - 2 * GAP, H = LH - GAP - TOP, g = { bar: { x: GAP, y: 8, w: W, h: BAR_H } };
     if (monitor === 'main') {
       const a = Math.round((W - 2 * IN) * .4309), b = Math.round((W - 2 * IN) * .2974), c = W - 2 * IN - a - b;
-      const eh = Math.round((H - IN) * .64);
-      g.term = { x: GAP, y: TOP, w: a, h: H };
-      const th = Math.round((H - IN) * .42);
-      g.termTop = { x: GAP, y: TOP, w: a, h: th };                       // with the log open: the shell on top
-      g.log = { x: GAP, y: TOP + th + IN, w: a, h: H - th - IN };        // Barnaby's log under it
+      const eh = Math.round((H - IN) * .58);
+      g.term = { x: GAP, y: TOP, w: a, h: H };                           // one terminal: tmux, zsh over Barnaby's log
       g.edit = { x: GAP + a + IN, y: TOP, w: b, h: eh };
-      g.todo = { x: GAP + a + IN, y: TOP + eh + IN, w: b, h: H - eh - IN };
+      g.chat = { x: GAP + a + IN, y: TOP + eh + IN, w: b, h: H - eh - IN };   // the crew chat
+      g.notif = { x: Math.round((LW - 300) / 2), y: TOP + 6, w: 300, h: 58 };  // mako, anchored top-center
       g.slot = { x: GAP + a + b + 2 * IN, y: TOP, w: c, h: H };
       g.web = { x: GAP + a + IN, y: TOP, w: b + IN + c, h: H };     // the browser: the right-hand container, beside the terminal
     } else if (monitor === 'studio') {
@@ -109,7 +108,7 @@
   }
 
   /* ------------------------------------------------------------------ the bar ----------------------------------- */
-  const WS = { main: [[1, 'dev'], [2, 'web'], [3, 'chat']], studio: [[4, 'render'], [5, 'ref'], [6, 'music']], laptop: [[7, 'crew'], [8, 'mail'], [9, 'notes']] };
+  const WS = { main: [[1, 'dev'], [2, 'web'], [3, 'art']], studio: [[4, 'render'], [5, 'ref'], [6, 'music']], laptop: [[7, 'crew'], [8, 'mail'], [9, 'notes']] };
   function clock(s) {
     const d = new Date(s.date + 'T12:00:00');
     return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
@@ -130,91 +129,134 @@
     const occupied = { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 0, 7: s.lap === 'quorum' ? 1 : 0, 8: 1, 9: 0 };
     const ws = WS[monitor].map(([n, name]) => `<span class="ws ${n === active ? (focused ? 'on' : 'vis') : ''} ${occupied[n] ? 'occ' : ''}"><b>${n}</b>${name}</span>`).join('');
     const title = monitor === 'main'
-      ? (s.app >= .5 ? 'Barnaby · 127.0.0.1:8700' : { term: 'theo@lisboa: ~/work/pipeline', log: 'theo@lisboa: blog · barnaby events', edit: 'dailies.py · ~/work/pipeline', todo: 'todo.txt', barnaby: 'barnaby', web: 'Barnaby · 127.0.0.1:8700' }[s.focus] || '')
+      ? (s.app >= .5 ? 'Barnaby · 127.0.0.1:8700' : { term: 'tmux · zsh  ~/work/pipeline', log: 'tmux · blog  ~/.barnaby/events.jsonl', edit: 'nvim · dailies.py', chat: '#pombo-crew · chat', barnaby: 'barnaby', web: 'Barnaby · 127.0.0.1:8700' }[s.focus] || '')
       : monitor === 'studio' ? 'ComfyUI · renderbox:8188' : s.lap === 'quorum' ? 'Quorum · the crew\'s memory' : '';
     const cpuPct = Math.round(s.cpu * 100);
     const mods = [];
     if (monitor === 'main') {
       mods.push(`<span class="mod barnaby-bar ${s.barnaby === 'slot' ? 'show' : ''}" id="barnaby-bar"></span>`);
       mods.push(`<span class="mod nata">${A.nata(13)}<b>×${s.nata}</b></span>`);
+      mods.push(`<span class="mod tray">${A.icon('ask', 12)}${s.time >= '09:20' && s.time < '12:00' ? '<i class="dot"></i>' : ''}${A.icon('cloud', 12)}${A.icon('bt', 12)}</span>`);
     }
-    mods.push(`<span class="mod">${A.icon('eth', 12)}studio-lan <i>${s.netDown.toFixed(1)}↓ ${s.netUp.toFixed(1)}↑</i></span>`);
+    mods.push(`<span class="mod">${A.icon('eth', 12)}<i>${s.netDown.toFixed(1)}↓ ${s.netUp.toFixed(1)}↑</i></span>`);
     mods.push(`<span class="mod cpu">${A.icon('cpu', 12)}<i class="sparkc">${spark(s.cpu, 8, 3)}</i>${String(cpuPct).padStart(2, ' ')}%</span>`);
     if (monitor !== 'laptop') mods.push(`<span class="mod">${A.icon('mem', 12)}${s.mem.toFixed(1)}G</span>`);
     if (monitor === 'main') mods.push(`<span class="mod">${A.icon('vol', 12)}40%</span>`);
     if (monitor === 'laptop') mods.push(`<span class="mod">${A.icon('bat', 12)}100% · docked</span>`);
-    mods.push(`<span class="mod">${A.icon(+s.time.slice(0, 2) >= 18 || +s.time.slice(0, 2) < 7 ? 'moon' : 'sun', 12)}${Math.round(s.temp)}° lisboa</span>`);
+    mods.push(`<span class="mod">${A.icon(+s.time.slice(0, 2) >= 18 || +s.time.slice(0, 2) < 7 ? 'moon' : 'sun', 12)}${Math.round(s.temp)}°</span>`);
     return `<div class="bar-l">${ws}<span class="layout">[]=</span><span class="wtitle">${esc(title)}</span></div>
       <div class="bar-c"><span class="date">${clock(s)}</span><span class="time">${esc(s.time)}</span></div>
       <div class="bar-r">${mods.join('')}</div>`;
   }
 
-  /* ------------------------------------------------------------------ the terminal ------------------------------ */
+  /* ------------------------------------------------------------------ the terminal: tmux, zsh over `blog` -------- */
+  // One terminal window running tmux. The top pane is Theo's zsh with a real morning's scrollback; the bottom pane
+  // (from 09:38, state.split) tails Barnaby's events. Lines wrap at the pane's width like a terminal; a pane that
+  // overflows shows its last rows, one that doesn't starts at the top.
   const SESSIONS = C.sessions();
-  function cmdHTML(cmd) {               // zsh-syntax-highlighting style: command green, flags blue, paths underlined
-    return cmd.split(/(\s+)/).map((w, i) => !w.trim() ? w : i === 0 ? sp('t-cmd', w) : w.startsWith('-') ? sp('t-flag', w) : w.startsWith('~') || w.includes('/') ? sp('t-pathu', w) : sp('t-fg', w)).join('');
+  const T_LH = 15, T_CW = 6.9;                  // Fira Code 11.5px: line height, cell width
+  const plain = html => html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  function cmdHTML(cmd) {               // zsh-syntax-highlighting style: command green (red if unknown), flags blue, paths underlined
+    return cmd.split(/(\s+)/).map((w, i) => !w.trim() ? w : i === 0 ? sp(w === 'gti' ? 't-red' : 't-cmd', w) : w.startsWith('-') ? sp('t-flag', w)
+      : w.startsWith('~') || w.includes('/') ? sp('t-pathu', w) : sp('t-fg', w)).join('');
   }
-  function promptLines(p, typed, cursor) {
+  function promptRow(p, typed, cursor, cols) {
     const remote = p.host !== 'lisboa';
-    const l1 = `<div class="tl tp"><span>${sp('t-user', 'theo')}${sp('t-mu', '@')}${sp(remote ? 't-host-r' : 't-host', p.host)}${remote ? sp('t-ssh', ' (ssh)') : ''} ${sp('t-path', p.path)}` +
-      (p.branch ? ` ${sp('t-mu', 'on')} <span class="t-branch">${A.icon('branch', 10)}${esc(p.branch)}</span>` : '') + `</span>${sp('t-rt', p.at)}</div>`;
-    const l2 = `<div class="tl">${sp('t-caret', '❯')} ${cmdHTML(typed)}${cursor ? '<span class="t-cur"></span>' : ''}</div>`;
-    return [l1, l2];
+    const left = `${sp('t-user', 'theo')}${sp('t-mu', '@')}${sp(remote ? 't-host-r' : 't-host', p.host)} ${sp('t-path', p.path)}` +
+      (p.branch ? ' ' + sp('t-branch', p.branch) : '') + ` ${sp(p.st ? 't-red' : 't-caret', '❯')} ${cmdHTML(typed)}${cursor ? '<span class="t-cur"></span>' : ''}`;
+    const right = (p.st ? sp('t-red', `✘ ${p.st}`) + '  ' : '') + sp('t-rt', p.at);
+    const n = plain(left).length, rows = Math.max(1, Math.ceil(n / cols));
+    const showRight = n + plain(right).length + 2 <= cols;          // zsh drops the right prompt when the line is long
+    return { rows, html: `<div class="tl tp" style="height:${rows * T_LH}px"><span class="pl">${left}</span>${showRight ? `<span class="pr">${right}</span>` : ''}</div>` };
   }
-  function entryHTML(e) {
-    if (e.k === 'line') return [`<div class="tl ${e.cls || ''}">${e.html || '&nbsp;'}</div>`];
-    if (e.k === 'prompt') return promptLines(e, e.cmd, false);
-    return [];
+  function lineRow(e, cols) {
+    if (e.cls === 'art') return { rows: 1, html: `<div class="tl art">${e.html}</div>` };
+    const n = plain(e.html || '').length, rows = Math.max(1, Math.ceil(n / cols));
+    return { rows, html: `<div class="tl wrap" style="height:${rows * T_LH}px">${e.html || '&nbsp;'}</div>` };
   }
-  /** Theo's shell: every entry before the last prompt as it was; the last prompt's command typed by state.type. */
-  function termHTML(s, rows) {
+  const rowOf = (e, cols) => e.k === 'prompt' ? promptRow(e, e.cmd, false, cols) : lineRow(e, cols);
+  /** Rows into a pane of `cap` rows: everything if it fits (top-anchored), else the last rows (bottom-anchored). */
+  function fill(items, cap) {
+    const total = items.reduce((a, r) => a + r.rows, 0);
+    if (total <= cap) return { html: items.map(r => r.html).join(''), anchor: 'top' };
+    const out = []; let acc = 0;
+    for (let i = items.length - 1; i >= 0 && acc < cap; i--) { out.unshift(items[i].html); acc += items[i].rows; }
+    return { html: out.join(''), anchor: 'bottom' };
+  }
+  function shellRows(s, cols) {
     const en = (SESSIONS[s.term] || SESSIONS.fetch).entries;
     let cur = en.length - 1;
     while (cur >= 0 && en[cur].k !== 'prompt') cur--;
-    const lines = [];
-    for (let i = 0; i < cur; i++) lines.push(...entryHTML(en[i]));
+    const rows = [];
+    for (let i = 0; i < cur; i++) rows.push(rowOf(en[i], cols));
     const p = en[cur];
-    lines.push(...promptLines(p, p.cmd.slice(0, Math.round(p.cmd.length * clamp(s.type))), s.blink >= .5 && s.focus === 'term'));
-    for (const e of en.slice(cur + 1)) lines.push(...entryHTML(e));
-    return lines.slice(Math.max(0, lines.length - rows)).join('');
+    rows.push(promptRow(p, p.cmd.slice(0, Math.round(p.cmd.length * clamp(s.type))), s.blink >= .5 && s.focus === 'term', cols));
+    for (const e of en.slice(cur + 1)) rows.push(rowOf(e, cols));
+    return rows;
   }
   /** Barnaby's log (Theo's `blog`, tailing $BARNABY_STATE/events.jsonl): its head, then state.out event lines. */
   const LOG = C.barnabyLog();
-  function logHTML(s, rows) {
+  function logRows(s, cols) {
     const n = Math.max(0, Math.min(LOG.lines.length, Math.floor(s.out)));
-    const lines = [];
-    for (const e of LOG.head) lines.push(...entryHTML(e));
-    for (const e of LOG.lines.slice(0, n)) lines.push(...entryHTML(e));
-    if (s.blink >= .5 && s.focus === 'log') lines.push('<div class="tl"><span class="t-cur dim"></span></div>');
-    return lines.slice(Math.max(0, lines.length - rows)).join('');
+    const rows = [...LOG.head, ...LOG.lines.slice(0, n)].map(e => rowOf(e, cols));
+    if (s.blink >= .5 && s.focus === 'log') rows.push({ rows: 1, html: '<div class="tl"><span class="t-cur dim"></span></div>' });
+    return rows;
   }
   /** Where the film's beats end in Barnaby's log (values for state.out). */
   function marks() { return { total: LOG.lines.length, ...LOG.marks }; }
+  function tmuxStatus(s) {
+    const d = new Date(s.date + 'T12:00:00');
+    const win = `<span class="tw on">0:zsh*</span><span class="tw">1:renderbox-</span>`;
+    return `<span class="ts-l">[pipeline] </span>${win}<span class="ts-r">"lisboa" ${esc(s.time)} ${d.getDate()}-${MONTHS[d.getMonth()]}-${String(d.getFullYear()).slice(2)}</span>`;
+  }
 
-  /* ------------------------------------------------------------------ the editor -------------------------------- */
+  /* ------------------------------------------------------------------ the editor (nvim, as Theo set it up) ------- */
   const CODE = C.codeHTML();
+  const FN_OF = n => n >= 14 && n <= 22 ? 'last_night' : n >= 25 && n <= 30 ? 'by_shot' : '';
   function editorHTML(s, rows) {
-    const top = clamp(Math.round(s.edTop), 1, CODE.length);
+    const top = clamp(Math.round(s.edTop), 1, CODE.length), eve = s.evening >= .5;
     const body = [];
     for (let n = top; n < top + rows; n++) {
       if (n > CODE.length) { body.push(`<div class="el"><span class="es"></span><span class="en"></span><span class="ec t-tilde">~</span></div>`); continue; }
-      const cur = n === s.edLine, sign = s.evening >= .5 ? '' : C.CODE_SIGNS[n];   // evening: all committed
+      const cur = n === s.edLine, sign = eve ? '' : C.CODE_SIGNS[n];
       const num = cur ? String(n) : String(Math.abs(n - s.edLine));
-      body.push(`<div class="el ${cur ? 'cur' : ''}"><span class="es ${sign || ''}"></span><span class="en">${num}</span><span class="ec">${CODE[n - 1] || ''}</span></div>`);
+      let vt = '';
+      if (n === 10) vt = `<span class="vt hint">■ "DAILIES" is not accessed</span>`;        // pyright, as nvim shows it
+      else if (cur) vt = `<span class="vt blame">${sign && !eve ? 'You, 17 hours ago • Uncommitted changes' : 'theo, 1 day ago • first commit at the new job!!'}</span>`;
+      body.push(`<div class="el ${cur ? 'cur' : ''}"><span class="es ${sign || (n === 10 ? 'hint' : '')}"></span><span class="en">${num}</span><span class="ec">${CODE[n - 1] || ''}${vt}</span></div>`);
     }
-    const pct = Math.round((top - 1) / Math.max(1, CODE.length - rows) * 100);
-    return `<div class="ed-tabs"><span class="tab on">${A.icon('flow', 10)} dailies.py ${s.evening >= .5 ? '' : '<i>+</i>'}</span><span class="tab">README.md</span><span class="ed-path">~/work/pipeline</span></div>
+    const pct = Math.round((top - 1) / Math.max(1, CODE.length - rows) * 100), fn = FN_OF(s.edLine);
+    return `<div class="ed-tabs"><span class="tab on">${A.icon('flow', 10)} dailies.py</span><span class="tab">test_dailies.py</span><span class="tab">todo.txt</span><span class="ed-path">${A.icon('branch', 9)} main</span></div>
+      <div class="ed-winbar">pipeline <i>›</i> dailies.py${fn ? ` <i>›</i> <b>ƒ</b> ${fn}` : ''}</div>
       <div class="ed-body">${body.join('')}</div>
-      <div class="ed-status"><span class="mode">NORMAL</span><span class="br">${A.icon('branch', 10)} main</span><span class="fn">dailies.py</span><span class="sp"></span><span>utf-8</span><span class="pos">${s.edLine}:1</span><span class="pct">${top === 1 ? 'top' : pct >= 100 ? 'bot' : pct + '%'}</span></div>`;
+      <div class="ed-status"><span class="mode">NORMAL</span><span class="br">${A.icon('branch', 10)} main</span>${eve ? '' : '<span class="gd"><b>+7</b> <i>~1</i></span>'}<span class="fn">dailies.py</span><span class="sp"></span><span class="dg">${eve ? '' : '◆1'}</span><span class="pos">${s.edLine}:1</span><span class="pct">${top === 1 ? 'Top' : pct >= 100 ? 'Bot' : pct + '%'}</span></div>
+      <div class="ed-cmd">"dailies.py" 33L, 1104B written</div>`;
   }
 
-  /* ------------------------------------------------------------------ todo.txt ---------------------------------- */
-  function todoHTML(s) {
-    const rows = C.TODO.map((t, i) => {
-      const done = t.done || (t.barnaby && s.tick >= t.barnaby) || (t.evening && s.evening >= .5);
-      return `<div class="td ${done ? 'done' : ''} ${t.barnaby ? 'bn' : ''}"><span class="tdn">${i + 1}</span><span class="tdb">${done ? '[x]' : '[ ]'}</span><span class="tdt">${esc(t.t)}</span></div>`;
-    }).join('');
-    return `<div class="td-head"><span>~/todo.txt</span><span>${clock(s)}</span></div><div class="td-body">${rows}</div>`;
+  /* ------------------------------------------------------------------ the crew chat (staged) ---------------------- */
+  function chatHTML(s, r) {
+    const eve = s.evening >= .5;
+    const today = C.CHAT.filter(m => !m.mon && m.at <= s.time && (eve || m.at < '12:00'));
+    const msg = (m, prev) => {
+      const same = prev && prev.who === m.who && !prev.div;
+      const text = esc(m.text).replace('@theo', '<span class="at">@theo</span>');
+      return `<div class="cm ${m.mention ? 'mention' : ''} ${same ? 'cont' : ''}">${same ? '<span class="av sp"></span>' : `<span class="av" style="background:${C.WHO[m.who]}">${esc(m.who[0].toUpperCase())}</span>`}`
+        + `<div class="cm-b">${same ? '' : `<div class="cm-n"><b style="color:${C.WHO[m.who]}">${esc(m.who)}</b><i>${m.mon ? 'Mon ' : ''}${m.at}</i></div>`}<div class="cm-t">${text}</div></div></div>`;
+    };
+    // yesterday's messages, a Today divider, today's (the list is bottom-anchored: older ones scroll off the top)
+    const all = [...C.CHAT.filter(m => m.mon), { div: 'Today' }, ...today];
+    const rows = all.map((m, i) => m.div ? `<div class="ch-div"><span>${m.div}</span></div>` : msg(m, all[i - 1])).join('');
+    const lastTheo = today.filter(m => m.who === 'theo').map(m => m.at).pop() || '00:00';
+    const unread = today.filter(m => m.who !== 'theo' && m.at > lastTheo).length;   // read up to his own last message
+    return `<div class="ch-rail"><span class="ws on">PS</span><span class="ws">#</span><span class="ws dm">@${unread ? `<i>${unread}</i>` : ''}</span></div>
+      <div class="ch-main"><div class="ch-head"><b># pombo-crew</b><span>sc014–sc020 · dailies 10:00</span><em>12</em></div>
+      <div class="ch-msgs">${rows}</div><div class="ch-input">Message #pombo-crew</div></div>`;
+  }
+
+  /* ------------------------------------------------------------------ a notification (mako, as configured) -------- */
+  function notifHTML(s) {
+    const mins = 600 - (+s.time.slice(0, 2) * 60 + +s.time.slice(3, 5));     // to the 10:00 dailies
+    return `<b>Dailies · screening room</b><span>10:00 – 10:30 · in ${mins} minutes</span><span class="src">calendar</span>`;
   }
 
   /* ------------------------------------------------------------------ Barnaby's slot (placeholder) --------------- */
@@ -360,31 +402,80 @@
       ${dailiesNote(s)}`;
   }
 
-  /* ------------------------------------------------------------------ laptop: Quorum (staged) -------------------- */
+  /* ------------------------------------------------------------------ laptop: Quorum (staged, its real look) ------ */
+  // Quorum's own "studio" look, taken from the real app (Projects_X/code_cubicle_6: app/web/looks/studio.css and the
+  // v4 film's stills, copies in ref/): paper ground, white surfaces, ink type in Schibsted Grotesk, colour for state
+  // only (green synced, amber queued, violet private, red disputed). The device panel's layout as the app draws it:
+  // name + Live line + hub switch, the stats row, the Memory cloud with Mine/Team view and its legend, a conflict card,
+  // Capture and Inbox, Ask with suggestions and a cited answer, and "Latest to reach the hub". The content is staged.
+  function cloudSVG(w, h, pins) {
+    const r = A.rng(4242), o = [];
+    o.push(`<defs>${[['qb1', '#7fb0e6'], ['qb2', '#b69cf0'], ['qb3', '#f2b38a'], ['qb4', '#8fd4a8']].map(([id, c]) => `<radialGradient id="${id}"><stop offset="0" stop-color="${c}" stop-opacity=".42"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`).join('')}</defs>`);
+    for (const [x, y, rr, id] of [[.22, .55, .2, 'qb1'], [.46, .42, .18, 'qb2'], [.6, .3, .13, 'qb3'], [.72, .62, .2, 'qb4'], [.36, .7, .14, 'qb2']]) o.push(`<ellipse cx="${x * w}" cy="${y * h}" rx="${rr * w}" ry="${rr * w * .8}" fill="url(#${id})"/>`);
+    for (let i = 0; i < 90; i++) o.push(`<circle cx="${(r() * w).toFixed(1)}" cy="${(r() * h).toFixed(1)}" r="${(.5 + r() * .9).toFixed(2)}" fill="#8A909C" opacity="${(.2 + r() * .3).toFixed(2)}"/>`);
+    const clusters = [[.2, .5, 5, '#13824F'], [.42, .28, 4, '#13824F'], [.75, .55, 6, '#13824F'], [.5, .72, 3, '#6A4BC4']];
+    for (const [cx, cy, n, col] of clusters) {
+      const pts = []; for (let i = 0; i < n; i++) pts.push([cx * w + (r() - .5) * w * .12, cy * h + (r() - .5) * h * .3]);
+      for (let i = 1; i < pts.length; i++) o.push(`<line x1="${pts[i - 1][0].toFixed(1)}" y1="${pts[i - 1][1].toFixed(1)}" x2="${pts[i][0].toFixed(1)}" y2="${pts[i][1].toFixed(1)}" stroke="#7d8593" stroke-width="1.1" opacity=".7"/>`);
+      for (const [x, y] of pts) o.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.2" fill="${col}"/><circle cx="${(x - 1.2).toFixed(1)}" cy="${(y - 1.3).toFixed(1)}" r="1.4" fill="#fff" opacity=".55"/>`);
+    }
+    // the two disputed claims, each with its label, the way the app pins them
+    const a = [w * .56, h * .2], b = [w * .63, h * .26];
+    o.push(`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#D7263D" stroke-width="1.4"/>`);
+    for (const [x, y] of [a, b]) o.push(`<circle cx="${x}" cy="${y}" r="9" fill="#D7263D" opacity=".18"/><circle cx="${x}" cy="${y}" r="5" fill="#D7263D"/>`);
+    return `<div class="q-cloudbox" style="width:${w}px;height:${h}px"><svg class="q-cloud" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${o.join('')}</svg>` +
+      (pins ? `<span class="q-pin" style="right:${w - a[0] + 12}px;top:${a[1] - 16}px"><b>Thu 26 Nov</b>Email · producer</span>
+      <span class="q-pin" style="left:${b[0] + 12}px;top:${b[1] - 10}px"><b>Fri 27 Nov</b>Note · Marta</span>` : '') + '</div>';
+  }
   function quorumHTML(s, lh) {
-    const Q = C.QUORUM, hl = clamp(s.qHl);
-    const conf = Q.conflicts.map(c => `<div class="qc" style="--hl:${hl.toFixed(3)}"><div class="qc-h"><span class="tag">DISPUTED</span><b>${esc(c.what)}</b></div>
-      <p><b>${esc(c.a[0])}</b> says <span class="d">${esc(c.a[1])}</span>; <b>${esc(c.b[0])}</b> says <span class="d">${esc(c.b[1])}</span>.</p>
-      <div class="qc-f"><span class="own">owner · ${esc(c.owner)} resolves</span><span class="btn">Draft a message to ${esc(c.owner)}</span></div></div>`).join('');
-    const tierName = { team: 'Team', mine: 'My devices', device: 'Device only' };
-    const claims = Q.claims.map(c => `<div class="qcl"><div class="qcl-t">${esc(c.t)}</div><div class="qcl-m"><span class="src">${esc(c.src)}</span><span class="tier ${c.tier}">${tierName[c.tier]}</span><span class="at">${esc(c.at)}</span></div></div>`).join('');
-    return `<div class="br-bar"><span class="br-tab on">${A.icon('memory', 10)} Quorum</span><span class="br-url">${A.icon('lock', 10)} localhost:8001</span></div>
-      <div class="qa">
-        <div class="qa-top"><div class="qa-brand"><b>Quorum</b><span>the crew's memory</span></div>
-          <div class="qa-nav"><span>${A.icon('ask', 12)}Ask</span><span>${A.icon('memory', 12)}Memory</span><span class="on">${A.icon('conflict', 12)}Conflicts <i>2</i></span><span>${A.icon('inbox', 12)}Inbox</span></div>
-          <div class="qa-dev"><span class="sync"><i></i>synced ${esc(s.synced)}</span><span class="dev">theo-laptop · this device</span></div></div>
-        <div class="qa-body">
-          <div class="qa-col">
-            <div class="qa-sec"><span>Conflicts</span><i>2 open · the owner resolves</i></div>${conf}
-            <div class="qa-sec"><span>Ask</span></div>
-            <div class="qa-ask"><div class="q">${A.icon('search', 12)} when is the sc14 animatic due?</div>
-              <div class="a"><b>Disputed:</b> the producer's email says <span class="d">Thu 26 Nov</span>; Marta's note from the call says <span class="d">Fri 27 Nov</span>.</div></div>
-            <div class="qa-sec"><span>Inbox</span><i>read on this device</i></div>
-            <div class="qa-inbox">${Q.inbox.slice(0, lh >= 800 ? 3 : 2).map(m => `<div class="qi ${m.dispute ? 'disp' : ''}"><span class="from">${esc(m.from)}</span><span class="subj">${esc(m.subj)}</span><span class="cl">${m.claims} claim${m.claims > 1 ? 's' : ''}${m.dispute ? ' · disputed' : ''}</span><span class="at">${esc(m.at)}</span></div>`).join('')}</div>
-          </div>
-          <div class="qa-col side"><div class="qa-sec"><span>Latest</span><i>claims, with sources</i></div>${claims}</div>
+    const Q = C.QUORUM, hl = clamp(s.qHl), short = lh < 800;
+    const mail = '<svg class="qi-ic" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="3.5" width="12" height="9" rx="1"/><path d="M2.5 4.5 8 9l5.5-4.5"/></svg>';
+    const pen = '<svg class="qi-ic" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 13l1-3.5 6.5-6.5 2.5 2.5L6.5 12z"/></svg>';
+    const c1 = Q.conflicts[0];
+    const latest = [
+      ['Render box: big jobs before 18:00', 'from Inês', '18:00'], ['sc14 animatic', 'from Rui', 'Thu 26 Nov', 1], ['sc14 animatic', 'from Marta', 'Fri 27 Nov', 1],
+      ['Lighting pass', 'to the render box · from Inês', 'Mon 30 Nov', 1], ['Dailies', 'from Rui', '10:00'], ['Pombo client review', 'from producer', 'Fri 4 Dec'], ['Theo starts, desk 14', 'from Rui', 'Mon 23 Nov'],
+    ].slice(0, short ? 6 : 7).map(([t, f, v, d]) => `<div class="q-row"><div><b>${esc(t)}</b><span>${esc(f)}</span></div><div class="q-rv"><b class="${d ? 'red' : ''}">${esc(v)}</b><span>Team</span></div></div>`).join('');
+    return `<div class="br-bar"><span class="br-nav">${A.icon('back', 11)}${A.icon('fwd', 11)}${A.icon('reload', 11)}</span><span class="br-tab on"><span class="fav q"></span>Quorum</span><span class="br-tab">pombo · schedule</span><span class="br-url">${A.icon('lock', 10)} localhost:8001</span></div>
+      <div class="qs">
+        <div class="qs-head">
+          <div class="qs-id"><div class="qs-name">Theo <span>at the studio</span></div><div class="qs-sub"><b>Live</b> Qdrant Edge node</div></div>
+          <div class="qs-hub"><span class="qs-tog on"><i></i></span>Connected to hub</div>
         </div>
-        <div class="qa-foot"><span><i class="g"></i>hub synced</span><span>outbox 0</span><span>search runs on this device</span></div>
+        <div class="qs-stats"><span>Outbox <b>0</b></span><span>Hub traffic <b class="g">288 B/s</b></span><span>Sent <b>12 KB</b></span><span>Received <b>41 KB</b></span></div>
+        <div class="qs-body">
+          <div class="qs-main">
+            <div class="q-mem">
+              <div class="q-mem-h"><div><b>Memory</b><span>26 claims on this device, one point each</span></div><div class="q-seg"><span class="on">Mine</span><span>Team view</span></div></div>
+              <div class="q-cloudwrap">${cloudSVG(880, short ? 150 : 190, !short)}</div>
+              <div class="q-legend"><span><i class="g"></i>Synced <b>21</b></span><span class="dim"><i class="a"></i>Queued <b>0</b></span><span><i class="v"></i>Private <b>3</b></span><span class="red"><i class="r"></i>Disputed <b>2</b></span><span class="dim"><i class="s"></i>Superseded <b>0</b></span></div>
+              <div class="q-conf" style="--hl:${hl.toFixed(3)}">
+                <div class="q-conf-k"><b>Conflict found on sync</b><span>09:38</span><em>Marta owns this: she keeps the version that is true</em><i>×</i></div>
+                <div class="q-conf-t">Found 2 claims about <b>the sc14 animatic</b>, similarity <b class="red">0.88</b>. Dates disagree.</div>
+                <div class="q-conf-cols">
+                  <div class="q-cc"><b>${esc(c1.a[1])}</b><div class="q-meta">${mail}<b>Email</b> · producer · 20 Nov, 17:12</div><div class="q-quote">“sc14 animatic by Thursday please.”</div><div class="q-by">captured by Rui</div></div>
+                  <span class="q-vs">vs</span>
+                  <div class="q-cc"><b>${esc(c1.b[1])}</b><div class="q-meta">${pen}<b>Note</b> · Marta · 19 Nov, 16:40</div><div class="q-quote">“Call with the producer: animatic Friday.”</div><div class="q-by">captured by Marta</div></div>
+                </div>
+                <div class="q-conf-f"><span>Also disputed: lighting pass to the render box, Mon 30 Nov vs Wed 2 Dec · Inês owns it</span><em>Draft a message to Marta</em></div>
+              </div>
+            </div>
+            <div class="qs-low">
+              <div class="q-cap"><div class="q-h"><b>Capture</b><span>extracted on this device</span></div>
+                <div class="q-inrow"><span class="q-input ph">Quick note after a call</span><span class="q-btn">Save</span></div>
+                <div class="q-h2"><b>Inbox</b><span>1 new</span></div>
+                <div class="q-mail"><div class="q-mail-h"><b>Inês</b><span>08:51</span></div><div class="q-mail-s">Render box this week</div><div class="q-mail-p">Big jobs in the queue before 18:00 please, the overnight batch starts at 19:00…</div><span class="q-btn dark">Receive</span></div>
+              </div>
+              <div class="q-ask"><div class="q-inrow"><span class="q-input">When is the sc14 animatic due?</span><span class="q-btn dark">Ask</span></div>
+                <div class="q-sugg"><span>What's due this week?</span><span>Who owns the lighting pass?</span></div>
+                <div class="q-ans"><p><b>Disputed:</b> the producer's email says Thu 26 Nov; Marta's note from the call says Fri 27 Nov. Marta owns this.</p>
+                  <div class="q-chips"><span>${mail}<b>Email</b> · producer · 20 Nov</span><span>${pen}<b>Note</b> · Marta · 19 Nov</span></div>
+                  <div class="q-ms"><b>9 ms, on this device</b> mine</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="qs-side"><div class="q-side-h">Latest to reach the hub</div>${latest}</div>
+        </div>
       </div>`;
   }
 
@@ -403,11 +494,10 @@
     if (monitor === 'main') {
       const ws1 = h('div', 'ws-layer', root);
       d.term = tile(ws1, 'term', g.term);
-      d.termIn = h('div', 'term-in', d.term);
-      d.log = tile(ws1, 'term log', g.log);
-      d.logIn = h('div', 'term-in', d.log);
+      d.pane1 = h('div', 'pane', d.term); d.pane2 = h('div', 'pane', d.term);
+      d.sep = h('div', 'tmux-sep', d.term); d.tmux = h('div', 'tmux', d.term);
       d.edit = tile(ws1, 'edit', g.edit);
-      d.todo = tile(ws1, 'todo', g.todo);
+      d.chat = tile(ws1, 'chat', g.chat);
       d.slot = tile(ws1, 'slot', g.slot); d.slot.id = 'barnaby-slot';
       d.slotPh = h('div', 'bn-ph', d.slot);
       d.client = h('div', 'bn-client', d.slot); d.client.id = 'barnaby-client';
@@ -415,11 +505,12 @@
       const sx = g.slot;
       d.guide.innerHTML = `<b>#barnaby-slot</b><span>logical x=${sx.x} y=${sx.y} w=${sx.w} h=${sx.h}</span><span>2560×1440: x=${sx.x * 2} y=${sx.y * 2} ${sx.w * 2}×${sx.h * 2}</span><span>1920×1080: x=${sx.x * 1.5} y=${sx.y * 1.5} ${sx.w * 1.5}×${sx.h * 1.5}</span><span class="small">mount his UI in #barnaby-client, or replace the slot; #barnaby-layer (whole monitor) and #barnaby-bar (status bar) are free too</span>`;
       d.web = tile(ws1, 'web', g.web);
-      d.web.innerHTML = `<div class="br-bar"><span class="br-nav">${A.icon('back', 11)}${A.icon('fwd', 11)}${A.icon('reload', 11)}</span><span class="br-tab on"><span class="fav"></span>Barnaby</span><span class="br-url">${A.icon('lock', 10)} 127.0.0.1:8700</span></div>
+      d.web.innerHTML = `<div class="br-bar"><span class="br-nav">${A.icon('back', 11)}${A.icon('fwd', 11)}${A.icon('reload', 11)}</span><span class="br-tab on"><span class="fav"></span>Barnaby</span><span class="br-tab"><span class="fav q"></span>Quorum</span><span class="br-tab">shotlist · pombo</span><span class="br-tab">datetime · Python docs</span><span class="br-url">${A.icon('lock', 10)} 127.0.0.1:8700</span></div>
         <div class="br-page"><img class="realapp" alt="the real Barnaby app" src="${opts.realapp || 'realapp/barnaby-connect.png'}"></div>`;
       d.layer = h('div', 'barnaby-layer', root); d.layer.id = 'barnaby-layer';
-      d.logRows = Math.floor((g.log.h - 14) / 15);
-      d.edRows = Math.floor((g.edit.h - 46) / 15.5);
+      d.notif = h('div', 'notif', root); box(d.notif, g.notif);
+      d.edRows = Math.floor((g.edit.h - 4 - 20 - 17 - 18 - 16 - 4) / 14.5);
+      d.cols = Math.floor((g.term.w - 4 - 16) / T_CW);
     } else if (monitor === 'studio') {
       d.comfy = tile(root, 'comfy', g.comfy);
       d.comfy.innerHTML = `<div class="br-bar"><span class="br-nav">${A.icon('back', 11)}${A.icon('fwd', 11)}${A.icon('reload', 11)}</span><span class="br-tab on"><span class="fav cf"></span>ComfyUI</span><span class="br-tab">pombo · shot list</span><span class="br-url">renderbox:8188</span></div>
@@ -445,23 +536,30 @@
       const s = { ...DEFAULT, ...state };
       set(bar, barHTML(monitor, s));
       if (monitor === 'main') {
-        // the browser slides in over the right-hand container (editor, todo, Barnaby's slot) and back out
+        // the browser slides in over the right-hand container (editor, chat, Barnaby's slot) and back out
         const k = ease(s.app);
         d.web.style.transform = `translateX(${px((LW - g.web.x) * (1 - k))})`;
         d.web.style.visibility = k <= 0 ? 'hidden' : 'visible';
-        for (const el of [d.edit, d.todo, d.slot]) el.style.visibility = k >= 1 ? 'hidden' : 'visible';
-        // the log terminal opens under the shell (a new window in the left column; the shell shrinks)
-        const sk = ease(s.split), th = lerp(g.term.h, g.termTop.h, sk);
-        d.term.style.height = px(th);
-        d.log.style.transform = `translateY(${px((1 - sk) * (g.log.h + IN))})`;
-        d.log.style.visibility = sk <= 0 ? 'hidden' : 'visible';
-        d.log.style.opacity = String(clamp(sk * 3));
-        set(d.termIn, termHTML(s, Math.floor((th - 14) / 16)));
-        set(d.logIn, sk > 0 ? logHTML(s, d.logRows) : '');
+        for (const el of [d.edit, d.chat, d.slot]) el.style.visibility = k >= 1 ? 'hidden' : 'visible';
+        // tmux: the blog pane splits off the bottom of the zsh pane (state.split); its status line stays at the bottom
+        const sk = ease(s.split), area = g.term.h - 4 - 17, h1 = Math.round(lerp(area, area * .44, sk)), h2 = area - h1 - 1;
+        const cap1 = Math.floor((h1 - 8) / T_LH), cap2 = Math.floor((h2 - 8) / T_LH);
+        const p1 = fill(shellRows(s, d.cols), cap1);
+        d.pane1.style.cssText = `top:0;height:${h1}px`; d.pane1.className = 'pane ' + p1.anchor;
+        set(d.pane1, p1.html);
+        d.sep.style.cssText = `top:${h1}px;display:${sk > 0 ? 'block' : 'none'}`;
+        d.sep.classList.toggle('act', s.focus === 'log');
+        const p2 = sk > 0 ? fill(logRows(s, d.cols), cap2) : { html: '', anchor: 'top' };
+        d.pane2.style.cssText = `top:${h1 + 1}px;height:${Math.max(0, h2)}px;display:${sk > 0 ? 'flex' : 'none'}`; d.pane2.className = 'pane ' + p2.anchor;
+        set(d.pane2, p2.html);
+        set(d.tmux, tmuxStatus(s));
         set(d.edit, editorHTML(s, d.edRows));
-        set(d.todo, todoHTML(s));
-        const f = s.app >= .5 ? 'web' : s.focus;
-        for (const [name, el] of [['term', d.term], ['log', d.log], ['edit', d.edit], ['todo', d.todo], ['barnaby', d.slot], ['web', d.web]]) el.classList.toggle('focus', f === name);
+        set(d.chat, chatHTML(s, g.chat));
+        d.notif.style.display = s.notify > 0 && k < 1 ? '' : 'none';
+        d.notif.style.opacity = String(clamp(s.notify));
+        set(d.notif, s.notify > 0 ? notifHTML(s) : '');
+        const f = s.app >= .5 ? 'web' : s.focus === 'log' ? 'term' : s.focus;
+        for (const [name, el] of [['term', d.term], ['edit', d.edit], ['chat', d.chat], ['barnaby', d.slot], ['web', d.web]]) el.classList.toggle('focus', f === name);
         const mode = s.barnaby;
         d.slot.dataset.mode = mode;
         d.slot.style.display = mode === 'off' ? 'none' : '';
@@ -486,7 +584,7 @@
       }
       if (monitor === 'main') {          // the screens dim; Barnaby's slot stays lit (as his bell does at the shop)
         const b = clamp(s.dim), f = b > 0 ? `brightness(${(1 - b).toFixed(3)})` : '';
-        for (const el of [wall, bar, d.term, d.log, d.edit, d.todo, d.web]) el.style.filter = f;
+        for (const el of [wall, bar, d.term, d.edit, d.chat, d.web, d.notif]) el.style.filter = f;
         d.slot.style.filter = b > 0 ? `brightness(${(1 - b * .25).toFixed(3)})` : '';
         d.dim.style.opacity = '0';
       } else d.dim.style.opacity = String(clamp(s.dim));

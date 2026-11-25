@@ -112,7 +112,7 @@
   /* ------------------------------------------------------------------ the terminal ------------------------------- */
   // A session is a list of entries: {k:'prompt', host, path, branch, cmd, at} | {k:'line', html} | {k:'spin', ...}.
   // The LAST prompt is "current": state.type types its command, state.out reveals the lines after it.
-  const P = (path, cmd, o = {}) => ({ k: 'prompt', host: o.host || 'lisboa', path, branch: o.branch === undefined ? null : o.branch, cmd, at: o.at || '' });
+  const P = (path, cmd, o = {}) => ({ k: 'prompt', host: o.host || 'lisboa', path, branch: o.branch === undefined ? null : o.branch, cmd, at: o.at || '', st: o.st || 0 });
   const L = (html, cls) => ({ k: 'line', html, cls });
   const BL = L('');
 
@@ -209,35 +209,97 @@
     return { head: [P('~', 'blog', { at: '09:38' }), L(sp('b-dim', '── following ~/.barnaby/events.jsonl ──'))], lines, marks };
   }
 
+  // A real morning's scrollback. The prompt is one line; its right side shows the previous command's exit status
+  // (when it failed) and the time. Lines longer than the pane wrap, as they do in a terminal (desk.js counts rows).
+  const W = 68;                                   // pytest's rule width at this pane's size
+  const bar = (title, cls) => { const t = ` ${title} `, n = Math.max(4, W - t.length), a = Math.floor(n / 2); return L(sp(cls, '='.repeat(a) + t + '='.repeat(n - a))); };
+  const PIPE = (cmd, at, st) => P('~/work/pipeline', cmd, { branch: 'main', at, st });
+  function morning() {
+    return [
+      ...fetchLines(), BL,                         // .zshrc runs fetch when a shell starts (09:12)
+      P('~', 'cd work/pipeline', { at: '09:12' }),
+      PIPE('git pull', '09:12'), L(sp('t-fg', 'Already up to date.')),
+      PIPE('git lg -3', '09:13'), ...gitLines().slice(0, 3),
+      PIPE('gti status', '09:13'), L(sp('t-fg', 'zsh: command not found: gti')),
+      PIPE('git status', '09:13', 127),
+      L(sp('t-fg', 'On branch main')), L(sp('t-fg', 'Your branch is up to date with \'origin/main\'.')), BL,
+      L(sp('t-fg', 'Changes not staged for commit:')),
+      L(sp('t-fg', '  (use "git add <file>..." to update what will be committed)')),
+      L(sp('t-fg', '  (use "git restore <file>..." to discard changes in working directory)')),
+      L('        ' + sp('t-red', 'modified:   dailies.py')), BL,
+      L(sp('t-fg', 'no changes added to commit (use "git add" and/or "git commit -a")')),
+      PIPE('python -m pytest -q --tb=line', '09:14'),
+      L(sp('t-grn', '..') + sp('t-red', 'F') + ' '.repeat(W - 9) + sp('t-fg', '[100%]')),
+      bar('FAILURES', 't-red'),
+      L(sp('t-fg', '/home/theo/work/pipeline/tests/test_dailies.py:21: assert 0 == 3')),
+      bar('short test summary info', 't-cyan'),
+      L(sp('t-red', 'FAILED') + sp('t-fg', ' tests/test_dailies.py::test_last_night - assert 0 == 3')),
+      L(sp('t-red', '1 failed') + sp('t-fg', ', ') + sp('t-grn', '2 passed') + sp('t-red', ' in 0.31s')),
+      PIPE('ls ~/crew', '09:15', 1), L(sp('t-dir', 'quorum')),
+    ];
+  }
+
   function sessions() {
-    const rest = [P('~', 'fetch', { at: '09:12' }), ...fetchLines(), BL,
-      P('~/work/pipeline', 'git lg -4', { branch: 'main', at: '09:14' }), ...gitLines(), BL];
-    rest.push(P('~/work/pipeline', 'ls ~/crew ~/work', { branch: 'main', at: '09:15' }),
-      L(sp('t-fg', '/home/theo/crew:')), L(sp('t-dir', 'quorum')), BL,
-      L(sp('t-fg', '/home/theo/work:')), L(sp('t-dir', 'pipeline') + '  ' + sp('t-dir', 'shotlist') + '  ' + sp('t-fg', 'notes-day1.md')), BL);
+    const am = morning();
     const S = {};
-    S.fetch = { entries: [...rest, P('~/work/pipeline', '', { branch: 'main', at: '09:15' })] };
-    // 09:38 a second terminal opens under this one, tailing Barnaby (`blog`); this shell waits
-    S.idle = { entries: [...rest, P('~/work/pipeline', '', { branch: 'main', at: '09:38' })] };
+    S.fetch = { entries: [...am, PIPE('', '09:15')] };
+    // 09:38 a tmux pane opens under this one, tailing Barnaby (`blog`); this shell waits
+    S.idle = { entries: [...am, PIPE('', '09:15')] };
     // 09:42 Theo connects the render box himself, through the same API the app's form posts to, with a starter
     // set that can see the card and the queue (the default would be the first six GETs: /ws, /, /embeddings...)
     const cont = [
-      [sp('t-mu', '> ') + sp('t-flag', '-d ') + sp('t-str', '\'{"name":"comfyui","repo":"/mnt/renderbox/ComfyUI",')],
-      [sp('t-mu', 'quote> ') + sp('t-str', '"base_url":"http://renderbox:8188",')],
-      [sp('t-mu', 'quote> ') + sp('t-str', '"starter":["GET /system_stats","GET /queue",')],
-      [sp('t-mu', 'quote> ') + sp('t-str', '"GET /api/jobs","GET /history","GET /object_info",')],
-      [sp('t-mu', 'quote> ') + sp('t-str', '"GET /models"]}\'')],
-    ].map(([h]) => L(h));
-    S.comfy = { entries: [...rest, P('~/work/pipeline', 'curl -s localhost:8700/api/connect \\', { branch: 'main', at: '09:42' }),
-      L(sp('t-mu', '> ') + sp('t-flag', '-H ') + sp('t-str', '\'content-type: application/json\' ') + sp('t-fg', '\\')), ...cont, L(sp('t-fg', '{"ok":true,"system":"comfyui"}')), BL, P('~/work/pipeline', '', { branch: 'main', at: '09:42' })] };
-    // Tuesday 24 Nov, evening: this morning's TODO is done (with Barnaby's help), Monday's first commit a day back
-    S.night = { entries: [P('~/work/pipeline', 'git lg -3', { branch: 'main', at: '20:06' }),
+      sp('t-mu', '> ') + sp('t-flag', '-H ') + sp('t-str', '\'content-type: application/json\' ') + sp('t-fg', '\\'),
+      sp('t-mu', '> ') + sp('t-flag', '-d ') + sp('t-str', '\'{"name":"comfyui","repo":"/mnt/renderbox/ComfyUI",'),
+      sp('t-mu', 'quote> ') + sp('t-str', '"base_url":"http://renderbox:8188",'),
+      sp('t-mu', 'quote> ') + sp('t-str', '"starter":["GET /system_stats","GET /queue",'),
+      sp('t-mu', 'quote> ') + sp('t-str', '"GET /api/jobs","GET /history","GET /object_info",'),
+      sp('t-mu', 'quote> ') + sp('t-str', '"GET /models"]}\''),
+    ].map(h => L(h));
+    S.comfy = { entries: [...am, PIPE('curl -s localhost:8700/api/connect \\', '09:42'), ...cont,
+      L(sp('t-fg', '{"ok":true,"system":"comfyui"}')), PIPE('', '09:42')] };
+    // Tuesday evening: the test passes, Marta's 14:06 commit comes down, Theo commits this morning's TODO and pushes
+    S.night = { entries: [
+      PIPE('python -m pytest -q', '17:05'),
+      L(sp('t-grn', '...') + ' '.repeat(W - 9) + sp('t-fg', '[100%]')), L(sp('t-grn', '3 passed in 0.29s')),
+      PIPE('git pull', '17:05'),
+      L(sp('t-fg', 'Updating a41c9e2..5d02c91')), L(sp('t-fg', 'Fast-forward')),
+      L(sp('t-fg', ' shotlist/sc014.csv | 2 ') + sp('t-grn', '+') + sp('t-red', '-')),
+      L(sp('t-fg', ' 1 file changed, 1 insertion(+), 1 deletion(-)')),
+      PIPE('git commit -am "dailies: ask the render box what\'s queued"', '17:06'),
+      L(sp('t-fg', '[main b7e1f20] dailies: ask the render box what\'s queued')),
+      L(sp('t-fg', ' 1 file changed, 14 insertions(+), 2 deletions(-)')),
+      PIPE('git push', '17:06'),
+      ...['Enumerating objects: 5, done.', 'Counting objects: 100% (5/5), done.', 'Delta compression using up to 16 threads',
+        'Compressing objects: 100% (3/3), done.', 'Writing objects: 100% (3/3), 641 bytes | 641.00 KiB/s, done.',
+        'Total 3 (delta 2), reused 0 (delta 0), pack-reused 0', 'To git.studio.lan:pombo/pipeline.git',
+        '   5d02c91..b7e1f20  main -> main'].map(t => L(sp('t-fg', t))),
+      PIPE('git lg -3', '20:06'),
       ...[['b7e1f20', '3h', 'theo', "dailies: ask the render box what's queued"], ['5d02c91', '6h', 'marta', 'shotlist: sc014 animatic due Thu 26 Nov'],
         ['a41c9e2', '1d', 'theo', 'first commit at the new job!! (olá lisboa)']].map(([hh, t, a, msg]) =>
-        L(sp('t-yel', '* ') + sp('t-hash', hh) + '  ' + sp('t-mu', t.padEnd(3)) + ' ' + sp('t-auth', a.padEnd(6)) + sp('t-fg', msg))), BL,
-      P('~/work/pipeline', '', { branch: 'main', at: '20:07' })] };
+        L(sp('t-yel', '* ') + sp('t-hash', hh) + '  ' + sp('t-mu', t.padEnd(3)) + ' ' + sp('t-auth', a.padEnd(6)) + sp('t-fg', msg))),
+      PIPE('', '20:07')] };
     return S;
   }
+
+  /* ------------------------------------------------------------------ the crew chat (staged) ---------------------- */
+  // The studio's team chat, #pombo-crew. A message shows once state.time has reached it (pure: filtered by time).
+  const CHAT = [
+    // yesterday (Theo's first day), above the Today divider
+    { mon: 1, at: '16:12', who: 'rui', text: 'welcome to the crew, theo! desk 14 is yours' },
+    { mon: 1, at: '16:15', who: 'theo', text: 'obrigado! the plant made it too' },
+    { mon: 1, at: '17:40', who: 'inês', text: 'render box access sorted: ssh renderbox, the queue is shared so be nice' },
+    { mon: 1, at: '18:03', who: 'marta', text: 'sc015 shotlist is up' },
+    { at: '08:47', who: 'inês', text: 'bom dia! last night\'s BG passes are in /mnt/renderbox/output' },
+    { at: '09:02', who: 'rui', text: 'dailies 10:00, screening room. bring the pombo pencil test' },
+    { at: '09:20', who: 'marta', text: '@theo can you check the sc14 animatic date? producer says thu, my note from the call says fri', mention: true },
+    { at: '09:36', who: 'theo', text: 'on it. hooking barnaby up to quorum' },
+    { at: '09:40', who: 'inês', text: 'barnaby??' },
+    { at: '09:42', who: 'theo', text: 'you\'ll see :)' },
+    { at: '14:05', who: 'marta', text: 'sc14 animatic is THU 26. resolved in quorum, thanks barnaby' },
+    { at: '18:02', who: 'inês', text: 'overnight batch queued, 6 jobs. hands off the box pls' },
+    { at: '19:58', who: 'theo', text: 'boa noite, crew' },
+  ];
+  const WHO = { 'inês': '#e0a35c', rui: '#7fc8a9', marta: '#c79be0', theo: '#7fb0e6' };
 
   /* ------------------------------------------------------------------ Barnaby (placeholder words) ---------------- */
   // script v2.1, scene 8: with Theo he speaks a developer's language ("endpoints"), and says "sir" once
@@ -304,5 +366,5 @@
     ],
   };
 
-  G.LX_CONTENT = { esc, sp, CODE, CODE_SIGNS, codeHTML, TODO, sessions, barnabyLog, COMFY_STARTER, starterOf, SAY, PLAN, JOBS, OLD_JOBS, T, NODES, LINKS, GPU_PROCS, QUORUM };
+  G.LX_CONTENT = { esc, sp, CODE, CODE_SIGNS, codeHTML, TODO, CHAT, WHO, sessions, barnabyLog, COMFY_STARTER, starterOf, SAY, PLAN, JOBS, OLD_JOBS, T, NODES, LINKS, GPU_PROCS, QUORUM };
 })(window);

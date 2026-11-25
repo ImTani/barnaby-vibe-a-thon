@@ -19,7 +19,8 @@
   PRESETS (desk.js STATES)            in scene order; every clock, commit and file time agrees with the film's calendar
     rest      Tue 24 Nov 09:15, Theo's second morning (scene 7 is Priya's Tuesday morning at the shop; scene 9 is
               tonight): fetch (his drawn bike, "day 2 :)"), `git lg` with yesterday's "first commit at the new job!!
-              (olá lisboa)" (1d), dailies.py open, todo.txt, Barnaby standing by ("systems on this desk: none yet");
+              (olá lisboa)" (1d), a typo (exit 127), git status, a failing pytest; nvim on dailies.py; the crew
+              chat; Barnaby standing by ("systems on this desk: none yet");
               ComfyUI rendering, 2 queued; laptop: Theo's wallpaper.
     realapp   09:39. Script v2.1: "In a browser tile, the real Barnaby app, exactly as it ships: Theo types a repo
               path into Connect a repo." The browser tile slides in beside the terminal (state.app) with the REAL app:
@@ -60,8 +61,9 @@
     shows "Extracted 13 endpoint(s)", out >= 20 "Extracted 28 endpoint(s)".
   TERMINAL KEYS: term (Theo's shell: fetch | idle | comfy | night), type (its current command typed), split (0..1 the
     log terminal opening under it), out (the log), blink.
-  OTHER KEYS: evening (0 the morning, 1 the 20:07 night: todo.txt, git signs, dailies note), temp, nata, job + queued (the render queue), synced (Quorum),
-    tick (todo items for Barnaby), mode + level (his presence), say/sayK (his line), plan/planK (his endpoint list:
+  OTHER KEYS: evening (0 the morning, 1 the 20:07 night: shell, git signs, chat, dailies note), temp, nata, job + queued
+    (the render queue), notify (0..1 the 09:41 calendar notification), tick (systems Barnaby has read: his idle list),
+    mode + level (his presence), say/sayK (his line), plan/planK (his endpoint list:
     '' | quorum | comfy), edTop/edLine (editor), dim (screens; his slot stays lit)
 
   FILM USE (pure function of state; no CSS animation anywhere):
@@ -76,7 +78,19 @@
     The placeholder waits for his chosen world (a tungsten-amber "workshop hologram"); it says what the script says.
     Also free: #barnaby-layer (whole main monitor, above the tiles, for anything that breaks out of the tile) and
     #barnaby-bar (a place in the status bar, right side; shown dashed in the 'slot' preset).
-    In 'realapp' the browser tile with the real app covers the right-hand container (editor, todo, slot).
+    In 'realapp' the browser tile with the real app covers the right-hand container (editor, chat, slot).
+
+  THE MAIN MONITOR, LIVED IN: one terminal window running tmux (zsh with a real morning's scrollback: wrapped lines,
+  exit codes on the right prompt, git status hints, a failing pytest; from 09:38 a pane tailing Barnaby's events; the
+  tmux status line), nvim as a person sets it up (bufferline, breadcrumbs, git signs and blame, a pyright hint, the
+  cmdline's last message), the crew chat (#pombo-crew: yesterday, a Today divider, Marta's @theo about the sc14 date),
+  a mako notification for the 10:00 dailies at 09:41, a tray, browser tabs. The chat messages are staged.
+
+  QUORUM ON THE LAPTOP: the real app's own look, its "studio" theme (paper, white surfaces, ink type in Schibsted
+  Grotesk, colour for state only), from the director's checkout X:/Projects_X/code_cubicle_6 (read only):
+  app/web/looks/studio.css for the tokens and type, the v4 film's stills for the device panel's layout and the
+  conflict card. Copies in ref/: quorum-device-stage.jpg, quorum-conflict.jpg, quorum-ask.jpg, quorum-fonts/ (OFL).
+  The content is staged (the crew, the two disputed deadlines, the inbox). Its sticky-note "Q" mark is left out.
 
   TRUTH: the endpoint lines are the real Synapse scans (13 Quorum, 28 ComfyUI: methods, paths, tool names, session
   ids) and the CLI output follows Synapse 0.1.9's own formatting. The Quorum and ComfyUI scenes are staged: the crew,

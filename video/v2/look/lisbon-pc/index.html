@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!--
+  Theo's Lisbon desk (film v2 look-dev, scene 8 "Any house" and the closing cuts): Monday 23 Nov 2026, his first day
+  at an animation studio in Lisbon. One modern Linux session, a tiling window manager with gaps, Theo's own "nata" rice,
+  three outputs: MAIN (DP-1, his dev monitor), STUDIO (DP-2, the render box side) and the docked LAPTOP (eDP-1, Quorum).
+  The 2009 shop PC (../shop-pc) is the opposite desk; the closing cuts between the two.
+
+  OPEN    index.html?monitor=main|studio|laptop&state=<preset>[&key=value...]
+          logical 1280x720 (laptop panel 1280x800); the page scales the desk to the window width.
+  RENDER  node video/v2/look/lisbon-pc/render.js            -> video/v2/look/frames/lisbon-*.png
+            panels (3D screen textures): main + studio 2560x1440, laptop 1920x1200 (16:10)
+            cut-ins: every monitor and state at 1920x1080
+          node render.js realapp   re-captures the REAL Barnaby app: `python -m barnaby serve` on a fresh temp
+                                   BARNABY_STATE, Capabilities open, "Connect" form typed in (not submitted), 2x at the
+                                   tile's page size, server stopped -> realapp/barnaby-connect.png (+ -empty.png)
+          node render.js verify    proves every preset is a pure function of its state
+          node export_endpoints.js re-reads the real Synapse scans (.demo/montage) -> endpoints.js
+
+  PRESETS (desk.js STATES)            in scene order; every clock, commit and file time agrees with the film's calendar
+    rest      Mon 23 Nov 09:15. First morning: fetch (his drawn bike), `git lg` with "first commit at the new job!!
+              (olá lisboa)", dailies.py open, todo.txt, Barnaby standing by ("systems on this desk: none yet");
+              ComfyUI rendering, 2 queued; laptop: Theo's wallpaper.
+    realapp   09:39. Script v2.1: "In a browser tile, the real Barnaby app, exactly as it ships: Theo types a repo
+              path into Connect a repo." The browser tile slides in beside the terminal (state.app) with the REAL app:
+              Theo's own fresh Barnaby (empty registry: "No systems yet"), its Capabilities panel open, the form
+              filled: quorum · /home/theo/crew/quorum · http://localhost:8001 (not submitted). The real form is titled
+              "Point Barnaby at a repo", button "Connect". &realimg=empty shows the same form before typing.
+              Under Theo's shell a second terminal has opened (09:38): `blog`, his alias tailing Barnaby's own event
+              log ($BARNABY_STATE/events.jsonl), waiting. Laptop: Quorum open.
+    quorum    09:41. "Barnaby — new job. This is the crew's memory." Barnaby's log shows what the Connect click
+              (09:39:58) really ran (barnaby/systems.py Registry.connect): synapse build --auto --local --all-endpoints
+              -> "Extracted 13 endpoint(s)", then --endpoints "<starter>" with the first six read-only ones (GET
+              /api/state, /api/events, /api/inbox, /api/look, /phone, /stage) -> 6 of 13 exposed, 7 read-only; then
+              Theo's line (heard), quorum.state (call), and the answer (say). No picker: Barnaby runs Synapse himself.
+              Slot: "Thirteen endpoints, sir — and two deadlines in dispute. Shall I flag them?" + the 13 endpoints
+              (■ the 6 exposed, □ the rest; state, the one he called, marked). Laptop: Quorum, the 2 disputes lit.
+    quorum-theo  09:41, "Still Theo." (heard) -> "Theo." (say), in the log and the slot.
+    comfy     09:43. At 09:42 Theo connects the render box himself in his shell: curl POST /api/connect (the same
+              endpoint the app's form posts to) with a starter that can see the card and the queue (GET /system_stats,
+              /queue, /api/jobs, /history, /object_info, /models). The default starter, the first six GETs (/ws, /,
+              /embeddings, /models, /models/{folder}, /extensions), couldn't answer the line. The log shows that connect
+              (Extracted 28 endpoint(s), 6 of 28 exposed, 19 read-only), "And the render box?", comfyui.system_stats
+              and comfyui.get_queue, and the answer: "Twenty-eight endpoints. It's on the big card, and three jobs are
+              queued." Studio: the queue panel open, "3 queued", gpu0 48 GB at 97%.
+    night     Tue 24 Nov 20:07, the closing night: screens dimmed, Barnaby's slot still lit ("systems on this desk:
+              quorum 13 endpoints, comfyui 28"), Monday's TODO committed, the overnight render batch queued, 13° and a moon.
+    slot      rest with Barnaby's slot drawn as a dashed guide with its coordinates
+    frame     rest with Barnaby's slot as an empty tile, ready for his UI
+
+  ANY KEY can be overridden in the URL (LX.DEFAULT in desk.js), e.g.
+    ?monitor=main&state=quorum&out=6                    Barnaby's log up to the first Synapse run
+    ?monitor=main&state=realapp&split=.5                the log terminal opening under the shell
+    ?monitor=main&state=quorum&sayK=.4&planK=.5         Barnaby mid-sentence, his endpoint list half revealed
+    ?monitor=main&state=realapp&app=.5                  the browser tile with the real app sliding in, half way
+    ?monitor=studio&state=comfy&queueOpen=.5&step=21    the queue sliding open, the sampler at 21/28
+    ?monitor=laptop&state=quorum&lapIn=.5               Quorum opening
+  BARNABY'S LOG (state.out = event lines shown; LX.marks()): 0 nothing yet (09:39), 10 quorum connected (09:40),
+    14 his quorum answer (09:41), 16 "Theo.", 26 comfyui connected (09:42), 31 his comfy answer (09:43). out >= 4
+    shows "Extracted 13 endpoint(s)", out >= 20 "Extracted 28 endpoint(s)".
+  TERMINAL KEYS: term (Theo's shell: fetch | idle | comfy | night), type (its current command typed), split (0..1 the
+    log terminal opening under it), out (the log), blink.
+  OTHER KEYS: day (1 Mon, 2 Tue: todo.txt, git signs), temp, nata, job + queued (the render queue), synced (Quorum),
+    tick (todo items for Barnaby), mode + level (his presence), say/sayK (his line), plan/planK (his endpoint list:
+    '' | quorum | comfy), edTop/edLine (editor), dim (screens; his slot stays lit)
+
+  FILM USE (pure function of state; no CSS animation anywhere):
+    const m = LX.build(el, { monitor: 'main', lw: 1280, lh: 720 });   // also 'studio', 'laptop' (lh 800 for the panel)
+    m.render(LX.preset('quorum', { out: lerp(0, 24, k), scan: k2, sayK: k3 }));
+
+  BARNABY'S SLOT (main monitor): #barnaby-slot, logical x=932 y=42 w=338 h=668
+      at 2560x1440: x=1864 y=84, 676x1336; at 1920x1080: x=1398 y=63, 507x1002.
+    The right-hand tile of the tiling layout, full height, beside the terminal and editor; the layout is designed
+    around it. Mount his UI in m.barnabyClient (#barnaby-client) or replace the slot. state.barnaby = 'placeholder'
+    (default: a neutral presence ring, his line, the endpoints he read), 'frame' (empty tile), 'slot' (guide), 'off'.
+    The placeholder waits for his chosen world (a tungsten-amber "workshop hologram"); it says what the script says.
+    Also free: #barnaby-layer (whole main monitor, above the tiles, for anything that breaks out of the tile) and
+    #barnaby-bar (a place in the status bar, right side; shown dashed in the 'slot' preset).
+    In 'realapp' the browser tile with the real app covers the right-hand container (editor, todo, slot).
+
+  TRUTH: the endpoint lines are the real Synapse scans (13 Quorum, 28 ComfyUI: methods, paths, tool names, session
+  ids) and the CLI output follows Synapse 0.1.9's own formatting. The Quorum and ComfyUI scenes are staged: the crew,
+  the disputes, the queue and the render jobs are written for the film. The real-app tile is a screenshot of the
+  real app. No distro logos, no brand logos; ComfyUI and Quorum appear by name only.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Lisbon desk · look-dev</title>
+<link rel="stylesheet" href="lisbon.css">
+<style>html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }</style>
+</head>
+<body>
+<div id="screen"></div>
+<script src="endpoints.js"></script>
+<script src="art.js"></script>
+<script src="content.js"></script>
+<script src="wallpaper.js"></script>
+<script src="desk.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.search);
+  const monitor = q.get('monitor') || 'main';
+  const LW = +q.get('lw') || 1280, LH = +q.get('lh') || 720;
+  const root = document.getElementById('screen');
+  const desk = LX.build(root, { monitor, lw: LW, lh: LH, realapp: q.get('realimg') === 'empty' ? 'realapp/barnaby-connect-empty.png' : undefined });
+  const scale = +q.get('scale') || window.innerWidth / LW;
+  root.style.transform = `scale(${scale})`;
+  const s = LX.preset(q.get('state') || 'rest');
+  for (const [k, v] of q) {
+    if (['monitor', 'state', 'lw', 'lh', 'scale'].includes(k) || !(k in LX.DEFAULT)) continue;
+    s[k] = (v !== '' && !isNaN(+v) && typeof LX.DEFAULT[k] === 'number') ? +v : v;
+  }
+  desk.render(s);
+  window.desk = desk; window.deskState = s;
+  const imgs = [...document.images].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; }));
+  Promise.all([document.fonts.ready, ...imgs]).then(() => { desk.render(s); document.body.dataset.ready = '1'; });
+})();
+</script>
+</body>
+</html>

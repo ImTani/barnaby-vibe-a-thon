@@ -6,7 +6,7 @@
 (function () {
   const C = CUES.scenes[8], S = C.start, E = C.end, FI = .6;
   let run, dimmer, rightOff, shade, title, mark, tag, old, card, cardParts, seam;
-  const REPO = '';                                   // the public repo, once confirmed (no remote in this checkout)
+  const REPO = 'github.com/ImTani/barnaby-vibe-a-thon';   // the public repo (confirmed by the coordinator)
   Scene({
     id: '9', start: S, end: E, fadeIn: 0,
     build(root) {
@@ -49,14 +49,16 @@
           <div><b>Compose</b><span>Turns steps he keeps repeating into one.</span></div>
           <div><b>Build</b><span>Writes what’s missing, and adds it when you say so.</span></div>
         </div>
-        <div class="cred"><span><b>Built on Synapse</b></span><span class="ev">2nd Brain Labs × Geek Room Vibe-a-thon</span>${REPO ? `<span class="repo">${REPO}</span>` : ''}</div>
+        <div class="cred"><span><b>Built on Synapse</b></span><span class="ev">2nd Brain Labs × Geek Room Vibe-a-thon</span></div>
+        ${REPO ? `<div class="repo">${REPO}</div>` : ''}
         <div class="fine">Recreated from a real recorded run. Quorum and ComfyUI scenes are staged; endpoint counts come from real Synapse scans. Synthetic voices; Barnaby’s voice: ElevenLabs. Spokes &amp; Sprockets is a fictional shop.</div>`;
       const cm = card.querySelector('.m'); cm.innerHTML = markSVG('#D3A14A'); markAnim(cm, 0, -100);   // at rest: no ring arcs
       // the build, in reading order: the mark and the name, the line, the four steps, the credit, the small print
       const head = card.querySelector('.head');
       cardParts = [[head.querySelector('.m'), 0], [head.querySelector('.w'), 0], [head.querySelector('.what'), .4]]
         .concat([...card.querySelectorAll('.grow > div')].map((e, i) => [e, .85 + .12 * i]))
-        .concat([[card.querySelector('.grow'), -1], [card.querySelector('.cred'), 1.55], [card.querySelector('.fine'), 1.75]]);
+        .concat([[card.querySelector('.grow'), -1], [card.querySelector('.cred'), 1.55]])
+        .concat(card.querySelector('.repo') ? [[card.querySelector('.repo'), 1.65]] : []).concat([[card.querySelector('.fine'), 1.8]]);
       css(card, { display: 'none' });
     },
     render(t) {

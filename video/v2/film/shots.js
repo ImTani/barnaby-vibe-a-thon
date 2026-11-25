@@ -18,6 +18,17 @@
  *     cam  [x, y, s] (static) or [[t, x, y, s], ...] keyframes (eased): (x, y) is the source point at frame centre,
  *          s the zoom over "cover" (1 = the image just fills 1920x1080). The view is clamped to the image.
  *     over (t, layer, shotLocalT, shot) per-frame hook for a shot's own overlays (children of layer, in source px).
+ *   v2.3, the screens in the room (glassOf):
+ *     screen {src, state, k, grade}   a room shot with a quad (Blender per-frame screen_quads, or a still's screen_quad
+ *          in shots.json) shows this LIVE page on its monitor's glass, driven by state(t): an emissive layer (a little
+ *          soft, lifted, a glow), k a brightness multiplier, grade the shot's colour grade. glassFromStill: a locked-off
+ *          sequence without quads uses its still's.
+ *     pin {d}   on a live item right after such a room shot: the push into the screen. The room shot (already showing
+ *          this page on its glass) is scaled around the glass for d seconds until the glass fills the frame; then this
+ *          full-screen item takes over (the same picture). Without a room quad before it, a cut.
+ *     open {x, y, d} / close {x, y, d}   a world opens out of his window (a circle reveal), or closes back into it
+ *          over the next item (the reveal reversed).
+ *     blClock t -> frame   re-time an item's Blender sequence (where only the light moves).
  */
 (function (G) {
 'use strict';

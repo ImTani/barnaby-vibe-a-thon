@@ -68,7 +68,7 @@
         // 6.11 the jobs page: Dev -> Priya (locked, held)
         { src: 'live/shop', at: M('reassign') - .1, cam: [960, 540, 1],
           state: t => ({ preset: 'shop-jobs-after', reassign: +clamp((t - M('reassign') - .25) / 1.3).toFixed(3), secs: 5 + Math.floor(t - M('reassign')) }) },
-      ].concat(CHAIR ? [{ src: CHAIR, at: Math.max(M('reassign') + 3.0, E - 1.6), cam: hold(960, 540, 1.0) }] : []), E, { scene: 6 });
+      ].concat(CHAIR ? [{ src: CHAIR, at: CUES.marks.s6_chair != null ? M('s6_chair') : Math.max(M('reassign') + 3.0, E - 1.6), cam: hold(960, 540, 1.0) }] : []), E, { scene: 6 });
       cardPlan = run.list[7].s;
     },
     ready() {

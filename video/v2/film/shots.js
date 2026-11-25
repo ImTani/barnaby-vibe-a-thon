@@ -206,7 +206,8 @@ function seq(root, items, end, o = {}) {
     // an item may re-time its sequence where nothing but the light moves (blClock: t -> fractional frame)
     if (it.bl) it.blFrame = it.blClock ? (t => clamp(Math.floor(it.blClock(t) + 1e-6), 1, it.bl.frames)) : seqClock(it.bl).frame; });
   // v2.3: the monitor's glass in every room shot that has one (per Blender frame, or the still's screen_quad) shows the
-  // LIVE screen at that film time (item.screen {src, state, k}, or the pin item that follows). A pin (the push into
+  // LIVE screen at that film time (item.screen {src, state, k (brightness), grade (the shot's colour grade)}, or the
+  // pin item that follows). A pin (the push into
   // the screen) runs over the room shot actually on screen: the composited room is scaled around its glass until the
   // glass fills the frame, then the full-screen layer takes over; the content is the same on both sides.
   list.forEach((it, i) => {
@@ -310,7 +311,7 @@ function seq(root, items, end, o = {}) {
               const k = it.scrSrc.k == null ? 1 : typeof it.scrSrc.k === 'function' ? it.scrSrc.k(t) : it.scrSrc.k;
               // emissive: a touch soft and lifted on the glass, crisp and plain by the time it fills the frame
               const soft = (1 - e), bl = .7 * soft, br = k * (1 + .04 * soft);
-              it.scr.img.style.filter = `${bl > .02 ? `blur(${bl.toFixed(2)}px) ` : ''}brightness(${br.toFixed(3)}) saturate(${(1 - .06 * soft).toFixed(3)})`;
+              it.scr.img.style.filter = `${bl > .02 ? `blur(${bl.toFixed(2)}px) ` : ''}brightness(${br.toFixed(3)}) saturate(${(1 - .06 * soft).toFixed(3)})${it.scrSrc.grade ? ' ' + it.scrSrc.grade : ''}`;
               it.glow.style.opacity = (k * soft).toFixed(3);
               if (it.scrSrc.state) it.scr.apply(it.scrSrc.state(t, t - it.at));
             }
@@ -496,7 +497,7 @@ function glassOf(it) {
     const n = q.every(p => Math.abs(p[0]) <= 1.5 && Math.abs(p[1]) <= 1.5);
     return q.map(p => n ? [p[0] * w, p[1] * h] : [p[0] * sx, p[1] * sy]);
   };
-  if (it.bl) {
+  if (it.bl && !it.glassFromStill) {                 // glassFromStill: a locked-off sequence framed as its still
     const sh = it.bl, ck = { frame: it.blFrame || seqClock(sh, (m && m.fps) || FILM_FPS).frame };
     if (sh.screen_quads) {
       const keys = Object.keys(sh.screen_quads).map(Number).sort((a, b) => a - b), cache = {};

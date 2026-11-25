@@ -90,7 +90,9 @@
           cur.at(c[0], c[1], true);
         } }, o); };
       run = seq(root, [
-        { src: 'world/04_medium_monday.png', at: S, grade: AFT, keepGrade: true, cam: hold(960, 600, 1.1) },
+        // s5_afternoon is locked off on the Monday still's framing: its glass is the still's; the shop PC live on it
+        { src: 'world/04_medium_monday.png', at: S, grade: AFT, keepGrade: true, cam: hold(960, 600, 1.1), glassFromStill: true,
+          screen: { src: 'live/shop', state: t => ({ preset: 'shop-jobs', time: '14:20', secs: Math.floor(t) % 60 }), grade: AFT } },
         planItem({ at: V(19) - .1, fi: .35, cam: [960, 540, 1] }),
         planItem({ at: M('walk1'), cam: move(M('passage') + .05, 2.2, [620, 540, 1.62], [600, 525, 1.8], 0) }),   // 5.4 the slow push as it forms
       ], E, { scene: 5 });

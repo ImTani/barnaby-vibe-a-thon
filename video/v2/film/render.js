@@ -13,6 +13,7 @@
  *                                                 shuffled with a jump in between) must be byte-identical
  *   node video/v2/film/render.js encode | mux     re-encode frames / re-mux the soundtrack (after a new mix)
  *   flags: --fps=24 --workers=2 --scale=1 --quality=92 --no-encode --resume (skip frames already on disk)
+ *          --name=barnaby_v2_review (output base name, for encode and mux too)
  */
 const path = require('path'), fs = require('fs'), { spawnSync } = require('child_process');
 const HERE = __dirname;
@@ -67,12 +68,13 @@ function mux(silent, final) {
   ffmpeg(['-i', silent, '-i', WAV, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', final]);
   console.log('wrote', final);
 }
+const BASE = flags.name || 'barnaby_v2';           // --name=barnaby_v2_review -> out/barnaby_v2_review.mp4
 function encode(f0, f1, name) {
-  const silent = path.join(OUT, name || 'barnaby_v2-silent.mp4');
+  const silent = path.join(OUT, name || BASE + '-silent.mp4');
   ffmpeg(['-framerate', String(FPS), '-start_number', String(f0), '-i', path.join(OUT, 'frames', '%05d.jpg'), '-frames:v', String(f1 - f0),
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS), '-movflags', '+faststart', silent]);
   console.log('wrote', silent);
-  if (!name) mux(silent, path.join(OUT, 'barnaby_v2.mp4'));
+  if (!name) mux(silent, path.join(OUT, BASE + '.mp4'));
 }
 
 async function renderFrames(f0, f1) {
@@ -179,7 +181,7 @@ const fmt = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`
   } else if (mode === 'encode') {
     encode(0, Math.round(DUR * FPS));
   } else if (mode === 'mux') {
-    mux(path.join(OUT, 'barnaby_v2-silent.mp4'), path.join(OUT, 'barnaby_v2.mp4'));
+    mux(path.join(OUT, BASE + '-silent.mp4'), path.join(OUT, BASE + '.mp4'));
   } else if (mode === 'range') {
     const a = +pos[1], b = +pos[2]; const f0 = Math.round(a * FPS), f1 = Math.round(b * FPS);
     await renderFrames(f0, f1);

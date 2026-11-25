@@ -3,7 +3,7 @@
 > **Every system deserves a butler.** *(film kicker: "…even the old ones.")*
 > Product name is parked; "Barnaby" is the butler's name and the working product name.
 
-Status: **v0.4 — 2026-11-25 ~05:00 IST.** Phases 0–1 done; Phase 2 (core) working end to end for Connect, Ask and Unlock. Build is being tested.
+Status: **v0.5 — 2026-11-25 ~08:15 IST.** Core complete: Connect, Ask, Unlock, Build, Act and **Compose** all pass on a real run (`demo_check` 15/15). Docs written (README for judges, WRITEUP, MCP_SETUP). Film: framework + scene B done, scenes A, C–I in progress; score rendered through the VSTs (`video/audio/score.py`).
 
 ### Progress log
 - **Phase 0 ✅** Repo-local env; Synapse pinned locally; smoke tests pass. Details in §7.
@@ -27,6 +27,8 @@ Status: **v0.4 — 2026-11-25 ~05:00 IST.** Phases 0–1 done; Phase 2 (core) wo
   - Fixed along the way:
     - uvicorn `--reload` hangs on Windows, so Barnaby restarts systems himself.
     - The worker now reads the repo README ("notes") before speccing a build, and the builder's README definitions outrank the spec.
+- **Compose ✅** `synapse.build_custom` (hosted Custom mode, headless `synapse init`), one stdio MCP server per skill (repo on `PYTHONPATH`), a `compose` growth tool with a grow approval, habit detection in `capabilities`, skill calls gated as writes. Real run: `hand_back_finished_bike` composed in 38 s and used (Tom texted, job ready). `demo_check` **15/15**.
+- **Core unit tests** `tests/test_core.py` (10): fix-up, surface atlas, tiers + voice gate, habits.
 - **Display (P0 started)** `ui/`: conversation, live trace (tiers colour-coded), approval cards with a diff viewer, capability map, and connect-a-repo form.
   - **Mock mode replays a real recorded run** (`ui/fixtures/demo-run.json`, exported from `events.jsonl`).
 - **Voice (P0 started)**: `runtime/voice` (Pipecat).

@@ -79,6 +79,8 @@ def main() -> int:
     for i, m in enumerate(man, 1):
         if a.only and m["who"] != a.only:
             continue
+        if any(r and r[0] == "_src" for r in words.get(f"{i:02d}", [])):
+            continue                                  # timings straight from ElevenLabs' alignment (choose_eleven.py)
         path = HERE / m["file"]
         want = script_words(m["text"])
         got = recognise(path, m["text"])

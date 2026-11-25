@@ -1,12 +1,15 @@
 /* Drives the real display in each skin and checks that every feature still works (no screenshots).
    Needs the core running (.venv/Scripts/python -m barnaby serve). The connect POST is intercepted, so nothing is
-   connected for real.   node video/v2/look/app/check.js [--skins default,signpost,ticket] */
+   connected for real.   node video/v2/look/app/check.js [--skins default,classic,signpost,ticket]
+   "default" is the display with no ?skin, which since round 3 is the approved app look (app3); "classic" is the old
+   developer look (?skin=classic), the only one without the household view's plain words. */
 const path = require('path');
 const puppeteer = require(path.resolve(__dirname, '../../../node_modules/puppeteer-core'));
 const CHROME = process.env.CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const BASE = process.env.BARNABY_URL || 'http://127.0.0.1:8700';
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
-const skins = arg('skins', 'default,signpost,ticket').split(',');
+const skins = arg('skins', 'default,classic,signpost,ticket').split(',');
+const HOUSEHOLD = skin => skin !== 'classic';           // every look but the old one speaks in plain words
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const url = (skin, q) => `${BASE}/?${q}${skin === 'default' ? '' : '&skin=' + skin}`;
 
@@ -33,18 +36,18 @@ const url = (skin, q) => `${BASE}/?${q}${skin === 'default' ? '' : '&skin=' + sk
     await p.waitForSelector('#card-a1', { timeout: 20000 });
     ok(skin, 'unlock card shows', true);
     const card = await p.$eval('#card-a1', n => ({ text: n.innerText, buttons: [...n.querySelectorAll('button')].map(x => x.textContent) }));
-    if (skin !== 'default') ok(skin, 'card leads with the plain title', /order parts from your suppliers/i.test(card.text.split('\n')[0]));
+    if (HOUSEHOLD(skin)) ok(skin, 'card leads with the plain title', /order parts from your suppliers/i.test(card.text.split('\n')[0]));
     ok(skin, 'card has yes and no', card.buttons.length === 2, card.buttons.join(' | '));
     await p.click('#card-a1 button.primary');
     await p.waitForSelector('#card-a2', { timeout: 20000 });
     ok(skin, 'click approves; replay continues to the next card', true);
-    if (skin !== 'default') ok(skin, 'the yes is kept in the conversation', await p.$$eval('.msg.decision.yes', n => n.length) >= 1);
+    if (HOUSEHOLD(skin)) ok(skin, 'the yes is kept in the conversation', await p.$$eval('.msg.decision.yes', n => n.length) >= 1);
     await p.keyboard.press('y');                                     // mock: Y approves the open card
     await wait(400);
     ok(skin, 'Y key approves', !(await p.$('#card-a2')));
     const acts = await p.$$eval('#trace li', n => n.map(x => x.innerText.trim()).filter(Boolean));
     ok(skin, 'activity is listed', acts.length > 5, acts.length + ' rows');
-    if (skin !== 'default') {
+    if (HOUSEHOLD(skin)) {
       ok(skin, 'activity reads in plain words', acts.some(t => /^Looked at repair jobs due on/m.test(t)), acts.find(t => /due/.test(t)) || '');
       ok(skin, 'no developer words in activity', !acts.some(t => /endpoint|\bAPI\b|\btool\b|MCP/i.test(t.split('\n')[0])));
       const opened = await p.evaluate(() => { const d = document.querySelector('#trace .tr.step details'); if (!d) return ''; d.open = true; return d.querySelector('.technical-body').textContent; });
@@ -70,7 +73,7 @@ const url = (skin, q) => `${BASE}/?${q}${skin === 'default' ? '' : '&skin=' + sk
     ok(skin, 'compose card shows', /Hand back a bike in one step/.test(await p.$eval('#card-a7', n => n.innerText)));
     await p.click('#card-a7 button.secondary, #card-a7 button:not(.primary)');
     await wait(500);
-    if (skin !== 'default') ok(skin, 'not now is kept', await p.$$eval('.msg.decision.no', n => n.length) === 1);
+    if (HOUSEHOLD(skin)) ok(skin, 'not now is kept', await p.$$eval('.msg.decision.no', n => n.length) === 1);
 
     // 4. hold to talk (fake mic; the voice bot is absent, so it reports that, as before)
     await p.goto(url(skin, 'mock=1&turn=2&paused=1'), { waitUntil: 'networkidle0' });
@@ -92,7 +95,7 @@ const url = (skin, q) => `${BASE}/?${q}${skin === 'default' ? '' : '&skin=' + sk
       const m = document.getElementById('map').getBoundingClientRect();
       return [...document.querySelectorAll('#messages .text')].some(t => { const r = t.getBoundingClientRect(); return r.right > m.left + 2 && r.width > 0; });
     });
-    if (skin !== 'default') ok(skin, 'nothing half-covered by the drawer', !covered);
+    if (HOUSEHOLD(skin)) ok(skin, 'nothing half-covered by the drawer', !covered);
     await p.type('#connect-form input[name="name"]', 'shop');
     await p.type('#connect-form input[name="repo"]', 'X:\\shop');
     await p.type('#connect-form input[name="base_url"]', 'http://127.0.0.1:8101');
@@ -106,7 +109,7 @@ const url = (skin, q) => `${BASE}/?${q}${skin === 'default' ? '' : '&skin=' + sk
     await wait(600);
     await p.click('#toggle-map'); await wait(200);
     const mapText = await p.$eval('#map-body', n => n.innerText);
-    ok(skin, 'drawer lists what the system can do', skin === 'default' ? /GET \/api/.test(mapText) : /Repair jobs due on a given day/i.test(mapText), mapText.slice(0, 60).replace(/\n/g, ' '));
+    ok(skin, 'drawer lists what the system can do', !HOUSEHOLD(skin) ? /GET \/api/.test(mapText) : /Repair jobs due on a given day/i.test(mapText), mapText.slice(0, 60).replace(/\n/g, ' '));
 
     // 6. overlay
     await p.setViewport({ width: 560, height: 860 });

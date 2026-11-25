@@ -37,11 +37,11 @@ const FAKE_VOICE = () => {
   ok('the mark is his bell and bow tie (masked), in the bar and the welcome', await p.evaluate(() => !!document.getElementById('bb-tie') && document.querySelectorAll('.brand .bmark, .intro .bmark').length === 2));
   const fav = await p.evaluate(async () => { const l = document.querySelector('link[rel="icon"]'); if (!l) return 0; const r = await fetch(l.href); return r.status; });
   ok('the favicon is served', fav === 200, String(fav));
-  for (const q of ['', '?skin=classic', '?skin=app']) {
+  for (const [q, want, what] of [['', /skins\/app3\.css$/, 'the default ("/") is this look'], ['?skin=classic', /\/ui\/style\.css$/, 'the old look at ?skin=classic'], ['?skin=app', /skins\/app\.css$/, 'round 2 at ?skin=app']]) {
     const o = await page();
     await o.goto(`${BASE}/${q}${q ? '&' : '?'}static=1`, { waitUntil: 'networkidle0' });
-    const css = await o.evaluate(() => [...document.styleSheets].map(s => s.href || '').find(h => /\/ui\/(style|skins\/app)\.css/.test(h)) || '');
-    ok(`other looks untouched at "/${q}"`, q === '?skin=app' ? /skins\/app\.css/.test(css) : /\/ui\/style\.css/.test(css), css.split('/ui/')[1]);
+    const css = await o.evaluate(() => [...document.styleSheets].map(s => s.href || '').find(h => /\/ui\/(style|skins\/app3?)\.css/.test(h)) || '');
+    ok(what, want.test(css), css.split('/ui/')[1]);
     await o.close();
   }
   await p.close();

@@ -62,6 +62,9 @@ at the edge, overlay keeps its name, the count keeps its noun, the status wraps 
 verdict and verified by recapture and the check scripts, not re-reviewed. DESIGN.md and .impeccable/design.json
 written for this look, marked pending.
 
-## Open
-The director approves `?skin=app` before it becomes the default (index.html: DEFAULT = 'app') and before DESIGN.md
-loses its pending mark.
+## Current (round 3, approved)
+The contract above is round 2's (`?skin=app`), kept as history. The director found round 2 too subdued ("No AI apps
+look like this") and approved round 3, modelled on the Claude and Codex desktop apps (study:
+video/v2/look/app3/REFERENCE-ANALYSIS.md): `ui/skins/app3.css` is now the default (index.html DEFAULT = 'app3');
+`?skin=app` and `?skin=classic` stay reachable. DESIGN.md and .impeccable/design.json describe round 3. Checks:
+video/v2/look/app/check.js (default = app3, plus classic) and video/v2/look/app3/check.js.

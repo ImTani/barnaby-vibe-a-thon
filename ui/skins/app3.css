@@ -16,7 +16,7 @@
   --line: #D3CCBE;
   --ink: #24211C;           /* 15:1 on the ground */
   --ink-2: #534F47;         /* 8:1 */
-  --ink-3: #6E695F;         /* 5.1:1 */
+  --ink-3: #6A655B;         /* 5.3:1 on the ground, 4.7:1 on the hover tint */
   --brass: #A8772A;         /* the mark */
   --brass-strong: #87590F;  /* the decision, Hold to talk, brass words (5.6:1 on white) */
   --on-brass: #FFFFFF;
@@ -225,7 +225,7 @@ body.working:not(.overlay) .msg.pending { display: none; }
   display: flex; flex-direction: column;
 }
 .card .head { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px 0; }
-.card .ico.kind { width: 38px; height: 38px; padding: 9px; border-radius: 11px; background: var(--brass-tint); color: var(--brass-strong); }
+.card .ico.kind { width: 38px; height: 38px; padding: 9px; border-radius: 12px; background: var(--brass-tint); color: var(--brass-strong); }
 .card .hd { display: grid; gap: 1px; padding-top: 1px; }
 .card .title { font: 600 17px/1.35 var(--ui); color: var(--ink); text-wrap: balance; }
 .card .kind-line { font-size: 13px; color: var(--ink-3); }
@@ -285,7 +285,7 @@ body.working:not(.overlay) .msg.pending { display: none; }
 .msg.intro .how li { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-radius: 10px; font-size: 14.5px; color: var(--ink-2); }
 .msg.intro .how .ico { color: var(--brass-strong); }
 .connect-first {
-  display: none; align-items: center; gap: 8px; margin-top: 22px; height: 40px; padding: 0 16px 0 12px; border: 0; border-radius: 20px;
+  display: none; align-items: center; gap: 8px; margin-top: 22px; height: 40px; padding: 0 16px 0 12px; border: 0; border-radius: 999px;
   background: var(--brass-strong); color: var(--on-brass); font: 600 14.5px/1 var(--ui);
 }
 .connect-first:hover { filter: brightness(1.08); }
@@ -308,13 +308,13 @@ body.s-listening .input { border-color: var(--brass); }
 .plus:hover { background: var(--surface-2); color: var(--ink); }
 .talk-hint { grid-area: hint; padding: 1px 7px; border: 1px solid var(--line); border-radius: 6px; font: 600 11.5px/1.5 var(--ui); color: var(--ink-3); }
 .talk {
-  grid-area: act; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px 0 12px; border: 0; border-radius: 19px;
+  grid-area: act; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px 0 12px; border: 0; border-radius: 999px;
   background: var(--brass-strong); color: var(--on-brass); font: 600 14.5px/1 var(--ui); user-select: none; touch-action: none; transition: filter .15s;
 }
 .talk:hover { filter: brightness(1.08); }
 .talk .mic { width: 19px; height: 19px; }
 .talk .wave { display: none; align-items: center; justify-content: center; gap: 2.5px; width: 19px; height: 19px; }
-.talk .wave i { display: block; width: 3px; height: 5px; border-radius: 2px; background: currentColor; }
+.talk .wave i { display: block; width: 3px; height: 5px; border-radius: 999px; background: currentColor; }
 .talk.on { box-shadow: 0 0 0 4px var(--brass-tint); }
 .talk.on .mic { display: none; } .talk.on .wave { display: flex; }
 .talk.on .wave i { animation: level 1s var(--ease) infinite; }
@@ -341,8 +341,8 @@ body.s-listening .input { border-color: var(--brass); }
 .irow .ivalue { flex: none; margin-left: auto; font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .irow.empty .ilabel { color: var(--ink-3); }
 .irow .meter { display: inline-flex; align-items: center; gap: 8px; }
-.irow .bar { display: block; width: 48px; height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; }
-.irow .bar i { display: block; height: 100%; border-radius: 3px; background: var(--brass); transition: width .4s var(--ease); }
+.irow .bar { display: block; width: 48px; height: 5px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.irow .bar i { display: block; height: 100%; border-radius: 999px; background: var(--brass); transition: width .4s var(--ease); }
 .imore { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding: 6px 8px; border: 0; border-radius: 8px; background: none; font: 600 13px/1.3 var(--ui); color: var(--ink-2); }
 .imore .ico { width: 12px; height: 12px; }
 .imore:hover { background: var(--surface-2); color: var(--ink); }
@@ -380,11 +380,11 @@ body.s-listening .input { border-color: var(--brass); }
 .ab .tech { display: none; grid-column: 2 / -1; grid-row: 2; font: 11.5px/1.45 var(--mono); color: var(--ink-3); overflow-wrap: anywhere; }
 #map.show-tech .ab .tech { display: block; }
 .ab.shut .what { color: var(--ink-3); text-decoration: line-through; }
-.connect { margin-top: 20px; padding: 16px; display: grid; gap: 12px; background: var(--surface); border: 1px solid var(--hair); border-radius: 14px; }
+.connect { margin-top: 20px; padding: 16px; display: grid; gap: 12px; background: var(--surface); border: 1px solid var(--hair); border-radius: 12px; }
 .connect h3 { font: 600 16px/1.3 var(--serif-head); }
 .connect .help { margin-top: -6px; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
 .connect label { display: grid; gap: 5px; font: 600 12.5px/1.3 var(--ui); color: var(--ink-2); }
-.connect input { height: 38px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--ground); font: 400 14px var(--ui); color: var(--ink); }
+.connect input { height: 38px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); font: 400 14px var(--ui); color: var(--ink); }
 .connect input::placeholder { color: var(--ink-3); opacity: 1; }
 .connect input:focus { outline: 2px solid var(--brass); outline-offset: -1px; border-color: transparent; }
 .connect button[type="submit"] { justify-self: start; height: 36px; padding: 0 16px; border: 0; border-radius: 18px; background: var(--brass-strong); color: var(--on-brass); font: 600 14px/1 var(--ui); }

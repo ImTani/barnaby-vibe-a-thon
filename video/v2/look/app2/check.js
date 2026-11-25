@@ -31,10 +31,10 @@ const FAKE_VOICE = () => {
   ok('?skin=app loads skins/app.css', await p.evaluate(() => [...document.styleSheets].some(s => /skins\/app\.css/.test(s.href || ''))));
   const font = await p.evaluate(() => getComputedStyle(document.querySelector('.msg .text')).fontFamily);
   ok('set in Segoe UI', /Segoe UI/.test(font), font.split(',')[0]);
-  for (const q of ['', '?skin=classic']) {
+  for (const [q, want] of [['?skin=classic', /\/ui\/style\.css/], ['', /\/ui\/skins\/app3\.css/]]) {   // "/" is app3 since round 3
     const o = await page();
     await o.goto(`${BASE}/${q}${q ? '&' : '?'}static=1`, { waitUntil: 'networkidle0' });
-    ok(`old look unchanged at "/${q}"`, await o.evaluate(() => [...document.styleSheets].some(s => /\/ui\/style\.css/.test(s.href || '')) && !document.documentElement.dataset.skin));
+    ok(q ? `old look still at "/${q}"` : 'the default ("/") is the approved round-3 look', await o.evaluate(w => [...document.styleSheets].some(s => new RegExp(w).test(s.href || '')), want.source));
     await o.close();
   }
   await p.close();

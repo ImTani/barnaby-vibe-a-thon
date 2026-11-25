@@ -15,6 +15,7 @@ import difflib
 import json
 import re
 import shutil
+import subprocess
 import sys
 import wave
 from pathlib import Path
@@ -125,14 +126,23 @@ def main() -> int:
             continue
         scored.sort(key=lambda s: s[0])
         best = scored[0]
-        shutil.copy(best[1], TAKES / f"{k}_Barnaby.wav")
+        # the director wants Barnaby brisker than George's natural read: lines under 175 wpm are brought toward
+        # 180 with a pitch-preserving stretch (ffmpeg atempo, WSOLA), never more than 10%; word timings scale with it
+        tempo = min(1.10, 180.0 / best[5]) if 0 < best[5] < 175 and len(want) >= 4 else 1.0
+        dest = TAKES / f"{k}_Barnaby.wav"
+        if tempo > 1.001:
+            subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(best[1]), "-af", f"atempo={tempo:.4f}",
+                            "-ar", "48000", "-ac", "1", "-c:a", "pcm_s24le", str(dest)], check=True)
+        else:
+            shutil.copy(best[1], dest)
         al = best[1].with_suffix(".align.json")
         if al.exists():
-            words[k] = word_times(json.loads(al.read_text(encoding="utf-8")), TAGGED[k]) + [["_src", "eleven", 0]]
+            wt = word_times(json.loads(al.read_text(encoding="utf-8")), TAGGED[k])
+            words[k] = [[w, round(a / tempo, 3), round(b / tempo, 3)] for w, a, b in wt] + [["_src", "eleven", round(tempo, 4)]]
         for s in scored:
             report.append(f"| {k} | {s[1].stem.split('_')[1]} | {s[2][:70]} | {s[3]:.2f} | {s[4]} | {s[5]:.0f} | "
                           f"{'**yes**' if s is best else ''} |")
-        print(f"{k} pick {best[1].stem}  wer {best[3]:.2f} leak {best[4]} wpm {best[5]:.0f}"
+        print(f"{k} pick {best[1].stem}  wer {best[3]:.2f} leak {best[4]} wpm {best[5]:.0f} -> x{tempo:.3f}"
               + ("   <- CHECK" if best[3] > 0.15 or best[4] else ""))
     WORDS.write_text(json.dumps(words, ensure_ascii=False, indent=1), encoding="utf-8")
     (CAND.parent / "choice.md").write_text("\n".join(report) + "\n", encoding="utf-8")

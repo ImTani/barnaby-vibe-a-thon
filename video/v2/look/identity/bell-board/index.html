@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barnaby · Bell Board</title>
+<style>
+:root{
+  --porcelain:#F5F5F2;     /* vitreous enamel plates, the ground */
+  --white:#FDFDFB;         /* the card in hand */
+  --ink:#1A1917;           /* engraving ink */
+  --ink-2:#47433D;         /* written-in, secondary */
+  --rule:#CFCBC2;          /* fine rules */
+  --mahogany:#4A2218;      /* the board's frame */
+  --mahogany-2:#5F3024;    /* rails inside the frame */
+  --on-mah:#F2ECE4;        /* lettering on the frame */
+  --on-mah-2:#D9C9BC;      /* quieter lettering on the frame */
+  --brass:#A97C2F;         /* Barnaby: flags, bell */
+  --brass-deep:#7A5718;    /* brass as text on porcelain */
+  --brass-lt:#C9A050;      /* brass on mahogany */
+  --brass-fill:#ECDDB4;    /* he's in here now */
+  --shutter:#D8D6CF;       /* a room that needs a key */
+  --shutter-2:#BDBAB1;
+  --engr:"Copperplate Gothic",serif;
+  --engr-l:"Copperplate Gothic Light","Copperplate Gothic",serif;
+  --bell:"Bell MT","Baskerville Old Face",Georgia,serif;
+  --text:"Segoe UI",system-ui,sans-serif;
+  --code:Consolas,"Cascadia Mono",monospace;
+  --hand:"Segoe Print","Segoe Script",cursive;
+}
+*{box-sizing:border-box;font-kerning:none !important}  /* Bell MT ships a broken f+space kern pair */
+html,body{margin:0}
+body{width:1920px;height:1080px;overflow:hidden;background:var(--porcelain);color:var(--ink);font:20px/1.45 var(--text);
+  display:grid;grid-template-columns:500px 1fr;grid-template-rows:84px 1fr 104px;caret-color:var(--brass-deep);font-kerning:none}
+::selection{background:var(--brass-fill);color:var(--ink)}
+:focus-visible{outline:3px solid var(--brass);outline-offset:3px}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+p{margin:0}
+button{font:600 21px/1 var(--text);color:var(--ink);background:var(--white);border:2px solid var(--mahogany);border-radius:3px;
+  padding:15px 26px;display:inline-flex;align-items:center;gap:10px;cursor:pointer;min-height:56px}
+button:hover{background:#EFEBE4}
+button.primary{background:var(--mahogany);color:var(--on-mah)}
+button.primary:hover{background:#5d2c1f}
+button.quiet{border-color:transparent;background:none;color:var(--ink);text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:1.5px;padding:15px 12px}
+button.quiet.open{border:2px solid var(--brass);text-decoration:none;background:var(--brass-fill)}
+button svg.i{width:24px;height:24px;stroke-width:2}
+.tech{font:15px var(--code);color:var(--ink-2)}
+
+/* ── the board's maker's plate (top of the frame) ── */
+.maker{grid-column:1;grid-row:1;background:var(--mahogany);display:flex;align-items:center;gap:16px;padding:0 30px;border-bottom:1px solid var(--mahogany-2)}
+.maker svg{width:52px;height:52px;color:var(--brass-lt);stroke-width:1.5}
+.maker b{font:400 40px/1 var(--bell);color:var(--on-mah);letter-spacing:.01em}
+.maker span{font:17px/1.25 var(--bell);color:var(--on-mah-2);margin-left:4px}
+
+/* ── header ── */
+header{grid-column:2;grid-row:1;display:flex;align-items:center;gap:30px;padding:0 40px;border-bottom:1px solid var(--rule);box-shadow:inset 0 -3px 0 var(--porcelain),inset 0 -4px 0 var(--rule)}
+.status{display:flex;align-items:center;gap:12px;font:26px/1 var(--bell);min-width:420px}
+.status small{font:15px var(--engr-l);color:var(--ink-2);letter-spacing:.04em}
+.status .win{width:34px;height:34px}
+nav.tabs{display:flex;gap:6px;margin-left:auto}
+nav.tabs a{font:600 20px var(--text);color:var(--ink-2);text-decoration:none;padding:26px 14px 24px;border-bottom:4px solid transparent}
+nav.tabs a.on{color:var(--ink);border-bottom-color:var(--mahogany)}
+.desk-who{display:flex;align-items:center;gap:10px;margin-left:24px}
+.desk-who small{font:15px var(--engr-l);color:var(--ink-2);letter-spacing:.04em;margin-right:4px}
+.seg{display:flex;border:2px solid var(--mahogany);border-radius:3px;overflow:hidden}
+.seg a{font:600 18px var(--text);padding:9px 16px;color:var(--ink);text-decoration:none;border-left:1px solid var(--mahogany)}
+.seg a:first-child{border-left:0}
+.seg a.on{background:var(--mahogany);color:var(--on-mah)}
+.date{font:18px var(--text);color:var(--ink-2);margin-left:18px}
+
+/* ── the board (persistent column) ── */
+.board{grid-column:1;grid-row:2/4;background:var(--mahogany);color:var(--on-mah);padding:22px 26px 22px;display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden}
+.board h2{font:400 28px/1.1 var(--bell);margin:0;color:var(--on-mah)}
+.board .sub{font:17px/1.3 var(--bell);color:var(--on-mah-2);margin:2px 0 8px}
+.plates{display:flex;flex-direction:column;gap:9px}
+.plate{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:14px;background:var(--porcelain);color:var(--ink);border-radius:4px;padding:9px 14px 9px 10px;min-height:72px;position:relative}
+.plate .nm{font:700 24px/1 var(--engr);letter-spacing:.03em;color:var(--ink)}
+.plate .pl{font:18px/1.2 var(--bell);color:var(--ink-2);margin-top:5px}
+.plate .st{font:600 16px/1.2 var(--text);color:var(--ink-2);text-align:right;display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.plate .st svg.i{width:20px;height:20px}
+.plate.key{background:var(--shutter)}
+.plate.key .nm{color:#3B3833}
+.plate.now{outline:3px solid var(--brass-lt);outline-offset:2px}
+.plate.now .st,.plate.been .st{color:var(--brass-deep)}
+.plate.ask{outline:3px solid var(--brass-lt);outline-offset:2px}
+.plate.ask .st{color:var(--mahogany);font-weight:700}
+.plate.fit{background:transparent;border:2px dashed var(--brass-lt);color:var(--on-mah)}
+.plate.fit .nm{color:var(--on-mah)} .plate.fit .pl{color:var(--on-mah-2)} .plate.fit .st{color:var(--brass-lt)}
+.plate.passage{background:transparent;border:2px solid var(--on-mah-2);min-height:60px}
+.plate.passage .nm{color:var(--on-mah);font-size:20px} .plate.passage .pl{color:var(--on-mah-2)} .plate.passage .st{color:var(--on-mah-2)}
+.plate.new-built{outline:2px solid var(--brass-lt);outline-offset:2px}
+/* indicator window */
+.win{width:46px;height:46px;border-radius:50%;border:2px solid var(--ink);background:var(--white);display:grid;place-items:center;position:relative;flex:none}
+.win svg{width:100%;height:100%}
+.win.w-now{background:var(--brass-fill)}
+.win.w-key{background:#C4C1B8;color:#2B2925}
+.win.w-key svg.i{width:24px;height:24px;stroke-width:2}
+.win.w-dark{border-color:var(--on-mah-2);background:transparent;color:var(--brass-lt)}
+.win.w-dark svg.i{width:24px;height:24px}
+.flag{transform-origin:20px 6px}
+.legend{margin-top:auto;border-top:1px solid var(--mahogany-2);padding-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;font:17px/1.25 var(--text);color:var(--on-mah)}
+.legend div{display:flex;align-items:center;gap:10px}
+.legend .win{width:34px;height:34px}
+
+/* ── main ── */
+main{grid-column:2;grid-row:2;padding:30px 40px 18px;min-height:0;overflow:hidden;position:relative}
+.ex{display:grid;gap:16px;max-width:1300px}
+.who{font:600 16px var(--text);color:var(--ink-2);letter-spacing:.01em;display:flex;align-items:center;gap:8px}
+.q p{font:26px/1.35 var(--text);color:var(--ink-2);margin-top:4px}
+.a{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start}
+.a>svg{width:44px;height:44px;color:var(--brass-deep);stroke-width:1.8;margin-top:4px}
+.a p{font:40px/1.22 var(--bell);color:var(--ink);max-width:28em;text-wrap:pretty}
+.a p.before{font-size:28px;color:var(--ink-2);margin-bottom:10px}
+.a p.wait{font-size:32px;color:var(--ink-2)}
+.dots{display:inline-flex;gap:6px;margin-left:10px;vertical-align:middle}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--brass)}
+.dots i:nth-child(2){opacity:.6}.dots i:nth-child(3){opacity:.3}
+h3{font:400 26px/1.2 var(--bell);margin:0 0 12px;color:var(--ink)}
+.lower{display:grid;grid-template-columns:420px 1fr;gap:40px;margin-top:30px;padding-top:24px;border-top:1px solid var(--rule)}
+.went{list-style:none;margin:0;padding:0;display:grid;gap:16px}
+.went li{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start;font:20px/1.4 var(--text);color:var(--ink-2)}
+.went li .win{width:38px;height:38px}
+.went b{color:var(--ink);font-weight:600}
+.went .rm{display:block;font:15px var(--engr-l);letter-spacing:.04em;color:var(--brass-deep);margin-top:2px}
+.went .who5{display:block;font-size:17px;margin-top:4px}
+.went .who5 svg.i{width:15px;height:15px;stroke-width:2.4;vertical-align:-2px}
+table{border-collapse:collapse;width:100%;font:19px/1.3 var(--text);color:var(--ink-2);font-variant-numeric:tabular-nums}
+th{font:15px var(--engr-l);letter-spacing:.05em;color:var(--ink);text-align:left;padding:4px 10px 8px;border-bottom:2px solid var(--mahogany)}
+td{padding:10px;border-bottom:1px solid var(--rule);vertical-align:top}
+td.n{color:var(--ink-2)}
+td b{color:var(--ink);font-weight:600}
+tr.short td{background:var(--brass-fill)}
+tr.short td.p{color:var(--ink);font-weight:700}
+td.p .flag-s{display:inline-flex;align-items:center;gap:6px}
+td.p svg.i{width:20px;height:20px;stroke-width:2;color:var(--mahogany);vertical-align:-4px}
+.pend{color:#7D786F;font-style:normal}
+
+/* the card: an enamel plate in hand */
+.card{background:var(--white);border:2px solid var(--mahogany);border-radius:4px;outline:1px solid var(--brass);outline-offset:5px;
+  padding:26px 30px 22px;margin-top:34px;max-width:1240px;box-shadow:0 10px 28px rgba(74,34,24,.13)}
+.card h2{font:400 38px/1.15 var(--bell);margin:0 0 16px;display:flex;align-items:center;gap:14px}
+.card h2 svg.i{width:34px;height:34px;color:var(--brass);stroke-width:1.6}
+.card dl{display:grid;grid-template-columns:230px 1fr;margin:0 0 20px;border-top:1px solid var(--rule)}
+.card dt,.card dd{margin:0;padding:12px 0;border-bottom:1px solid var(--rule)}
+.card dt{font:16px/1.4 var(--engr-l);letter-spacing:.04em;color:var(--ink-2);padding-top:16px}
+.card dd{font:22px/1.4 var(--text);color:var(--ink)}
+.card dd svg.i{width:22px;height:22px;stroke-width:2.2;color:var(--brass-deep);vertical-align:-4px;margin-right:6px}
+.card dd b{font-weight:600}
+.act{display:flex;align-items:center;gap:14px}
+.foot{display:flex;justify-content:space-between;align-items:baseline;gap:20px;margin-top:16px;font:17px/1.4 var(--text);color:var(--ink-2)}
+
+/* the change, for whoever wants it */
+.sheet{background:var(--white);border:2px solid var(--mahogany);border-radius:4px;display:flex;flex-direction:column;min-height:0;height:100%}
+.sheet .sh{padding:14px 18px;border-bottom:2px solid var(--mahogany);display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.sheet .sh b{font:400 26px var(--bell)}
+.sheet .sh span{font:16px var(--text);color:var(--ink-2)}
+.sheet .body{overflow:hidden;font:14.5px/1.55 var(--code);color:var(--ink-2);flex:1}
+.fileh{font:600 17px var(--text);color:var(--ink);padding:10px 18px 8px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;gap:10px;background:var(--porcelain)}
+.fileh code{font:600 16px var(--code)}
+.fileh span{font:400 16px var(--text);color:var(--ink-2)}
+.ln{white-space:pre;padding:0 18px 0 36px;position:relative}
+.ln.add{background:#F3EAD0;color:var(--ink)}
+.ln.add::before{content:"+";position:absolute;left:16px;color:var(--brass-deep)}
+.ln.hunk{color:#8C877D;padding-top:6px}
+.sheet .ln{white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* earlier today: what's already done, quiet */
+.earlier{position:absolute;left:40px;right:40px;bottom:18px;border-top:1px solid var(--rule);padding-top:14px;display:grid;grid-template-columns:auto 1fr;gap:6px 20px;font:18px/1.35 var(--text);color:var(--ink-2)}
+.earlier h3{grid-column:1/-1;font-size:22px;margin:0 0 2px}
+.earlier time{font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.earlier b{color:var(--ink);font-weight:600}
+
+/* ── the house (Martin) ── */
+.plan h2{font:400 34px/1.1 var(--bell);margin:0}
+.plan .sub{font:20px var(--text);color:var(--ink-2);margin:8px 0 0}
+.house{position:absolute;left:40px;top:128px;width:1340px;height:740px}
+.room{position:absolute;background:var(--white);border:4px solid var(--mahogany);padding:12px 16px}
+.room.key{background:var(--shutter)}
+.room .rh{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:10px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
+.room .rh .win{width:34px;height:34px}
+.room .rh .win svg.i{width:18px;height:18px}
+.room.key .rh{border-bottom-color:var(--shutter-2)}
+.room .rh b{display:block;font:700 22px/1 var(--engr);letter-spacing:.03em}
+.room .rh span{display:block;font:17px/1.1 var(--bell);color:var(--ink-2);margin-top:3px}
+.room .rh em{font:600 15px var(--text);font-style:normal;color:var(--ink-2);align-self:start}
+.room ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.room li{display:grid;grid-template-columns:24px 1fr;gap:8px;align-items:center;font:18px/1.3 var(--text);color:var(--ink-2)}
+.room li svg.i{width:20px;height:20px;stroke-width:2}
+.room li.lit{color:var(--ink);font-weight:600}
+.room li.lit svg{color:var(--ink)}
+.room li.shut span{text-decoration:line-through;text-decoration-thickness:1.5px}
+.room li em{font:600 15px var(--text);font-style:normal;color:var(--brass-deep);margin-left:8px}
+.room li.shut em{color:var(--mahogany)}
+.room.new{border:4px solid var(--mahogany);outline:2px solid var(--brass);outline-offset:4px}
+.room .tag-new{position:absolute;right:12px;top:-17px;background:var(--brass-fill);border:2px solid var(--brass-deep);font:700 15px var(--engr);letter-spacing:.05em;padding:4px 10px;color:var(--ink)}
+.corridor{position:absolute;border:4px solid var(--mahogany);border-top:0;background:var(--porcelain);display:flex;align-items:center;gap:18px;padding:0 20px}
+.corridor .path{flex:1;display:flex;align-items:center;gap:12px;font:19px var(--text);color:var(--ink)}
+.corridor .path svg.i{width:22px;height:22px;color:var(--brass-deep);stroke-width:2}
+.corridor>svg.i{width:30px;height:30px;color:var(--brass-deep)}
+.corridor b{font:700 20px var(--engr);letter-spacing:.03em;color:var(--ink)}
+.corridor small{font:16px var(--text);color:var(--ink-2)}
+.door{position:absolute;background:var(--white);height:4px}
+/* key panel on the board in house view */
+.kp{display:grid;gap:12px;font:18px/1.3 var(--text);color:var(--on-mah)}
+.kp div{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center}
+.kp .sw{height:34px;border-radius:3px;display:grid;place-items:center;color:var(--ink)}
+.kp b{font-weight:600}
+.count{border-top:1px solid var(--mahogany-2);padding-top:16px;margin-top:6px;font:20px/1.4 var(--bell);color:var(--on-mah)}
+.count .big{font:56px/1 var(--bell);color:var(--brass-lt);margin-right:8px}
+.keys{border-top:1px solid var(--mahogany-2);padding-top:14px}
+.keys h3{color:var(--on-mah);font-size:24px;margin-bottom:8px}
+.keys ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.keys li{display:flex;align-items:center;gap:10px;font:19px var(--text)}
+.keys li svg{color:var(--brass-lt);width:22px;height:22px}
+.keys li span{color:var(--on-mah-2);font-size:17px;margin-left:auto}
+
+/* ── behind the board (Theo) ── */
+.wiring{font:15px/1.45 var(--code);color:var(--on-mah)}
+.wiring dl{display:grid;grid-template-columns:118px 1fr;gap:3px 10px;margin:0 0 14px}
+.wiring dt{color:var(--on-mah-2)}
+.wiring dd{margin:0}
+.runs{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.runs li{border-top:1px solid var(--mahogany-2);padding-top:6px}
+.runs .r1{display:flex;justify-content:space-between;gap:10px;font:600 16px var(--text)}
+.runs .r1 span{font:600 16px var(--code);color:var(--brass-lt)}
+.runs .r2{color:var(--on-mah-2);font:13.5px/1.35 var(--code);margin-top:1px}
+.runs .r3{font:14.5px var(--code);margin-top:1px}
+.hist{list-style:none;margin:0;padding:0;font:14px/1.45 var(--code);color:var(--on-mah)}
+.hist li{display:grid;grid-template-columns:70px 1fr;gap:8px}
+.hist li b{font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist li span{color:var(--on-mah-2)}
+.dev{display:grid;grid-template-columns:1fr 620px;gap:26px;height:100%}
+.dev h3{font-size:24px;margin-bottom:6px;display:flex;align-items:baseline;gap:12px}
+.dev h3 small{font:16px var(--text);color:var(--ink-2)}
+table.eps{font:14px/1.3 var(--code);color:var(--ink)}
+table.eps th{font:13.5px var(--engr-l);padding:2px 6px 5px}
+table.eps td{padding:2px 6px;border-bottom:1px solid #E4E1DA;white-space:nowrap}
+table.eps tr.grp td{font:700 14.5px var(--engr);letter-spacing:.03em;color:var(--mahogany);background:var(--porcelain);padding:5px 6px 2px;border-bottom:1px solid var(--rule)}
+table.eps tr.grp td span{font:14px var(--bell);color:var(--ink-2);letter-spacing:0;margin-left:8px}
+table.eps td.m{font-weight:700}
+table.eps td.x{font:600 14px var(--text)}
+table.eps tr.off td{color:#7A756C}
+table.eps tr.denied td{color:#7A756C;text-decoration:line-through}
+table.eps tr.denied td.x{text-decoration:none;color:var(--mahogany)}
+table.eps td.x svg.i{width:16px;height:16px;stroke-width:2.4;vertical-align:-3px;margin-right:4px}
+.box{background:var(--white);border:1.5px solid var(--rule);border-radius:4px;padding:10px 14px;margin-bottom:12px}
+.box .bq{font:17px/1.35 var(--text);color:var(--ink-2);margin-bottom:6px}
+.calls{font:14px/1.45 var(--code);color:var(--ink)}
+.calls div{display:grid;grid-template-columns:96px 168px 1fr;gap:8px;border-top:1px solid #ECE9E3;padding:2px 4px}
+.calls div.short{background:var(--brass-fill)}
+.calls span:nth-child(3){color:var(--ink-2)}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:3px 12px;font:15px/1.45 var(--code)}
+.kv dt{font:15px var(--text);color:var(--ink-2)}
+.kv dd{margin:0}
+.mini{font:13.5px/1.45 var(--code);color:var(--ink-2);border-top:1px solid var(--rule);margin-top:8px;padding-top:6px;max-height:132px;overflow:hidden}
+.mini .ln{white-space:pre}
+.mini .ln{padding-left:24px}
+.mini .ln.add::before{left:8px}
+
+/* ── Priya's bench (proposal) ── */
+.prop{display:flex;align-items:center;gap:14px;border:2px dashed var(--brass-deep);border-radius:4px;padding:10px 16px;font:18px/1.35 var(--text);color:var(--ink);background:#FBF7EC;max-width:1360px}
+.prop b{font:700 18px var(--engr);letter-spacing:.05em;color:var(--brass-deep)}
+.bench{display:grid;grid-template-columns:1fr 420px;gap:36px;margin-top:18px;height:calc(100% - 66px)}
+.bench .a p{font-size:34px}
+.note{background:#FFF6B8;padding:18px 22px 16px;transform:rotate(1.2deg);box-shadow:0 8px 18px rgba(0,0,0,.12)}
+.note p{font:24px/1.35 var(--hand);color:#1F2A5A}
+.note small{display:block;font:16px var(--text);color:#4A4630;margin-top:8px}
+.rail{position:relative;margin-top:20px;height:470px}
+.rail .bar{position:absolute;left:0;right:0;top:0;height:10px;background:var(--mahogany);border-radius:3px}
+.rail .cap{position:absolute;right:0;top:16px;font:15px var(--engr-l);letter-spacing:.05em;color:var(--ink-2)}
+.tag{position:absolute;top:56px;width:430px;background:#EADFC2;color:#24201A;padding:58px 26px 20px;
+  clip-path:polygon(32px 0,calc(100% - 32px) 0,100% 32px,100% 100%,0 100%,0 32px);box-shadow:none}
+.tag::before{content:"";position:absolute;left:50%;top:18px;width:26px;height:26px;margin-left:-13px;border-radius:50%;background:var(--porcelain);box-shadow:0 0 0 6px #D4C59C}
+.string{position:absolute;top:6px;width:2px;height:66px;background:#8D7B5A}
+.tag .t1{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid #9C8C68;padding-bottom:8px}
+.tag .t1 b{font:700 24px var(--engr);letter-spacing:.03em}
+.tag .t1 span{font:600 19px var(--text)}
+.tag .who2{font:30px/1.15 var(--bell);margin-top:12px}
+.tag .bike{font:19px var(--text);color:#4A4236;margin-top:2px}
+.tag .work{font:600 21px/1.3 var(--text);margin-top:12px}
+.tag .work span{display:block;font-weight:400;font-size:18px;color:#4A4236;margin-top:2px}
+.tag ul{list-style:none;margin:14px 0 0;padding:12px 0 0;border-top:1.5px solid #9C8C68;display:grid;gap:8px}
+.tag li{display:grid;grid-template-columns:26px 1fr;gap:8px;font:18px/1.3 var(--text)}
+.tag li svg.i{width:22px;height:22px;stroke-width:2.2}
+.tag li small{display:block;color:#4A4236;font-size:17px}
+.tag li.no small{color:#24201A;font-weight:600}
+.tag .stamp{margin-top:14px;display:inline-flex;align-items:center;gap:8px;border:2.5px solid #24201A;padding:5px 12px;font:700 17px var(--engr);letter-spacing:.06em}
+.tag .stamp.no{border-color:var(--mahogany);color:var(--mahogany)}
+.asks{margin-top:30px}
+.asks h3{display:flex;align-items:center;gap:10px}
+.asks h3 svg.i{width:26px;height:26px;color:var(--brass-deep)}
+.asks ol{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.asks li{border:1.5px solid var(--rule);background:var(--white);border-radius:4px;padding:10px 14px;display:grid;grid-template-columns:24px 1fr;gap:2px 10px;align-items:start}
+.asks li svg.i{width:22px;height:22px;color:var(--ink-2);margin-top:3px;grid-row:1/3}
+.asks li b{font:400 23px/1.2 var(--bell);color:var(--ink)}
+.asks li span{font:17px/1.3 var(--text);color:var(--ink-2)}
+
+/* ── talk bar ── */
+footer{grid-column:2;grid-row:3;display:flex;align-items:center;gap:24px;padding:0 40px;border-top:1px solid var(--rule)}
+.talk{font:600 23px var(--text);padding:18px 30px;min-width:320px;justify-content:center;background:var(--mahogany);color:var(--on-mah);border-color:var(--mahogany)}
+.talk svg.i{width:28px;height:28px;stroke-width:1.9}
+.hint{font:17px var(--text);color:var(--ink-2)}
+.write{flex:1;display:flex;align-items:flex-end;gap:14px;font:600 17px var(--text);color:var(--ink-2)}
+.write .in{flex:1;border-bottom:2px solid var(--ink-2);font:22px var(--text);color:#6E695F;padding:6px 4px}
+
+/* ── identity sheet ── */
+.idx{display:grid;grid-template-columns:1fr 600px;gap:44px;height:100%}
+.idx h1{font:400 92px/1 var(--bell);margin:0}
+.idx .dir{font:19px var(--engr-l);letter-spacing:.06em;color:var(--ink-2);margin-top:10px}
+.idx .thesis{font:30px/1.3 var(--bell);margin:22px 0 0;max-width:30em}
+.idx .why{font:21px/1.5 var(--text);color:var(--ink-2);margin:18px 0 0;max-width:46em}
+.idx .why b{color:var(--ink)}
+.ms{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:26px;padding-top:20px;border-top:1px solid var(--rule)}
+.ms h4,.spec h4{font:16px var(--engr-l);letter-spacing:.05em;margin:0 0 6px;color:var(--ink-2)}
+.ms p{font:20px/1.45 var(--text);color:var(--ink)}
+.spec{display:grid;gap:16px;align-content:start}
+.sw2{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center}
+.sw2 i{height:48px;border-radius:3px;border:1px solid rgba(0,0,0,.18)}
+.sw2 span{font:17px/1.3 var(--text);color:var(--ink-2)}
+.sw2 b{font:600 18px var(--text);color:var(--ink)}
+.ty{display:grid;gap:2px}
+.ty p{color:var(--ink)} .ty span{font:17px var(--text);color:var(--ink-2);margin-bottom:10px}
+.icons{display:flex;gap:20px;color:var(--ink)}
+.icons svg.i{width:38px;height:38px;stroke-width:1.6}
+
+@media (prefers-reduced-motion:no-preference){
+  body:not(.still) .flag.swing{animation:swing .62s cubic-bezier(.3,1.6,.5,1) both}
+}
+@keyframes swing{0%{transform:rotate(-70deg)}55%{transform:rotate(9deg)}78%{transform:rotate(-3deg)}100%{transform:rotate(0)}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- the counter bell, engraved: line plus a little hatching on the shaded side -->
+    <symbol id="bell" viewBox="0 0 64 64">
+      <path d="M32 9.5v6.5"/><circle cx="32" cy="7.5" r="2.4"/>
+      <path d="M11.5 44a20.5 20.5 0 0 1 41 0"/>
+      <path d="M7 44h50v6H7z"/>
+      <path d="M38.5 25.5a17 17 0 0 1 9.4 13.5M41 23.8a20 20 0 0 1 8.5 11.2M36 27.6a14 14 0 0 1 8 11.4" stroke-width=".9"/>
+      <path d="M17.5 37.5a14.5 14.5 0 0 1 7-9.5" />
+      <path d="M12 53.5h40" stroke-width=".9"/>
+    </symbol>
+    <!-- the indicator flag: pivot, rod, pennant (drawn in a 40x40 window) -->
+    <symbol id="flag" viewBox="0 0 40 40">
+      <circle cx="20" cy="6" r="2.2" fill="#1A1917" stroke="none"/>
+      <path d="M20 6v26" stroke="#1A1917" stroke-width="1.6"/>
+      <path d="M20 9.5l12 5.2-12 5.2z" fill="#A97C2F" stroke="#1A1917" stroke-width="1.3" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="pivot" viewBox="0 0 40 40"><circle cx="20" cy="6" r="2.2" fill="#1A1917"/></symbol>
+    <symbol id="mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11.5" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5M8.5 21.5h7"/></symbol>
+    <symbol id="tick" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol>
+    <symbol id="key" viewBox="0 0 24 24"><circle cx="7.5" cy="12" r="4"/><circle cx="7.5" cy="12" r="1.2"/><path d="M11.5 12h10M17.5 12v3.5M20.5 12v3"/></symbol>
+    <symbol id="shut" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></symbol>
+    <symbol id="dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.5" fill="currentColor"/></symbol>
+    <symbol id="see" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M3 12h17M14 6l6 6-6 6"/></symbol>
+    <symbol id="warn" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.2v.3"/></symbol>
+    <symbol id="passage" viewBox="0 0 24 24"><path d="M3 7h5v10H3M21 7h-5v10h5M8 12h8"/><path d="M13.5 9.5L16 12l-2.5 2.5"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  </defs>
+</svg>
+
+<div class="maker"><svg class="i"><use href="#bell"/></svg><b>Barnaby</b><span>at Spokes &amp; Sprockets</span></div>
+<header id="head"></header>
+<aside class="board" id="board" aria-label="Where Barnaby is"></aside>
+<main id="main"></main>
+<footer id="foot"></footer>
+
+<script src="content.js"></script>
+<script>
+(() => {
+  const S = window.STORY, Q = new URLSearchParams(location.search), M = Q.get('m') || '1';
+  if (Q.has('still')) document.body.classList.add('still');
+  const $ = s => document.querySelector(s);
+  const ic = (id, cls = '') => `<svg class="i ${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const R = Object.fromEntries(S.rooms.map(r => [r.id, r]));
+  const first = s => s.split(' ')[0];
+
+  /* the indicator window: now (flag in, brass), been (flag in), open (empty), key, dark (on the frame) */
+  function win(state, cls = '') {
+    if (state === 'now') return `<span class="win w-now ${cls}"><svg viewBox="0 0 40 40"><g class="flag swing"><use href="#flag"/></g></svg></span>`;
+    if (state === 'been') return `<span class="win ${cls}"><svg viewBox="0 0 40 40"><use href="#flag"/></svg></span>`;
+    if (state === 'key') return `<span class="win w-key ${cls}">${ic('key')}</span>`;
+    if (state === 'passage') return `<span class="win w-dark ${cls}">${ic('passage')}</span>`;
+    if (state === 'fit') return `<span class="win w-dark ${cls}">${ic('plus')}</span>`;
+    return `<span class="win ${cls}"><svg viewBox="0 0 40 40"><use href="#pivot"/></svg></span>`;
+  }
+
+  /* what's open at each point of the day */
+  const PHASE = { morning: 0, orders: 1, built: 2, end: 3 };
+  function itemLit(it, phase) {
+    const [k, , state, flag] = it;
+    if (state !== 'lit') return false;
+    if (k === 'POST /api/purchase-orders') return phase >= 1;
+    if (k === 'POST /api/jobs/{job_id}/assign') return phase >= 3;
+    if (flag === 'new') return phase >= 2;
+    return true;
+  }
+  const order = ['jobs', 'customers', 'parts', 'orders', 'mechanics', 'invoices', 'reports'];
+
+  /* the board: o = {phase, flags:{room:'now'|'been'}, ask:room, fit:bool, passage:bool, workload:bool} */
+  function board(o) {
+    const plate = id => {
+      const r = R[id], n = r.items.length, lit = r.items.filter(i => itemLit(i, o.phase)).length;
+      const f = (o.flags || {})[id];
+      let cls = lit ? '' : 'key', w = lit ? 'open' : 'key', st = lit ? `${lit} of ${n} open` : `${ic('key')}ask first`;
+      if (o.ask === id) { cls = 'key ask'; w = 'key'; st = 'asking for<br>the key'; }
+      if (f === 'now') { cls += ' now'; w = 'now'; st = 'here now'; }
+      if (f === 'been') { cls += ' been'; w = 'been'; st = 'looked in'; }
+      return `<div class="plate ${cls}">${win(w)}<div><div class="nm">${r.name}</div><div class="pl">${r.place}</div></div><div class="st">${st}</div></div>`;
+    };
+    let h = `<h2>The bell board</h2><p class="sub">Every room of Theo’s system, and where I am.</p><div class="plates">${order.map(plate).join('')}`;
+    if (o.workload) h += `<div class="plate new-built">${win('open')}<div><div class="nm">Workload</div><div class="pl">built today</div></div><div class="st">1 of 1 open</div></div>`;
+    if (o.fit) h += `<div class="plate fit">${win('fit')}<div><div class="nm">Workload</div><div class="pl">a new room, being fitted</div></div><div class="st">awaiting<br>your say-so</div></div>`;
+    if (o.passage) h += `<div class="plate passage">${win('passage')}<div><div class="nm">${S.passage.name}</div><div class="pl">a passage, made at ${S.passage.time}</div></div><div class="st">one step</div></div>`;
+    h += `</div><div class="legend">
+      <div>${win('now')}<span>Here now</span></div><div>${win('been')}<span>Looked in</span></div>
+      <div>${win('open')}<span>He can go in</span></div><div>${win('key')}<span>Ask you first</span></div></div>`;
+    $('#board').innerHTML = h;
+  }
+
+  function head(o) {
+    const tabs = { Martin: ['Today', 'The house'], Theo: ['Today', 'Behind the board'], Priya: ['My bench', 'The house'] }[o.who];
+    const state = { idle: 'At your service', look: 'Checking parts', wait: 'Waiting for your say-so', talk: 'Talking with Priya' }[o.now];
+    const w = o.now === 'look' ? win('now') : o.now === 'wait' ? `<span class="win w-key">${ic('key')}</span>` : win('open');
+    $('#head').innerHTML = `<div class="status"><small>Now</small>${w}<span>${state}</span></div>
+      <nav class="tabs" aria-label="Views">${tabs.map((t, i) => `<a href="#" class="${i === o.tab ? 'on' : ''}">${t}</a>`).join('')}</nav>
+      <div class="desk-who"><small>At the desk</small><div class="seg" role="tablist">${['Martin', 'Theo', 'Priya'].map(p => `<a href="#" role="tab" class="${p === o.who ? 'on' : ''}">${p}</a>`).join('')}</div></div>
+      <div class="date">${S.todayShort}</div>`;
+  }
+  function foot() {
+    $('#foot').innerHTML = `<button class="talk">${ic('mic')}Hold to talk</button><span class="hint">or hold the space bar</span>
+      <div class="write"><span>Or write it:</span><span class="in">Ask Barnaby…</span></div><button>Ask</button>`;
+  }
+
+  const ex = (who, time, ask, say, opts = {}) => `<div class="ex">
+      <div class="q"><div class="who">${who} · ${time}</div><p>“${ask}”</p></div>
+      <div class="a">${ic('bell')}<div>${opts.before ? `<p class="before">${opts.before}</p>` : ''}${say}</div></div></div>`;
+
+  function went(progress) {   // progress: jobs checked so far (5 = done)
+    const s = S.m1.steps, done = progress >= 5;
+    const who = (j, i) => i < progress ? (j.ok ? `${first(j.who)} ${ic('tick')}` : `<b>${first(j.who)}: short</b>`) : `<span class="pend">${first(j.who)}</span>`;
+    return `<h3>Where I went</h3><ul class="went">
+      <li>${win('been')}<span><b>${s[0].did}.</b> ${s[0].found}.<span class="rm">The workshop · Jobs</span></span></li>
+      <li>${win(done ? 'been' : 'now')}<span><b>${done ? s[1].did + "." : s[1].doing + "…"}</b> ${done ? s[1].found + '.' : `${progress} of 5 so far.`}
+        <span class="who5">${S.m1.due.map(who).join(' · ')}</span><span class="rm">The stockroom · Parts</span></span></li></ul>`;
+  }
+  function due(progress) {
+    return `<h3>Due tomorrow, Tuesday 24 November</h3><table><tr><th>No.</th><th>Customer and bike</th><th>Work</th><th>With</th><th>Parts</th></tr>
+      ${S.m1.due.map((j, i) => `<tr class="${!j.ok && i < progress ? 'short' : ''}"><td class="n">${j.n}</td>
+        <td><b>${j.who}</b><br>${j.bike}</td><td>${j.work}</td><td>${j.mech}</td>
+        <td class="p">${i < progress ? (j.ok ? j.parts : `<span class="flag-s">${ic('warn')}Short.</span> ${j.parts}`) : '<span class="pend">checking…</span>'}</td></tr>`).join('')}</table>`;
+  }
+
+  function keyCard() {
+    const c = S.m2.card;
+    return `<section class="card" aria-label="Needs your say-so"><h2>${ic('key')}${c.title}</h2>
+      <dl>${c.lines.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+      <div class="act"><button class="primary">${ic('tick')}${c.yes}</button><button>${c.no}</button></div>
+      <div class="foot"><span>You can also just say “yes”.</span><span class="tech">${c.technical}</span></div></section>`;
+  }
+  function buildCard(open) {
+    const c = S.m3.card;
+    return `<section class="card" aria-label="Needs your say-so"><h2>${ic('plus')}${c.title}</h2>
+      <dl>${c.lines.map(([k, v], i) => `<dt>${k}</dt><dd>${i === 2 ? ic('tick') : ''}${v}</dd>`).join('')}</dl>
+      <div class="act"><button class="primary">${ic('tick')}${c.yes}</button><button>${c.no}</button>
+        <button class="quiet ${open ? 'open' : ''}" aria-expanded="${open}">${ic('see')}${c.see}</button></div>
+      <div class="foot"><span>${c.where} ${c.clickOnly}</span><span class="tech">${c.technical}</span></div></section>`;
+  }
+  function parseDiff() {
+    const files = []; let cur = null;
+    for (const line of S.real.diff.split('\n')) {
+      if (line.startsWith('diff --git')) { cur = { name: line.replace(/^diff --git a\/(\S+).*$/, '$1'), lines: [], add: 0, del: 0 }; files.push(cur); continue; }
+      if (/^(index |--- |\+\+\+ |new file mode)/.test(line) || !cur) continue;
+      if (line.startsWith('+')) cur.add++; if (line.startsWith('-')) cur.del++;
+      cur.lines.push(line);
+    }
+    return files;
+  }
+  const lineHtml = l => `<div class="ln ${l.startsWith('@@') ? 'hunk' : l.startsWith('+') ? 'add' : ''}">${l.startsWith('@@') ? '· · ·' : esc(l.slice(1)) || ' '}</div>`;
+  function changeSheet() {
+    const files = parseDiff(), total = files.reduce((a, f) => a + f.add, 0);
+    const body = files.map(f => `<div class="fileh"><span><code>${esc(f.name)}</code></span><span>${S.m3.card.files[f.name] || ''} · ${f.add} lines added</span></div>` + f.lines.map(lineHtml).join('')).join('');
+    return `<div class="sheet"><div class="sh"><b>The change, for whoever wants to read it</b><span>${files.length} files · ${total} lines added · nothing removed</span></div><div class="body">${body}</div></div>`;
+  }
+
+  /* ── Martin's house ── */
+  function plan() {
+    const li = (it, phase) => {
+      const [, label, state, flag] = it, lit = itemLit(it, phase);
+      const mk = state === 'shut' ? ic('shut') : lit ? ic('dot') : ic('key');
+      const note = flag === 'given' ? '<em>your key</em>' : flag === 'new' ? '<em>new</em>' : state === 'shut' ? '<em>kept shut</em>' : '';
+      return `<li class="${state === 'shut' ? 'shut' : lit ? 'lit' : 'key'}">${mk}<span>${label}${note}</span></li>`;
+    };
+    const room = (id, x, y, w, h) => {
+      const r = R[id], lit = r.items.filter(i => itemLit(i, 3)).length;
+      return `<div class="room ${lit ? '' : 'key'} ${r.isNew ? 'new' : ''}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
+        ${r.isNew ? '<span class="tag-new">Built today</span>' : ''}
+        <div class="rh">${win(lit ? 'open' : 'key')}<div><b>${r.name}</b><span>${r.place === 'built today' ? 'off the office' : r.place}${lit ? ` · ${lit} of ${r.items.length} open` : ''}</span></div></div>
+        <ul>${r.items.map(i => li(i, 3)).join('')}</ul></div>`;
+    };
+    const p = S.passage;
+    return `<div class="plan"><h2>The house: everything Theo’s system can do</h2>
+      <p class="sub">White rooms are open to Barnaby. Grey rooms, and anything with a key, he’d ask you for first.</p>
+      <div class="house">
+        ${room('workload', 290, 0, 430, 130)}
+        ${room('invoices', 0, 142, 304, 230)}
+        ${room('reports', 300, 142, 340, 230)}
+        ${room('mechanics', 636, 142, 300, 230)}
+        ${room('parts', 932, 142, 408, 250)}
+        ${room('customers', 0, 368, 424, 296)}
+        ${room('jobs', 420, 368, 516, 296)}
+        ${room('orders', 932, 388, 408, 276)}
+        <div class="corridor" style="left:0;top:660px;width:936px;height:80px">${ic('passage')}<b>${p.name}</b>
+          <span class="path">${p.steps.map(s => `<span>${s}</span>`).join(ic('arrow'))}</span></div>
+      </div></div>`;
+  }
+  function planKey() {
+    const c = S.counts;
+    $('#board').innerHTML = `<h2>Key to the plan</h2><p class="sub">The same plates as the board.</p><div class="kp">
+      <div><span class="sw" style="background:var(--white)">${ic('dot')}</span><span><b>Open.</b> Barnaby can use it.</span></div>
+      <div><span class="sw" style="background:var(--shutter)">${ic('key')}</span><span><b>A key.</b> He’d ask you first.</span></div>
+      <div><span class="sw" style="background:var(--white);outline:2px solid var(--brass-lt);outline-offset:2px">${ic('plus')}</span><span><b>Built today,</b> with your say-so.</span></div>
+      <div><span class="sw" style="background:var(--porcelain)">${ic('passage')}</span><span><b>A passage.</b> Steps he joined into one.</span></div>
+      <div><span class="sw" style="background:var(--shutter)">${ic('shut')}</span><span><b>Kept shut.</b> Never, whoever asks.</span></div></div>
+      <div class="count"><span class="big">${c.can}</span>of ${c.of} things he can do, and ${c.passages} passage. Everything else stays locked until you hand him the key.</div>
+      <div class="keys"><h3>Keys you’ve given him</h3><ul>${S.keysGiven.map(([k, t]) => `<li>${ic('key')}${k}<span>${t}</span></li>`).join('')}</ul></div>
+      <div class="keys"><h3>Passages he’s made</h3><ul><li>${ic('passage')}${S.passage.name}<span>${S.passage.time}</span></li></ul></div>
+      <div class="keys"><h3>Rooms he’s built</h3><ul><li>${ic('plus')}Workload, with your say-so<span>${S.m3.time}</span></li></ul></div>`;
+  }
+
+  /* ── Theo: behind the board ── */
+  function wiring() {
+    const t = S.theo;
+    $('#board').innerHTML = `<h2>Behind the board</h2><p class="sub">The wiring, for whoever looks after it.</p>
+      <div class="wiring"><dl><dt>system</dt><dd>${t.system.name} · ${t.system.title}</dd><dt>repo</dt><dd>${t.system.repo}</dd>
+        <dt>api</dt><dd>${t.system.base}</dd><dt>mcp servers</dt><dd>shop · ${t.exposed.length} tools<br>${t.skill.server} · 1 composed skill</dd>
+        <dt>deny-list</dt><dd>${t.denied.join(', ')}</dd><dt>tests</dt><dd>pytest -q · ${S.real.tested}</dd></dl></div>
+      <h3 style="color:var(--on-mah);font-size:24px;margin:2px 0 6px">Synapse runs</h3>
+      <ul class="runs">${t.synapse.map(r => `<li><div class="r1">${r.when} · ${r.what}<span>${r.s.toFixed(2)} s</span></div>
+        <div class="r2">synapse ${esc(r.cmd)}</div><div class="r3">${esc(r.out)}</div></li>`).join('')}</ul>
+      ${S.real.gitlog ? `<h3 style="color:var(--on-mah);font-size:24px;margin:14px 0 4px">History</h3><ul class="hist">${S.real.gitlog.map(g => `<li><span>${g.date.slice(0, 4)}</span><b>${esc(g.author.split(" ")[0])}: ${esc(g.subject)}</b></li>`).join('')}</ul>` : ''}`;
+  }
+  function theo() {
+    const t = S.theo, ep = Object.fromEntries(S.real.endpoints.map(e => [e.key, e]));
+    const rows = S.rooms.map(r => `<tr class="grp"><td colspan="5">${r.name}<span>${r.place}</span></td></tr>` + r.items.map(([k]) => {
+      const e = ep[k] || { tool: 'workload', read_only: true }, [m, path] = k.split(' ');
+      const exposed = t.exposed.includes(k), denied = t.denied.includes(k), built = S.real.built.includes(k);
+      const x = denied ? `${ic('shut')}denied` : exposed ? `${ic('dot')}exposed` : '—';
+      return `<tr class="${denied ? 'denied' : exposed ? '' : 'off'}"><td class="m">${m}</td><td>${esc(path)}</td><td>${e.tool}</td><td>${e.read_only ? 'read' : 'write'}</td><td class="x">${x}</td></tr>`;
+    }).join('')).join('');
+    const files = parseDiff(), svc = files.find(f => f.name === 'services.py');
+    const tr = t.trace;
+    return `<div class="dev"><section style="min-height:0;overflow:hidden">
+        <h3>Discovered <small>${S.real.endpoints.length + S.real.built.length} endpoints · ${t.exposed.length} exposed as MCP tools · 1 denied</small></h3>
+        <table class="eps"><tr><th>Method</th><th>Path</th><th>Tool</th><th>Kind</th><th>Barnaby</th></tr>${rows}</table></section>
+      <section style="min-height:0;overflow:hidden">
+        <h3>Last turn <small>${(tr.ms / 1000).toFixed(1)} s · ${tr.modelTurns} model turns · ${tr.calls.length} calls</small></h3>
+        <div class="box"><div class="bq">“${tr.ask}”</div><div class="calls">${tr.calls.map(c => `<div class="${c.short ? 'short' : ''}"><span>${c.tool}</span><span>${esc(c.args)}</span><span>${esc(c.res)}</span></div>`).join('')}</div></div>
+        <h3>The build <small>GET /api/reports/workload/{day}</small></h3>
+        <div class="box"><dl class="kv"><dt>written in</dt><dd>a git worktree, merged after approval</dd><dt>checks</dt><dd>pytest -q · ${S.real.tested}</dd>
+          <dt>change</dt><dd>${t.build.files} files · +${t.build.added} −${t.build.removed}</dd><dt>end to end</dt><dd>${t.build.endToEnd}, approved by click</dd></dl>
+          <div class="mini">${svc.lines.slice(4, 15).map(lineHtml).join('')}</div></div>
+        <h3>Composed skill <small>${t.skill.server} · ${t.synapse[2].s.toFixed(1)} s</small></h3>
+        <div class="box"><dl class="kv"><dt>tool</dt><dd>${t.skill.tool}</dd><dt>from</dt><dd>${t.skill.from.join(' + ')}</dd></dl>
+          <p style="font:15px/1.4 var(--text);color:var(--ink-2);margin-top:6px">${esc(t.skill.description)}</p></div>
+      </section></div>`;
+  }
+
+  /* ── Priya's bench (proposal) ── */
+  function priya() {
+    const P = S.priya;
+    const tag = (t, x) => `<span class="string" style="left:${x + 214}px"></span><div class="tag" style="left:${x}px">
+      <div class="t1"><b>No. ${t.n}</b><span>${t.dueWord} · ${t.due}</span></div>
+      <div class="who2">${t.who}</div><div class="bike">${t.bike}, ${t.colour}</div>
+      <div class="work">${t.work}<span>${t.hours} · moved from Dev’s bench</span></div>
+      <ul>${t.parts.map(([p, s, ok]) => `<li class="${ok ? '' : 'no'}">${ok ? ic('tick') : ic('warn')}<span>${p}<small>${s}</small></span></li>`).join('')}</ul>
+      <span class="stamp ${t.ready ? '' : 'no'}">${t.ready ? ic('tick') + 'Parts ready' : ic('warn') + 'Spokes short'}</span></div>`;
+    return `<div class="prop"><b>Proposal</b><span>Priya’s first day: her bench as the repair tags on the handlebars. Not decided; for the director’s notes.</span></div>
+      <div class="bench"><div>${ex('Priya', P.time, P.ask, `<p>${P.say} ${P.aside}</p>`)}
+        <div class="rail"><span class="bar"></span>${tag(P.tags[0], 20)}${tag(P.tags[1], 490)}</div></div>
+        <div><div class="note"><p>${P.note.text}</p><small>Theo, in the README he left for whoever comes next</small></div>
+        <div class="asks"><h3>${ic('mic')}Things you can ask me</h3><ol>${P.asks.map(([q, n]) => `<li>${ic('arrow')}<b>“${q}”</b><span>${n}</span></li>`).join('')}</ol></div></div></div>`;
+  }
+
+  /* ── identity sheet ── */
+  function sheet() {
+    const sw = (c, n, h) => `<div class="sw2"><i style="background:${c}"></i><span><b>${n}</b><br>${h}</span></div>`;
+    return `<div class="idx"><div style="display:flex;flex-direction:column">
+        <h1>Bell Board</h1><div class="dir">Direction C for Barnaby’s identity</div>
+        <p class="thesis">In a house with a butler, the bell board in the passage shows which room has rung and where he’s been called. Barnaby brings his board to the shop: one window for each room of Theo’s system. When he’s working, a brass flag swings into the window of the room he’s in.</p>
+        <p class="why"><b>Why Martin would trust it:</b> discretion you can watch. He only goes where he’s called, and you can always see which room he’s in and which rooms he’s been in. The bell on the shop counter is the same bell that rings the board.</p>
+        <div class="ms"><div><h4>Motion</h4><p>The flag swings once on its pivot and settles, about six tenths of a second. Plates never move; a new plate is fitted, not animated. Nothing loops. With reduced motion, the flag simply appears.</p></div>
+          <div><h4>Sound</h4><p>One ring of the counter bell when he answers. The soft clack of an indicator flag as he steps into a room. A key in a lock when you hand him a key. Otherwise the workshop radio carries on.</p></div></div>
+      </div>
+      <div class="spec"><h4>Colour</h4>
+        ${sw('#4A2218', 'Mahogany', 'The board’s frame: a third of the window. #4A2218')}
+        ${sw('#F5F5F2', 'Porcelain', 'The enamel plates and the ground. #F5F5F2')}
+        ${sw('#1A1917', 'Engraving ink', 'Lettering. #1A1917')}
+        ${sw('#A97C2F', 'Brass', 'Barnaby: the bell and the flags. #A97C2F')}
+        ${sw('#ECDDB4', 'Brass light', 'He’s in this room now; the thing to look at. #ECDDB4')}
+        ${sw('#D8D6CF', 'Shutter grey', 'A room he’d need a key for. #D8D6CF')}
+        <h4 style="margin-top:8px">The bell and the drawn set</h4>
+        <div class="icons"><svg class="i" style="width:64px;height:64px;color:var(--brass);stroke-width:1.4"><use href="#bell"/></svg>
+          ${['mic', 'key', 'tick', 'see', 'passage', 'plus', 'shut', 'warn'].map(i => ic(i)).join('')}</div>
+        <h4 style="margin-top:10px">Type, already on the shop PC</h4>
+        <div class="ty"><p style="font:700 30px/1.1 var(--engr);letter-spacing:.03em">Copperplate Gothic</p><span>engraved room plates and short labels</span>
+          <p style="font:34px/1.15 var(--bell)">Bell MT, for Barnaby’s words</p><span>an English face, cut for John Bell in 1788</span>
+          <p style="font:24px/1.2 var(--text)">Segoe UI, for what’s written in</p><span>questions, tables, details</span>
+          <p style="font:20px/1.2 var(--code)">Consolas, only where it is code</p></div>
+      </div></div>`;
+  }
+
+  /* ── moments ── */
+  const main = $('#main');
+  foot();
+  if (M === '0') {
+    head({ who: 'Martin', tab: 0, now: 'idle' });
+    board({ phase: 0, flags: { jobs: 'been', parts: 'now' } });
+    main.innerHTML = sheet();
+  } else if (M === '1a' || M === '1') {
+    const done = M === '1', prog = done ? 5 : S.m1.checkedSoFar;
+    head({ who: 'Martin', tab: 0, now: done ? 'idle' : 'look' });
+    board({ phase: 0, flags: done ? { jobs: 'been', parts: 'been' } : { jobs: 'been', parts: 'now' } });
+    main.innerHTML = ex('Martin', S.m1.time, S.m1.ask, done ? `<p>${S.m1.say}</p>`
+        : `<p class="wait">${S.m1.steps[0].doing}… ${S.m1.steps[1].doing.toLowerCase()}<span class="dots"><i></i><i></i><i></i></span></p>`)
+      + `<div class="lower"><div>${went(prog)}</div><div>${due(prog)}</div></div>`;
+  } else if (M === '2') {
+    head({ who: 'Martin', tab: 0, now: 'wait' });
+    board({ phase: 0, ask: 'orders' });
+    main.innerHTML = ex('Martin', S.m2.time, S.m2.ask, `<p>${S.m2.say}</p>`) + keyCard()
+      + `<div class="earlier"><h3>Earlier today</h3>
+        <time>${S.m1.time}</time><span><b>“${S.m1.ask}”</b> ${S.m1.say}</span>
+        <time>${S.morning.time}</time><span><b>“${S.morning.ask}”</b> ${S.morning.say}</span></div>`;
+  } else if (M === '3') {
+    head({ who: 'Martin', tab: 0, now: 'wait' });
+    board({ phase: 1, fit: true, passage: true });
+    main.innerHTML = ex('Martin', S.m3.time, S.m3.ask, `<p>${S.m3.say}</p>`, { before: S.m3.before }) + buildCard(false);
+  } else if (M === '3b') {
+    head({ who: 'Martin', tab: 0, now: 'wait' });
+    board({ phase: 1, fit: true, passage: true });
+    main.style.display = 'grid'; main.style.gridTemplateColumns = '1fr 640px'; main.style.gap = '30px';
+    main.innerHTML = `<div style="min-width:0">${ex('Martin', S.m3.time, S.m3.ask, `<p style="font-size:34px">${S.m3.say}</p>`)}${buildCard(true)}</div><div style="min-height:0">${changeSheet()}</div>`;
+    document.querySelectorAll('.card dl').forEach(d => d.style.gridTemplateColumns = '200px 1fr');
+  } else if (M === '4') {
+    head({ who: 'Martin', tab: 1, now: 'idle' });
+    planKey();
+    main.innerHTML = plan();
+  } else if (M === '5') {
+    head({ who: 'Theo', tab: 1, now: 'idle' });
+    wiring();
+    main.innerHTML = theo();
+  } else if (M === '6') {
+    head({ who: 'Priya', tab: 0, now: 'talk' });
+    board({ phase: 3, workload: true, passage: true });
+    main.innerHTML = priya();
+  }
+})();
+</script>
+</body>
+</html>

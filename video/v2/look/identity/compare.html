@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Barnaby · three identity directions, side by side</title>
+<style>
+/* A plain contact sheet for reviewing the directions: one moment per page (?m=1), the three directions across.
+   Rendered by `node render.js --compare` into frames/_compare-<moment>.png. */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{width:1920px;height:1080px;overflow:hidden;background:#2a2a28;color:#f2f1ec;font:20px/1.35 "Segoe UI",system-ui,sans-serif;padding:28px 30px;display:grid;grid-template-rows:auto 1fr;gap:18px}
+h1{margin:0;font:600 28px "Segoe UI",sans-serif;display:flex;gap:18px;align-items:baseline}
+h1 small{font:400 20px "Segoe UI",sans-serif;color:#c9c7bd}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-content:start}
+figure{margin:0}
+figure img{display:block;width:100%;border:1px solid #57564f}
+figcaption{margin-top:12px;font:600 22px "Segoe UI",sans-serif}
+figcaption span{display:block;font:400 18px/1.35 "Segoe UI",sans-serif;color:#c9c7bd;margin-top:4px}
+</style>
+</head>
+<body>
+<h1 id="t"></h1>
+<div class="row" id="row"></div>
+<script>
+const m = new URLSearchParams(location.search).get('m') || '1';
+const MOMENTS = { '0': 'The identity sheet', '1a': 'Listening: his work in plain words', '1': 'The answer', '2': 'Asking for a key',
+  '3': 'Explaining a change', '3b': '“See the change” opened', '4': 'Martin: the plan of the house', '5': 'Theo: what a developer needs', '6': 'Priya: her bench (proposal)' };
+const DIRS = [
+  ['job-card', 'A · Job Card', 'Procedure: every request a numbered card, every key signed off on the yellow copy.'],
+  ['livery', 'B · Livery', 'Belonging: Barnaby wears the shop’s own colours, lined in gold like a good frame.'],
+  ['bell-board', 'C · Bell Board', 'Discretion you can watch: a flag shows which room of the system he’s in.'],
+];
+document.getElementById('t').innerHTML = `${MOMENTS[m]}<small>Barnaby identity directions · moment ${m}</small>`;
+document.getElementById('row').innerHTML = DIRS.map(([d, n, r]) =>
+  `<figure><img src="frames/${d}-${m}.png" alt="${n}, ${MOMENTS[m]}"><figcaption>${n}<span>${r}</span></figcaption></figure>`).join('');
+</script>
+</body>
+</html>

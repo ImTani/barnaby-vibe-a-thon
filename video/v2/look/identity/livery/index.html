@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barnaby · Livery</title>
+<style>
+/* Gill Sans MT's figure 1 is a bare stroke that reads as a capital I in job numbers and times;
+   figures come from Segoe UI (on the same PC), everything else stays Gill Sans */
+@font-face{font-family:"Liv Figures";src:local("Segoe UI"),local("SegoeUI");unicode-range:U+0030-0039;font-weight:400}
+@font-face{font-family:"Liv Figures";src:local("Segoe UI Semibold"),local("SegoeUI-Semibold");unicode-range:U+0030-0039;font-weight:700}
+:root{
+  --green:#17402F;      /* Hartley green: the shop's fascia, Barnaby's colours */
+  --green-2:#215443;    /* an unlit room on the plan */
+  --green-3:#0F2D20;
+  --gold:#C9A04A;       /* lining gold, on green */
+  --gold-deep:#977629;  /* lining gold, on white (lines and icons only) */
+  --enamel:#F7F7F3;     /* white enamel: the working surfaces */
+  --white:#FFFFFF;
+  --black:#141414;      /* frame black: body text */
+  --ink-2:#3F4A44;
+  --ink-3:#5F6A64;
+  --mist:#E3EAE5;       /* second neutral */
+  --rule:#CBD5CE;
+  --on-green:#FFFFFF;
+  --on-green-2:#CFDDD4;
+  --on-green-3:#A9BFB2;
+  --red:#A3261B;        /* enamel red: a shortfall, always with icon and words */
+  --red-tint:#F7E6E2;
+  --add:#E3EEE6;
+  --manila:#E7D8B3; --manila-2:#CDB888; --manila-ink:#2B2416;
+  --note:#F4EAA0;
+  --sans:"Liv Figures","Gill Sans MT","Gill Sans",Calibri,sans-serif;
+  --title:"Perpetua Titling MT","Gill Sans MT",serif;
+  --code:Consolas,"Cascadia Mono",monospace;
+  --hand:"Segoe Print","Segoe Script",cursive;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{width:1920px;height:1080px;overflow:hidden;background:var(--enamel);color:var(--black);font:21px/1.4 var(--sans);
+  display:grid;grid-template-rows:96px 1fr 104px;caret-color:var(--green);word-spacing:.07em}
+::selection{background:var(--gold);color:var(--black)}
+:focus-visible{outline:3px solid var(--gold-deep);outline-offset:3px}
+a{color:inherit}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+b,strong,h1,h2,h3,h4{font-weight:bold}
+h1,h2,h3,h4,p{margin:0}
+
+/* ── the fascia: green, lined in gold along its foot ── */
+header{position:relative;background:var(--green);color:var(--on-green);display:flex;align-items:center;gap:30px;padding:0 40px 10px}
+header::before,header::after{content:"";position:absolute;left:0;right:0;background:var(--gold)}
+header::before{bottom:9px;height:2px}
+header::after{bottom:4px;height:1px}
+.mark{display:flex;align-items:center;gap:16px;color:var(--gold)}
+.mark svg.badge{width:46px;height:58px}
+.mark .wm{display:flex;flex-direction:column;gap:2px}
+.mark .wm b{font:bold 30px/1 var(--title);letter-spacing:.16em}
+.mark .wm span{font:16px/1.2 var(--sans);color:var(--on-green-2)}
+.now{margin-left:auto;display:flex;align-items:center;gap:12px;font:22px var(--sans);color:var(--on-green)}
+.now svg{width:26px;height:26px;color:var(--gold)}
+.tabs{display:flex;gap:6px;margin-left:24px}
+.tabs a{font:21px var(--sans);color:var(--on-green-2);text-decoration:none;padding:10px 16px 12px;position:relative}
+.tabs a.on{color:var(--on-green);font-weight:bold}
+.tabs a.on::before,.tabs a.on::after{content:"";position:absolute;left:16px;right:16px;background:var(--gold)}
+.tabs a.on::before{bottom:5px;height:2px}
+.tabs a.on::after{bottom:1px;height:1px}
+.desk{display:flex;align-items:center;gap:12px;font:16px var(--sans);color:var(--on-green-2)}
+.seg{display:flex;border:1.5px solid var(--gold);border-radius:4px;overflow:hidden}
+.seg a{font:19px var(--sans);color:var(--on-green);text-decoration:none;padding:7px 15px}
+.seg a+a{border-left:1.5px solid var(--gold)}
+.seg a.on{background:var(--enamel);color:var(--green);font-weight:bold}
+
+/* ── main ── */
+main{display:grid;min-height:0}
+.talkcol{background:var(--green);color:var(--on-green);padding:40px 48px 32px;display:flex;flex-direction:column;gap:26px;min-height:0;overflow:hidden}
+.work{padding:40px 48px 32px;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:26px}
+.att{font:19px var(--sans);color:var(--gold);display:flex;gap:10px;align-items:baseline;margin-bottom:6px}
+.att b{font-weight:bold}
+.q{font:27px/1.35 var(--sans);color:var(--on-green-2)}
+.before{font:24px/1.4 var(--sans);color:var(--on-green-2)}
+.say{font:38px/1.24 var(--sans);color:var(--on-green);text-wrap:pretty}
+.say.wait{font-size:30px;color:var(--on-green-2)}
+.att svg.badge{width:20px;height:25px;color:var(--gold);flex:none;align-self:center}
+.said .before{margin-bottom:12px}
+h3.sub{font:bold 20px var(--sans);color:var(--gold)}
+.steps{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:4px}
+.step{--p:100%;position:relative;display:grid;grid-template-columns:30px 1fr;gap:12px;padding:10px 0 18px;font:22px/1.35 var(--sans);color:var(--on-green)}
+.step svg{width:26px;height:26px;color:var(--gold);margin-top:2px}
+.step .f{display:block;font-size:20px;color:var(--on-green-2)}
+.step::before,.step::after{content:"";position:absolute;left:42px;width:calc((100% - 42px) * var(--pp, 1));background:var(--gold)}
+.step::before{bottom:6px;height:2px}
+.step::after{bottom:1px;height:1px}
+.step.doing{color:var(--on-green-2)}
+.step .rm{display:inline-block;margin-left:10px;font:17px var(--sans);color:var(--gold-on-green, #C9A04A);letter-spacing:.02em;white-space:nowrap}
+.step .who{display:block;font-size:19px;color:var(--on-green-2);margin-top:2px}
+.step .who b{color:var(--on-green)}
+.filed{border-top:1px solid rgba(201,160,74,.45);padding-top:16px;margin-top:6px}
+.filed h3{font:bold 20px var(--sans);color:var(--on-green);margin-bottom:8px}
+.filed li{display:grid;grid-template-columns:64px 1fr;gap:10px;font:19px/1.35 var(--sans);color:var(--on-green-2);padding:3px 0}
+.filed li b{font-weight:normal;color:var(--on-green-3)}
+.filed ul{list-style:none;margin:0;padding:0}
+.keys{margin-top:auto;border-top:1px solid rgba(201,160,74,.45);padding-top:18px}
+.keys h3{font:bold 20px var(--sans);color:var(--on-green);margin-bottom:6px}
+.keys ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.keys li{display:flex;gap:10px;align-items:center;font:20px var(--sans);color:var(--on-green)}
+.keys li svg{color:var(--gold);width:22px;height:22px}
+.keys li span.t{color:var(--on-green-3);font-size:18px}
+.keys p{font:20px var(--sans);color:var(--on-green-2)}
+
+/* tables */
+h2.hd{font:bold 30px/1.2 var(--sans);color:var(--black)}
+.hdrow{display:flex;align-items:baseline;gap:18px}
+.hdrow .meta{font:19px var(--sans);color:var(--ink-2)}
+table{border-collapse:collapse;width:100%;font:21px/1.3 var(--sans);color:var(--black)}
+th{font:bold 18px var(--sans);color:var(--ink-2);text-align:left;padding:0 12px 10px;border-bottom:2px solid var(--green)}
+td{padding:13px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+td.n{font:bold 21px var(--sans);color:var(--green)}
+td .bike{display:block;color:var(--ink-2);font-size:19px}
+td.p .pc{display:flex;gap:10px;align-items:flex-start}
+td.p svg{width:24px;height:24px;margin-top:1px;color:var(--green)}
+tr.short td{background:var(--red-tint)}
+tr.short td.p{color:var(--red);font-weight:bold}
+tr.short td.p svg{color:var(--red)}
+.pend{color:var(--ink-3)}
+.pend svg{color:var(--ink-3)!important}
+.problem{display:grid;grid-template-columns:30px 1fr;gap:12px;font:21px/1.4 var(--sans);color:var(--black);background:var(--white);border:1px solid var(--rule);border-radius:4px;padding:18px 22px}
+.problem svg{width:26px;height:26px;color:var(--red);margin-top:1px}
+.problem b{font-weight:bold}
+
+/* buttons: standard controls in the shop's colours */
+.btn{font:bold 23px/1 var(--sans);min-height:60px;padding:0 30px;border-radius:4px;border:2px solid var(--green);background:var(--white);color:var(--green);display:inline-flex;align-items:center;gap:12px;cursor:pointer}
+.btn svg{width:24px;height:24px}
+.btn.primary{background:var(--green);color:var(--white)}
+.btn.quiet{border-color:transparent;background:none;color:var(--black);font-weight:normal;text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:1.5px;padding:0 12px}
+.btn.quiet.open{background:var(--mist);text-decoration:none;font-weight:bold}
+
+/* the coachline: a frame painter's double line around whatever needs Martin */
+.lined{position:relative;background:var(--white);border:2px solid var(--gold-deep);box-shadow:0 0 0 5px var(--enamel),0 0 0 6px var(--gold-deep);border-radius:6px;padding:30px 36px 26px;margin:6px}
+.lined h2{font:bold 40px/1.15 var(--sans);color:var(--black);margin-bottom:6px}
+.lined .why{font:21px/1.4 var(--sans);color:var(--ink-2)}
+dl.lines{display:grid;grid-template-columns:250px 1fr;margin:18px 0 22px;border-top:1px solid var(--rule)}
+dl.lines dt,dl.lines dd{margin:0;padding:13px 0;border-bottom:1px solid var(--rule)}
+dl.lines dt{font:bold 20px/1.35 var(--sans);color:var(--black);padding-top:15px;padding-right:16px}
+dl.lines dd{font:23px/1.4 var(--sans);color:var(--black);display:flex;gap:10px;align-items:flex-start}
+dl.lines dd svg{width:26px;height:26px;color:var(--green);margin-top:2px}
+.act{display:flex;align-items:center;gap:16px}
+.act .hint{font:19px var(--sans);color:var(--ink-2);margin-left:8px}
+.cfoot{display:flex;justify-content:space-between;align-items:baseline;gap:24px;margin-top:20px;font:19px/1.4 var(--sans);color:var(--ink-2)}
+.tech{font:15px var(--code);color:var(--ink-3);white-space:nowrap}
+
+/* where a key goes: one room, drawn like the plan */
+.minihouse{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:start;margin:0 6px}
+.minihouse>p{font:20px/1.4 var(--sans);color:var(--ink-2);max-width:20em;padding-top:12px}
+.miniroom{background:var(--green);border:2px solid var(--gold);box-shadow:0 0 0 5px var(--enamel),0 0 0 6px var(--green);padding:16px 22px 18px;color:var(--on-green-2);min-width:470px;border-radius:2px}
+.miniroom h4{font:bold 22px/1 var(--title);letter-spacing:.08em;color:var(--gold);margin-bottom:10px;display:flex;gap:12px;align-items:baseline}
+.miniroom h4 small{font:18px var(--sans);letter-spacing:0;color:var(--on-green-3)}
+.miniroom ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.miniroom li{display:flex;gap:10px;align-items:center;font:20px var(--sans)}
+.miniroom li svg{color:var(--gold);width:22px;height:22px}
+.miniroom li.this{color:var(--on-green);font-weight:bold}
+.miniroom.new{background:var(--enamel);color:var(--black);border-color:var(--gold-deep);box-shadow:0 0 0 5px var(--enamel),0 0 0 6px var(--gold-deep)}
+.miniroom.new h4{color:var(--green)}
+.miniroom.new h4 small{color:var(--ink-2)}
+.miniroom.new li svg{color:var(--green)}
+.miniroom.new li.this{color:var(--black)}
+.miniroom.new li em{color:var(--ink-2)}
+.miniroom li em{font-style:normal;font-weight:normal;font-size:17px;color:var(--gold);margin-left:4px}
+
+/* the change: for whoever wants to read it */
+.change{background:var(--white);border:1px solid var(--rule);border-radius:4px;display:flex;flex-direction:column;min-height:0;flex:1;overflow:hidden}
+.change .ch{display:flex;align-items:baseline;justify-content:space-between;padding:14px 22px;border-bottom:2px solid var(--green)}
+.change .ch b{font:bold 22px var(--sans)}
+.change .ch span{font:18px var(--sans);color:var(--ink-2)}
+.change .body{overflow:hidden;flex:1;font:15px/1.55 var(--code);color:var(--black)}
+.fileh{display:flex;gap:14px;align-items:baseline;padding:9px 22px 8px;background:var(--mist);border-bottom:1px solid var(--rule);font:bold 18px var(--sans)}
+.fileh code{font:bold 16px var(--code)}
+.fileh span{font:17px var(--sans);color:var(--ink-2)}
+.fileh svg{width:20px;height:20px;color:var(--green);align-self:center}
+.ln{white-space:pre;padding:0 22px 0 46px;position:relative}
+.ln.add{background:var(--add)}
+.ln.add::before{content:"+";position:absolute;left:22px;color:var(--green);font-weight:bold}
+.ln.hunk{color:var(--ink-3);padding-top:4px;padding-bottom:2px}
+
+/* compact card for 3b */
+.lined.compact{padding:22px 30px 20px}
+.lined.compact h2{font-size:32px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:0 26px;margin:14px 0 18px;border-top:1px solid var(--rule)}
+.grid4 div{padding:12px 0 0}
+.grid4 b{display:block;font:bold 18px var(--sans);color:var(--ink-2);margin-bottom:4px}
+.grid4 span{font:20px/1.35 var(--sans);display:flex;gap:8px}
+.grid4 svg{width:22px;height:22px;color:var(--green);margin-top:1px}
+
+/* ── the house ── */
+.plan{background:var(--green);color:var(--on-green);padding:36px 48px;position:relative;overflow:hidden}
+.plan h2{font:bold 34px var(--sans);color:var(--on-green)}
+.plan .lede{font:21px/1.4 var(--sans);color:var(--on-green-2);margin-top:4px}
+.house{position:absolute;left:48px;top:150px;width:1260px;height:700px}
+.house .outer{position:absolute;left:-7px;top:-7px;width:1254px;height:574px;border:1px solid var(--gold);pointer-events:none}
+.room{position:absolute;border:2px solid var(--gold);padding:14px 20px;background:var(--green-2);color:var(--on-green-2)}
+.room h4{font:bold 23px/1 var(--title);letter-spacing:.07em;color:var(--gold);display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.room h4 small{font:18px var(--sans);letter-spacing:0;color:var(--on-green-3)}
+.room ul{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.room li{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font:19px/1.3 var(--sans)}
+.room li svg{width:21px;height:21px;margin-top:1px;color:var(--gold)}
+.room li em{font-style:normal;font-size:16px;margin-left:8px;white-space:nowrap}
+.room.lit{background:var(--enamel);color:var(--ink-2)}
+.room.lit h4{color:var(--green)}
+.room.lit h4 small{color:var(--ink-2)}
+.room.lit li svg{color:var(--gold-deep)}
+.room.lit li.lit{color:var(--black)}
+.room.lit li.lit svg{color:var(--green)}
+.room li.lit em,.room li.given em{color:var(--green);font-weight:bold}
+.room li.shut{color:var(--ink-3)}
+.room li.shut span{text-decoration:line-through;text-decoration-thickness:1.5px}
+.room li.shut svg{color:var(--red)!important}
+.room li.shut em{color:var(--red);text-decoration:none;display:inline-block;font-weight:bold}
+.room.new{border-width:2px;box-shadow:0 0 0 5px var(--green),0 0 0 6px var(--gold)}
+.room.new h4 small{color:var(--green);font-weight:bold}
+.passage{position:absolute;border:2px solid var(--gold);border-top:0;background:repeating-linear-gradient(90deg,transparent 0 22px,rgba(201,160,74,.16) 22px 24px),var(--green-3);display:flex;align-items:center;gap:18px;padding:0 22px;color:var(--on-green)}
+.passage h4{font:bold 20px/1 var(--title);letter-spacing:.07em;color:var(--gold);white-space:nowrap}
+.passage .route{display:flex;align-items:center;gap:10px;font:20px var(--sans);white-space:nowrap}
+.passage .route svg{width:20px;height:20px;color:var(--gold)}
+.passage .when{margin-left:auto;font:18px var(--sans);color:var(--on-green-3)}
+.door{position:absolute;height:2px;background:var(--green-3)}
+.legend{padding:36px 40px;display:flex;flex-direction:column;gap:22px;background:var(--enamel)}
+.legend h3{font:bold 26px var(--sans)}
+.lg{display:grid;gap:12px}
+.lg div{display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:center;font:20px/1.3 var(--sans);color:var(--ink-2)}
+.lg b{color:var(--black)}
+.sw{height:34px;border:2px solid var(--gold-deep);display:grid;place-items:center;background:var(--green-2);color:var(--gold)}
+.sw svg{width:22px;height:22px}
+.count{border-top:1px solid var(--rule);padding-top:18px;font:21px/1.4 var(--sans);color:var(--black)}
+.count .big{font:bold 44px/1 var(--sans);color:var(--green);margin-right:8px}
+.held{border-top:1px solid var(--rule);padding-top:16px}
+.held h3{font:bold 21px var(--sans);margin-bottom:6px}
+.held ul{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:4px}
+.held li{display:flex;gap:10px;align-items:center;font:20px var(--sans)}
+.held li svg{color:var(--green);width:22px;height:22px}
+.held li .t{color:var(--ink-2);font-size:18px}
+
+/* ── Theo: the workings ── */
+.tcol{background:var(--green);color:var(--on-green);padding:34px 36px;display:flex;flex-direction:column;gap:20px;overflow:hidden}
+.tcol h2{font:bold 30px var(--sans)}
+.tcol .lede{font:19px/1.4 var(--sans);color:var(--on-green-2);margin-top:4px}
+.tcol h3{font:bold 19px var(--sans);color:var(--gold);margin-bottom:8px}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 14px;font:18px/1.35 var(--sans);color:var(--on-green-2)}
+.kv code{font:16px/1.5 var(--code);color:var(--on-green)}
+.tally{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(201,160,74,.45);border-bottom:1px solid rgba(201,160,74,.45)}
+.tally div{padding:10px 0 10px;font:17px/1.25 var(--sans);color:var(--on-green-2)}
+.tally b{display:block;font:bold 30px/1.1 var(--sans);color:var(--on-green)}
+.runs{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.runs li{display:grid;grid-template-columns:76px 1fr auto;gap:2px 12px;font:18px/1.3 var(--sans);color:var(--on-green)}
+.runs .w{color:var(--gold);font-size:17px}
+.runs .s{font:bold 18px var(--code);color:var(--on-green);text-align:right}
+.runs code{grid-column:2/4;font:14.5px/1.4 var(--code);color:var(--on-green-3);overflow-wrap:anywhere}
+.runs .o{grid-column:2/4;color:var(--on-green-2);font-size:17px}
+.twork{padding:30px 36px;display:grid;grid-template-columns:810px 1fr;gap:34px;min-height:0;overflow:hidden}
+.twork h3{font:bold 21px var(--sans);display:flex;gap:12px;align-items:baseline;margin-bottom:10px}
+.twork h3 span{font:17px var(--sans);color:var(--ink-2);font-weight:normal}
+table.ep{font:15.5px/1.2 var(--code)}
+table.ep th{font:bold 16px var(--sans);padding:0 8px 8px}
+table.ep td{padding:5px 8px;border-bottom:1px solid var(--mist);white-space:nowrap}
+table.ep td.m{font-weight:bold;color:var(--ink-2)}
+table.ep td.st{font:16px var(--sans);display:flex;gap:7px;align-items:center}
+table.ep td.st svg{width:18px;height:18px}
+table.ep tr.exp td.st{color:var(--green);font-weight:bold}
+table.ep tr.den td{color:var(--red)}
+table.ep tr.den td.st{color:var(--red);font-weight:bold}
+table.ep tr.unl td{color:var(--ink-2)}
+table.ep tr.new td{background:var(--add)}
+.rcol{display:flex;flex-direction:column;gap:16px;min-height:0;overflow:hidden}
+.box{border:1px solid var(--rule);background:var(--white);border-radius:4px}
+.trace{list-style:none;margin:0;padding:6px 0;font:15px/1.35 var(--code)}
+.trace li{display:grid;grid-template-columns:22px 104px 1fr;gap:2px 8px;padding:3px 14px;border-bottom:1px solid var(--mist)}
+.trace li:last-child{border-bottom:0}
+.trace li svg{width:16px;height:16px;color:var(--green);margin-top:2px}
+.trace li .a{color:var(--ink-2)}
+.trace li .r{grid-column:3/4;color:var(--black)}
+.trace li.short .r{color:var(--red);font-weight:bold}
+.trace li.short svg{color:var(--red)}
+.trace .tt{display:flex;justify-content:space-between;padding:8px 14px;font:17px var(--sans);color:var(--ink-2);border-bottom:2px solid var(--green)}
+.trace .tt b{color:var(--black)}
+.bk{display:grid;grid-template-columns:96px 1fr;gap:4px 12px;padding:10px 14px;font:17px/1.35 var(--sans);color:var(--ink-2)}
+.bk b{color:var(--black)}
+.bk code{font:15.5px var(--code);color:var(--black)}
+.bk .ok{color:var(--green);font-weight:bold;display:flex;gap:8px;align-items:center}
+.bk .ok svg{width:20px;height:20px}
+.log{list-style:none;margin:0;padding:6px 0;font:14.5px/1.35 var(--code)}
+.log li{display:grid;grid-template-columns:52px 70px 1fr;gap:8px;padding:4px 14px;border-bottom:1px solid var(--mist)}
+.log li:last-child{border-bottom:0}
+.log .d{color:var(--ink-2)}
+.log .au{font:bold 15px var(--sans);color:var(--green)}
+.log li:first-child{background:var(--add)}
+.mini{font:13.5px/1.5 var(--code);overflow:hidden;flex:1;min-height:0}
+.mini .ln{padding:0 12px 0 30px}
+.mini .ln.add::before{left:12px}
+.mini .fileh{font-size:16px;padding:6px 12px}
+.mini .fileh code{font-size:14.5px}
+
+/* ── Priya: her bench (proposal) ── */
+.proposal{display:flex;gap:16px;align-items:center;border:2px dashed var(--gold-deep);border-radius:4px;padding:12px 20px;font:19px/1.35 var(--sans);color:var(--ink-2);background:var(--white)}
+.proposal b{font:bold 19px var(--sans);color:var(--black);background:var(--note);padding:3px 10px;border-radius:2px;white-space:nowrap}
+.bench{position:relative;height:500px;flex:none}
+.rail{position:absolute;left:0;right:0;top:12px;height:10px;border-radius:5px;background:var(--green);box-shadow:0 0 0 1px var(--gold-deep)}
+.tag{position:absolute;top:70px;width:530px;height:420px;background:var(--manila);color:var(--manila-ink);padding:70px 30px 22px;
+  clip-path:polygon(34px 0,calc(100% - 34px) 0,100% 34px,100% 100%,0 100%,0 34px);box-shadow:inset 0 0 0 1px var(--manila-2)}
+.tag .eye{position:absolute;left:50%;top:22px;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:var(--enamel);box-shadow:0 0 0 6px var(--manila-2)}
+.tag .pr{position:absolute;left:30px;right:30px;top:66px;display:flex;justify-content:space-between;align-items:baseline;border-bottom:1.5px solid var(--green);padding-bottom:6px;font:16px var(--sans);color:var(--green)}
+.tag .pr b{font:bold 16px var(--title);letter-spacing:.1em}
+.tag .no{font:bold 46px/1 var(--sans);color:var(--green);margin:40px 0 12px;display:flex;justify-content:space-between;align-items:center;height:52px}
+.tag .no span{font:bold 21px var(--sans);color:var(--manila-ink)}
+.tag dl{display:grid;grid-template-columns:82px 1fr;gap:5px 12px;margin:0;font:20px/1.3 var(--sans)}
+.tag dt{font:bold 16px/1.6 var(--sans);color:#5b4f33}
+.tag dd{margin:0}
+.tag dd.parts{display:grid;gap:4px}
+.tag dd.parts span{display:flex;gap:8px;align-items:flex-start;font-size:19px}
+.tag dd.parts svg{width:20px;height:20px;margin-top:2px;color:var(--green)}
+.tag dd.parts .short{color:var(--red);font-weight:bold}
+.tag dd.parts .short svg{color:var(--red)}
+.tag .no .stamp{display:inline-block;font:bold 19px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;border:2.5px solid;padding:5px 12px 4px;border-radius:3px;transform:rotate(-3deg)}
+.tag .stamp.ok{color:var(--green)}
+.tag .stamp.no{color:var(--red)}
+.string{position:absolute;top:0;width:530px;height:120px;pointer-events:none}
+.string path{fill:none;stroke:#8f7b52;stroke-width:2}
+.asks h3{font:bold 23px var(--sans);margin-bottom:10px}
+.asks ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.asks li{border:2px solid var(--green);border-radius:4px;background:var(--white);padding:10px 14px 12px;display:flex;flex-direction:column;gap:4px}
+.asks li b{font:bold 19px/1.25 var(--sans);color:var(--black)}
+.asks li span{font:17px/1.3 var(--sans);color:var(--ink-2)}
+.sticky{align-self:flex-start;background:var(--note);color:#2b2a1f;font:22px/1.45 var(--hand);padding:22px 26px 20px;width:360px;transform:rotate(-2.2deg);box-shadow:0 8px 14px -6px rgba(0,0,0,.45)}
+.sticky small{display:block;text-align:right;font:20px var(--hand);margin-top:6px}
+
+/* ── talk bar ── */
+footer{display:flex;align-items:center;gap:24px;padding:0 40px;border-top:1px solid var(--rule);background:var(--white)}
+.talk{font:bold 24px/1 var(--sans);min-height:66px;min-width:320px;justify-content:center;padding:0 30px;background:var(--green);color:var(--white);border:0;border-radius:4px;display:inline-flex;align-items:center;gap:14px}
+.talk svg{width:28px;height:28px;color:var(--gold)}
+.hint2{font:18px var(--sans);color:var(--ink-2);white-space:nowrap}
+.write{flex:1;display:flex;align-items:center;gap:14px}
+.write label{font:bold 19px var(--sans);color:var(--black);white-space:nowrap}
+.write .in{flex:1;height:58px;border:1.5px solid #7E8A83;border-radius:4px;background:var(--white);font:22px var(--sans);color:#5F6A64;display:flex;align-items:center;padding:0 18px}
+
+/* ── identity sheet ── */
+.sheetL{background:var(--green);color:var(--on-green);padding:38px 56px 30px;display:flex;flex-direction:column;gap:18px;overflow:hidden}
+.sheetL .name{display:flex;gap:34px;align-items:center}
+.sheetL .name svg{width:150px;height:188px;color:var(--gold);flex:none}
+.sheetL h1{font:bold 92px/1 var(--title);letter-spacing:.1em;color:var(--gold)}
+.sheetL .tag1{font:24px/1.35 var(--sans);color:var(--on-green-2);margin-top:12px}
+.sheetL .thesis{font:29px/1.35 var(--sans);color:var(--on-green)}
+.sheetL .trust{font:21px/1.45 var(--sans);color:var(--on-green-2)}
+.sheetL .trust b{color:var(--on-green)}
+.fascia{display:flex;align-items:center;justify-content:center;gap:28px;background:var(--green-3);padding:22px 24px;position:relative;margin-top:8px}
+.fascia::before,.fascia::after{content:"";position:absolute;left:10px;right:10px;border-top:2px solid var(--gold);border-bottom:1px solid var(--gold);height:4px}
+.fascia::before{top:8px}.fascia::after{bottom:8px}
+.fascia .fb svg{width:40px;height:50px;color:var(--gold)}
+.fascia .ft{display:flex;flex-direction:column;align-items:center;gap:6px}
+.fascia .ft b{font:bold 38px/1 var(--title);letter-spacing:.12em;color:var(--gold)}
+.fascia .ft span{font:19px var(--sans);color:var(--on-green-2)}
+.ms{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:auto;border-top:1px solid rgba(201,160,74,.45);padding-top:20px}
+.ms h3{font:bold 20px var(--sans);color:var(--gold);margin-bottom:6px}
+.ms p{font:20px/1.4 var(--sans);color:var(--on-green-2)}
+.sheetR{padding:40px 52px;display:flex;flex-direction:column;gap:20px;overflow:hidden}
+.sheetR h3{font:bold 20px var(--sans);color:var(--ink-2)}
+.pal{display:grid;grid-template-columns:1fr 1fr;gap:14px 26px}
+.pal div{display:grid;grid-template-columns:84px 1fr;gap:14px;align-items:center;font:18px/1.3 var(--sans);color:var(--ink-2)}
+.pal i{height:56px;border:1px solid var(--rule);border-radius:3px}
+.pal b{display:block;color:var(--black);font-size:21px}
+.type{display:grid;gap:8px;border-top:1px solid var(--rule);padding-top:16px}
+.type div{display:flex;align-items:baseline;gap:18px}
+.type span{font:17px var(--sans);color:var(--ink-2);min-width:300px}
+.icons{display:flex;gap:30px;align-items:center;border-top:1px solid var(--rule);padding-top:16px;color:var(--green)}
+.icons svg{width:38px;height:38px}
+.icons .lbl{font:17px var(--sans);color:var(--ink-2)}
+.coach{display:flex;gap:26px;align-items:center;border-top:1px solid var(--rule);padding-top:18px}
+.coach .s{width:300px;height:70px;background:var(--white);border:2px solid var(--gold-deep);box-shadow:0 0 0 5px var(--enamel),0 0 0 6px var(--gold-deep);border-radius:6px;margin:6px}
+.coach p{font:19px/1.4 var(--sans);color:var(--ink-2)}
+
+@media (prefers-reduced-motion: no-preference){
+  body:not(.still) .step.drawn::before,body:not(.still) .step.drawn::after{animation:pull .4s cubic-bezier(.16,1,.3,1) both;transform-origin:left}
+  @keyframes pull{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- the brass service bell, drawn in line as a liner would paint it -->
+    <symbol id="bell" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 9.5v4M20.5 9h7M9.5 34a14.5 14.5 0 0 1 29 0M5.5 34.5h37v4.5h-37zM16.2 28.5a9.2 9.2 0 0 1 5.3-5.6"/></g></symbol>
+    <!-- the head badge: the bell on an oval plate, lined twice -->
+    <symbol id="badge" viewBox="0 0 64 80"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="32" cy="40" rx="29.5" ry="37.5" stroke-width="2.6"/><ellipse cx="32" cy="40" rx="25" ry="33" stroke-width="1.1"/>
+      <g stroke-width="2.4"><path d="M32 25.5v3.6M28.8 25.2h6.4M18.6 48a13.4 13.4 0 0 1 26.8 0M15 48.4h34v4.2H15zM24.6 42.8a8.4 8.4 0 0 1 4.9-5.1"/></g></g></symbol>
+    <symbol id="mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></symbol>
+    <symbol id="key" viewBox="0 0 24 24"><circle cx="7.5" cy="12" r="3.8"/><path d="M11.3 12H21M17.2 12v3.6M20.2 12v2.6"/></symbol>
+    <symbol id="tick" viewBox="0 0 24 24"><path d="M4.5 12.5l4.8 4.8L19.5 7"/></symbol>
+    <symbol id="see" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/></symbol>
+    <symbol id="shut" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M6.3 6.3l11.4 11.4"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M3.5 12h16M14 6.5l5.5 5.5-5.5 5.5"/></symbol>
+    <symbol id="passage" viewBox="0 0 24 24"><path d="M2.5 6.5h6v11h-6zM15.5 6.5h6v11h-6zM8.5 10.5h7M8.5 13.5h7"/></symbol>
+    <symbol id="dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="short" viewBox="0 0 24 24"><path d="M12 3.8l9.2 15.7H2.8zM12 9.6v4.6M12 16.9v.2"/></symbol>
+    <symbol id="lit" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1.5" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="page" viewBox="0 0 24 24"><path d="M6 3h8.5L19 7.5V21H6zM14 3v5h5"/></symbol>
+    <symbol id="wait" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 12.5l3 3 5-6"/></symbol>
+    <symbol id="ear" viewBox="0 0 24 24"><path d="M7 9a5 5 0 0 1 10 0c0 3.5-3.5 4.2-3.5 7.5a2.5 2.5 0 0 1-5 0"/><path d="M10.5 9.2a1.6 1.6 0 0 1 3.2 0c0 1.4-1.6 1.6-1.6 3"/></symbol>
+  </defs>
+</svg>
+
+<header id="head"></header>
+<main id="main"></main>
+<footer id="foot"></footer>
+
+<script src="content.js"></script>
+<script>
+(() => {
+  const S = window.STORY, P = new URLSearchParams(location.search), M = P.get('m') || '1';
+  if (P.has('still')) document.body.classList.add('still');
+  const ic = (id, cls = '') => `<svg class="i ${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
+  const badge = (cls = 'badge') => `<svg class="${cls}" viewBox="0 0 64 80" aria-hidden="true"><use href="#badge"/></svg>`;
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const $ = s => document.querySelector(s);
+  const first = j => j.who.split(' ')[0];
+
+  /* ── shell: the same on every moment ── */
+  const person = { '5': 'Theo', '6': 'Priya' }[M] || 'Martin';
+  const tabsFor = { Martin: [['Today', '1'], ['The house', '4']], Theo: [['The workings', '5'], ['The house', '4']], Priya: [['My bench', '6'], ['The house', '4']] };
+  const status = {
+    '0': ['bell', 'At your service'], '1a': ['dots', 'Checking parts, in the stockroom'], '1': ['bell', 'Answering Martin'],
+    '2': ['key', 'Waiting for your say-so'], '3': ['wait', 'Waiting for your say-so'], '3b': ['wait', 'Waiting for your say-so'],
+    '4': ['bell', 'At your service'], '5': ['bell', 'At your service'], '6': ['bell', 'Answering Priya'] }[M];
+  const onTab = M === '4' ? 'The house' : tabsFor[person][0][0];
+  $('#head').innerHTML = `
+    <a class="mark" href="?m=0" style="text-decoration:none">${badge()}<span class="wm"><b>Barnaby</b><span>looks after the system at ${S.shop}</span></span></a>
+    <div class="now" aria-live="polite">${status[0] === 'bell' ? `<svg class="i" viewBox="0 0 48 48" style="stroke:none"><use href="#bell"/></svg>` : ic(status[0])}<span>${status[1]}</span></div>
+    <nav class="tabs" role="tablist">${tabsFor[person].map(([t, m]) => `<a role="tab" href="?m=${m}" class="${t === onTab ? 'on' : ''}" aria-selected="${t === onTab}">${t}</a>`).join('')}</nav>
+    <div class="desk"><span>At the desk</span><div class="seg" role="group" aria-label="Who's at the desk">${['Martin', 'Theo', 'Priya'].map(p =>
+      `<a href="?m=${{ Martin: 1, Theo: 5, Priya: 6 }[p]}" class="${p === person ? 'on' : ''}" aria-pressed="${p === person}">${p}</a>`).join('')}</div></div>`;
+  $('#foot').innerHTML = `<button class="talk">${ic('mic')}Hold to talk</button><span class="hint2">or hold the space bar</span>
+    <div class="write"><label for="ask">Or write it:</label><span class="in" id="ask">Ask Barnaby…</span></div><button class="btn">Ask</button>`;
+
+  /* ── conversation column (green): his words in the shop's colours ── */
+  const att = (who, time) => `<div class="att"><b>${who}</b><span>${time}</span></div>`;
+  const asked = (who, time, text) => `<div>${att(who, time)}<div class="q">“${text}”</div></div>`;
+  const said = (text, cls = '', earlier = '') => `<div class="said"><div class="att">${badge()}<b>Barnaby</b></div>${earlier ? `<div class="before">${earlier}</div>` : ''}<div class="say ${cls}">${text}</div></div>`;
+  function keysHeld(upto) {   // keys and passages in hand at this point of the day
+    const items = [];
+    if (upto >= 2) items.push(['key', 'Ordering from suppliers', '08:55']);
+    if (upto >= 3) items.push(['passage', 'One step: hand back a bike', S.passage.time]);
+    return `<div class="keys"><h3>Keys you’ve given him</h3>${items.length
+      ? `<ul>${items.map(([i, t, w]) => `<li>${ic(i)}${t} <span class="t">${w}</span></li>`).join('')}</ul>`
+      : '<p>None yet. He can only look.</p>'}</div>`;
+  }
+  function steps(list) {   // [{icon, text, sub, p (0..1), doing}]
+    return `<div><h3 class="sub">What he did</h3><ul class="steps">${list.map(s =>
+      `<li class="step ${s.doing ? 'doing' : 'drawn'}" style="--pp:${s.p ?? 1}">${ic(s.icon || 'tick')}<span>${s.text}${s.where ? `<span class="rm">${s.doing ? 'in' : 'in'} ${s.where}</span>` : ''}${s.sub ? `<span class="f">${s.sub}</span>` : ''}${s.who || ''}</span></li>`).join('')}</ul></div>`;
+  }
+
+  /* ── due-tomorrow table ── */
+  function dueTable(progress) {
+    return `<table><thead><tr><th style="width:90px">Job</th><th>Customer and bike</th><th>Work</th><th style="width:90px">With</th><th style="width:360px">Parts</th></tr></thead><tbody>
+      ${S.m1.due.map((j, i) => {
+        const done = i < progress;
+        const cls = done && !j.ok ? 'short' : '';
+        const parts = !done ? `<span class="pend">${ic('dots')}</span><span class="pend">Checking…</span>` : j.ok ? `${ic('tick')}<span>${j.parts}</span>` : `${ic('short')}<span>Short. ${j.parts}</span>`;
+        return `<tr class="${cls}"><td class="n">${j.n}</td><td>${j.who}<span class="bike">${j.bike}</span></td><td>${j.work}</td><td>${j.mech}</td><td class="p"><div class="pc">${parts}</div></td></tr>`;
+      }).join('')}</tbody></table>`;
+  }
+
+  /* ── the approval cards ── */
+  function keyCard() {
+    const c = S.m2.card;
+    return `<section class="lined" aria-label="Needs your say-so">
+      <h2>${c.title}</h2>
+      <dl class="lines">${c.lines.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+      <div class="act"><button class="btn primary">${ic('key')}${c.yes}</button><button class="btn">${c.no}</button><span class="hint">One click. Nothing is ordered until you’ve said yes to the order itself.</span></div>
+      <div class="cfoot"><span>Once allowed, the key is listed under “Keys you’ve given him”.</span><span class="tech">${c.technical}</span></div></section>`;
+  }
+  function buildCard(open) {
+    const c = S.m3.card;
+    const see = `<button class="btn quiet ${open ? 'open' : ''}" aria-expanded="${open}">${ic('see')}${open ? 'Hide the change' : c.see}</button>`;
+    if (open) return `<section class="lined compact" aria-label="Needs your say-so"><h2>${c.title}</h2>
+      <div class="grid4">${c.lines.map(([k, v], i) => `<div><b>${k}</b><span>${i === 2 ? ic('tick') : ''}${v}</span></div>`).join('')}</div>
+      <div class="act"><button class="btn primary">${ic('tick')}${c.yes}</button><button class="btn">${c.no}</button>${see}<span class="hint" style="margin-left:auto">${c.clickOnly}</span></div></section>`;
+    return `<section class="lined" aria-label="Needs your say-so"><h2>${c.title}</h2>
+      <dl class="lines">${c.lines.map(([k, v], i) => `<dt>${k}</dt><dd>${i === 2 ? ic('tick') : ''}${v}</dd>`).join('')}</dl>
+      <div class="act"><button class="btn primary">${ic('tick')}${c.yes}</button><button class="btn">${c.no}</button>${see}</div>
+      <div class="cfoot"><span>${c.where} ${c.clickOnly}</span><span class="tech">${c.technical}</span></div></section>`;
+  }
+
+  /* ── the real diff, file by file ── */
+  function parseDiff() {
+    const files = []; let cur = null;
+    for (const line of S.real.diff.split('\n')) {
+      if (line.startsWith('diff --git')) { cur = { name: line.replace(/^diff --git a\/(\S+).*$/, '$1'), lines: [], add: 0, del: 0 }; files.push(cur); continue; }
+      if (!cur || /^(index |--- |\+\+\+ |new file mode)/.test(line)) continue;
+      if (line.startsWith('+')) cur.add++; else if (line.startsWith('-')) cur.del++;
+      cur.lines.push(line);
+    }
+    return files;
+  }
+  const diffLines = f => f.lines.map(l => {
+    if (l.startsWith('@@')) { const ctx = l.replace(/^@@[^@]*@@\s?/, ''); return `<div class="ln hunk">· · ·${ctx ? '  ' + esc(ctx) : ''}</div>`; }
+    const add = l.startsWith('+');
+    return `<div class="ln ${add ? 'add' : ''}">${esc(l.slice(1)) || ' '}</div>`;
+  }).join('');
+  function changeSheet() {
+    const files = parseDiff(), total = files.reduce((a, f) => a + f.add, 0), del = files.reduce((a, f) => a + f.del, 0);
+    return `<section class="change" aria-label="The change"><div class="ch"><b>The change, for whoever wants to read it</b><span>${files.length} files · ${total} lines added · ${del ? del + ' removed' : 'nothing removed'}</span></div>
+      <div class="body">${files.map(f => `<div class="fileh">${ic('page')}<code>${esc(f.name)}</code><span>${S.m3.card.files[f.name] || ''} · ${f.add} lines added</span></div>${diffLines(f)}`).join('')}</div></section>`;
+  }
+
+  /* ── the house ── */
+  function plan() {
+    const R = Object.fromEntries(S.rooms.map(r => [r.id, r]));
+    const li = ([, label, state, flag]) => {
+      const i = state === 'lit' ? ic('lit') : state === 'key' ? ic('key') : ic('shut');
+      const given = flag === 'given' ? `<em>your key</em>` : state === 'shut' ? `<em>kept shut</em>` : '';
+      return `<li class="${state} ${flag || ''}">${i}<span>${label}${given}</span></li>`;
+    };
+    const room = (id, x, y, w, h) => {
+      const r = R[id], lit = r.items.some(i => i[2] === 'lit');
+      return `<div class="room ${lit ? 'lit' : ''} ${r.isNew ? 'new' : ''}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
+        <h4>${r.name}<small>${r.isNew ? 'built today' : r.place}</small></h4><ul>${r.items.map(li).join('')}</ul></div>`;
+    };
+    const p = S.passage;
+    return `<section class="plan"><h2>The house</h2>
+      <p class="lede">Everything Theo’s system can do, room by room. Lit rooms Barnaby can use; a key means he’d ask you first.</p>
+      <div class="house">
+        <div class="outer"></div>
+        ${room('invoices', 0, 0, 302, 232)}
+        ${room('reports', 300, 0, 302, 232)}
+        ${room('mechanics', 600, 0, 302, 232)}
+        ${room('parts', 900, 0, 340, 232)}
+        ${room('customers', 0, 230, 422, 330)}
+        ${room('jobs', 420, 230, 482, 330)}
+        ${room('orders', 900, 230, 340, 330)}
+        <div class="passage" style="left:0;top:558px;width:902px;height:80px"><h4>${p.name}</h4>
+          <span class="route">${p.steps.map((s, i) => (i ? ic('arrow') : '') + `<span>${s}</span>`).join('')}</span></div>
+        <div class="door" style="left:160px;top:558px;width:90px"></div><div class="door" style="left:610px;top:558px;width:90px"></div>
+        ${room('workload', 924, 584, 316, 110)}
+      </div></section>`;
+  }
+  function legend() {
+    const C = S.counts;
+    return `<aside class="legend"><h3>Key to the plan</h3><div class="lg">
+      <div><span class="sw" style="background:var(--enamel);color:var(--green)">${ic('lit')}</span><span><b>Lit.</b> Barnaby can use it.</span></div>
+      <div><span class="sw">${ic('key')}</span><span><b>A key.</b> He’d ask you first.</span></div>
+      <div><span class="sw" style="background:var(--enamel);box-shadow:0 0 0 3px var(--enamel),0 0 0 4px var(--gold-deep)"></span><span><b>Lined twice.</b> A room he built, with your say-so.</span></div>
+      <div><span class="sw" style="background:var(--green-3);color:var(--gold)">${ic('passage')}</span><span><b>A passage.</b> Steps he joined into one.</span></div>
+      <div><span class="sw" style="background:var(--enamel);color:var(--red)">${ic('shut')}</span><span><b>Kept shut.</b> Never, whoever asks.</span></div></div>
+      <p class="count"><span class="big">${C.can}</span>of ${C.of} things he can do, and ${C.passages === 1 ? 'one passage' : C.passages + ' passages'}. Everything else stays locked until you hand him the key.</p>
+      <div class="held"><h3>Keys you’ve given him</h3><ul>${S.keysGiven.map(([k, t]) => `<li>${ic('key')}${k} <span class="t">${t}</span></li>`).join('')}</ul>
+        <h3>Made with your say-so</h3><ul><li>${ic('passage')}A passage: hand back a bike <span class="t">${S.passage.time}</span></li><li>${ic('plus')}A room: the workload report <span class="t">${S.m3.time}</span></li></ul></div></aside>`;
+  }
+
+  /* ── Theo: the workings ── */
+  function theo() {
+    const T = S.theo, real = S.real;
+    const builtKey = real.built[0];
+    const eps = [...real.endpoints, { key: builtKey, tool: 'workload', read_only: true, built: true }];
+    const row = e => {
+      const [m, ...p] = e.key.split(' ');
+      const exp = T.exposed.includes(e.key), den = T.denied.includes(e.key);
+      const st = den ? `${ic('shut')}denied` : exp ? `${ic('lit')}exposed` : `${ic('key')}unlockable`;
+      return `<tr class="${den ? 'den' : exp ? 'exp' : 'unl'} ${e.built ? 'new' : ''}"><td class="m">${m}</td><td>${esc(p.join(' '))}</td><td>${e.tool}</td><td>${e.read_only ? 'read' : 'write'}</td><td class="st">${st}${e.built ? ' · built' : ''}</td></tr>`;
+    };
+    const tr = T.trace;
+        return `<section class="tcol"><div><h2>The workings</h2><p class="lede">For Theo, or whoever looks after it next. Exactly what ran, nothing tidied.</p></div>
+      <dl class="kv" style="margin:0"><dt>System</dt><dd><code>${T.system.name}</code> · ${T.system.title}</dd><dt>Repo</dt><dd><code>${T.system.repo}</code></dd><dt>Its API</dt><dd><code>${T.system.base}</code></dd></dl>
+      <div class="tally"><div><b>24</b>discovered</div><div><b>${T.exposed.length}</b>exposed as MCP tools</div><div><b>${T.denied.length}</b>denied</div><div><b>1</b>composed skill</div></div>
+      <div><h3>Synapse runs</h3><ul class="runs">${T.synapse.map(r => `<li><span class="w">${r.when}</span><span>${r.what}</span><span class="s">${r.s.toFixed(2)} s</span><code>synapse ${esc(r.cmd)}</code><span class="o">${esc(r.out)}</span></li>`).join('')}</ul></div>
+      </section>
+      <section class="twork">
+        <div><h3>Endpoints <span>found in Theo’s code, and what Barnaby may call</span></h3>
+          <table class="ep"><thead><tr><th>Method</th><th>Path</th><th>MCP tool</th><th>Kind</th><th>State</th></tr></thead><tbody>${eps.map(row).join('')}</tbody></table>
+          <p style="font:16px/1.4 var(--sans);color:var(--ink-2);margin-top:10px">Composed: <code style="font:15px var(--code);color:var(--black)">${T.skill.tool}</code> on <code style="font:15px var(--code);color:var(--black)">${T.skill.server}</code>, from ${T.skill.from.map(f => `<code style="font:15px var(--code);color:var(--black)">${f}</code>`).join(' + ')}.</p></div>
+        <div class="rcol">
+          <div><h3>Live trace <span>${(tr.ms / 1000).toFixed(1)} s · ${tr.modelTurns} model turns · ${tr.calls.length} calls</span></h3><div class="box"><ul class="trace">
+            <li class="tt" style="display:flex"><span>Martin, 08:53: “${esc(tr.ask)}”</span></li>
+            ${tr.calls.map(c => `<li class="${c.short ? 'short' : ''}">${ic(c.short ? 'short' : 'tick')}<span>${c.tool}</span><span class="a">${esc(c.args)}</span><span class="r">${esc(c.res)}</span></li>`).join('')}</ul></div></div>
+          <div><h3>Build <span>${esc(builtKey)}</span></h3><div class="box bk">
+            <span>Where</span><span>a git worktree; merged after approval</span>
+            <span><code>pytest -q</code></span><span class="ok">${ic('tick')}${real.tested}</span>
+            <span>Change</span><span>${T.build.files} files · +${T.build.added} −${T.build.removed} · ${T.build.endToEnd} end to end</span>
+            <span>Approved</span><span>Martin, by click (never by voice)</span></div></div>
+          <div><h3>History <span>git log, newest first</span></h3><div class="box"><ul class="log">${(real.gitlog || []).slice(0, 3).map(c =>
+            `<li><span class="d">${c.author === 'Barnaby' ? 'today' : c.date.slice(0, 4)}</span><span class="au">${c.author.split(' ')[0]}</span><span>${esc(c.subject)}</span></li>`).join('')}</ul></div></div>
+        </div></section>`;
+  }
+
+  /* ── Priya: her bench, as repair tags (proposal) ── */
+  function tag(t, x) {
+    const parts = t.parts.map(([name, state, ok]) => `<span class="${ok ? '' : 'short'}">${ic(ok ? 'tick' : 'short')}<span>${name}: ${state}</span></span>`).join('');
+    return `<svg class="string" style="left:${x}px" viewBox="0 0 530 120" aria-hidden="true"><path d="M265 106 C 244 70, 226 40, 235 17 M265 106 C 286 70, 304 40, 295 17"/></svg>
+      <article class="tag" style="left:${x}px" aria-label="Job ${t.n}"><span class="eye"></span>
+      <div class="pr"><b>Spokes &amp; Sprockets</b><span>Repair · from Dev’s bench</span></div>
+      <div class="no">${t.n}<span class="stamp ${t.ready ? 'ok' : 'no'}">${t.ready ? 'Parts ready' : 'Spokes short'}</span></div>
+      <dl><dt>Customer</dt><dd>${t.who}</dd><dt>Bike</dt><dd>${t.bike}, ${t.colour}</dd><dt>Work</dt><dd>${t.work} · ${t.hours}</dd>
+        <dt>Due</dt><dd><b>${t.dueWord}</b>, ${t.due}</dd><dt>Parts</dt><dd class="parts">${parts}</dd></dl></article>`;
+  }
+  function priya() {
+    const Pr = S.priya;
+    return `<section class="talkcol">${asked('Priya', Pr.time, Pr.ask)}${said(Pr.say)}
+      <div class="before">${Pr.aside}</div>
+      <div class="sticky" style="margin-left:6px">${Pr.note.text}<small>T.</small></div>
+      <div class="keys"><h3>Priya’s first day</h3><p>Two wheel builds moved to her from Dev at 15:08, with Martin’s say-so.</p></div></section>
+      <section class="work" style="gap:20px">
+        <div class="proposal"><b>Proposal</b><span>Priya’s view isn’t decided yet. This is one option: her jobs as the paper tags we hang on the handlebars.</span></div>
+        <div class="hdrow"><h2 class="hd">Your bench, Priya</h2><span class="meta">Two jobs · soonest first</span></div>
+        <div class="bench"><div class="rail"></div>${tag(Pr.tags[0], 20)}${tag(Pr.tags[1], 610)}</div>
+        <div class="asks"><h3>Things you can ask me</h3><ul>${Pr.asks.map(([q, a]) => `<li><b>“${q}”</b><span>${a}</span></li>`).join('')}</ul></div>
+      </section>`;
+  }
+
+  /* ── identity sheet ── */
+  function sheet() {
+    const sw = (c, n, h, ink) => `<div><i style="background:${c}"></i><span><b ${ink ? `style="color:${ink}"` : ''}>${n}</b>${h}</span></div>`;
+    return `<section class="sheetL">
+        <div class="name"><svg viewBox="0 0 64 80" aria-hidden="true"><use href="#badge"/></svg>
+          <div><h1>Livery</h1><p class="tag1">Barnaby wears the shop’s colours.<br>Direction B of three.</p></div></div>
+        <p class="thesis">A family shop’s livery (its fascia, its van, the head badge on the bikes it builds) is how you know who belongs. Barnaby is dressed in Spokes &amp; Sprockets’ own green, lined in gold by hand like a good frame. He’s staff, not a visitor.</p>
+        <p class="trust"><b>Why Martin would trust it:</b> belonging and craft pride. These are his colours, not a tech company’s; the man in the shop apron is one of ours. Whatever needs his say-so is lined twice, the way a frame painter lines a lug, so it’s never missed and never shouted.</p>
+        <div class="fascia"><span class="fb">${badge()}</span><span class="ft"><b>Spokes &amp; Sprockets</b><span>${S.strap}</span></span><span class="fb">${badge()}</span></div>
+        <div class="ms"><div><h3>Motion</h3><p>The liner’s pull: one steady stroke, about 400 ms, easing out. A finished step gets its line; a card that needs you is lined round. Nothing bounces, nothing loops.</p></div>
+          <div><h3>Sound</h3><p>One ring of the counter bell when he answers. A key turning in a lock when you hand him a key. Otherwise quiet: the workshop radio carries on.</p></div></div>
+      </section>
+      <section class="sheetR">
+        <h3>Colours</h3><div class="pal">
+          ${sw('var(--green)', 'Hartley green', ' #17402F. The fascia and his voice; 30–50% of the window.')}
+          ${sw('var(--gold)', 'Lining gold', ' #C9A04A on green, #977629 on white. Lines and the badge only.')}
+          ${sw('var(--enamel)', 'White enamel', ' #F7F7F3. The working surfaces.')}
+          ${sw('var(--black)', 'Frame black', ' #141414. Body text.')}
+          ${sw('var(--mist)', 'Mist', ' #E3EAE5. Second neutral, headers of the change.')}
+          ${sw('var(--red)', 'Enamel red', ' #A3261B. A shortfall, always with a sign and words.', 'var(--red)')}</div>
+        <div class="type"><h3>Type, all already on the shop PC</h3>
+          <div><span>Perpetua Titling MT, the badge and room names</span><b style="font:bold 34px var(--title);letter-spacing:.1em;color:var(--green)">BARNABY</b></div>
+          <div><span>Gill Sans MT Bold, headings and cards</span><b style="font:bold 32px var(--sans)">Let Barnaby order parts</b></div>
+          <div><span>Gill Sans MT, his words and everything else</span><span style="font:28px var(--sans);min-width:0;color:var(--black)">Five bikes due tomorrow.</span></div>
+          <div><span>Consolas, code and technical names only</span><span style="font:20px var(--code);min-width:0;color:var(--ink-2)">POST /api/purchase-orders</span></div></div>
+        <div class="icons">${['mic', 'key', 'tick', 'see', 'passage', 'arrow', 'shut', 'short'].map(i => ic(i)).join('')}<span class="lbl">One line weight, round ends, like lining.</span></div>
+        <div class="coach"><div class="s"></div><p><b style="color:var(--black)">The coachline.</b> A 2 px line and a 1 px line, 5 px apart, around whatever needs Martin; under each step as it’s done; along the walls of the house.</p></div>
+      </section>`;
+  }
+
+  /* ── moments ── */
+  const main = $('#main');
+  const conv = (cols) => { main.style.gridTemplateColumns = cols; };
+  if (M === '1a' || M === '1') {
+    const done = M === '1', prog = done ? 5 : S.m1.checkedSoFar, st = S.m1.steps;
+    const place = id => S.rooms.find(r => r.id === id).place;
+    const whoLine = `<span class="who">${S.m1.due.map((j, i) => i < prog ? (j.ok ? first(j) : `<b>${first(j)}: short</b>`) : `<span style="opacity:.75">${first(j)}…</span>`).join(' · ')}</span>`;
+    conv('720px 1fr');
+    main.innerHTML = `<section class="talkcol">${asked('Martin', S.m1.time, S.m1.ask)}
+      ${done ? said(S.m1.say) : said(`${st[0].did}. ${st[1].doing}: three of the five so far.`, 'wait')}
+      ${steps([{ text: st[0].did, where: place(st[0].room), sub: st[0].found + '.' },
+               done ? { text: st[1].did, where: place(st[1].room), sub: st[1].found + '.', who: whoLine } : { icon: 'dots', text: st[1].doing + '…', where: place(st[1].room), sub: `${prog} of 5 checked`, who: whoLine, p: prog / 5, doing: true }])}
+      ${keysHeld(1)}</section>
+      <section class="work"><div class="hdrow"><h2 class="hd">Due tomorrow, Tuesday 24 November</h2><span class="meta">Five bikes, from the job board</span></div>
+      ${dueTable(prog)}
+      ${done ? `<div class="problem">${ic('short')}<span><b>The one problem: Anika’s brakes, job 4478.</b> Two pairs of Shimano resin pads needed, one on the shelf. Madison is the usual supplier.</span></div>` : ''}</section>`;
+  } else if (M === '2') {
+    conv('720px 1fr');
+    main.innerHTML = `<section class="talkcol">${asked('Martin', S.m2.time, S.m2.ask)}${said(S.m2.say)}
+      ${steps([{ text: 'Looked through what Theo’s system can do', sub: 'It can send orders to suppliers. He hasn’t the key.' }])}
+      <div class="filed"><h3>Earlier today</h3><ul><li><b>${S.m1.time}</b><span>“${S.m1.ask}” Five due; Anika’s brakes short one pair of pads.</span></li><li><b>${S.morning.time}</b><span>“${S.morning.ask}” ${S.morning.say}</span></li></ul></div>
+      ${keysHeld(1)}</section>
+      <section class="work">${keyCard()}
+        <div class="minihouse"><div class="miniroom"><h4>Orders<small>suppliers</small></h4><ul>
+          ${S.rooms.find(r => r.id === 'orders').items.map(([, label], i) => `<li class="${i === 0 ? 'this' : ''}">${ic('key')}${label}${i === 0 ? '<em>this key</em>' : '<em>stays locked</em>'}</li>`).join('')}</ul></div>
+          <p>Where the key goes in the house. One room, one door: the others stay as they are.</p></div></section>`;
+  } else if (M === '3' || M === '3b') {
+    const open = M === '3b';
+    conv('720px 1fr');
+    main.innerHTML = `<section class="talkcol">${asked('Martin', S.m3.time, S.m3.ask)}${said(S.m3.say, '', S.m3.before)}
+      ${steps([{ text: 'Wrote the report on a copy of the system', sub: 'Nothing in the shop has changed.' }, { text: 'Ran the checks on the copy', sub: 'All 22 pass: Theo’s 19, and 3 new ones.' }])}
+      ${keysHeld(3)}</section>
+      <section class="work" style="${open ? 'gap:22px' : ''}">${buildCard(open)}${open ? changeSheet() : `
+        <div class="minihouse"><div class="miniroom new"><h4>Workload<small>a new room, once you add it</small></h4><ul>
+          <li class="this">${ic('plus')}Each mechanic’s hours this week<em>reads the job board</em></li></ul></div>
+          <p>Built on, not changed: every other room in the house stays exactly as it is.</p></div>`}</section>`;
+  } else if (M === '4') {
+    conv('1fr 560px');
+    main.innerHTML = plan() + legend();
+  } else if (M === '5') {
+    conv('520px 1fr');
+    main.innerHTML = theo();
+  } else if (M === '6') {
+    conv('640px 1fr');
+    main.innerHTML = priya();
+  } else {
+    conv('960px 1fr');
+    main.innerHTML = sheet();
+  }
+})();
+</script>
+</body>
+</html>

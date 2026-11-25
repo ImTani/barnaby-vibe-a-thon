@@ -101,19 +101,21 @@
     },
     render(t) {
       run.render(t);
-      const nd = M('new_desk_fades'), EC = CUES.marks.end_card != null ? M('end_card') : M('credit') - .2, out = EC - .45;
+      const nd = M('new_desk_fades'), EC = CUES.marks.end_card != null ? M('end_card') : M('credit') - .2, out = EC - .75;
       rightOff.style.display = t > nd ? 'block' : 'none';
       rightOff.style.opacity = (.66 * easeInOutSine(P(t, nd, 1.6))).toFixed(3);      // the new desk recedes, not gone
       // titles: the lockup up on the music, then the line written on in Theo's hand;
-      // the coda written as the new desk fades; all out together, calmly, under the card's dissolve
-      const tOut = 1 - easeInOutSine(P(t, out, .75));
+      // the coda written as the new desk fades; all out together, calmly, gone before the card's dissolve (no double name)
+      const tOut = 1 - easeInOutSine(P(t, out, .7));
       const rise = (e, a, d) => { const k = easeOutCubic(P(t, a, d)) * tOut; e.style.opacity = k.toFixed(4); e.style.transform = `translateY(${((1 - easeOutCubic(P(t, a, d))) * 8).toFixed(2)}px)`; return k; };
-      const on = t > M('title') - .7 && t < out + .8;
-      shade.parentNode && (shade.style.display = on ? 'block' : 'none');
-      shade.style.opacity = (easeInOutSine(P(t, M('title') - .7, 1.4)) * tOut).toFixed(3);
+      const on = t > M('title') - .7 && t < out + .75;
+      // the scrim stays down until the card has covered the desks (no lift in the light between the two)
+      const sOn = t > M('title') - .7 && t < EC + .75;
+      shade.parentNode && (shade.style.display = sOn ? 'block' : 'none');
+      shade.style.opacity = (easeInOutSine(P(t, M('title') - .7, 1.4)) * (1 - easeInOutSine(P(t, EC - .1, .8)))).toFixed(3);
       title.parentNode.style.display = on ? 'flex' : 'none';
       rise(title, M('title'), 1.1);
-      if (on) { write(tag, t, M('title') + 1.2, 2.1, tOut); write(old, t, M('old_ones'), 1.35, tOut); }
+      if (on) { write(tag, t, M('title') + 1.2, 2.1, tOut); write(old, t, M('old_ones'), 1.2, tOut); }
       markAnim(mark, t, M('bell_final') + .55);            // the mark rings once, just after the real bell
       // the end card: a dissolve in over the titles' exit, then its rows settle in turn
       const ck = easeInOutSine(P(t, EC - .1, .8));

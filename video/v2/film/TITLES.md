@@ -24,10 +24,11 @@ accent; warm ivory on warm charcoal). Built in `scenes/s9.js` and the `.t-titles
   set 34 px right, like a line added after. The serif is Barnaby; the hand is Theo, who built the old system.
 - **Written on, not faded:** each word in turn behind a soft-edged mask (30 px feather) moving left to right at a
   pen's pace, time per word by its letters, a 90 ms lift between words. The line starts 1.2 s after 'title' and
-  takes 2.1 s; the coda starts on 'old_ones' (as the new desk fades) and takes 1.35 s. Nothing bounces.
+  takes 2.1 s; the coda starts on 'old_ones' (as the new desk fades) and takes 1.2 s. Nothing bounces.
 - **Legibility:** a soft oval scrim (warm near-black, .8 at the centre, gone by the frame's edges) under the group
   instead of a top band; the type keeps a faint dark text-shadow over the lit desk.
-- **Out:** everything leaves together over 0.75 s from 'end_card' - 0.45, under the end card's dissolve.
+- **Out:** everything leaves together over 0.7 s from 'end_card' - 0.75, so the titles are gone before the card's
+  dissolve and its own name never doubles over theirs.
 - Styles are injected by `scenes/s9.js` (`#s9-titles`); the old `.t-titles` rules in index.html are no longer used.
 
 ## The product end card

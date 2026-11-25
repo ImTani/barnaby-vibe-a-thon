@@ -143,7 +143,7 @@ non-essential") and only the page's own product images were rendered at their na
   - colour only where it has a job.
 - **From Codex:**
   - an empty state built around the mark and one question, with suggestion rows above the composer;
-  - the change summarised by its counts ("3 files · +102 −0"), opened on request;
+  - the change summarised by its counts ("3 files · +114 −0"), opened on request;
   - the context selector at the point of asking;
   - the primary circle on the composer (for Barnaby: the brass Hold to talk, which turns into send when there is text).
 - **From Claude:**

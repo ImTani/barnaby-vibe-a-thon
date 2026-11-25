@@ -189,7 +189,7 @@ r"""    actions.append(hint, no, yes);
     cards.append(card); stamp(card);
     bringIntoView(card);
   }
-  function diffCounts(diff) {                      // APP3: "3 files  +102 −0", the way a change is summarised
+  function diffCounts(diff) {                      // APP3: "3 files  +114 −0", the way a change is summarised
     const lines = diff.split('\n');
     const files = lines.filter(l => l.startsWith('diff --git')).length;
     const added = lines.filter(l => l.startsWith('+') && !l.startsWith('+++')).length;

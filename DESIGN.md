@@ -349,7 +349,7 @@ app icon's corner is 116 on 512. Icons are one inline SVG set, 2px stroke, round
   ("A new key", "A shortcut", "A new piece for the system", "A change to your records").
 - **Lede:** in his serif. **Facts:** What it reads, What it changes, Checks (a green tick: "Theo's 19 checks still
   pass, and so do the 3 new ones."), If you change your mind, Each time.
-- **Folded rows:** "See the change", with its counts on the right ("3 files +102 −0"), opening to the diff with sticky
+- **Folded rows:** "See the change", with its counts on the right ("3 files +114 −0"), opening to the diff with sticky
   file headers; and Technical detail.
 - **Footer:** how it may be answered ("Or just say “yes”." / "A change like this needs a click, not a spoken yes.")
   with Not now (secondary) and the brass Yes on the right. The footer docks to the bottom edge while the card is taller

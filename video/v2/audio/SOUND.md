@@ -1,6 +1,6 @@
 # Barnaby: the soundtrack
 
-`video/v2/audio/soundtrack.wav` (48 kHz stereo, 311.49 s: the v2.2 cut, paced for picture) and its stems `music.wav` + `sfx.wav` +
+`video/v2/audio/soundtrack.wav` (48 kHz stereo, the cue sheet's length: 300.05 s for the v2.3 timing, Barnaby at 185 words a minute, with the 6 s end card) and its stems `music.wav` + `sfx.wav` +
 `voice.wav`, which sum to it; `sfx.wav` is `effects.wav` + `ambience.wav` (kept whole because the DubMate backing is
 music + sfx). All wav files are gitignored; this file and the scripts are the record.
 
@@ -17,6 +17,27 @@ runtime/audio/.venv/Scripts/python video/v2/audio/foley.py     # every one-shot 
   and never copied into the repo (licensed for productions, not redistribution); their 48 kHz conversions are cached as
   `.npy` under the gitignored `.cache/audio/samples/`.
 - `check.py`: loudness, true peak, cue timing, dialogue clearance, excerpts at the key moments.
+
+## v2.3: the director's sound notes (review cut 2)
+
+- **Beds much lower, the opening especially.** Every category is measured alone against the dialogue (the levels table
+  below, from `check.py --levels`). Rain went down 9.5 dB, the PC fan 6 dB, the street 6 dB, the
+  workshop 4.6 dB, Tuesday 4.4 dB, the radio 2 dB;
+  the workshop's tool clinks are peak-compressed hard so none pokes out.
+- **No voices in any bed.** The crowd recording is gone from the workshop, Tuesday and Lisbon; the talk radio is gone
+  from the workshop beds too (it stays only in scene 1, far off, where it is switched off on screen). What is left:
+  room tone, tools now and then, a mug, traffic, birds, night air.
+- **Targeted effects:** the compressor runs 1.2 s, the freewheel 1.6 s, Martin's keys are two handfuls, not three; the
+  passage's soft bell gives way to the hand-back chord.
+- **The hand-back chimes (scene 5).** A hand-back is four steps (the job, the customer, a text, the status); each step
+  gets one note of the same figure, **D5-F#5-A5-D6** (the score's key, D major), on the celeste (`Celeste C6`, tuned down
+  10, 6 and 3 semitones and up 2), each note as long as its step (1.2x the interval) and panned left to right across the
+  four stops. The notes sit on Barnaby's steps from the cue sheet: walk 1 (`marks.walk1`, steps 0.45 s apart), walk 2
+  (`walk2`, 0.26 s apart), walk 3 (`walk3`: the sheet has no steps there, so four are derived 0.17 s apart, quicker
+  again). At the passage (`marks.passage` + 0.35 s) the four notes sound as **one chord**: the steps have become one.
+  For Tom's Brompton (`marks.walk4`) the chord sounds once more, alone.
+- **The timing follows the cue sheet.** Everything is placed from `cues.json` (marks, sfx, music sections) and the
+  voice manifest, so a new layout (faster Barnaby, or an ElevenLabs voice) only needs `score_v2.py` and `check.py` re-run.
 
 ## The approach
 
@@ -50,27 +71,26 @@ runtime/audio/.venv/Scripts/python video/v2/audio/foley.py     # every one-shot 
   four stems: a slow glue compressor, the end fade, the level to -16 LUFS integrated and a true-peak limiter (4x
   oversampled detection) at -1.8 dBTP.
 
-## The music against the v2.2 clock
+## The music against the clock
 
-The same instruments and the same grid (D major, 80 BPM, a bar line exactly on `marks.tab_change`), re-fitted to the
-311.49 s cut and to the shot plan's rule that the music is Barnaby (`video/v2/SHOTLIST.md`, section 4):
+The same instruments and the same grid (D major, 80 BPM, a bar line exactly on `marks.tab_change`), fitted to whatever
+the cue sheet says, under the shot plan's rule that the music is Barnaby (`video/v2/SHOTLIST.md`, section 4).
+`score_v2.py` prints each section's cue time against its bar line on every run and refuses to render if the lift misses
+the tab change or the handover has not resolved before the key.
 
-- **Nothing before the bell.** The music stem is digital silence until `marks.bell_arrive` (45.85 s); the entry roll
-  starts 0.5 s after the bell, the soft picking on the first full bar after it (48.78 s).
-- **The handover resolves before the key.** Six bars of soft picking end on Asus4, then one D roll (66.78 s) that has
-  died away by `marks.key` (70.74 s); the stem is faded to silence over the last 0.6 s before the key. **Rain only** under
-  the key, the lamp-off and the time-lapse: the music stem measures -90 dBFS (dither) from the key to 78.7 s.
-- **Monday's walking music** returns on the first bar of the `work` section (78.78 s, 0.54 s after its cue).
-- **It thins under "Who's got too much on this week?"** (soft picking from 159.78 s) and **builds from the code to the
-  click**: 8 bars from 183.78 s (the first bar line after `marks.code`), climbing to sixteenths, into the lift.
-- **The lift lands exactly on the tab change** (207.78 s). One strum rings over the cut into Tuesday (222.78 s), then the
-  soft picking settles for Priya.
-- **Brighter for Lisbon** (full strums from 252.78 s, after the street has come in), one strum ringing into the night,
-  the held chords under the goodnights, and **the final Dadd9 resolves on the last bell** (0.25 s after
-  `marks.bell_final`, so the bell is heard first and becomes the chord's 9th).
-
-`score_v2.py` prints every section's cue time against its bar line on each run and asserts the two hard rules (the lift
-on the tab change, the handover resolved before the key).
+- **Nothing before the bell:** the music stem is digital silence until `marks.bell_arrive`; the entry roll comes 0.5 s
+  after the bell, the soft picking on the first full bar after it.
+- **The handover resolves before the key:** the picking ends on Asus4, then one D roll whose notes end 0.5 s before
+  `marks.key`; the stem is faded to silence over the last 0.6 s. **Rain only** under the key, the lamp-off and the
+  time-lapse, until Monday's walking music starts on the first bar of the `work` section.
+- **It thins under "Who's got too much on this week?"** and **builds from the code to the click** (8 bars from the first
+  bar line after `marks.code`, climbing to sixteenths) into **the lift, exactly on the tab change**; the score steps back
+  3 dB from "Fussy." through the click.
+- One strum rings over the cut into Tuesday; the soft picking settles for Priya. **Brighter for Lisbon** (full strums
+  after the street has come in), one strum ringing into the night, held chords under the goodnights, and **the final
+  Dadd9 resolves on the last bell** (0.25 s after `marks.bell_final`: the bell is heard first and becomes its 9th).
+- **The end card:** the roll under "Even the old ones." is the last chord; it carries into the end card (`marks.end_card`)
+  and fades out over the card, gone by `marks.fade_out`.
 
 <!-- generated by check.py --sound-md: begin -->
 
@@ -78,24 +98,44 @@ on the tab change, the handover resolved before the key).
 
 | | target | measured |
 |---|---|---|
-| integrated loudness | -16 LUFS | -16.0 LUFS (ffmpeg ebur128), -16.06 (pyloudnorm) |
+| integrated loudness | -16 LUFS | -16.0 LUFS (ffmpeg ebur128), -16.08 (pyloudnorm) |
 | true peak | <= -1 dBTP | -1.8 dBTP (ffmpeg, 4x), -1.8 dBTP (4x polyphase) |
-| loudness range | - | 12.2 LU |
-| format | 48 kHz stereo | 48000 Hz, 2 ch, PCM_16, 311.49 s (film 311.49 s) |
+| loudness range | - | 17.9 LU |
+| format | 48 kHz stereo | 48000 Hz, 2 ch, PCM_16, 302.69 s (film 302.69 s) |
 | music + effects + ambience + voice = soundtrack | exact | max difference -76.3 dBFS (dither) |
 | sfx.wav = effects + ambience | exact | max difference -84.3 dBFS (dither) |
-| stems, integrated | - | music -26.7 LUFS, effects -28.9 LUFS, ambience -30.6 LUFS, voice -14.5 LUFS |
-| dialogue over everything under it | always clear | min 9.5 dB (line 36), median 15.9 dB over 54 lines (RMS in each line's speech window) |
-| effects on their cues | on the cue | 75 one-shots: median 4 ms, max 30 ms from cue to the first rise in the effects stem |
+| stems, integrated | - | music -27.5 LUFS, effects -27.8 LUFS, ambience -37.4 LUFS, voice -15.0 LUFS |
+| dialogue over everything under it | always clear | min 9.5 dB (line 17), median 17.1 dB over 54 lines (RMS in each line's speech window) |
+| voices, level per speaker | consistent | Martin -14.7 LUFS (-16.4..-13.6, 18 lines, cached); Theo -16.0 LUFS (-17.5..-15.2, 10 lines, cached); Barnaby -14.3 LUFS (-15.6..-13.2, 23 lines, take); Priya -14.2 LUFS (-14.3..-14.0, 3 lines, cached) |
+| effects on their cues | on the cue | 93 one-shots: median 2 ms, max 32 ms from cue to the first rise in the effects stem |
+
+## Levels by category, against the dialogue
+
+Each category re-rendered alone with the mix's ducking and master gain. The dialogue's reference: its typical short-term (3 s) level -16.7 LUFS and typical momentary (400 ms) level -15.5 LUFS while someone speaks (voice stem: peak -1.2 dBFS, integrated -15.0 LUFS). Targets: beds -14 to -20 LU under the dialogue (short-term max), the opening's rain and fan at the quiet end; foley and UI never louder than a voice (momentary max under the dialogue's typical momentary level).
+
+| category | peak dBFS | short-term max LUFS (vs dialogue) | momentary max LUFS (vs dialogue) | integrated while playing LUFS (vs dialogue) |
+|---|---|---|---|---|
+| rain | -25.6 | -35.3 (-18.6 LU) | -35.1 (-19.6 LU) | -38.6 (-21.9 LU) |
+| fan (2009 PC) | -30.1 | -40.0 (-23.3 LU) | -38.3 (-22.8 LU) | -42.2 (-25.5 LU) |
+| radio (scene 1) | -32.6 | -46.1 (-29.4 LU) | -42.4 (-26.9 LU) | -48.0 (-31.3 LU) |
+| room tone (back office) | -29.4 | -40.9 (-24.2 LU) | -40.0 (-24.5 LU) | -43.3 (-26.6 LU) |
+| workshop | -17.8 | -31.9 (-15.2 LU) | -29.0 (-13.5 LU) | -39.5 (-22.8 LU) |
+| workshop, Tuesday | -13.6 | -32.6 (-15.9 LU) | -29.0 (-13.5 LU) | -36.9 (-20.2 LU) |
+| Lisbon street | -24.0 | -34.0 (-17.3 LU) | -33.8 (-18.3 LU) | -37.7 (-21.0 LU) |
+| Lisbon street, night | -23.5 | -34.5 (-17.8 LU) | -32.9 (-17.4 LU) | -37.7 (-20.9 LU) |
+| foley | -3.3 | -28.7 (-12.0 LU) | -22.1 (-6.6 LU) | -30.0 (-13.3 LU) |
+| UI (clicks, reload, pops, ding) | -8.8 | -29.6 (-12.9 LU) | -21.8 (-6.3 LU) | -31.9 (-15.2 LU) |
+| worlds (steps, chimes, drawer, soft bells, swell) | -11.0 | -23.9 (-7.2 LU) | -19.8 (-4.3 LU) | -25.4 (-8.7 LU) |
+| the bell | -5.5 | -24.5 (-7.8 LU) | -16.5 (-1.0 LU) | -23.4 (-6.7 LU) |
 
 ## Key moments (excerpts in .cache/audio/excerpts/)
 
 | moment | excerpt | excerpt loudness | at the event: peak / loudest 400 ms | stems RMS at the event (dBFS) |
 |---|---|---|---|---|
-| s2_bell_arrival | 44.35-50.35 s | -18.2 LUFS | -5.3 dBFS / -15.9 LUFS | music -37.5, effects -22.4, ambience -29.5, voice -96.4 |
-| s4_key_turn | 111.48-115.08 s | -18.3 LUFS | -3.1 dBFS / -21.1 LUFS | music -30.8, effects -31.3, ambience -32.8, voice -96.8 |
-| s6_click_tab_change | 205.28-210.28 s | -18.3 LUFS | -6.5 dBFS / -18.5 LUFS | music -38.3, effects -34.7, ambience -35.3, voice -24.2 |
-| s9_final_bell | 298.49-304.49 s | -23.2 LUFS | -6.2 dBFS / -16.4 LUFS | music -27.5, effects -23.1, ambience -31.1, voice -96.4 |
+| s2_bell_arrival | 44.35-50.35 s | -17.6 LUFS | -5.3 dBFS / -16.3 LUFS | music -36.5, effects -22.5, ambience -37.1, voice -96.4 |
+| s4_key_turn | 108.2-111.8 s | -18.6 LUFS | -3.4 dBFS / -22.4 LUFS | music -29.6, effects -31.4, ambience -42.8, voice -96.4 |
+| s6_click_tab_change | 197.24-202.24 s | -20.2 LUFS | -6.5 dBFS / -19.4 LUFS | music -37.8, effects -35.9, ambience -46.9, voice -25.0 |
+| s9_final_bell | 286.49-292.49 s | -24.8 LUFS | -6.6 dBFS / -16.7 LUFS | music -28.0, effects -23.1, ambience -37.2, voice -96.4 |
 
 ## Effect cues: source and processing
 
@@ -109,8 +149,8 @@ Processing: rain on the window: random 7-15 s stretches of the steady rain (2 s 
 
 | from | to | level | label |
 |---|---|---|---|
-| 0.00 | 76.84 | 1.0 x 0.018 RMS | rain on the window (bed) |
-| 283.71 | 311.49 | 0.8 x 0.018 RMS | rain returns over the shop (bed; leads the cut) |
+| 0.00 | 75.62 | 1.0 x 0.006 RMS | rain on the window (bed) |
+| 272.57 | 302.69 | 0.8 x 0.006 RMS | rain returns over the shop (bed; leads the cut) |
 
 ### office_night
 
@@ -120,8 +160,8 @@ Processing: a low room tone (synth: brown noise LP 160 Hz) with the machine loop
 
 | from | to | level | label |
 |---|---|---|---|
-| 0.00 | 76.84 | 1.0 x 0.006 RMS | the back office at night (derived: scenes 1-2) |
-| 284.71 | 311.49 | 0.8 x 0.006 RMS | the back office at night (derived: scene 9) |
+| 0.00 | 75.62 | 1.0 x 0.005 RMS | the back office at night (derived: scenes 1-2) |
+| 273.57 | 302.69 | 0.8 x 0.005 RMS | the back office at night (derived: scene 9) |
 
 ### radio
 
@@ -131,7 +171,7 @@ Processing: the radio recording through a small speaker (BP 450 Hz-3 kHz, +4 dB 
 
 | from | to | level | label |
 |---|---|---|---|
-| 0.40 | 75.84 | 0.55 x 0.0045 RMS | a radio far off in the workshop (bed) |
+| 0.40 | 74.62 | 0.55 x 0.0035 RMS | a radio far off in the workshop (bed) |
 
 ### fan
 
@@ -141,7 +181,7 @@ Processing: the machine loop varispeeded up from 25 % over 1.6 s (the fan spinni
 
 | from | to | level | label |
 |---|---|---|---|
-| 0.60 | 76.44 | 1.0 x 0.008 RMS | PC fan spins up, then hums (bed) |
+| 0.60 | 75.22 | 1.0 x 0.004 RMS | PC fan spins up, then hums (bed) |
 
 ### hdd
 
@@ -151,10 +191,10 @@ Processing: 10 ms grains of the tiny perc (-3..+2 st) at irregular seek interval
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 4.20 | hard drive chatter | +0 ms | -20.1 | -36.0 LUFS |
-| 15.55 |  | -30 ms | -19.0 | -34.1 LUFS |
-| 18.10 |  | +4 ms | -19.4 | -35.8 LUFS |
-| 19.80 |  | -30 ms | -19.3 | -33.1 LUFS |
+| 4.20 | hard drive chatter | +0 ms | -20.2 | -36.1 LUFS |
+| 15.55 |  | -30 ms | -19.1 | -34.2 LUFS |
+| 18.10 |  | -30 ms | -19.5 | -35.9 LUFS |
+| 19.80 |  | -30 ms | -19.4 | -33.2 LUFS |
 
 ### tab
 
@@ -167,14 +207,14 @@ Processing: old shop mouse: the cassette's latch (from 46 ms) -1 st (down) + vin
 | 13.80 |  | -8 ms | -14.0 | -34.5 LUFS |
 | 14.65 |  | -8 ms | -13.9 | -34.5 LUFS |
 | 15.50 |  | -8 ms | -13.7 | -32.3 LUFS |
-| 16.35 |  | -8 ms | -13.5 | -34.4 LUFS |
-| 17.20 |  | -8 ms | -13.5 | -34.4 LUFS |
-| 18.05 |  | -8 ms | -13.4 | -32.2 LUFS |
-| 18.90 |  | -8 ms | -13.3 | -34.5 LUFS |
-| 19.75 |  | -8 ms | -13.2 | -31.1 LUFS |
-| 20.60 |  | -8 ms | -13.1 | -34.4 LUFS |
-| 24.78 |  | -8 ms | -15.5 | -36.4 LUFS |
-| 25.56 |  | -8 ms | -16.4 | -37.5 LUFS |
+| 16.35 |  | -8 ms | -13.6 | -34.5 LUFS |
+| 17.20 |  | -8 ms | -13.6 | -34.5 LUFS |
+| 18.05 |  | -8 ms | -13.5 | -32.3 LUFS |
+| 18.90 |  | -8 ms | -13.4 | -34.6 LUFS |
+| 19.75 |  | -8 ms | -13.3 | -31.1 LUFS |
+| 20.60 |  | -8 ms | -13.2 | -34.5 LUFS |
+| 24.79 |  | -8 ms | -15.6 | -36.5 LUFS |
+| 25.63 |  | -8 ms | -16.7 | -37.5 LUFS |
 
 ### radio_off
 
@@ -194,7 +234,7 @@ Processing: the metallic clatter -5 st, looped (forward, reversed) to the cue's 
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 29.78 | Martin pulls the shop shutter down for the night (o.s.) | +14 ms | -11.9 | -23.5 LUFS |
+| 29.78 | Martin pulls the shop shutter down for the night (o.s.) | +14 ms | -12.0 | -23.5 LUFS |
 
 ### tab_close
 
@@ -204,15 +244,15 @@ Processing: as tab, a little lighter
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 40.15 |  | -8 ms | -15.6 | -36.9 LUFS |
+| 40.15 |  | -8 ms | -15.6 | -37.0 LUFS |
 | 40.55 |  | -8 ms | -15.7 | -36.9 LUFS |
-| 40.95 |  | -8 ms | -15.7 | -36.8 LUFS |
-| 41.35 |  | -8 ms | -15.8 | -36.8 LUFS |
-| 41.75 |  | -8 ms | -15.8 | -37.0 LUFS |
-| 42.40 |  | -8 ms | -16.0 | -37.0 LUFS |
-| 43.05 |  | -8 ms | -16.1 | -37.2 LUFS |
-| 43.70 |  | -8 ms | -16.2 | -36.9 LUFS |
-| 44.35 |  | -8 ms | -16.3 | -37.0 LUFS |
+| 40.95 |  | -8 ms | -15.7 | -36.9 LUFS |
+| 41.35 |  | -8 ms | -15.9 | -36.9 LUFS |
+| 41.75 |  | -8 ms | -15.9 | -37.0 LUFS |
+| 42.40 |  | -8 ms | -16.0 | -37.1 LUFS |
+| 43.05 |  | -8 ms | -16.2 | -37.2 LUFS |
+| 43.70 |  | -8 ms | -16.3 | -37.0 LUFS |
+| 44.35 |  | -8 ms | -16.3 | -37.1 LUFS |
 
 ### bell
 
@@ -222,8 +262,8 @@ Processing: the counter bell: Bell Cash tuned +0.3 st to E6; the recording's str
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 45.85 | the brass bell: Barnaby arrives | +0 ms | -5.5 | -16.3 LUFS |
-| 299.99 | the real bell, once | +0 ms | -7.0 | -17.0 LUFS |
+| 45.85 | the brass bell: Barnaby arrives | +0 ms | -5.5 | -16.4 LUFS |
+| 287.99 | the real bell, once | +0 ms | -7.1 | -17.1 LUFS |
 
 ### pop
 
@@ -233,9 +273,9 @@ Processing: a water drip tuned up the D major pentatonic, LP 4.2 kHz, HP 250 Hz;
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 55.74 | six light up | -4 ms | -13.5 | -25.3 LUFS |
-| 121.13 | order 3 lands | -4 ms | -14.2 | -29.3 LUFS |
-| 222.04 | two rows change | -4 ms | -14.1 | -26.5 LUFS |
+| 55.74 | six light up | -4 ms | -13.5 | -25.4 LUFS |
+| 117.32 | order 3 lands | -4 ms | -14.2 | -29.3 LUFS |
+| 212.56 | two rows change | -4 ms | -14.2 | -26.5 LUFS |
 
 ### key_tap
 
@@ -245,7 +285,7 @@ Processing: the coin's first impact only (45-200 ms: the ring damped by the keys
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 71.29 | the key on the keyboard: a small clean metal tap | -4 ms | -9.8 | -28.6 LUFS |
+| 70.07 | the key on the keyboard: a small clean metal tap | -4 ms | -9.9 | -28.7 LUFS |
 
 ### lamp_click
 
@@ -255,7 +295,7 @@ Processing: vinyl click +2 st, then the cassette latch -4 st 12 ms later; HP 250
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 73.64 | the lamp clicks off | -2 ms | -10.0 | -30.8 LUFS |
+| 72.42 | the lamp clicks off | -2 ms | -10.1 | -30.9 LUFS |
 
 ### timelapse
 
@@ -265,17 +305,17 @@ Processing: a noise swell varispeeded to the cue's length, LP 4.5 kHz, with a si
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 75.24 | time passes: a soft swell | (swell or derived: not timed) | | |
+| 74.02 | time passes: a soft swell | (swell or derived: not timed) | | |
 
 ### workshop
 
-Source: synth: room tone; `Loops/Texture/Nuts and Bolts.wav`; `Loops/Texture/Radio Station Search.wav`
+Source: synth: room tone; `Loops/Texture/Nuts and Bolts.wav`
 
-Processing: room tone (synth) + the parts trays (nuts and bolts, BP 300 Hz-5.5 kHz, peak-compressed, coming and going on a slow random gate, ~40 % on) + the radio through its small speaker
+Processing: room tone (synth) + tools now and then (the parts trays: nuts and bolts, BP 300 Hz-5 kHz, peak-compressed, on a slow random gate ~25 % on, peak-compressed hard so no clink pokes out); no voices, no radio
 
 | from | to | level | label |
 |---|---|---|---|
-| 77.24 | 225.24 | 1.0 x 0.011 RMS | workshop morning bed: room, radio, tools |
+| 76.02 | 215.76 | 1.0 x 0.0065 RMS | workshop morning bed: room, radio, tools |
 
 ### freewheel
 
@@ -285,7 +325,7 @@ Processing: 12 ms grains of the tiny perc +6 st at 24 Hz slowing to 5 Hz, HP 1.5
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 79.44 |  | +0 ms | -15.0 | -27.4 LUFS |
+| 78.22 |  | +0 ms | -15.1 | -27.6 LUFS |
 
 ### chair
 
@@ -295,41 +335,45 @@ Processing: the cushion (soft hit -8 st LP 500 Hz), the seat's creak (rough wood
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 79.84 | a chair creaks: Martin sits, a breath out | -30 ms | -15.0 | -27.5 LUFS |
+| 78.62 | a chair creaks: Martin sits, a breath out | -30 ms | -15.1 | -27.8 LUFS |
 
 ### compressor
 
 Source: `Loops/Texture/Machine Noise Ambient.wav`; `Loops/Texture/Sink Noise.wav`
 
-Processing: a 1.8 s run: the machine loop varispeed-spun up (0.55 -> 1.0 in 0.35 s), LP 2.2 kHz, a 9-24 Hz chug, air hiss (sink noise, BP 1.2-6 kHz); off-screen: workshop room 80 %, panned right
+Processing: a 1.2 s run: the machine loop varispeed-spun up (0.55 -> 1.0 in 0.35 s), LP 2.2 kHz, a 9-24 Hz chug, air hiss (sink noise, BP 1.2-6 kHz); off-screen: workshop room 80 %, panned right
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 87.93 |  | (swell or derived: not timed) | | |
+| 86.12 |  | (swell or derived: not timed) | | |
 
 ### step
 
 Source: `One Shots/Drums/Misc Percussion/Perc Hit Soft.aif`; `One Shots/Instrument/Mallets/Marimba Cloth C3.aif`
 
-Processing: a soft hit -5 st LP 1.4 kHz + a cloth-mallet marimba note an octave down (E or A, alternate feet) LP 900 Hz; Barnaby's world room 30 %; alternate pan +-0.08
+Processing: a soft hit -5 st LP 1.4 kHz + a cloth-mallet marimba note an octave down (D or A, alternate feet) LP 900 Hz; Barnaby's world room 30 %; alternate pan +-0.08 (the marimba is on D or A)
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 89.48 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | +8 ms | -19.9 | -35.1 LUFS |
-| 89.95 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -19.9 | -34.8 LUFS |
-| 90.41 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -21.4 | -36.7 LUFS |
-| 90.88 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | +0 ms | -21.4 | -36.2 LUFS |
-| 91.35 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -21.0 | -36.6 LUFS |
-| 91.81 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -21.0 | -35.9 LUFS |
-| 92.28 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | +0 ms | -23.8 | -38.2 LUFS |
-| 133.74 |  | -2 ms | -17.9 | -33.1 LUFS |
-| 134.19 |  | +0 ms | -17.5 | -32.4 LUFS |
-| 134.64 |  | +0 ms | -17.5 | -32.3 LUFS |
-| 135.09 |  | +0 ms | -17.8 | -32.5 LUFS |
-| 137.23 |  | -2 ms | -19.7 | -32.1 LUFS |
-| 137.49 |  | +0 ms | -18.8 | -31.7 LUFS |
-| 137.75 |  | +0 ms | -18.8 | -31.1 LUFS |
-| 138.01 |  | +0 ms | -18.8 | -33.7 LUFS |
+| 87.67 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -2 ms | -19.6 | -35.2 LUFS |
+| 88.13 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -2 ms | -19.6 | -34.7 LUFS |
+| 88.58 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | +0 ms | -21.4 | -36.9 LUFS |
+| 89.04 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -21.4 | -36.3 LUFS |
+| 89.49 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -21.4 | -36.6 LUFS |
+| 89.95 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -21.4 | -36.1 LUFS |
+| 90.41 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -23.2 | -38.3 LUFS |
+| 129.48 |  | -2 ms | -11.8 | -23.0 LUFS |
+| 129.93 |  | +0 ms | -12.2 | -22.3 LUFS |
+| 130.38 |  | +0 ms | -12.0 | -20.8 LUFS |
+| 130.83 |  | +0 ms | -12.0 | -19.8 LUFS |
+| 132.97 |  | -2 ms | -12.7 | -22.6 LUFS |
+| 133.23 |  | +0 ms | -11.0 | -21.2 LUFS |
+| 133.49 |  | +0 ms | -11.0 | -19.8 LUFS |
+| 133.75 |  | +0 ms | -11.0 | -21.0 LUFS |
+| 136.12 | Barnaby's walk 3, quicker (derived from marks.walk3) | -2 ms | -12.2 | -20.6 LUFS |
+| 136.29 | Barnaby's walk 3, quicker (derived from marks.walk3) | +1 ms | -12.2 | -20.0 LUFS |
+| 136.46 | Barnaby's walk 3, quicker (derived from marks.walk3) | +0 ms | -12.5 | -20.0 LUFS |
+| 136.63 | Barnaby's walk 3, quicker (derived from marks.walk3) | -1 ms | -12.5 | -22.2 LUFS |
 
 ### drawer
 
@@ -339,7 +383,7 @@ Processing: the wood scratch -7 st (a slow slide, LP 3.5 kHz, rising) and a dry 
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 96.32 | drawer 1 of the parts cabinet slides open in the shelf shot (derived from marks.shelf) | +0 ms | -15.3 | -29.5 LUFS |
+| 93.95 | drawer 1 of the parts cabinet slides open in the shelf shot (derived from marks.shelf) | +0 ms | -15.4 | -29.5 LUFS |
 
 ### mouse_click
 
@@ -349,12 +393,12 @@ Processing: the shop: as tab (the old shop mouse). Lisbon: Theo's modern mouse, 
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 112.10 |  | -8 ms | -8.7 | -29.7 LUFS |
-| 120.33 |  | -8 ms | -11.0 | -32.0 LUFS |
-| 132.35 |  | -8 ms | -11.8 | -32.9 LUFS |
-| 133.10 |  | -8 ms | -11.9 | -32.8 LUFS |
-| 206.28 |  | -8 ms | -10.1 | -31.0 LUFS |
-| 261.60 | Connect | -8 ms | -9.8 | -31.8 LUFS |
+| 108.82 |  | -8 ms | -8.8 | -29.7 LUFS |
+| 116.52 |  | -8 ms | -11.1 | -32.1 LUFS |
+| 128.09 |  | -8 ms | -11.8 | -33.0 LUFS |
+| 128.84 |  | -8 ms | -11.9 | -32.9 LUFS |
+| 198.24 |  | -8 ms | -10.1 | -31.0 LUFS |
+| 251.54 | Connect | -8 ms | -9.9 | -31.9 LUFS |
 
 ### key_turn
 
@@ -364,7 +408,7 @@ Processing: the lock recording as is (lead-in trimmed): the key in, the turn, th
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 112.58 | a real key turning in a lock | -6 ms | -3.2 | -23.9 LUFS |
+| 109.30 | a real key turning in a lock | -6 ms | -3.3 | -24.0 LUFS |
 
 ### bell_soft
 
@@ -374,9 +418,9 @@ Processing: the same bell, its strike rounded (12 ms attack) and darker (LP 3.8 
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 113.48 | the bell's soft confirm | +0 ms | -13.4 | -21.4 LUFS |
-| 151.39 | the passage opens | +0 ms | -15.2 | -23.1 LUFS |
-| 209.68 | a new room | +0 ms | -14.0 | -22.0 LUFS |
+| 110.20 | the bell's soft confirm | +0 ms | -13.5 | -21.5 LUFS |
+| 145.95 | the passage opens | -32 ms | -19.1 | -26.2 LUFS |
+| 201.64 | a new room | +0 ms | -14.0 | -22.0 LUFS |
 
 ### clunk
 
@@ -386,10 +430,42 @@ Processing: the lever's crack (hit, +-1 st) + the jaw's clunk (metal impact -2 s
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 124.93 | repair stand clamp releases: Sofia's | -2 ms | -11.7 | -21.9 LUFS |
-| 136.04 | Kwame's | -2 ms | -13.0 | -23.0 LUFS |
-| 138.71 | Jana's | -2 ms | -11.8 | -24.7 LUFS |
-| 152.99 | Tom's Brompton | -2 ms | -13.1 | -24.2 LUFS |
+| 121.12 | repair stand clamp releases: Sofia's | -2 ms | -11.8 | -22.0 LUFS |
+| 131.78 | Kwame's | -2 ms | -13.6 | -23.9 LUFS |
+| 134.45 | Jana's | -2 ms | -12.8 | -23.2 LUFS |
+| 147.55 | Tom's Brompton | -2 ms | -12.6 | -23.7 LUFS |
+
+### chime
+
+Source: `One Shots/Instrument/Mallets/Celeste C6.wav`
+
+Processing: the hand-back figure, one note per step: the celeste tuned to D5, F#5, A5, D6 (-10, -6, -3, +2 st), cut to 1.2x the step interval (0.54 s, 0.31 s, 0.2 s), LP 6 kHz; panned left to right across the four stops; world room 35 %
+
+| cue (s) | label | onset | peak dBFS | loudest 400 ms |
+|---|---|---|---|---|
+| 129.48 | hand-back chime 1/4 (the job), walk 1 | -2 ms | -11.8 | -23.0 LUFS |
+| 129.93 | hand-back chime 2/4 (the customer), walk 1 | +0 ms | -12.2 | -22.3 LUFS |
+| 130.38 | hand-back chime 3/4 (a text), walk 1 | +0 ms | -12.0 | -20.8 LUFS |
+| 130.83 | hand-back chime 4/4 (the status), walk 1 | +0 ms | -12.0 | -19.8 LUFS |
+| 132.97 | hand-back chime 1/4 (the job), walk 2 | -2 ms | -12.7 | -22.6 LUFS |
+| 133.23 | hand-back chime 2/4 (the customer), walk 2 | +0 ms | -11.0 | -21.2 LUFS |
+| 133.49 | hand-back chime 3/4 (a text), walk 2 | +0 ms | -11.0 | -19.8 LUFS |
+| 133.75 | hand-back chime 4/4 (the status), walk 2 | +0 ms | -11.0 | -21.0 LUFS |
+| 136.12 | hand-back chime 1/4 (the job), walk 3 | -2 ms | -12.2 | -20.6 LUFS |
+| 136.29 | hand-back chime 2/4 (the customer), walk 3 | +1 ms | -12.2 | -20.0 LUFS |
+| 136.46 | hand-back chime 3/4 (a text), walk 3 | +0 ms | -12.5 | -20.0 LUFS |
+| 136.63 | hand-back chime 4/4 (the status), walk 3 | -1 ms | -12.5 | -22.2 LUFS |
+
+### chime_chord
+
+Source: `One Shots/Instrument/Mallets/Celeste C6.wav`
+
+Processing: the four notes at once (D5 F#5 A5 D6), 2.6 s, LP 6 kHz; world room 45 %; replaces the passage's soft bell
+
+| cue (s) | label | onset | peak dBFS | loudest 400 ms |
+|---|---|---|---|---|
+| 145.90 | the passage: the four notes as one chord | -2 ms | -15.9 | -25.6 LUFS |
+| 149.29 | Tom's Brompton in one step: the chord once | -2 ms | -18.1 | -27.8 LUFS |
 
 ### lamp_on
 
@@ -399,7 +475,7 @@ Processing: as lamp_click (another take of the same switch)
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 159.62 | the desk lamp clicks on: dusk, Martin at Theo's desk | -2 ms | -10.1 | -30.9 LUFS |
+| 153.87 | the desk lamp clicks on: dusk, Martin at Theo's desk | -2 ms | -10.2 | -31.0 LUFS |
 
 ### typing
 
@@ -409,7 +485,7 @@ Processing: the old keyboard: plastic taps (two samples, +-1.5 st; the space bar
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 181.62 | keyboard foley under the code | +4 ms | -12.4 | -30.2 LUFS |
+| 174.45 | keyboard foley under the code | +0 ms | -12.3 | -29.6 LUFS |
 
 ### ding
 
@@ -419,7 +495,7 @@ Processing: the celeste on D (+2 st) with a quiet A above 70 ms later, LP 7 kHz;
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 187.42 | checks pass | -2 ms | -15.0 | -21.6 LUFS |
+| 180.25 | checks pass | -2 ms | -15.1 | -21.7 LUFS |
 
 ### reload
 
@@ -429,27 +505,27 @@ Processing: a 0.55 s burst of the drive's seeks + the fan bed rising and falling
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 206.68 | the page reloads | +0 ms | -15.9 | -30.0 LUFS |
+| 198.64 | the page reloads | +0 ms | -15.9 | -32.0 LUFS |
 
 ### bustle
 
-Source: synth: room tone; `Loops/Texture/Nuts and Bolts.wav`; `Loops/Texture/Radio Station Search.wav`; `Loops/Texture/Television Crowd.wav`; `Loops/Texture/Tea Cups.wav`
+Source: synth: room tone; `Loops/Texture/Nuts and Bolts.wav`; `Loops/Texture/Tea Cups.wav`
 
-Processing: the workshop busier (gate ~70 % on) + customers talking (TV crowd, BP 250 Hz-2.2 kHz) + mugs now and then
+Processing: the same, busier (gate ~40 % on), and a mug now and then; no voices
 
 | from | to | level | label |
 |---|---|---|---|
-| 223.64 | 250.60 | 1.0 x 0.015 RMS | Tuesday workshop bustle (bed; leads the cut) |
+| 214.16 | 240.54 | 1.0 x 0.009 RMS | Tuesday workshop bustle (bed; leads the cut) |
 
 ### street
 
-Source: synth: traffic; `Loops/Texture/Television Crowd.wav`; `Loops/Texture/Forest Ambience.wav`
+Source: synth: traffic; `Loops/Texture/Forest Ambience.wav`
 
-Processing: traffic below the window (synth: a rumble and passing cars, each a filtered noise swell with a slow pan) + people (TV crowd, BP 300 Hz-1.8 kHz) + birds (HP 1.5 kHz); LP 6 kHz (the window)
+Processing: traffic below the window (synth: a rumble and passing cars, each a filtered noise swell with a slow pan) + birds (HP 1.5 kHz); LP 6 kHz (the window); no voices
 
 | from | to | level | label |
 |---|---|---|---|
-| 249.30 | 285.31 | 1.0 x 0.016 RMS | Lisbon: street below the window (bed; leads the cut) |
+| 239.24 | 274.17 | 1.0 x 0.008 RMS | Lisbon: street below the window (bed; leads the cut) |
 
 ### cup
 
@@ -459,7 +535,7 @@ Processing: one clink from the tea-cups recording (2.865-3.35 s) and a small set
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 253.70 | an espresso cup set down on its saucer | -2 ms | -12.1 | -29.3 LUFS |
+| 243.64 | an espresso cup set down on its saucer | -2 ms | -12.2 | -29.4 LUFS |
 
 ### keys_modern
 
@@ -469,7 +545,7 @@ Processing: Theo's modern keyboard: the same taps -4 st, 50 ms long, LP 3.8 kHz,
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 256.10 | Theo types the name, pastes the repo path, types the URL | +6 ms | -14.7 | -29.6 LUFS |
+| 246.04 | Theo types the name, pastes the repo path, types the URL | +6 ms | -15.2 | -33.0 LUFS |
 
 ### coat
 
@@ -479,17 +555,17 @@ Processing: the paper rustle -4 st LP 3 kHz (cloth) between two sleeve swishes (
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 285.71 | Martin's coat on | -8 ms | -22.5 | -35.0 LUFS |
+| 274.57 | Martin's coat on | -8 ms | -22.6 | -35.0 LUFS |
 
 ### keys_jingle
 
-Source: `One Shots/Drums/Misc Percussion/Perc Jingle.wav`; `One Shots/Drums/Misc Percussion/Metallic Rattle.wav`
+Source: `One Shots/Drums/Misc Percussion/Perc Jingle.wav`
 
-Processing: three overlapping handfuls of the jingle (+-0.5 st) and a metal rattle, HP 500 Hz, LP 6 kHz; off-screen: workshop room 70 %, panned left, low
+Processing: two overlapping handfuls of the jingle (+-0.5 st), HP 500 Hz, LP 6 kHz; off-screen: workshop room 70 %, panned left, low
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 286.51 | Martin's keys | +0 ms | -14.8 | -24.2 LUFS |
+| 275.37 | Martin's keys | +0 ms | -14.6 | -24.6 LUFS |
 
 ### door_shop
 
@@ -499,17 +575,17 @@ Processing: a door = its wooden body (rough low wood -7 st, LP 1.2 kHz) + the la
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 291.06 | the back-office door, then the shop door (o.s.) | -2 ms | -14.6 | -26.1 LUFS |
+| 279.37 | the back-office door, then the shop door (o.s.) | -2 ms | -14.9 | -26.4 LUFS |
 
 ### street_night
 
-Source: synth: traffic; `Loops/Texture/Wind Air God.wav`; `Loops/Texture/Television Crowd.wav`
+Source: synth: traffic; `Loops/Texture/Wind Air God.wav`
 
-Processing: sparser traffic (synth) + night air (wind, LP 2.5 kHz) + a trace of people; LP 4.5 kHz
+Processing: sparser traffic (synth) + night air (wind, LP 2.5 kHz); LP 4.5 kHz
 
 | from | to | level | label |
 |---|---|---|---|
-| 291.76 | 311.49 | 1.0 x 0.009 RMS | a quieter street outside in Lisbon (bed) |
+| 280.07 | 302.69 | 1.0 x 0.0065 RMS | a quieter street outside in Lisbon (bed) |
 
 ### door_lisbon
 
@@ -519,7 +595,7 @@ Processing: the same door, smaller, LP 3.5 kHz, off in Theo's flat (Lisbon room 
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 297.84 | the studio door (o.s.) | -2 ms | -13.3 | -28.1 LUFS |
+| 285.84 | the studio door (o.s.) | -2 ms | -13.7 | -28.4 LUFS |
 
 <!-- generated by check.py --sound-md: end -->
 
@@ -538,6 +614,5 @@ Processing: the same door, smaller, LP 3.5 kHz, off in Theo's flat (Lisbon room 
   (long, quiet openings by design).
 
 - The library has no road traffic, so Lisbon's street is part synthesis; it sits low, behind people and birds.
-- `Television Crowd` stands in for customers and passers-by; it is band-limited and low so no words come through.
-- The radio is the library's `Radio Station Search` through a small speaker in another room: very low, so it reads as
-  a radio rather than as a programme.
+- The radio (scene 1 only) is the library's `Radio Station Search` through a small speaker in another room: very low,
+  so it reads as a radio rather than as a programme.

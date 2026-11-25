@@ -280,8 +280,7 @@ def keys_jingle(seed):
     """Martin's keys as he puts his coat on: three handfuls of the jingle, overlapping, with a metal rattle."""
     r = rng("jingle", seed)
     j = M("jingle")
-    parts = [(st(j, r.uniform(-.5, .5)), 0.0, 1.0), (st(j, .6 + r.uniform(-.3, .3)), .19, .55),
-             (st(j, -.5 + r.uniform(-.3, .3)), .44, .38), (cut(M("rattle"), 0, .3, r=.1), .25, .12)]
+    parts = [(st(j, r.uniform(-.5, .5)), 0.0, 1.0), (st(j, .6 + r.uniform(-.3, .3)), .19, .5)]
     y = filt(mix_at(parts), "highpass", 500)
     y = peak1(y)
     return y, onset(y)
@@ -463,6 +462,25 @@ def door(seed, size=1.0):
     body = filt(cut(st(M("rough"), -7 - 3 * (size - 1)), 0, .5, r=.25), "lowpass", 1200)
     y = mix_at([(body, 0, 1.0), (latch, .012, .45)])
     y = peak1(filt(y, "highpass", 80))
+    return y, onset(y)
+
+
+CHIME = [-10, -6, -3, 2]                               # celeste C6 -> D5, F#5, A5, D6: the hand-back's four steps
+STEPS4 = ("the job", "the customer", "a text", "the status")
+
+
+def chime(note: int, dur: float):
+    """One note of the hand-back figure: the celeste, tuned down to D5 / F#5 / A5 / D6, short."""
+    y = cut(st(M("celeste"), CHIME[note]), 0, dur + .04, a=.0005, r=.6 * dur)
+    y = peak1(filt(filt(y, "lowpass", 6000), "highpass", 250))
+    return y, onset(y)
+
+
+def chime_chord(dur: float = 2.6):
+    """The four notes as one chord: the steps have become one."""
+    c = M("celeste")
+    y = mix_at([(cut(st(c, n), 0, dur, a=.0005, r=.6 * dur), 0, g) for n, g in zip(CHIME, (1.0, .8, .75, .7))])
+    y = peak1(filt(filt(y, "lowpass", 6000), "highpass", 200))
     return y, onset(y)
 
 
@@ -651,43 +669,50 @@ def bed(typ: str, n: int, seed: int) -> np.ndarray:
         hum = filt(st(hum, -5)[:, :n], "lowpass", 400)
         hum = np.pad(hum, ((0, 0), (0, n - hum.shape[1])))
         return unit(tone + .5 * hum / (np.sqrt((hum ** 2).mean()) + 1e-12))
-    if typ in ("workshop", "bustle"):                  # the workshop: room, someone at the parts trays, the radio
+    if typ in ("workshop", "bustle"):                  # the workshop: room tone and tools now and then (no voices)
         busy = typ == "bustle"
         tone = room_tone(n, seed, lp=220)
         nuts = loop_to(S("nuts"), n, seed + 1, xf=1.0)
-        nuts = tame(filt(filt(nuts, "lowpass", 5500), "highpass", 300), -22, 3) * gate_env(n, seed + 2, on=.7 if busy else .4)
+        nuts = tame(filt(filt(nuts, "lowpass", 5000), "highpass", 300), -30, 4) * gate_env(
+            n, seed + 2, on=.4 if busy else .25, min_len=1.5, max_len=4.0, floor=.05)
         nuts = nuts / (np.sqrt((nuts ** 2).mean()) + 1e-12)
-        radio = radio_speaker(loop_to(S("radio"), n, seed + 3, xf=1.5).mean(0))
-        radio = np.stack([radio, np.roll(radio, 40)]) / (np.sqrt((radio ** 2).mean()) + 1e-12)
-        y = .55 * tone + .55 * nuts + .5 * radio
-        if busy:                                       # Tuesday: customers talking, a mug or two
-            crowd = filt(filt(loop_to(S("crowd"), n, seed + 4, xf=1.5), "lowpass", 2200), "highpass", 250)
-            crowd = crowd / (np.sqrt((crowd ** 2).mean()) + 1e-12)
-            cups = filt(loop_to(S("cups"), n, seed + 5, xf=.5), "lowpass", 6000) * gate_env(n, seed + 6, on=.25, floor=0)
+        y = .7 * tone + .45 * nuts
+        if busy:                                       # Tuesday: more hands at the trays, a mug now and then
+            cups = filt(loop_to(S("cups"), n, seed + 5, xf=.5), "lowpass", 6000) * gate_env(n, seed + 6, on=.15, floor=0)
             cups = cups / (np.sqrt((cups ** 2).mean()) + 1e-12)
-            y = y + .5 * crowd + .25 * cups
+            y = y + .2 * cups
         return unit(y)
-    if typ in ("street", "street_night"):              # below Theo's window in Lisbon
+    if typ in ("street", "street_night"):              # below Theo's window in Lisbon: traffic, birds, night air
         night = typ == "street_night"
         y = traffic(n, seed, night)
         y = y / (np.sqrt((y ** 2).mean()) + 1e-12)
-        crowd = filt(filt(loop_to(S("crowd"), n, seed + 4, xf=1.5), "lowpass", 1800), "highpass", 300)
-        crowd = crowd / (np.sqrt((crowd ** 2).mean()) + 1e-12)
         if night:
             wind = filt(loop_to(S("wind"), n, seed + 5, xf=1.0, lo=0.0, hi=5.5), "lowpass", 2500)
             wind = wind / (np.sqrt((wind ** 2).mean()) + 1e-12)
-            y = y + .35 * wind + .12 * crowd
+            y = y + .35 * wind
         else:
             birds = filt(loop_to(S("birds"), n, seed + 5, xf=1.0), "highpass", 1500)
             birds = birds / (np.sqrt((birds ** 2).mean()) + 1e-12)
-            y = y + .45 * crowd + .18 * birds
+            y = y + .2 * birds
         return unit(filt(y, "lowpass", 6000 if not night else 4500))   # through the window
     raise ValueError(typ)
 
 
+# the level audit's categories (check.py --levels)
+CATEGORIES = {
+    "rain": {"rain"}, "fan (2009 PC)": {"fan"}, "radio (scene 1)": {"radio"}, "room tone (back office)": {"office_night"},
+    "workshop": {"workshop"}, "workshop, Tuesday": {"bustle"}, "Lisbon street": {"street"},
+    "Lisbon street, night": {"street_night"},
+    "foley": {"key_tap", "lamp_click", "lamp_on", "key_turn", "keys_jingle", "clunk", "compressor", "freewheel", "hdd",
+              "typing", "keys_modern", "chair", "cup", "coat", "door_shop", "door_lisbon", "shutter", "radio_off"},
+    "UI (clicks, reload, pops, ding)": {"tab", "tab_close", "mouse_click", "reload", "pop", "ding"},
+    "worlds (steps, chimes, drawer, soft bells, swell)": {"step", "chime", "chime_chord", "drawer", "bell_soft", "timelapse"},
+    "the bell": {"bell"},
+}
+
 # ambience levels as RMS before the master (the voices sit near -20 dBFS RMS)
-BED_GAIN = {"rain": .018, "fan": .008, "radio": .0045, "office_night": .006, "workshop": .011, "bustle": .015,
-            "street": .016, "street_night": .009}
+BED_GAIN = {"rain": .006, "fan": .004, "radio": .0035, "office_night": .005, "workshop": .0065, "bustle": .009,
+            "street": .008, "street_night": .0065}   # v2.3: the beds well under the dialogue (SOUND.md, levels table)
 BED_PAN = {"fan": -.25, "radio": .45}
 
 SOURCES = {
@@ -697,7 +722,7 @@ SOURCES = {
     "key_tap": [P["coin"], P["plastic2"]],
     "lamp_click": [P["cassette"], P["vinyl"]],
     "key_turn": [P["lock"]],
-    "keys_jingle": [P["jingle"], P["rattle"]],
+    "keys_jingle": [P["jingle"]],
     "radio_off": [P["vinyl"], P["cassette"]],
     "shutter": [P["clatter"], P["machine"], P["metal"]],
     "chair": [P["hit_soft"], P["rough"], P["squeak"], P["breath"]],
@@ -724,10 +749,12 @@ SOURCES = {
     "fan": [P["machine"]],
     "radio": [P["radio"]],
     "office_night": ["synth: room tone", P["machine"]],
-    "workshop": ["synth: room tone", P["nuts"], P["radio"]],
-    "bustle": ["synth: room tone", P["nuts"], P["radio"], P["crowd"], P["cups"]],
-    "street": ["synth: traffic", P["crowd"], P["birds"]],
-    "street_night": ["synth: traffic", P["wind"], P["crowd"]],
+    "workshop": ["synth: room tone", P["nuts"]],
+    "bustle": ["synth: room tone", P["nuts"], P["cups"]],
+    "chime": [P["celeste"]],
+    "chime_chord": [P["celeste"]],
+    "street": ["synth: traffic", P["birds"]],
+    "street_night": ["synth: traffic", P["wind"]],
 }
 
 
@@ -744,11 +771,11 @@ PROCESS = {
                   "fast compressor; panned left (the lamp); office room",
     "key_turn": "the lock recording as is (lead-in trimmed): the key in, the turn, the bolt; HP 140 Hz, LP 11 kHz, -2 dB "
                 "at 3.2 kHz; fast compressor; office room 25 %; the score ducks 5 dB around it",
-    "keys_jingle": "three overlapping handfuls of the jingle (+-0.5 st) and a metal rattle, HP 500 Hz, LP 6 kHz; "
+    "keys_jingle": "two overlapping handfuls of the jingle (+-0.5 st), HP 500 Hz, LP 6 kHz; "
                    "off-screen: workshop room 70 %, panned left, low",
     "clunk": "the lever's crack (hit, +-1 st) + the jaw's clunk (metal impact -2 st, 35 ms later) + a short pan ring; "
              "HP 70 Hz, LP 5 kHz; off-screen: workshop room 75 %, panned right, low",
-    "compressor": "a 1.8 s run: the machine loop varispeed-spun up (0.55 -> 1.0 in 0.35 s), LP 2.2 kHz, a 9-24 Hz chug, air "
+    "compressor": "a 1.2 s run: the machine loop varispeed-spun up (0.55 -> 1.0 in 0.35 s), LP 2.2 kHz, a 9-24 Hz chug, air "
                   "hiss (sink noise, BP 1.2-6 kHz); off-screen: workshop room 80 %, panned right",
     "freewheel": "12 ms grains of the tiny perc +6 st at 24 Hz slowing to 5 Hz, HP 1.5 kHz; off-screen: workshop room",
     "hdd": "10 ms grains of the tiny perc (-3..+2 st) at irregular seek intervals, HP 400 Hz, LP 6.5 kHz, a +5 dB "
@@ -759,8 +786,8 @@ PROCESS = {
               "+2.5 dB at 2.2 kHz; office room",
     "keys_modern": "Theo's modern keyboard: the same taps -4 st, 50 ms long, LP 3.8 kHz, -7 dB at 380 Hz, quicker, no upstroke; "
                    "Lisbon room",
-    "step": "a soft hit -5 st LP 1.4 kHz + a cloth-mallet marimba note an octave down (E or A, alternate feet) LP 900 Hz; "
-            "Barnaby's world room 30 %; alternate pan +-0.08",
+    "step": "a soft hit -5 st LP 1.4 kHz + a cloth-mallet marimba note an octave down (D or A, alternate feet) LP 900 Hz; "
+            "Barnaby's world room 30 %; alternate pan +-0.08 (the marimba is on D or A)",
     "radio_off": "a dry switch: vinyl click -2 st + the cassette latch -5 st, HP 300 Hz, LP 6 kHz; through the workshop "
                  "door (workshop room 60 %, right); the radio bed stops on it",
     "shutter": "the metallic clatter -5 st, looped (forward, reversed) to the cue's length and pulsed at 9-14 slats a second, "
@@ -794,13 +821,48 @@ PROCESS = {
     "radio": "the radio recording through a small speaker (BP 450 Hz-3 kHz, +4 dB at 1.1 kHz, soft saturation, LP 2.4 "
              "kHz), panned right, very low",
     "office_night": "a low room tone (synth: brown noise LP 160 Hz) with the machine loop -5 st LP 400 Hz under it",
-    "workshop": "room tone (synth) + the parts trays (nuts and bolts, BP 300 Hz-5.5 kHz, peak-compressed, coming and going "
-                "on a slow random gate, ~40 % on) + the radio through its small speaker",
-    "bustle": "the workshop busier (gate ~70 % on) + customers talking (TV crowd, BP 250 Hz-2.2 kHz) + mugs now and then",
+    "workshop": "room tone (synth) + tools now and then (the parts trays: nuts and bolts, BP 300 Hz-5 kHz, peak-compressed, "
+                "on a slow random gate ~25 % on, peak-compressed hard so no clink pokes out); no voices, no radio",
+    "bustle": "the same, busier (gate ~40 % on), and a mug now and then; no voices",
     "street": "traffic below the window (synth: a rumble and passing cars, each a filtered noise swell with a slow pan) + "
-              "people (TV crowd, BP 300 Hz-1.8 kHz) + birds (HP 1.5 kHz); LP 6 kHz (the window)",
-    "street_night": "sparser traffic (synth) + night air (wind, LP 2.5 kHz) + a trace of people; LP 4.5 kHz",
+              "birds (HP 1.5 kHz); LP 6 kHz (the window); no voices",
+    "street_night": "sparser traffic (synth) + night air (wind, LP 2.5 kHz); LP 4.5 kHz",
+    "chime": "the hand-back figure, one note per step: the celeste tuned to D5, F#5, A5, D6 (-10, -6, -3, +2 st), cut to "
+             "1.2x the step interval (0.54 s, 0.31 s, 0.2 s), LP 6 kHz; panned left to right across the four stops; world room 35 %",
+    "chime_chord": "the four notes at once (D5 F#5 A5 D6), 2.6 s, LP 6 kHz; world room 45 %; replaces the passage's soft "
+                   "bell",
 }
+
+
+def handback_chimes(cues: dict) -> list[dict]:
+    """Scene 5: each of a hand-back's four steps (the job, the customer, a text, the status) gets one note of the same
+    figure, D-F#-A-D, on Barnaby's steps from the cue sheet: walk 1, then quicker in walk 2 and walk 3 (where the sheet
+    has no steps, they are derived, quicker again). At the passage, and for Tom's one step, the four notes sound as one
+    chord."""
+    mk = cues["marks"]
+    steps = sorted(float(s["t"]) for s in cues["sfx"] if s["type"] == "step")
+    walks = [w for w in ("walk1", "walk2", "walk3") if w in mk]
+    out, iv = [], .45
+    for i, w in enumerate(walks):
+        end = mk[walks[i + 1]] if i + 1 < len(walks) else mk.get("passage", mk[w] + 3)
+        ts = [t for t in steps if mk[w] <= t < end][:4]
+        if len(ts) == 4:
+            iv = (ts[-1] - ts[0]) / 3
+        else:                                          # derived: the same walk, quicker still
+            iv = max(.15, iv * .65)
+            ts = [round(mk[w] + .12 + k * iv, 3) for k in range(4)]
+            out += [{"t": t, "type": "step", "gain": .13, "label": f"Barnaby's walk {i + 1}, quicker (derived from marks.{w})"}
+                    for t in ts]
+        dur = float(np.clip(1.2 * iv, .18, .9))          # each note as long as its step: crisper as he speeds up
+        out += [{"t": t, "type": "chime", "note": k, "dur": round(dur, 3), "gain": .3,
+                 "label": f"hand-back chime {k + 1}/4 ({STEPS4[k]}), walk {i + 1}"} for k, t in enumerate(ts)]
+    if "passage" in mk:
+        out.append({"t": round(mk["passage"] + .35, 3), "type": "chime_chord", "gain": .3,
+                    "label": "the passage: the four notes as one chord"})
+    if "walk4" in mk:
+        out.append({"t": round(mk["walk4"] + .05, 3), "type": "chime_chord", "gain": .26,
+                    "label": "Tom's Brompton in one step: the chord once"})
+    return out
 
 
 def extra_cues(cues: dict) -> list[dict]:
@@ -813,6 +875,7 @@ def extra_cues(cues: dict) -> list[dict]:
     out = [{"t": round(t0 + k * (t1 - t0) / max(1, n - 1), 3), "type": "step", "gain": .13 if 0 < k < n - 1 else .1,
             "label": "Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout)"}
            for k in range(n)]
+    out += handback_chimes(cues)
     out.append({"t": round(mk["shelf"] + .3, 3), "type": "drawer", "gain": .3,
                 "label": "drawer 1 of the parts cabinet slides open in the shelf shot (derived from marks.shelf)"})
     out.append({"t": 0.0, "type": "office_night", "level": 1.0, "fade_in": 2.5, "until": mk["timelapse"] + 1.6,
@@ -822,8 +885,8 @@ def extra_cues(cues: dict) -> list[dict]:
     return out
 
 
-def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
-    """All effects and beds. Returns (sfx (2,n), ambience (2,n), report rows)."""
+def render(cues: dict, n: int, voice_env: np.ndarray | None = None, only: set | None = None):
+    """All effects and beds (or only the cue types in `only`). Returns (sfx (2,n), ambience (2,n), report rows)."""
     cq.N, cq.DUR = n, n / SR                          # the helpers (place, convolve) work on buses of the film's length
     cq.T = np.arange(n, dtype=np.float64) / SR
     fx = Buses(n)
@@ -831,10 +894,16 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
     report = []
     lisbon = (cues["marks"]["lisbon_wide"], cues["marks"]["shop_night"])
     items = sorted(cues["sfx"] + extra_cues(cues), key=lambda s: s["t"])
+    # the passage's soft bell gives way to the chime chord (the steps become one)
+    pas = cues["marks"].get("passage")
+    if pas is not None:
+        items = [s for s in items if not (s["type"] == "bell_soft" and abs(float(s["t"]) - pas) < 1.0)]
     radio_off_t = min((float(s["t"]) for s in items if s["type"] == "radio_off"), default=None)
     pops = 0
     for k, s in enumerate(items):
         typ, t = s["type"], float(s["t"])
+        if only is not None and typ not in only:
+            continue
         g = float(s.get("gain", .5))
         pan = float(s.get("pan", 0.0))
         if typ in BED_GAIN:
@@ -875,10 +944,10 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
             y, o = clunk(k)
             fx.put(y, t - o, .09 * g / .5, .4, "workshop", send=.75)
         elif typ == "compressor":
-            y, o = compressor(k, 1.8)                  # done before Barnaby starts walking
+            y, o = compressor(k, 1.2)                  # short, and done before Barnaby starts walking
             fx.put(y, t - o, .028 * g / .22, .5, "workshop", send=.8)
         elif typ == "freewheel":
-            y, o = freewheel(k)
+            y, o = freewheel(k, 1.6)
             fx.put(y, t - o, .06 * g / .3, .45, "workshop", send=.8)
         elif typ == "hdd":
             y, o = hdd(float(s.get("dur", .5)), k)
@@ -945,6 +1014,13 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
             final = t > n / SR - 20
             fx.put(y, t - o, .3 * g / .5, .1, "office", send=.5 if final else .35, width=.0007)
             fx.put(y, t - o, .3 * g / .5 * .5, .1, "world", send=1.0, dry=False)    # and a halo of air
+        elif typ == "chime":
+            note = int(s["note"])
+            y, o = chime(note, float(s["dur"]))
+            fx.put(y, t - o, .13 * g / .3, -.15 + .1 * note, "world", send=.35)
+        elif typ == "chime_chord":
+            y, o = chime_chord()
+            fx.put(y, t - o, .11 * g / .3, 0.0, "world", send=.45, width=.0007)
         elif typ == "bell_soft":
             y, o = bell(soft=True)
             fx.put(y, t - o, .1 * g / .3, .05, "world", send=.7, width=.0007)

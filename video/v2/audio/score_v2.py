@@ -18,6 +18,7 @@ sum to the soundtrack), with sfx.wav also split into effects.wav and ambience.wa
   Lisbon; resolves with the bell and the titles. The run prints each section's cue time against its bar line.
 - Sound effects and ambience follow cues.json -> sfx (foley.py; sources and processing in SOUND.md).
 - Voices from video/v2/audio/voice/manifest.json (video/audio/voices.py, which also takes recorded lines via --takes).
+  Every line is levelled to the same K-weighted speech level (takes and TTS alike).
   Off-screen lines (Martin from the workshop, the two goodnights from the door) are pushed back: high-cut and more
   room. Under speech (60 ms look-ahead) the music ducks -8 dB (up to 4 dB more where it runs hot) with a further -3 dB
   presence dip around 2.5 kHz, the ambience -4 dB and the effects -2 dB; the score steps back for the key turning, the
@@ -254,11 +255,19 @@ class Score:
         for i, n in enumerate(CH["Dadd9"][0]):
             self.g(n, 74 - 3 * i, fin + i * .11, 9.0, ms=2)
         self.b(38, 68, fin, 8.0)
-        for i, n in enumerate([62, 66, 69, 74]):
-            self.g(n, 58 - 3 * i, MARK["old_ones"] + i * .14, 6.0, ms=0)
-        for i, n in enumerate([57, 62, 66, 69, 74]):
-            self.g(n, 56 - 3 * i, MARK["credit"] + i * .16, 5.0, ms=0)
-        self.b(38, 52, MARK["credit"], 4.0)
+        if "end_card" in MARK:
+            # the product end card: the roll under "Even the old ones." is the last chord; it carries into the card and
+            # is faded out by marks.fade_out (music_gate)
+            hold = MARK["fade_out"] - MARK["old_ones"] + .5
+            for i, n in enumerate([57, 62, 66, 69, 74]):
+                self.g(n, 58 - 3 * i, MARK["old_ones"] + i * .14, hold, ms=0)
+            self.b(38, 54, MARK["old_ones"], hold)
+        else:
+            for i, n in enumerate([62, 66, 69, 74]):
+                self.g(n, 58 - 3 * i, MARK["old_ones"] + i * .14, 6.0, ms=0)
+            for i, n in enumerate([57, 62, 66, 69, 74]):
+                self.g(n, 56 - 3 * i, MARK["credit"] + i * .16, 5.0, ms=0)
+            self.b(38, 52, MARK["credit"], 4.0)
 
 
 # ── rendering (as v1) ──
@@ -331,7 +340,17 @@ def envelope(x: np.ndarray, attack: float, release: float) -> np.ndarray:
 
 
 # ── voices ──
-OFFSCREEN = {1: .85, 51: .6, 53: .6}                   # cue line -> how far off (o.s. in the script)
+VOICE_LEVEL = -20.0                                    # each line's K-weighted speech level before the master (dB)
+
+
+def offscreen(line: dict) -> float:
+    """How far off a line is (o.s. in the script): Martin from the workshop in scene 1, the two goodnights from the door.
+    Found by scene and words, not by line number, so a re-laid cue sheet or new takes keep it."""
+    if line.get("scene") == 1 and line["who"] == "Martin":
+        return .85
+    if line.get("scene") == 9 and line["text"].strip().lower().startswith("night"):
+        return .6
+    return 0.0
 
 
 def voices() -> np.ndarray:
@@ -343,11 +362,15 @@ def voices() -> np.ndarray:
         if sr != SR:
             y = resample_poly(y, SR // np.gcd(SR, sr), sr // np.gcd(SR, sr), axis=0).astype(np.float32)
         mono = cq.sos_filter(y.mean(1), "highpass", 75).astype(np.float32)     # a recorded take may bring rumble
-        rms = np.sqrt((mono[np.abs(mono) > 1e-3] ** 2).mean() + 1e-12)
-        mono = mono * (0.1 / rms)
+        # every line to the same K-weighted level over its speech (BS.1770 weighting, gated at -60 dBFS): TTS lines and
+        # recorded takes (the ElevenLabs Barnaby is mastered louder, brighter-compressed) sit level with each other
+        act = np.abs(mono) > 1e-3
+        kw = cq.k_weight(mono[None, :].astype(np.float64))[0]
+        lk = 10 * np.log10((kw[act] ** 2).mean() + 1e-12)
+        mono = (mono * 10 ** ((VOICE_LEVEL - lk) / 20)).astype(np.float32)
         pan = {"Barnaby": 0.0, "Martin": -0.12, "Theo": -0.1, "Priya": 0.12}.get(line["who"], 0.0)
-        if i in OFFSCREEN:
-            d = OFFSCREEN[i]
+        d = offscreen(line)
+        if d:
             mono = cq.sos_filter(mono, "lowpass", 5200 - 2400 * d).astype(np.float32)
             cq.place(out, mono, float(line["t"]), cq.db(-3.5 * d), pan - .25 * d)
             cq.place(far, mono, float(line["t"]), .55 * d, pan)
@@ -380,6 +403,7 @@ def master(stems: dict[str, np.ndarray], target=-16.0, ceiling=-1.5) -> dict[str
             break
         gain *= cq.db(target - L)
     k = total * gain * lim
+    np.save(MUSIC_CACHE.parent / "master_gain.npy", k.astype(np.float32))      # for check.py --levels
     return {name: x * k for name, x in stems.items()}
 
 
@@ -408,7 +432,8 @@ def styled(style: str, after: str | None = None) -> int:
 
 def music_gate() -> np.ndarray:
     """Silence the score where the picture asks for it: nothing before the bell; after the handover resolves, nothing
-    under the key and the lamp-off (rain only) until Monday's walking music starts."""
+    under the key and the lamp-off (rain only) until Monday's walking music starts; on the end card the last chord
+    fades out by marks.fade_out."""
     t = np.arange(N) / SR
     g = np.ones(N)
     g[t < MARK["bell_arrive"]] = 0.0
@@ -417,6 +442,11 @@ def music_gate() -> np.ndarray:
     fade = (t >= a) & (t < b)
     g[fade] = .5 + .5 * np.cos(np.pi * (t[fade] - a) / (b - a))
     g[(t >= b) & (t < w0)] = 0.0
+    if "end_card" in MARK:                                       # the last chord fades through the card, gone by fade_out
+        a, b = MARK["end_card"] + 1.5, MARK["fade_out"]
+        fade = (t >= a) & (t < b)
+        g[fade] *= (.5 + .5 * np.cos(np.pi * (t[fade] - a) / (b - a))) ** 1.5
+        g[t >= b] = 0.0
     return g.astype(np.float32)
 
 
@@ -494,6 +524,8 @@ def main() -> int:
     music = (music * (1 - venv) + dip * venv) * cq.db(-8.0 * venv - extra).astype(np.float32)
     music = music * spot_ducks().astype(np.float32)
     print("sound effects + ambience (Core Library) ...")
+    MUSIC_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    np.save(MUSIC_CACHE.parent / "voice_env.npy", venv)                           # for check.py --levels
     sfx, amb, report = foley.render(CUES, N, venv)
     amb = amb * cq.db(-4.0 * venv).astype(np.float32)
     sfx = sfx * cq.db(-2.0 * venv).astype(np.float32)          # effects give way a little to the words, too

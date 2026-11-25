@@ -75,11 +75,13 @@ repo, and the per-system work is zero.
 - **Proof** (`scripts/demo_check.py`): the whole story in the film's order, run against the real stack and checked
   against the shop's own API and git history, plus a check that nothing Barnaby said used the machine's words.
   16 of 16 checks pass. There are also 27 unit tests.
-- **The film** (`video/v2/`, in production): about three and a half minutes, rendered from code. It uses a procedural
-  Blender diorama of the shop desk and a Lisbon desk, screens designed as HTML and captured with puppeteer, and
-  Kokoro voices paced to researched speaking rates. The score is composed in code and played by real instrument
-  plugins through DawDreamer; the sound effects come from Ableton's Core Library samples (being finished). An HTML
-  film engine draws every frame as a pure function of time, and ffmpeg encodes them.
+- **The film** (`video/v2/`, `video/v2/film/out/barnaby_v2_final_cast.mp4`, about five minutes), rendered from
+  code and directed from a written shot plan (`video/v2/SHOTLIST.md`). It uses a procedural Blender diorama of the
+  shop desk and a Lisbon desk (animated shots tied to the story's marks), screens designed as HTML and driven live,
+  real people voicing Martin, Theo and Priya (recorded in DubMate, the film re-timed around their reads by Whisper
+  word timings), and ElevenLabs v4 for Barnaby. The score is composed in code and played by real instrument plugins
+  through DawDreamer; the sound effects come from Ableton's Core Library samples. An HTML film engine draws every
+  frame as a pure function of time, and ffmpeg encodes them.
 
 ## Results (one real run, 25 Nov, 18:30 IST)
 
@@ -113,8 +115,8 @@ router prefixes and `Literal` fields. Barnaby's fix-up pass keeps Synapse's orig
   model.
 - Synapse sends no auth headers in local Auto mode, so systems behind auth need a proxy or a token-aware fix-up.
 - Compose uses hosted Synapse (a free key); everything else runs locally.
-- The voice front desk on Claude Haiku is built for but was not used in the film. The film's voices are all
-  synthetic (Kokoro), Martin's included, unless the author records takes.
+- The voice front desk on Claude Haiku is built for but was not used in the film. In the film, Martin, Theo and
+  Priya are voiced by real people (recorded in DubMate); Barnaby is ElevenLabs v4, credited on the end card.
 - The film is a staged recreation of a real run. Its Lisbon scene (Quorum and ComfyUI) is staged, though the endpoint
   counts on screen (13 and 28) come from real Synapse scans. The shop, its people and its data are fictional, and no
   real brand logos are used.

@@ -52,7 +52,7 @@
         </div>
         <div class="cred"><span><b>Built on Synapse</b></span><span class="ev">2nd Brain Labs × Geek Room Vibe-a-thon</span></div>
         ${REPO ? `<div class="repo">${REPO}</div>` : ''}
-        <div class="fine">Recreated from a real recorded run. Quorum and ComfyUI scenes are staged; endpoint counts come from real Synapse scans. Synthetic voices; Barnaby’s voice: ElevenLabs. Spokes &amp; Sprockets is a fictional shop.</div>`;
+        <div class="fine">Recreated from a real recorded run. Quorum and ComfyUI scenes are staged; endpoint counts come from real Synapse scans. Martin, Theo and Priya voiced by real people; Barnaby’s voice: ElevenLabs. Spokes &amp; Sprockets is a fictional shop.</div>`;
       const cm = card.querySelector('.m'); cm.innerHTML = markSVG('#D3A14A'); markAnim(cm, 0, -100);   // at rest: no ring arcs
       // the build, in reading order: the mark and the name, the line, the four steps, the credit, the small print
       const head = card.querySelector('.head');

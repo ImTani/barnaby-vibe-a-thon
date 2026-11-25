@@ -213,6 +213,7 @@ class Shot:
         self.render_until = None    # film time after which the last rendered frame is held (hidden by the film)
         self.upscale_to = None      # (w, h): lanczos-upscale the finished frames (rendered smaller for time)
         self.active = None          # held shots: [(t0, t1)] where something changes; other frames are exact copies
+        self.events = {}            # cue-sheet mark -> film time of that story event in this render (-> frame)
         self.segments = []          # [(time the segment starts, setup())]
         self.frame_fn = None        # (t) -> None, continuous state for film time t
         self.out_dir = os.path.join(OUT_ANIM, sid)
@@ -361,6 +362,7 @@ def render_still(st, args, test=None):
     sc.view_settings.exposure += st.ev
     c = st.cam() if callable(st.cam) else st.cam
     set_cam(c["loc"], c["tgt"], c["lens"], c["focus"], c["fstop"])
+    RIG["cam"].data.shift_x = c.get("shift_x", 0.0)
     if "grid" in RIG:
         RIG["grid"]()
     sc.camera = RIG["cam"]
@@ -379,13 +381,88 @@ def render_still(st, args, test=None):
     t1 = time.time()
     bpy.ops.render.render(write_still=True)
     sc.eevee.taa_render_samples = keep
+    RIG["cam"].data.shift_x = 0.0
     print(f"STILL {st.id} -> {st.file} in {time.time() - t1:.0f}s")
     if not test:
         m = manifest_load()
         e = dict(id=st.id, kind="still", scene=st.scene, file="world/" + st.file, start=None, frames=1,
                  res=list(st.res), status="done", notes=st.notes)
+        old = next((x for x in m["shots"] if x["id"] == st.id), {})
+        if "screen_quad" in old:
+            e["screen_quad"] = old["screen_quad"]
         m["shots"] = [x for x in m["shots"] if x["id"] != st.id] + [e]
         manifest_save(m)
+
+
+def _corner_world(ob, uv_corners=((0, 1), (1, 1), (1, 0), (0, 0))):
+    """World positions of the picture's corners (image UV corners TL, TR, BR, BL) on a screen mesh."""
+    me = ob.data
+    uvl = me.uv_layers.active.data
+    out = []
+    for cu, cv in uv_corners:
+        best = min(range(len(me.loops)), key=lambda i: (uvl[i].uv[0] - cu) ** 2 + (uvl[i].uv[1] - cv) ** 2)
+        out.append(ob.matrix_world @ me.vertices[me.loops[best].vertex_index].co)
+    return out
+
+
+def _project(corners):
+    from bpy_extras.object_utils import world_to_camera_view
+    sc = bpy.context.scene
+    vs = [world_to_camera_view(sc, RIG["cam"], co) for co in corners]
+    if any(v.z <= 0 for v in vs):
+        return None
+    q = [[round(v.x * 1920, 1), round((1 - v.y) * 1080, 1)] for v in vs]
+    xs, ys = [c[0] for c in q], [c[1] for c in q]
+    if max(xs) < 0 or min(xs) > 1920 or max(ys) < 0 or min(ys) > 1080:
+        return None
+    return q
+
+
+def screen_quads(sh, ob):
+    """Per-frame picture corners for a sequence -> manifest "screen_quads": {frame: [TL, TR, BR, BL]} (1920x1080
+    output px), every frame where the screen is in view."""
+    sc = bpy.context.scene
+    sc.render.resolution_x, sc.render.resolution_y, sc.render.resolution_percentage = 1920, 1080, 100
+    sc.camera = RIG["cam"]
+    bpy.context.view_layer.update()
+    corners = _corner_world(ob)
+    quads = {}
+    for fa, fb, setup in sh.seg_ranges():
+        setup()
+        for f in range(fa, fb + 1):
+            sh.frame_fn(sh.time(f))
+            bpy.context.view_layer.update()
+            q = _project(corners)
+            if q:
+                quads[str(f)] = q
+    m = manifest_load()
+    for e in m["shots"]:
+        if e["id"] == sh.id:
+            e["screen_quads"] = quads
+            if str(sh.frames) in quads:
+                e["screen_quad"] = quads[str(sh.frames)]
+    manifest_save(m)
+    print(f"QUADS {sh.id}: {len(quads)} frames")
+
+
+def still_quad(sid, scene, file, cam, ob, res, notes="", approved=False):
+    """One picture-corner quad for a still (1920x1080 px of the same frame; scale for larger renders)."""
+    sc = bpy.context.scene
+    sc.render.resolution_x, sc.render.resolution_y, sc.render.resolution_percentage = 1920, 1080, 100
+    set_cam(cam["loc"], cam["tgt"], cam["lens"], cam["focus"], cam["fstop"])
+    RIG["cam"].data.shift_x = cam.get("shift_x", 0.0)
+    bpy.context.view_layer.update()
+    q = _project(_corner_world(ob))
+    RIG["cam"].data.shift_x = 0.0
+    m = manifest_load()
+    e = next((x for x in m["shots"] if x["id"] == sid), None)
+    if e is None:
+        e = dict(id=sid, kind="still", scene=scene, file="world/" + file, start=None, frames=1, res=list(res),
+                 status="approved" if approved else "pending", notes=notes)
+        m["shots"].append(e)
+    e["screen_quad"] = q
+    manifest_save(m)
+    print(f"QUAD still {sid}: {q}")
 
 
 class Task:
@@ -445,10 +522,18 @@ def manifest_update(sh, status):
     if sh.id.endswith("_half"):
         manifest_save(m)
         return
-    e = dict(id=sh.id, scene=sh.scene, replaces=sh.replaces[0] if len(sh.replaces) == 1 else sh.replaces,
+    e = dict(id=sh.id, kind="seq", scene=sh.scene,
+             replaces=sh.replaces[0] if len(sh.replaces) == 1 else sh.replaces,
              start=round(sh.start, 4), frames=sh.frames, status=status, notes=sh.notes)
+    if sh.events:
+        e["events"] = {k: sh.frame(t) for k, t in sh.events.items()}
+    old = next((x for x in m["shots"] if x["id"] == sh.id), {})
+    if old.get("frames") == sh.frames:                  # same render: keep its measured metadata
+        for k in ("screen_quads", "screen_quad", "quad_frame"):
+            if k in old:
+                e[k] = old[k]
     m["shots"] = [s for s in m["shots"] if s["id"] != sh.id] + [e]
-    m["shots"].sort(key=lambda s: s["start"])
+    m["shots"].sort(key=lambda s: (s["start"] is None, s["start"] or 0))
     manifest_save(m)
 
 
@@ -606,20 +691,25 @@ def shop_shots(DM, M, hands):
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 2+3 · s2: the key lands, the lamp clicks off
-    sh = Shot("s2_key_lamp", 2, ["world/03_keys_night.png"], 38.04, 40.34,
-              notes="Theo's BACK OFFICE key drops in from above frame and lands on the keyboard on the key_tap "
-                    "(38.59) with a small bounce, the tag settling after; the desk lamp clicks off on lamp_click "
-                    "(39.79) and the room drops to the monitor's glow (baked in: drop the still's brightness "
-                    "grade). Slow push toward the key.")
+    sh = Shot("s2_key_lamp", 2, ["world/03_keys_night.png"], 38.04, 38.04 + 8.0, res=LONG_RES)
+    sh.upscale_to = (1920, 1080)
+    sh2 = sh
     K = pose("CAM_keys")
-    K2 = pushed(K, 640, 840, 1.2)
+    K2 = pushed(K, 640, 840, 1.12)
+    T_PUSH = (38.04, 41.6)
     key = bpy.data.objects["backoffice_key"]
     tag = bpy.data.objects["key_tag"]
     sw = bpy.data.objects["lamp_switch"]
     key_rest = (Vector(key.location), key.rotation_euler.copy())
     tag_rest = (Vector(tag.location), tag.rotation_euler.copy())
     sw_rest = Vector(sw.location)
-    T_LAND, T_LAMP = 38.59, 39.79
+    T_LAND, T_LAMP = 38.04 + 1.2, 38.04 + 4.2
+    sh.notes = (f"SHOTLIST 2.9: Theo's BACK OFFICE key drops in from above frame and lands on the keyboard at frame "
+                f"{sh.frame(T_LAND)} (the key tap) with a small bounce, the tag settling after; a calm push toward the "
+                f"key (frames 1-{sh.frame(T_PUSH[1])}), then held; the desk lamp clicks off at frame "
+                f"{sh.frame(T_LAMP)} and the room drops to the monitor's glow; held in the dark to the end. Baked in: "
+                f"no brightness grade on top. 1600x900 at 12 samples, upscaled.")
+    sh.active = [(sh.start - 1, T_PUSH[1] + 0.05), (T_LAMP - 0.1, T_LAMP + 0.3)]
     LAMP_OFF_EV = -1.3          # with the lamp off the room drops to the monitor's glow (the animatic's .16)
     # how high above the keyboard the key must start to be out of frame (camera at its start pose)
     from bpy_extras.object_utils import world_to_camera_view
@@ -673,7 +763,7 @@ def shop_shots(DM, M, hands):
         return 1.0 if dt < 0 else exp(-dt / 0.035)
 
     def f2(t):
-        cam_between(K, K2, DRIFT(P(t, 38.04, 40.84 - 38.04)))
+        cam_between(K, K2, CALM(P(t, T_PUSH[0], T_PUSH[1] - T_PUSH[0])))
         key_pose(t)
         lv = lamp_level(t)
         L["L_lamp"].data.energy = 40.0 * lv
@@ -743,20 +833,24 @@ def shop_shots(DM, M, hands):
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 5 · s3 shelf: drawer 1 slides open
-    sh = Shot("s3_shelf", 3, ["world/x_shelf_monday.png"], 56.21, 58.56,
-              notes="Drawer 1 (BRAKE PADS) slides open from shut, one pair inside; ends on the approved still's "
-                    "state. Slow push toward the open drawer.")
+    sh = Shot("s3_shelf", 3, ["world/x_shelf_monday.png"], 56.21, 56.21 + 8.0, res=LONG_RES)
+    sh.upscale_to = (1920, 1080)
     S0 = pose("CAM_shelf")
-    S1 = pushed(S0, 560, 340, 1.25)
+    S1 = S0                                              # held (SHOTLIST 3.5)
+    T_DR = 56.21 + 1.0
+    sh.notes = (f"SHOTLIST 3.5: held on the approved frame; drawer 1 (BRAKE PADS) slides open from shut at frames "
+                f"{sh.frame(T_DR)}-{sh.frame(T_DR + 0.85)}, one pair of pads inside; then holds on the approved "
+                f"still's state. 1600x900 at 12 samples, upscaled.")
+    sh.active = [(T_DR - 0.1, T_DR + 0.95)]
     dr = bpy.data.objects["drawer_BRAKE PADS"]
     dr_open = Vector(dr.location)
     dr_shut = Vector((dr_open.x, -0.008, dr_open.z))
 
     def f5(t):
-        cam_between(S0, S1, DRIFT(P(t, 56.21, 58.9 - 56.21)))
-        k = P(t, 56.45, 0.62)
+        cam_between(S0, S1, 0.0)
+        k = P(t, T_DR, 0.62)
         e = 1 - (1 - k) ** 3                            # pulled: quick start, soft stop
-        over = 0.004 * sin(pi * P(t, 56.95, 0.22)) if t > 56.95 else 0.0
+        over = 0.004 * sin(pi * P(t, T_DR + 0.5, 0.22)) if t > T_DR + 0.5 else 0.0
         dr.location = dr_shut.lerp(dr_open, e) + Vector((0, -over, 0))
     sh.segments = [(sh.start, preset("monday"))]
     sh.frame_fn = f5
@@ -764,18 +858,23 @@ def shop_shots(DM, M, hands):
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 6 · s5 afternoon: the light slides across
-    sh = Shot("s5_afternoon", 5, ["world/04_medium_monday.png"], 77.72, 80.99,
-              notes="Monday afternoon: the window sun slides slowly across the desk; slow push toward the monitor. "
-                    "Colour as approved (keep the film's AFT grade on top; drop the CSS sweep overlay).")
+    sh = Shot("s5_afternoon", 5, ["world/04_medium_monday.png"], 77.72, 77.72 + 8.0, res=LONG_RES)
+    sh.upscale_to = (1920, 1080)
     Mo = pose("CAM_medium_monday")
-    Mo2 = pushed(Mo, 900, 620, 1.2)
-    d_aft0 = Vector((0.65, 0.55, -0.52))
-    d_aft1 = Vector((0.80, 0.30, -0.44))
+    Mo2 = Mo                                             # held (SHOTLIST 5.1)
+    d_aft0 = Vector((0.8, 1.0, -0.78))                   # a low winter sun through the window, its shaft sliding
+    d_aft1 = Vector((1.7, 0.9, -0.72))                   # from the desk's left across toward the mug
+    T_SUN = (77.72 + 0.8, 77.72 + 6.8)
+    sh.notes = (f"SHOTLIST 5.1: held on the Monday desk, about 14:30: a low winter sun breaks through and its warm "
+                f"shaft slides across the desk (frames {sh.frame(T_SUN[0])}-{sh.frame(T_SUN[1])}). The light is the "
+                f"grade: no colour filter on top. 1600x900 at 12 samples, upscaled.")
+    sh.active = [(T_SUN[0] - 0.05, T_SUN[1] + 0.05)]
 
     def f6(t):
-        cam_between(Mo, Mo2, DRIFT(P(t, 77.72, 81.49 - 77.72)))
-        k = sine(P(t, 77.22, 81.49 - 77.22))
+        cam_between(Mo, Mo2, 0.0)
+        k = CALM(P(t, T_SUN[0], T_SUN[1] - T_SUN[0]))
         sun.rotation_euler = d_aft0.lerp(d_aft1, k).normalized().to_track_quat("-Z", "Y").to_euler()
+        sun.data.energy, sun.data.color = 26.0, (1.0, 0.8, 0.58)
         grid()
     sh.segments = [(sh.start, preset("monday"))]
     sh.frame_fn = f6
@@ -931,6 +1030,107 @@ def shop_shots(DM, M, hands):
     RIG["grid"] = grid
     shots["quad_s1_open"] = Task(lambda: screen_quad(shots["s1_open"], shots["s1_open"].frames, scr))
     shots["quad_s3_timelapse"] = Task(lambda: screen_quad(sh3, sh3.frames, scr))
+    shots["quads_s1_open"] = Task(lambda: screen_quads(shots["s1_open"], scr))
+    shots["quads_s3_timelapse"] = Task(lambda: screen_quads(sh3, scr))
+
+    def shop_still_quads():
+        ap = "approved still (not re-rendered); screen_quad in 1920x1080 px of its frame"
+        still_quad("02_medium_night", 2, "02_medium_night.png", pose("CAM_medium"), scr, (1920, 1080), ap, True)
+        still_quad("04_medium_monday", 3, "04_medium_monday.png", pose("CAM_medium_monday"), scr, (1920, 1080), ap,
+                   True)
+        still_quad("05_medium_tuesday", 7, "05_medium_tuesday.png", pose("CAM_medium_tuesday"), scr, (1920, 1080),
+                   ap, True)
+        still_quad("06_medium_dusk", 6, "06_medium_dusk.png", pose("CAM_medium_monday"), scr, (2560, 1440))
+    shots["quad_stills_shop"] = Task(shop_still_quads)
+
+    # ================================================================ v2.3: match cuts, a plate, a rack focus
+    bpy.context.view_layer.update()
+    mug = bpy.data.objects["mug"]
+    mug_c = Vector(mug.location) + Vector((0, 0, 0.05))
+    med = pose("CAM_medium")
+    dh = med["loc"] - mug_c
+    dh.z = 0.0
+    dh.normalize()
+    mug_cam = dict(loc=mug_c + dh * 0.52 + Vector((0, 0, 0.07)), tgt=mug_c + Vector((-0.03, 0.0, -0.01)),
+                   lens=70.0, fstop=2.0, focus=mug_c + dh * 0.04)
+    shots["x_mug_night"] = Still("x_mug_night", 2, "x_mug_night.png", preset("night"), mug_cam,
+                                 notes="v2.3 match cut (Thu night -> Mon): Theo's WORLD'S OKAYEST NEPHEW mug in the "
+                                       "lamp pool, cold coffee, shallow focus, the monitor's glow soft behind. "
+                                       "2560x1440, 32 samples. Cut to x_mug_dawn (same framing).")
+
+    sh = Shot("x_mug_dawn", 3, ["world/x_mug_night.png"], 40.34, 40.34 + 3.5)
+    T_RISE = (40.34 + 0.4, 40.34 + 3.1)
+    sh.notes = (f"v2.3 match cut: x_mug_night's framing on Monday morning: the lamp off, Martin's tea in the same "
+                f"mug, daylight rising from pre-dawn blue (frames 1-{sh.frame(T_RISE[0])}) to Monday's morning light "
+                f"(full by frame {sh.frame(T_RISE[1])}). Static camera (handheld is post). 1920x1080, 12 samples.")
+    sh.active = [(T_RISE[0] - 0.05, T_RISE[1] + 0.05)]
+    sky_m = DM.principled(M["outside_sky"])
+    bgn = sc.world.node_tree.nodes["Background"]
+
+    def setup_dawn():
+        preset("monday")()
+        base["day"] = {k: L[k].data.energy for k in ("L_sun", "L_window_day", "L_room_fill", "L_strip",
+                                                       "L_drawer_bounce", "L_screen_day")}
+        base["sky"] = sky_m.inputs["Emission Strength"].default_value
+        base["bg"] = bgn.inputs[1].default_value
+
+    def f_dawn(t):
+        cam_between(mug_cam, mug_cam, 0.0)
+        k = sine(P(t, T_RISE[0], T_RISE[1] - T_RISE[0]))
+        for nm, lo in (("L_sun", 0.0), ("L_window_day", 0.12), ("L_room_fill", 0.08), ("L_strip", 0.0),
+                       ("L_drawer_bounce", 0.1), ("L_screen_day", 1.0)):
+            L[nm].data.energy = base["day"][nm] * lerp(lo, 1.0, k)
+        L["L_window_day"].data.color = tuple(lerp(a, b, k) for a, b in zip((0.4, 0.5, 0.95), (0.72, 0.84, 1.0)))
+        sky_m.inputs["Emission Strength"].default_value = base["sky"] * lerp(0.15, 1.0, k)
+        bgn.inputs[1].default_value = base["bg"] * lerp(0.15, 1.0, k)
+        DM.principled(M["tube"]).inputs["Emission Strength"].default_value = 9.0 * k
+    sh.segments = [(sh.start, setup_dawn)]
+    sh.frame_fn = f_dawn
+    shots[sh.id] = sh
+
+    ch_cam = dict(loc=Vector((2.38, 0.72, 1.16)), tgt=Vector((1.3, 2.35, 0.86)), lens=32.0, fstop=2.8,
+                  focus=Vector((1.75, 1.55, 0.92)))
+    shots["x_chair_dusk"] = Still("x_chair_dusk", 6, "x_chair_dusk.png", lambda: dusk(1.0), ch_cam,
+                                  notes="v2.3 match cut (Mon dusk -> Tue): the empty desk chair from behind and to one "
+                                        "side, the monitor and lamp beyond, dusk with the lamp on. 2560x1440, 32 "
+                                        "samples. Cut to x_chair_tuesday (same framing).")
+    shots["x_chair_tuesday"] = Still("x_chair_tuesday", 7, "x_chair_tuesday.png", preset("tuesday"), ch_cam,
+                                     notes="v2.3 match cut: x_chair_dusk's framing on Tuesday morning, crisp sun, "
+                                           "Priya's helmet hanging on the chair (the chair is pushed in, as on "
+                                           "Tuesday). 2560x1440, 32 samples.")
+    wide = pose("CAM_wide")
+    wide4 = dict(wide, lens=33.0, shift_x=-0.06)
+    shots["01_wide_night_4k"] = Still("01_wide_night_4k", 1, "01_wide_night_4k.png", preset("night", 0.45), wide4,
+                                      res=(3840, 2160), notes="v2.3 plate for 2D pans: the night wide at 3840x2160, a "
+                                                              "little wider (38 -> 33 mm) with the extra on the window "
+                                                              "side. 32 samples.")
+    key_w = bpy.data.objects["backoffice_key"].matrix_world.translation.copy()
+    rk_tgt = scr_c.copy()
+    rk_loc = key_w + Vector((0.06, -0.21, 0.1))
+    rk = dict(loc=rk_loc, tgt=key_w.lerp(rk_tgt, 0.33), lens=40.0, fstop=1.8, focus=key_w)
+    sh = Shot("x_key_rack", 2, ["world/03_keys_night.png"], 38.04, 38.04 + 2.5)
+    T_RACK = (38.04 + 0.7, 38.04 + 1.9)
+    sh.notes = (f"v2.3 rack focus, night, lamp on: low over the keyboard, Theo's key sharp in the foreground, then "
+                f"the focus racks to the monitor (frames {sh.frame(T_RACK[0])}-{sh.frame(T_RACK[1])}). Static camera. "
+                f"1920x1080, 12 samples.")
+    sh.active = [(T_RACK[0] - 0.05, T_RACK[1] + 0.05)]
+
+    def f_rack(t):
+        k = sine(P(t, T_RACK[0], T_RACK[1] - T_RACK[0]))
+        set_cam(rk["loc"], rk["tgt"], rk["lens"], key_w.lerp(rk_tgt, k), rk["fstop"])
+    sh.segments = [(sh.start, preset("night"))]
+    sh.frame_fn = f_rack
+    shots[sh.id] = sh
+
+    EV = {"s1_open": {"light_up": T_LIT, "medium": T_GO, "screen": T_ARRIVE},
+          "s2_key_lamp": {"key": T_LAND - T_FALL, "key_land": T_LAND, "lamp_off": T_LAMP},
+          "s3_timelapse": {"timelapse": T_DAWN, "monday": T_SETTLE, "clock": T_SETTLE + 2.2},
+          "s3_shelf": {"shelf": T_DR}, "s5_afternoon": {"afternoon": 77.72},
+          "s6_lamp_on": {"late": 104.78, "lamp_on": T_CLICK},
+          "s9_shop_night": {"shop_night": 199.7, "shop_sleep": T_OFF},
+          "x_mug_dawn": {"timelapse": T_RISE[0], "monday": T_RISE[1]}}
+    for k, v in EV.items():
+        shots[k].events = v
 
     # ================================================================ Tier B
     def drift_shot(sid, scene, still, cam, t0, t1, px, py, s, preset_name, ev, notes, no_probe=True, extra=None):
@@ -1179,6 +1379,9 @@ def lisbon_shots(LM, DM, cap):
     main_panel = next(o for o in bpy.data.objects if o.type == "MESH" and o.data.materials
                       and o.data.materials[0] == LM.PANELS["main"]["mat"])
     shots["quad_s8_lisbon_day"] = Task(lambda: screen_quad(sh8d, sh8d.frame(T8[1]), main_panel))
+    shots["quads_s8_lisbon_day"] = Task(lambda: screen_quads(sh8d, main_panel))
+    sh8d.events = {"lisbon_wide": 176.97, "realapp": T8[1]}
+    sh8.events = {"lisbon_night": 204.31, "dim": T_DIM}
 
     def asleep_state():
         sleep_setup()
@@ -1198,6 +1401,35 @@ def lisbon_shots(LM, DM, cap):
         res=(1920, 1080), samples=64,
         notes="SHOTLIST 9.2: lisbon_03_medium_night with the monitors asleep (bell glyph bottom right; laptop and "
               "studio dark); crossfade from lisbon_03_medium_night.png (monitors on). 64 samples, as the approved still.")
+    # the shop's CAM_medium_tuesday relative to its monitor (desk.py), scaled to the Lisbon main monitor's size
+    bpy.context.view_layer.update()
+    mp = main_panel
+    lc = sum((mp.matrix_world @ Vector(c) for c in mp.bound_box), Vector()) / 8
+    lw = max(mp.dimensions.x, mp.dimensions.y, mp.dimensions.z)
+    shop_c, shop_cam, shop_tgt = Vector((1.0, 2.51, 0.995)), Vector((1.38, 0.3, 1.38)), Vector((1.26, 2.5, 0.97))
+    k_sz = lw / 0.408                                   # same distance, a longer lens: the monitor the same size
+    match = dict(loc=lc + (shop_cam - shop_c), tgt=lc + (shop_tgt - shop_c), lens=27.0 * k_sz, fstop=5.6,
+                 focus=lc + Vector((0, -0.4, -0.1)))
+    match["loc"].z = max(match["loc"].z, LM.DZ + 0.55)
+    shots["lisbon_match_day"] = Still("lisbon_match_day", 8, "lisbon_match_day.png", preset("day"), match,
+                                      notes="v2.3 match cut (Tue shop -> Lisbon): Theo's Lisbon desk by day framed "
+                                            "like CAM_medium_tuesday (05_medium_tuesday): the main monitor at the same "
+                                            "place and size in frame, the desk edge at the same height. 2560x1440, "
+                                            "32 samples.")
+    W0w = pose("LCAM_wide")
+
+    def setup_wide4():
+        preset("day")()
+        outside_for(W0w["loc"], True)
+    shots["quad_stills_lisbon"] = Task(lambda: (
+        still_quad("lisbon_02_medium_day", 8, "lisbon_02_medium_day.png", pose("LCAM_medium"), main_panel,
+                   (1920, 1080), "approved still (not re-rendered); screen_quad = the MAIN monitor, 1920x1080 px",
+                   True),
+        still_quad("lisbon_match_day", 8, "lisbon_match_day.png", match, main_panel, (2560, 1440))))
+    shots["lisbon_01_wide_day_4k"] = Still("lisbon_01_wide_day_4k", 8, "lisbon_01_wide_day_4k.png", setup_wide4,
+                                           W0w, res=(3840, 2160),
+                                           notes="v2.3 plate for 2D pans: the approved Lisbon wide at 3840x2160 (same "
+                                                 "framing). 32 samples.")
     shots["lisbon_03_medium_night_on"] = Still(
         "lisbon_03_medium_night_on", 9, "lisbon_03_medium_night_on.png", preset("night"), pose("LCAM_medium"),
         res=(1920, 1080), notes="SHOTLIST 9.2: lisbon_03_medium_night, monitors on, rendered with the same settings "
@@ -1241,6 +1473,7 @@ def compose_two_desks():
                     "asleep as approved. Halves rendered separately (800x900 each, 12 samples), joined with the "
                     "still's seam and upscaled to 1080p. ~20 s: trim to the new spans.")
     assert n == sh.frames, (n, sh.frames)
+    sh.events = {"two_desks": t0}
     manifest_update(sh, "done")
     print("composed", n, "frames ->", out)
 

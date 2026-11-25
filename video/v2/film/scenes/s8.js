@@ -85,7 +85,8 @@
         // the whole tiling desktop for a second, then an eased push into Barnaby's log pane, held
         { src: 'live/lis-main', at: M('synapse_log') - .1, cam: move(M('synapse_log') + .9, 1.4, [960, 540, 1], [600, 700, 1.6], 0),
           state: logState },
-        { src: TL, at: M('theo_world'), cam: [960, 540, 1], open: { x: 1650, y: 540, d: .6 },
+        // his world opens out of his pane on the main monitor and, on "And the render box?", closes back into it
+        { src: TL, at: M('theo_world'), cam: [960, 540, 1], open: { x: 1650, y: 540, d: .6 }, close: { x: 1650, y: 540, d: .6 },
           build: l => { rv = reveal(l, TL, [[1466, 884, 1840, 912], [1467, 922, 1846, 950], [1467, 959, 1604, 987]], { color: '#14110E', a: V(45), b: VE(45) - .1, chars: [30, 33, 11] }); },
           over: t => rv.render(t) },
         { src: 'live/lis-studio', at: V(48), cam: [960, 540, 1],

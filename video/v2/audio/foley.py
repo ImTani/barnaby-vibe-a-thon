@@ -60,7 +60,7 @@ P = {
     "swell":      "One Shots/FX/Swell Short Noise.wav",                   # time passing
     "bowl":       "One Shots/FX/Bowl Swell B1.aif",
     "bell":       "One Shots/Drums/Bell/Bell Cash.aif",                   # the brass counter bell (strike and body)
-    "rain":       "Loops/Texture/Rain and Train.wav",                     # rain (the 8-70 s stretch, before the train)
+    "rain":       "Loops/Texture/Rain and Train.wav",                     # rain (8-22.5 s and 52-64 s: no gusts, no train)
     "radio":      "Loops/Texture/Radio Station Search.wav",               # a radio, played through a small speaker
     "nuts":       "Loops/Texture/Nuts and Bolts.wav",                     # rummaging in a parts tray: the workshop
     "crowd":      "Loops/Texture/Television Crowd.wav",                   # people talking: customers, the street below
@@ -223,14 +223,17 @@ def rng(*k):
     return cq.rng_for("foley", *k)
 
 
-def mouse(seed, weight=1.0):
-    """The old shop mouse: a plastic latch going down, a lighter click coming up ~90 ms later."""
-    r = rng("mouse", seed)
-    down = st(M("cassette"), r.uniform(-.6, .6) - 1.0)
-    up = cut(st(M("vinyl"), 4 + r.uniform(-.5, .5)), 0, .035, r=.012)
-    y = mix_at([(down, 0, 1.0), (up, .085 + r.uniform(-.012, .012), .32 * weight)])
-    y = filt(filt(y, "highpass", 380), "lowpass", 9000)
-    y = peq(y, 2600, 3.0, 1.2)                         # the plastic's bite
+def mouse(seed, weight=1.0, modern=False):
+    """The old shop mouse: a plastic latch going down, a lighter click coming up ~90 ms later. Theo's modern mouse in
+    Lisbon: the same gesture, smaller and crisper (higher, shorter, a lighter release)."""
+    r = rng("mouse", seed, modern)
+    down = st(M("cassette"), r.uniform(-.6, .6) + (2.5 if modern else -1.0))
+    if modern:
+        down = cut(down, 0, .05, r=.015)
+    up = cut(st(M("vinyl"), (6 if modern else 4) + r.uniform(-.5, .5)), 0, .03 if modern else .035, r=.012)
+    y = mix_at([(down, 0, 1.0), (up, (.07 if modern else .085) + r.uniform(-.012, .012), (.22 if modern else .32) * weight)])
+    y = filt(filt(y, "highpass", 600 if modern else 380), "lowpass", 11000 if modern else 9000)
+    y = peq(y, 3400 if modern else 2600, 3.0, 1.2)     # the plastic's bite
     y = peak1(y)
     return y, onset(y)                              # the latch lands ~8 ms into the clip
 
@@ -254,7 +257,7 @@ def lamp(seed):
     y = filt(filt(y, "highpass", 250), "lowpass", 8000)
     y = peq(y, 1800, 2.0, 1.0)
     y = peak1(y)
-    return y, onset(y)
+    return y, onset(y, -30)                          # the switch's first contact on the cue
 
 
 def key_turn(seed):
@@ -464,14 +467,17 @@ def bell(soft=False):
 
 
 # ── beds ──
-def loop_to(x: np.ndarray, n: int, seed, xf=1.0, lo=0.0, hi=None) -> np.ndarray:
-    """Fill n samples (stereo) from random stretches of x[lo:hi], joined with equal-power crossfades."""
+def loop_to(x: np.ndarray, n: int, seed, xf=1.0, lo=0.0, hi=None, ranges=None) -> np.ndarray:
+    """Fill n samples (stereo) from random stretches of x[lo:hi] (or of the given (lo, hi) ranges, in seconds), joined
+    with equal-power crossfades."""
     r = rng("loop", seed)
-    x = x[:, int(lo * SR): None if hi is None else int(hi * SR)]
-    L, F = x.shape[1], int(xf * SR)
+    parts = [x[:, int(a * SR): None if b is None else int(b * SR)] for a, b in (ranges or [(lo, hi)])]
+    F = int(xf * SR)
     out = np.zeros((2, n + F), np.float32)
     pos, first = 0, True
     while pos < n:
+        x = parts[int(r.integers(0, len(parts)))]
+        L = x.shape[1]
         seg = min(L, max(F * 3, int(r.uniform(.5, 1) * L)))
         s0 = int(r.integers(0, max(1, L - seg)))
         c = x[:, s0:s0 + seg].copy()
@@ -544,7 +550,7 @@ def bed(typ: str, n: int, seed: int) -> np.ndarray:
         return x / (np.sqrt((x ** 2).mean()) + 1e-12)
 
     if typ == "rain":                                  # rain on the window: the steady stretch, softened by the glass
-        x = loop_to(S("rain"), n, seed, xf=2.0, lo=8.0, hi=74.0)
+        x = loop_to(S("rain"), n, seed, xf=2.0, ranges=[(8.0, 22.5), (52.0, 64.0)])   # no gusts, no train
         x = tame(shelf(filt(filt(x, "highpass", 110), "lowpass", 7500), 2500, -3.0), -16, 2)
         return unit(x)
     if typ == "fan":                                   # the PC's fan: the machine loop, spun up from rest
@@ -600,12 +606,14 @@ def bed(typ: str, n: int, seed: int) -> np.ndarray:
 
 
 # ambience levels as RMS before the master (the voices sit near -20 dBFS RMS)
-BED_GAIN = {"rain": .022, "fan": .008, "radio": .0045, "office_night": .006, "workshop": .011, "bustle": .015,
+BED_GAIN = {"rain": .018, "fan": .008, "radio": .0045, "office_night": .006, "workshop": .011, "bustle": .015,
             "street": .016, "street_night": .009}
 BED_PAN = {"fan": -.25, "radio": .45}
 
 SOURCES = {
-    "tab / tab_close / mouse_click": [P["cassette"], P["vinyl"]],
+    "tab": [P["cassette"], P["vinyl"]],
+    "tab_close": [P["cassette"], P["vinyl"]],
+    "mouse_click": [P["cassette"], P["vinyl"]],
     "key_tap": [P["coin"], P["plastic2"]],
     "lamp_click": [P["cassette"], P["vinyl"]],
     "key_turn": [P["lock"]],
@@ -613,22 +621,80 @@ SOURCES = {
     "clunk": [P["hit_hard"], P["metal"], P["pan"]],
     "compressor": [P["machine"], P["sink"]],
     "freewheel": [P["tiny"]],
-    "hdd / reload": [P["tiny"], P["machine"]],
-    "typing / keys_modern": [P["plastic1"], P["plastic2"], P["prod"]],
+    "hdd": [P["tiny"]],
+    "reload": [P["tiny"], P["machine"]],
+    "typing": [P["plastic1"], P["plastic2"], P["prod"]],
+    "keys_modern": [P["plastic1"], P["plastic2"]],
     "step": [P["hit_soft"], P["marimba"]],
     "drawer": [P["scratch"], P["wood_low"]],
     "pop": [P["drip"]],
     "ding": [P["celeste"]],
     "timelapse": [P["swell"], P["bowl"]],
-    "bell / bell_soft": [P["bell"]],
+    "bell": [P["bell"], "modal ring (fitted to the sample)"],
+    "bell_soft": [P["bell"], "modal ring (fitted to the sample)"],
     "rain": [P["rain"]],
     "fan": [P["machine"]],
     "radio": [P["radio"]],
-    "office_night": [P["machine"]],
-    "workshop": [P["nuts"], P["radio"]],
-    "bustle": [P["nuts"], P["radio"], P["crowd"], P["cups"]],
-    "street": [P["crowd"], P["birds"]],
-    "street_night": [P["wind"], P["crowd"]],
+    "office_night": ["synth: room tone", P["machine"]],
+    "workshop": ["synth: room tone", P["nuts"], P["radio"]],
+    "bustle": ["synth: room tone", P["nuts"], P["radio"], P["crowd"], P["cups"]],
+    "street": ["synth: traffic", P["crowd"], P["birds"]],
+    "street_night": ["synth: traffic", P["wind"], P["crowd"]],
+}
+
+
+# how each kind of cue is built and placed (SOUND.md is generated from this, SOURCES and the measurements)
+PROCESS = {
+    "tab": "old shop mouse: cassette latch -1 st (down) + vinyl click +4 st 85 ms later (up); HP 380 Hz, LP 9 kHz, "
+           "+3 dB at 2.6 kHz; fast peak compressor; a little width; office room 22 %; pan follows the tab a little",
+    "tab_close": "as tab, a little lighter",
+    "mouse_click": "the shop: as tab (the old shop mouse). Lisbon: Theo's modern mouse, +2.5 st, shorter, HP 600 Hz, "
+                   "+3 dB at 3.4 kHz, Lisbon room",
+    "key_tap": "the coin's first impact only (45-200 ms: the ring damped by the keys), HP 900 Hz, on a plastic tap -2 st "
+               "LP 5 kHz; fast compressor; office room 18 %",
+    "lamp_click": "vinyl click +2 st, then the cassette latch -4 st 12 ms later; HP 250 Hz, LP 8 kHz, +2 dB at 1.8 kHz; "
+                  "fast compressor; panned left (the lamp); office room",
+    "key_turn": "the lock recording as is (lead-in trimmed): the key in, the turn, the bolt; HP 140 Hz, LP 11 kHz, -2 dB "
+                "at 3.2 kHz; fast compressor; office room 25 %; the score ducks 5 dB around it",
+    "keys_jingle": "three overlapping handfuls of the jingle (+-0.5 st) and a metal rattle, HP 500 Hz, LP 6 kHz; "
+                   "off-screen: workshop room 70 %, panned left, low",
+    "clunk": "the lever's crack (hit, +-1 st) + the jaw's clunk (metal impact -2 st, 35 ms later) + a short pan ring; "
+             "HP 70 Hz, LP 5 kHz; off-screen: workshop room 75 %, panned right, low",
+    "compressor": "a 1.8 s run: the machine loop varispeed-spun up (0.55 -> 1.0 in 0.35 s), LP 2.2 kHz, a 9-24 Hz chug, air "
+                  "hiss (sink noise, BP 1.2-6 kHz); off-screen: workshop room 80 %, panned right",
+    "freewheel": "12 ms grains of the tiny perc +6 st at 24 Hz slowing to 5 Hz, HP 1.5 kHz; off-screen: workshop room",
+    "hdd": "10 ms grains of the tiny perc (-3..+2 st) at irregular seek intervals, HP 400 Hz, LP 6.5 kHz, a +5 dB "
+           "resonance at 900 Hz (the drive cage); under the desk, left; office room 12 %",
+    "reload": "a 0.55 s burst of the drive's seeks + the fan bed rising and falling over 1.8 s",
+    "typing": "the old keyboard: plastic taps (two samples, +-1.5 st; the space bar -3 st and louder) with a soft wooden "
+              "upstroke +3 st 70-110 ms later; word gaps; HP 220 Hz, LP 9 kHz, +2.5 dB at 2.2 kHz; office room",
+    "keys_modern": "Theo's modern keyboard: the same taps -4 st, 50 ms long, LP 3.8 kHz, quicker, no upstroke; Lisbon room",
+    "step": "a soft hit -5 st LP 1.4 kHz + a cloth-mallet marimba note an octave down (E or A, alternate feet) LP 900 Hz; "
+            "Barnaby's world room 30 %; alternate pan +-0.08",
+    "drawer": "the wood scratch -7 st (a slow slide, LP 3.5 kHz, rising) and a dry wood knock -3 st as it stops; world room",
+    "pop": "a water drip tuned up the D major pentatonic, LP 4.2 kHz, HP 250 Hz; six rising pops 75 ms apart for 'six "
+           "light up', two for 'two rows change'; world room 40 %",
+    "ding": "the celeste on D (+2 st) with a quiet A above 70 ms later, LP 7 kHz; world room 45 %",
+    "timelapse": "a noise swell varispeeded to the cue's length, LP 4.5 kHz, with a singing bowl +3 st (B -> D) LP 1.5 kHz; "
+                 "world room",
+    "bell": "the counter bell: Bell Cash tuned +0.3 st to E6; the recording's strike for 0.2 s, then a modal ring fitted to "
+            "its own four partials (1318, 1998, 3009, 8700 Hz: amplitude and phase measured at 0.2 s; T60 5.0, 1.8, 3.4, "
+            "1.0 s; slow doublet beats), a raised-cosine hand-over over 0.25 s with the recording kept at 30 % under it; "
+            "HP 400 Hz; office room 35 % (50 % for the last bell) plus an air halo in the world room; the score ducks "
+            "3 dB for the last one",
+    "bell_soft": "the same bell, its strike rounded (12 ms attack) and darker (LP 3.8 kHz), lower, world room 70 %",
+    "rain": "rain on the window: random 7-15 s stretches of the steady rain (2 s crossfades), HP 110 Hz, LP 7.5 kHz, "
+            "-3 dB shelf above 2.5 kHz (the glass), gentle peak compression",
+    "fan": "the machine loop varispeeded up from 25 % over 1.6 s (the fan spinning up), BP 70 Hz-3.2 kHz, panned left",
+    "radio": "the radio recording through a small speaker (BP 450 Hz-3 kHz, +4 dB at 1.1 kHz, soft saturation, LP 2.4 "
+             "kHz), panned right, very low",
+    "office_night": "a low room tone (synth: brown noise LP 160 Hz) with the machine loop -5 st LP 400 Hz under it",
+    "workshop": "room tone (synth) + the parts trays (nuts and bolts, BP 300 Hz-5.5 kHz, peak-compressed, coming and going "
+                "on a slow random gate, ~40 % on) + the radio through its small speaker",
+    "bustle": "the workshop busier (gate ~70 % on) + customers talking (TV crowd, BP 250 Hz-2.2 kHz) + mugs now and then",
+    "street": "traffic below the window (synth: a rumble and passing cars, each a filtered noise swell with a slow pan) + "
+              "people (TV crowd, BP 300 Hz-1.8 kHz) + birds (HP 1.5 kHz); LP 6 kHz (the window)",
+    "street_night": "sparser traffic (synth) + night air (wind, LP 2.5 kHz) + a trace of people; LP 4.5 kHz",
 }
 
 
@@ -675,7 +741,7 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
             continue
         in_lisbon = lisbon[0] <= t < lisbon[1]
         if typ in ("tab", "tab_close", "mouse_click"):
-            y, o = mouse(k, .8 if typ != "mouse_click" else 1.0)
+            y, o = mouse(k, .8 if typ != "mouse_click" else 1.0, modern=in_lisbon)
             y = tame(y, -10)
             gg = {"tab": .12, "tab_close": .09, "mouse_click": .2 * g / .55}[typ]
             fx.put(y, t - o, gg, .1 + pan * .25, "lisbon" if in_lisbon else "office", width=.0006)
@@ -695,8 +761,8 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
             y, o = clunk(k)
             fx.put(y, t - o, .09 * g / .5, .4, "workshop", send=.75)
         elif typ == "compressor":
-            y, o = compressor(k)
-            fx.put(y, t - o, .09 * g / .22, .5, "workshop", send=.8)
+            y, o = compressor(k, 1.8)                  # done before Barnaby starts walking
+            fx.put(y, t - o, .028 * g / .22, .5, "workshop", send=.8)
         elif typ == "freewheel":
             y, o = freewheel(k)
             fx.put(y, t - o, .06 * g / .3, .45, "workshop", send=.8)

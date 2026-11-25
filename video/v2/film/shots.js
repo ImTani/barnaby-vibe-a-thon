@@ -405,6 +405,8 @@ function quadOf(id, at) {
   const norm = q.every(p => Math.abs(p[0]) <= 1.5 && Math.abs(p[1]) <= 1.5);
   return q.map(p => norm ? [p[0] * W, p[1] * H] : [+p[0], +p[1]]);
 }
+/** Is the Blender shot `id` done (and on disk: render.js checks the frames)? */
+const shotDone = id => { const m = blenderManifest(); return !!(m && m.shots && m.shots.some(x => x.id === id && x.status === 'done')); };
 /** CSS matrix3d taking a w x h box onto the quad [TL, TR, BR, BL] (a projective map, Heckbert's square-to-quad). */
 function pinMatrix(q, w, h) {
   const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = q;
@@ -500,5 +502,5 @@ function typed(s, t, a, b) {
 }
 
 Object.assign(G, { SRC, SIZE, V, VE, M, still, seq, frameImg, label, fadeEl, markSVG, markAnim, sizeOf, imgPath: path, reveal, sweep,
-  cursor, path2, clickK, typed, LIVE_FRAMES: frames, FILM_FPS, hold, move, pan, sfxT, sfxAll, hand, pressAt, pick, quadOf, seqClock });
+  cursor, path2, clickK, typed, LIVE_FRAMES: frames, FILM_FPS, hold, move, pan, sfxT, sfxAll, hand, pressAt, pick, quadOf, seqClock, shotDone });
 })(window);

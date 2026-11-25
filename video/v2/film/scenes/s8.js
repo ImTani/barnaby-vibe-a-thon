@@ -43,12 +43,16 @@
     build(root) {
       stepAt = STEPS(); window.__typingFit = FIT;                  // < 1: Theo had to type faster than 7/s to fit
       const qOpen = M('queue') - .3;
-      const MATCH = pick('world/lisbon_match_day.png', ''), LW4K = pick('world/lisbon_01_wide_day_4k.png', '');
+      const MATCH = pick('world/lisbon_match_day.png', ''), LW4K = pick('world/lisbon_01_wide_day_4k.png', ''), DAY = shotDone('s8_lisbon_day');
       run = seq(root, [
         ...(MATCH ? [{ src: MATCH, at: S, cam: hold(960, 600, 1.12) }] : []),
-        LW4K ? { src: LW4K, at: MATCH ? S + 1.6 : S, cam: pan((MATCH ? S + 1.6 : S) + .2, M('nata') - (MATCH ? S + 1.6 : S) - .5, 760, 520, 1160, 560, 1.2) }
-          : { src: 'world/lisbon_01_wide_day.png', at: MATCH ? S + 1.6 : S, cam: move((MATCH ? S + 1.6 : S) + .4, M('nata') - (MATCH ? S + 1.6 : S) - .6, [970, 540, 1.0], [1000, 560, 1.12], 0) },
-        { src: 'world/x_lisbon_detail_day.png', at: M('nata'), cam: hold(880, 580, 1.06) },
+        // 8.1 with Blender's s8_lisbon_day: one continuous approach that lands on the monitor at 'realapp' for the push
+        // (8.2, the nata insert, is the beat SHOTLIST says to drop first; the cup is on the desk in the approach);
+        // without it, the 4K wide's pan (or the approved wide) and the nata insert, and a cut into the screen
+        ...(DAY ? [{ src: 'world/lisbon_01_wide_day.png', at: MATCH ? S + 1.6 : S, cam: hold(970, 540, 1.0) }] : [
+          LW4K ? { src: LW4K, at: MATCH ? S + 1.6 : S, cam: pan((MATCH ? S + 1.6 : S) + .2, M('nata') - (MATCH ? S + 1.6 : S) - .5, 760, 520, 1160, 560, 1.2) }
+            : { src: 'world/lisbon_01_wide_day.png', at: MATCH ? S + 1.6 : S, cam: move((MATCH ? S + 1.6 : S) + .4, M('nata') - (MATCH ? S + 1.6 : S) - .6, [970, 540, 1.0], [1000, 560, 1.12], 0) },
+          { src: 'world/x_lisbon_detail_day.png', at: M('nata'), cam: hold(880, 580, 1.06) }]),
         { src: 'live/lis-main-empty', at: M('realapp'), fi: .12, pin: { shot: 's8_lisbon_day', d: .6 }, cam: [960, 540, 1],
           state: t => ({ preset: 'realapp', app: +easeOutCubic(clamp((t - M('realapp') - .05) / .6)).toFixed(4), secs: 40 + Math.floor(t - M('realapp')) }) },
         { src: 'rapp/base.jpg', at: M('realapp_full'), cam: [712, 560, 1],

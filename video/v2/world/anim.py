@@ -214,6 +214,7 @@ class Shot:
         self.upscale_to = None      # (w, h): lanczos-upscale the finished frames (rendered smaller for time)
         self.active = None          # held shots: [(t0, t1)] where something changes; other frames are exact copies
         self.events = {}            # cue-sheet mark -> film time of that story event in this render (-> frame)
+        self.samples = None         # per-shot Eevee samples (None: the run's --samples)
         self.segments = []          # [(time the segment starts, setup())]
         self.frame_fn = None        # (t) -> None, continuous state for film time t
         self.out_dir = os.path.join(OUT_ANIM, sid)
@@ -252,6 +253,7 @@ def render_shot(sh, args, test=None):
     sc.render.image_settings.quality = 92
     sc.render.image_settings.color_mode = "RGB"
     sc.render.use_overwrite = bool(args.overwrite)         # resume: frames already on disk are skipped
+    sc.eevee.taa_render_samples = sh.samples or args.samples
     sc.camera = RIG["cam"]
     CUR["shot"], CUR["fn"] = sh, sh.frame_fn
     pr = bpy.data.objects.get("screen_probe")
@@ -710,7 +712,7 @@ def shop_shots(DM, M, hands):
                 f"{sh.frame(T_LAMP)} and the room drops to the monitor's glow; held in the dark to the end. Baked in: "
                 f"no brightness grade on top. 1600x900 at 12 samples, upscaled.")
     sh.active = [(sh.start - 1, T_PUSH[1] + 0.05), (T_LAMP - 0.1, T_LAMP + 0.3)]
-    LAMP_OFF_EV = -1.3          # with the lamp off the room drops to the monitor's glow (the animatic's .16)
+    LAMP_OFF_EV = -2.2          # with the lamp off the room drops to the monitor's glow (the animatic's .16)
     # how high above the keyboard the key must start to be out of frame (camera at its start pose)
     from bpy_extras.object_utils import world_to_camera_view
     set_cam(K["loc"], K["tgt"], K["lens"], K["focus"], K["fstop"])
@@ -757,10 +759,23 @@ def shop_shots(DM, M, hands):
         key.location, key.rotation_euler = loc, rot
         tag.location, tag.rotation_euler = tl, tr
 
-    def lamp_level(t):
-        """1 = lamp on, 0 = off: the switch clicks at T_LAMP; a tungsten filament dies in ~0.1 s."""
-        dt = t - T_LAMP
-        return 1.0 if dt < 0 else exp(-dt / 0.035)
+    def lamp_level(t, t_lamp=None):
+        """1 = lamp on, 0 = off: the switch clicks at t_lamp; 80% gone in one frame, then a tungsten afterglow
+        fading over 3-4 frames."""
+        dt = t - (T_LAMP if t_lamp is None else t_lamp)
+        if dt <= 0:
+            return 1.0
+        if dt < 1 / FPS:
+            return lerp(1.0, 0.2, dt * FPS)
+        return 0.2 * exp(-(dt - 1 / FPS) / 0.05)
+
+    def lamp_off_state(lv):
+        L["L_lamp"].data.energy = 40.0 * lv
+        bulb.default_value = 20.0 * lv
+        L["L_floor_spill"].data.energy = lerp(2.5, 9.0, lv)
+        L["L_bounce"].data.energy = lerp(2.0, 7.0, lv)
+        L["L_box_kick"].data.energy = lerp(2.0, 7.0, lv)
+        sc.view_settings.exposure = base["exp"] + LAMP_OFF_EV * (1 - lv)
 
     def f2(t):
         cam_between(K, K2, CALM(P(t, T_PUSH[0], T_PUSH[1] - T_PUSH[0])))
@@ -779,6 +794,29 @@ def shop_shots(DM, M, hands):
     sh.frame_fn = f2
     sh.no_probe = True
     shots[sh.id] = sh
+
+    # the rendered s2 (79 frames, the first cut's timing) with the lamp fix: re-render its tail (frames 54-79)
+    v1 = Shot("s2_key_lamp", 2, ["world/03_keys_night.png"], 38.04, 40.34)
+    K2v1 = pushed(K, 640, 840, 1.2)
+    T_LAMP1 = 39.79
+    v1.notes = ("Theo's BACK OFFICE key drops in from above frame (frame 21) and lands on the keyboard at frame 26 "
+                "with a small bounce; a slow push toward the key; the lamp clicks off at frame 56: 80% dark in that "
+                "frame, a tungsten afterglow over 3-4 frames, monitor-lit from frame 60 (exposure -2.2 EV). Baked in: "
+                "no brightness grade on top. 1920x1080, 16 samples.")
+    v1.events = {"key": 38.59 - 0.235, "key_land": 38.59, "lamp_off": 37.54 + 55 / FPS}
+
+    def f2v1(t):
+        cam_between(K, K2v1, DRIFT(P(t, 38.04, 40.84 - 38.04)))
+        key_pose(max(t, T_LAND + 0.8))                   # (tail only: the key has long settled)
+        lamp_off_state(lamp_level(t, T_LAMP1))
+        press = clamp01(1 - abs(t - (T_LAMP1 - 0.02)) / 0.07)
+        sw.location = sw_rest - Vector((0, 0, 0.0018 * press))
+        grid()
+    v1.segments = [(v1.start, preset("night"))]
+    v1.frame_fn = f2v1
+    v1.no_probe = True
+    v1.samples = 16
+    shots["s2_key_lamp_v1"] = v1
 
     # ---------------------------------------------------------------- 4 · s3 time-lapse: Thursday night -> Monday
     sh = Shot("s3_timelapse", 3, ["world/02_medium_night.png", "world/04_medium_monday.png"], 40.34, 48.34,

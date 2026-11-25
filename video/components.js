@@ -4,7 +4,8 @@
 (function (G) {
 'use strict';
 
-const BELL = (size = 40) => `<svg width="${size}" height="${size}" viewBox="0 0 64 64"><defs><linearGradient id="bg${size}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0cf8f"/><stop offset=".55" stop-color="#d4a85a"/><stop offset="1" stop-color="#9c7232"/></linearGradient></defs><circle cx="32" cy="13" r="3.6" fill="url(#bg${size})"/><rect x="30.4" y="15.5" width="3.2" height="6" rx="1.2" fill="url(#bg${size})"/><path d="M9 45 A23 23 0 0 1 55 45 Z" fill="url(#bg${size})"/><path d="M17 38 A16 16 0 0 1 27 26" fill="none" stroke="#fff3d6" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round"/><rect x="5" y="46" width="54" height="5.5" rx="2.75" fill="url(#bg${size})"/></svg>`;
+let _bellN = 0;   // each bell gets its own gradient id: a shared id goes blank when its first owner is hidden
+const BELL = (size = 40, id = 'bell' + (++_bellN)) => `<svg width="${size}" height="${size}" viewBox="0 0 64 64"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0cf8f"/><stop offset=".55" stop-color="#d4a85a"/><stop offset="1" stop-color="#9c7232"/></linearGradient></defs><circle cx="32" cy="13" r="3.6" fill="url(#${id})"/><rect x="30.4" y="15.5" width="3.2" height="6" rx="1.2" fill="url(#${id})"/><path d="M9 45 A23 23 0 0 1 55 45 Z" fill="url(#${id})"/><path d="M17 38 A16 16 0 0 1 27 26" fill="none" stroke="#fff3d6" stroke-opacity=".55" stroke-width="2.2" stroke-linecap="round"/><rect x="5" y="46" width="54" height="5.5" rx="2.75" fill="url(#${id})"/></svg>`;
 
 /** The 2009 back office window. rows: [[job, mechanic, work, customer, hrs, due], ...] */
 const SHOP_ROWS = [

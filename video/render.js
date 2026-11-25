@@ -28,7 +28,7 @@ for (let i = 0; i < argv.length; i++) {
 }
 const FPS = +(flags.fps || 30), WORKERS = +(flags.workers || 8), QUALITY = +(flags.quality || 92);
 const dir = d => { const p = path.join(ROOT, d); fs.mkdirSync(p, { recursive: true }); return p; };
-const ARGS = ['--hide-scrollbars', '--force-device-scale-factor=1', '--allow-file-access-from-files', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-ipc-flooding-protection', '--font-render-hinting=none'];
+const ARGS = ['--hide-scrollbars', '--force-device-scale-factor=1', '--allow-file-access-from-files', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--disable-ipc-flooding-protection', '--font-render-hinting=none', '--disable-gpu-rasterization'];   // GPU raster varies run to run; keep frames bit-identical
 
 async function worker(tag) {
   const b = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ARGS });

@@ -19,14 +19,18 @@
   ],
   [
    "29",
-   "30",
+   "30"
+  ],
+  [
    "32",
    "33",
    "35",
    "37"
   ],
   [
-   "40",
+   "40"
+  ],
+  [
    "42"
   ],
   [
@@ -49,17 +53,17 @@
  "23": "That's three bikes handed back, and the same four steps each time. Shall I make it one?",
  "25": "[calmly, unhurried] Give me a moment.",
  "27": "Tom's been texted, and it's marked ready.",
- "29": "The system can't tell me — there's no report for it. Theo always meant to write one.",
- "30": "[gently] I could write it... if you like.",
+ "29": "The system can't tell me — there's no report for it. [brightly, matter-of-fact] Theo always meant to write one.",
+ "30": "[lightly] I could write it... if you like.",
  "32": "With your say-so. I'll work on a copy — nothing changes until you've seen it.",
  "33": "Done. It adds up each mechanic's hours, the way Theo's notes count them. It only reads, and all of Theo's checks still pass. Shall I add it?",
  "35": "That one needs your click, Martin... I don't change the system on a word.",
  "37": "Dev's carrying thirty-one hours against his twenty. Priya starts tomorrow — shall I give her the two wheel builds?",
- "40": "[dryly] Guilty. Dev had thirty-one hours booked. You had none.",
+ "40": "[wryly, a little cheeky] Guilty. Dev had thirty-one hours booked. You had none.",
  "42": "Your jobs, the parts they need, who's collecting what. And Theo left you a note: [amused] never trust the stock count on a Friday.",
  "45": "Thirteen endpoints, sir — and two deadlines in dispute. Shall I flag them?",
  "47": "[dryly] Theo.",
  "49": "Twenty-eight endpoints. It's on the big card, and three jobs are queued.",
- "52": "[softly] Goodnight, Martin.",
- "54": "[softly] Goodnight, Theo."
+ "52": "[warmly, calling out] Goodnight, Martin.",
+ "54": "[warmly, calling out] Goodnight, Theo."
 }

@@ -24,7 +24,7 @@ ROOT = HERE.parents[2]
 V4DIR = ROOT / ".demo" / "review" / "eleven" / "v4"
 TAKES = HERE / "takes"
 WORDS = HERE / "voice" / "words.json"
-PREFER = ("_s5505", "_s4404", "")                     # newest re-render first
+PREFER = ("_s6606", "_s5505", "_s4404", "")                     # newest re-render first
 SPLIT = re.compile(r"[\s—–-]+")
 
 

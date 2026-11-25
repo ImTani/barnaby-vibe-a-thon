@@ -150,7 +150,7 @@ def build(T: Timeline) -> float:
     m("desk_detail", on(7) - .2)
     L(8, gap=.6)                                           # Barnaby: "Noted."
     m("key", off(8) + 1.3)                                 # a beat; the key slides off his ring onto the keyboard
-    fx("key_tap", m("key_land", T.marks["key"] + .55), gain=.6, label="the key on the keyboard: a small clean metal tap")
+    fx("key_tap", m("key_land", T.marks["key"] + .21), gain=.6, label="the key on the keyboard: a small clean metal tap")
     fx("lamp_click", m("lamp_off", T.marks["key"] + 2.9), gain=.55, label="the lamp clicks off")
     s3 = T.marks["lamp_off"] + 1.6                         # hold on the dark desk
 

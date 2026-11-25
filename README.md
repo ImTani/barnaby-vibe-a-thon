@@ -67,6 +67,10 @@ Run it yourself: `.venv/Scripts/python scripts/demo_check.py` (about 3 minutes; 
 - **Worker** ([`barnaby/worker.py`](barnaby/worker.py)) is the Claude Agent SDK, running on the local Claude Code login
   (or an API key). Each system's server attaches over stdio. After a growth step the servers are reconnected and the
   turn continues, so the new tool is used straight away.
+- **Bring your own model** ([`barnaby/worker_byom.py`](barnaby/worker_byom.py)): the same worker on Pydantic AI, so
+  any provider works (`BARNABY_WORKER_BACKEND=byom`, `BARNABY_BYOM_MODEL=openai:…`, `groq:…`, `ollama:…`). Both
+  workers share one prompt, one tier gate and one set of growth tools ([`barnaby/toolkit.py`](barnaby/toolkit.py)).
+  Only the Build tier's code writer is Claude-specific.
 - **Build** ([`barnaby/build.py`](barnaby/build.py)): a git worktree, a builder agent limited to that worktree, the
   system's own test suite, the diff on an approval card, a fast-forward merge, a deterministic restart, and
   `synapse build --discover`. The README in the repo (the departing developer's notes) outranks the spec.
@@ -104,7 +108,8 @@ The app is real; the film and the walkthrough are staged recreations of it, like
 | The film's montage (Quorum, ComfyUI) | Endpoint counts are **real** Synapse scans (13 and 28); the questions on the cards are illustrative |
 | Voice | **Real** (push-to-talk → sherpa ASR → Barnaby → Kokoro), verified by `scripts/smoke/voice_e2e.py`. The Haiku front desk is built for, and runs when an API key is present |
 | Score | Composed in code, **played by real instrument plugins** (Ample Guitar M Lite II, MODO BASS 2, Valhalla VintageVerb) via DawDreamer |
-| Not done yet | Bring-your-own-model worker (Pydantic AI; the interface is ready), the Tauri hotkey overlay (the compact display exists), a trained wake word |
+| Bring-your-own-model worker | **Built and unit-tested** against a real stdio MCP server with a scripted model; not yet run against a live third-party model (no keys here). Each provider needs its pydantic-ai extra |
+| Not done yet | The Tauri hotkey overlay (the compact display exists), a trained wake word |
 
 ### Synapse 0.1.9: issues we hit, and the disclosed fix-up pass
 

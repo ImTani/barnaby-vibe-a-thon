@@ -23,10 +23,11 @@ from .events import bus
 from .policy import approvals
 from .profiles import PROFILES
 from .systems import System, registry
-from .worker import worker
+from .workers import get_worker
 
 UI = ROOT / "ui"
 app = FastAPI(title="Barnaby")
+worker = get_worker()          # Claude Agent SDK, or any model with BARNABY_WORKER_BACKEND=byom
 
 
 class AskIn(BaseModel):

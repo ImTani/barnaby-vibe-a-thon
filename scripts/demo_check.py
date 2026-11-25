@@ -149,6 +149,14 @@ def report() -> int:
     return 0 if passed == len(RESULTS) else 1
 
 
+async def run() -> int:
+    try:
+        return await main()
+    finally:                                   # close the agent's subprocesses cleanly (else Windows prints noise)
+        import barnaby.worker as worker_mod
+        await worker_mod.worker.close()
+
+
 if __name__ == "__main__":
-    code = asyncio.run(main())
+    code = asyncio.run(run())
     sys.exit(code)

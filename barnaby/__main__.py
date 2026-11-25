@@ -85,14 +85,14 @@ def main() -> int:
         print(asyncio.run(_with_printer(registry.connect(PROFILES[args.profile]()))))
         return 0
     if args.cmd == "ask":
-        from .worker import worker
+        from .workers import get_worker
+        worker = get_worker()
 
         async def run():
             for s in registry.systems.values():
                 await registry.ensure_running(s)
             out = await worker.ask(args.text)
-            if worker.client:
-                await worker.client.disconnect()
+            await worker.close()
             return out
 
         print("\nFINAL:", asyncio.run(_with_printer(run())))

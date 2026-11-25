@@ -30,15 +30,18 @@ class Settings:
     worker_model: str = field(default_factory=lambda: _env("BARNABY_WORKER_MODEL", "claude-opus-5-5"))
     builder_model: str = field(default_factory=lambda: _env("BARNABY_BUILDER_MODEL", "claude-opus-5-5"))
     front_desk_model: str = field(default_factory=lambda: _env("BARNABY_FRONT_DESK_MODEL", "claude-haiku-5-5"))
+    # worker_backend "byom": the worker runs on this Pydantic AI model string instead ("openai:...", "ollama:...")
+    byom_model: str = field(default_factory=lambda: _env("BARNABY_BYOM_MODEL"))
     api_key_present: bool = field(default_factory=lambda: bool(_env("ANTHROPIC_API_KEY")))
     port: int = field(default_factory=lambda: int(_env("BARNABY_PORT", "8700")))
     # auto-approve tiers for unattended tests: comma list of "write,grow,build"
     auto_approve: set[str] = field(default_factory=lambda: {x for x in _env("BARNABY_AUTO_APPROVE").split(",") if x})
 
     def worker_env(self) -> dict[str, str]:
-        """Env for Agent SDK subprocesses. 'claude-code' strips the API key so the local Claude Code login is used."""
+        """Env for Agent SDK subprocesses. Only 'api' keeps the API key; otherwise the local Claude Code login is used
+        (with 'byom' that still holds for the Build tier's builder, which is Claude)."""
         env = dict(os.environ)
-        if self.worker_backend == "claude-code":
+        if self.worker_backend != "api":
             env.pop("ANTHROPIC_API_KEY", None)
         env.setdefault("MCP_TOOL_TIMEOUT", "1800000")   # a Build (write code, test, wait for approval) takes minutes
         return env

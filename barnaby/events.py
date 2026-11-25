@@ -50,7 +50,7 @@ class EventBus:
 
     def subscribe(self, replay: int = 200) -> asyncio.Queue[Event]:
         q: asyncio.Queue[Event] = asyncio.Queue()
-        for ev in list(self._history)[-replay:]:
+        for ev in list(self._history)[-replay:] if replay > 0 else []:      # [-0:] would be everything
             q.put_nowait(ev)
         self._subs.add(q)
         return q

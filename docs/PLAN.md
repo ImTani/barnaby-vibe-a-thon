@@ -123,7 +123,7 @@ The 2009 back office covers customers, bikes, repair jobs (with estimated hours 
 |---|---|---|
 | Core API and event stream | FastAPI + SSE (`sse-starlette`) | |
 | Worker agent loop (heavy thinking) | **Claude Agent SDK on Tani's local Claude Code login** (P0) | Speed isn't critical here; the demo just needs the results. Synapse's servers attach through the SDK's `mcp_servers` (stdio); approvals go through `can_use_tool` → our tier policy; SDK messages feed the event stream. Uses `ANTHROPIC_API_KEY` instead when one is set (e.g. for recording timings) |
-| Bring-your-own-model backend | **Pydantic AI** `Agent` + `MCPToolset` + deferred-tool approvals (P1) | Same worker interface; one string switches provider (OpenAI, Gemini, Groq, OpenRouter, Bedrock, Vertex, local Ollama). ⚠ Smoke-test its FastMCP 4 client against Synapse's mcp 1.30 servers |
+| Bring-your-own-model backend | ✅ **Pydantic AI** `Agent` + `MCPToolset`, approvals through the shared in-process tier gate (`barnaby/toolkit.py`), `barnaby/worker_byom.py` | Same worker interface; one string switches provider (OpenAI, Gemini, Groq, OpenRouter, Bedrock, Vertex, local Ollama). ⚠ Smoke-test its FastMCP 4 client against Synapse's mcp 1.30 servers |
 | MCP servers | Synapse-generated `synapse_auto_server.py` per system | Run in their **own venv pinned to `mcp==1.30`** |
 | Synapse | `npx @2ndbrainlabs-ai/synapse-cli@0.1.9`, nothing global | `build --auto --local --endpoints …`, `--discover`, `--custom --local -q …` |
 | Front desk | **Claude API**, `claude-haiku-5-5` (the only latency-critical piece; also used when recording) | Built for the key in `.env`; until it's there, the front desk falls back to text mode |

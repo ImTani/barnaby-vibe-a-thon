@@ -83,8 +83,9 @@ router prefixes and `Literal` fields. Barnaby's fix-up pass keeps Synapse's orig
 
 ## Limits, honestly
 
-- The Build tier writes code with Claude (Agent SDK). The rest of the worker is built to be provider-agnostic, but the
-  bring-your-own-model backend (Pydantic AI) isn't finished.
+- The Build tier writes code with Claude (Agent SDK). The rest of Barnaby runs on any model through the
+  bring-your-own-model worker (Pydantic AI), which is unit-tested but hasn't yet been run against a live third-party
+  model.
 - Synapse sends no auth headers in local Auto mode, so systems behind auth need a proxy or a token-aware fix-up.
 - Compose uses hosted Synapse (a free key); everything else runs locally.
 - The voice front desk on Claude Haiku is built for but was not used in the film; the recorded voice lines are TTS
@@ -92,6 +93,6 @@ router prefixes and `Literal` fields. Barnaby's fix-up pass keeps Synapse's orig
 
 ## What's next
 
-A trained wake word (our own Rust library), the hotkey overlay as a real always-on-top window, the
-bring-your-own-model worker, and Barnaby proposing compositions on his own from habits (the detection is in; the
+A trained wake word (our own Rust library), the hotkey overlay as a real always-on-top window, a live run of the
+bring-your-own-model worker on an open model, and Barnaby proposing compositions on his own from habits (the detection is in; the
 prompt to offer is in; it needs real-world tuning).

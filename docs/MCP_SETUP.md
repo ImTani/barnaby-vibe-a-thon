@@ -10,7 +10,7 @@ they're built and attached, and how to use the same servers from Claude Code, Cl
 |---|---|---|---|
 | `<system>` (e.g. `shop`) | One passthrough HTTP tool per exposed endpoint of the system | `synapse build --auto --local --endpoints "…"` | `runtime/mcp-servers/.venv` (`mcp==1.30`), stdio |
 | `<system>-k<N>` (e.g. `shop-k1`) | One composed skill: several of the system's internal functions fused into one tool | `synapse build --custom -q "…"` (hosted Custom mode) | same runtime, stdio, with the repo on `PYTHONPATH` |
-| `barnaby` | Barnaby's growth tools: `capabilities`, `unlock`, `compose`, `build`, `connect` | hand-written ([`barnaby/worker.py`](../barnaby/worker.py)) | in-process (Claude Agent SDK `create_sdk_mcp_server`) |
+| `barnaby` | Barnaby's growth tools: `capabilities`, `unlock`, `compose`, `build`, `connect` | hand-written ([`barnaby/toolkit.py`](../barnaby/toolkit.py)) | in-process (Agent SDK `create_sdk_mcp_server`, or Pydantic AI function tools) |
 
 Tools are addressed as `mcp__<server>__<tool>`, for example `mcp__shop__jobs_due` or
 `mcp__shop-k1__hand_back_finished_bike`.

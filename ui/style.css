@@ -98,6 +98,8 @@ body.s-growing .status .dot{background:var(--build);animation:pulse .7s ease-in-
 /* capability map */
 .map{position:absolute;inset:0 0 0 auto;width:min(560px,92vw);background:var(--surface);border-left:1px solid var(--hair);box-shadow:-20px 0 60px rgba(0,0,0,.4);overflow-y:auto;z-index:5}
 .map[hidden]{display:none}
+/* the drawer covers the conversation: dim what's behind it so a half-covered sentence reads as 'behind', not cut */
+.grid:has(.map:not([hidden])) > .convo, .grid:has(.map:not([hidden])) > .trace{opacity:.28;filter:saturate(.6);transition:opacity .2s}
 .sys{padding:4px 20px 18px}
 .sys h3{font:19px var(--serif);margin:6px 0 2px}
 .sys .sub{font-size:12.5px;color:var(--muted);margin-bottom:10px}

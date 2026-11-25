@@ -14,7 +14,7 @@ const puppeteer = require(path.resolve(__dirname, 'node_modules/puppeteer-core')
 const CHROME = process.env.CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const ROOT = __dirname;
 const URL = 'file:///' + path.resolve(ROOT, 'index.html').replace(/\\/g, '/');
-const DUR = +(process.env.FILM_DURATION || 140);
+const DUR = +(process.env.FILM_DURATION || 160);
 
 const argv = process.argv.slice(2);
 const flags = {}, pos = [];
@@ -128,7 +128,7 @@ async function stills(times, name, stamp) {
   } else if (mode === 'verify') {
     const times = pos.slice(1).map(Number); const k = await worker(0); const A = {}; let bad = 0;
     for (const t of times) { await k.p.evaluate(t => window.render(t), t); A[t] = await k.p.screenshot({ type: 'png' }); }
-    for (const t of times.slice().reverse()) { await k.p.evaluate(t => window.render(t), 0); await k.p.evaluate(t => window.render(t), t); const B = await k.p.screenshot({ type: 'png' }); const same = Buffer.compare(A[t], B) === 0; if (!same) bad++; console.log(`t=${t}: ${same ? 'identical' : 'DIFFERENT (state leaks between frames!)'}`); }
+    for (const t of times.slice().reverse()) { await k.p.evaluate(t => window.render(t), 0); await k.p.evaluate(t => window.render(t), t); const B = await k.p.screenshot({ type: 'png' }); const same = Buffer.compare(A[t], B) === 0; if (!same) { bad++; fs.writeFileSync(path.join(dir('stills'), `verify_${t}_a.png`), A[t]); fs.writeFileSync(path.join(dir('stills'), `verify_${t}_b.png`), B); } console.log(`t=${t}: ${same ? 'identical' : 'DIFFERENT (state leaks between frames!)'}`); }
     await k.b.close(); process.exitCode = bad ? 3 : 0;
   } else if (mode === 'encode') {
     encode(0, Math.round(DUR * FPS));

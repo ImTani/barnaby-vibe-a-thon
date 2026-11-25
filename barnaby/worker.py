@@ -61,6 +61,9 @@ How you work:
   build one under /api/reports/... so the answer is exact and the household keeps it for next time.
 - To change data (book, order, reassign, text a customer, change a status), just call the tool: a
   confirmation card asks the person for you. If they decline, accept it gracefully.
+- If capabilities shows a habit (the same chain of calls repeated), or the person asks for something to become one
+  step, offer to make it a single skill; when they agree (or asked), call mcp__barnaby__compose with a one-sentence
+  description of the whole job. Prefer an existing skill over the long chain whenever one fits.
 - When something can't be done, say so plainly and briefly.
 """
 
@@ -77,6 +80,7 @@ class Worker:
         self.lock = asyncio.Lock()
         self.reload: set[str] = set()         # systems whose MCP server must be reconnected after this turn
         self.grown: list[str] = []            # what was unlocked/built this turn (for the follow-up prompt)
+        self.calls: list[tuple[str, str]] = []  # (system, tool) of every system call this session, for habits
         self.turn = 0
         self.busy = False
 
@@ -97,6 +101,8 @@ class Worker:
                     "have": [e.brief() for e in eps if e.key in s.exposed],
                     "unlockable": [e.brief() for e in eps if e.key not in s.exposed and e.key not in s.denied],
                     "never": [e.key for e in eps if e.key in s.denied],
+                    "skills": [{"tool": f"mcp__{k['server']}__{k['tool']}", "does": k["description"]} for k in s.skills],
+                    "habits": self.habits(n),
                 })
             return _text(json.dumps(out, indent=1))
 
@@ -138,6 +144,27 @@ class Worker:
                              "you'll continue with the new tool automatically.")
             return _text(f"The build did not land: {result.get('error')}. Say so briefly.")
 
+        @tool("compose", "Fuse a chain of steps you keep repeating into ONE new tool, using Synapse Custom mode: it "
+              "composes the system's own internal functions. Describe the whole job in one sentence (inputs, what it "
+              "does, what it returns). The person approves it on the display.", {"system": str, "description": str})
+        async def compose(args: dict[str, Any]) -> dict:
+            s = registry.get(args["system"])
+            desc = args["description"].strip()
+            bus.emit("growth.compose.proposed", system=s.name, description=desc)
+            ok = await approvals.request(tier="grow", kind="compose", title=f"Compose a new skill for {s.title}",
+                                         detail=desc)
+            if not ok:
+                return _text("The person declined. Say that's quite all right.")
+            res = await registry.compose(s, desc)
+            if not res.ok:
+                return _text(f"Synapse couldn't compose it: {res.output[-300:]}. Say so briefly.")
+            sk = s.skills[-1]
+            self.reload.add(sk["server"])
+            self.grown.append(f"the skill mcp__{sk['server']}__{sk['tool']} ({desc})")
+            bus.emit("growth.compose.done", system=s.name, tool=sk["tool"], server=sk["server"], seconds=round(res.seconds, 1))
+            return _text(f"Composed {sk['tool']} (tool mcp__{sk['server']}__{sk['tool']}). Say so in one sentence and "
+                         "stop; you'll continue with it automatically.")
+
         from .profiles import PROFILES
 
         @tool("connect", "Take on a new system: Synapse scans its repo, you get its read-only tools to start. Use when "
@@ -163,13 +190,38 @@ class Worker:
                          f"{len(res['exposed'])} read-only tools to start. Say so in one sentence (mention the person's "
                          "notes in the README if there are any) and stop.")
 
-        return create_sdk_mcp_server("barnaby", tools=[capabilities, unlock, build, connect])
+        return create_sdk_mcp_server("barnaby", tools=[capabilities, unlock, build, compose, connect])
+
+    def habits(self, system: str, min_times: int = 2) -> list[dict]:
+        """Chains of 3-4 tool calls on a system that keep recurring (candidates for Compose)."""
+        names = [t for s, t in self.calls if s == system]
+        counts: dict[tuple, int] = {}
+        for n in (4, 3):
+            for i in range(len(names) - n + 1):
+                gram = tuple(names[i:i + n])
+                if len(set(gram)) == n:
+                    counts[gram] = counts.get(gram, 0) + 1
+        best = sorted(((c, g) for g, c in counts.items() if c >= min_times), key=lambda x: (-len(x[1]), -x[0]))
+        seen, out = set(), []
+        for c, g in best:
+            if any(set(g) <= s for s in seen):
+                continue
+            seen.add(frozenset(g))
+            out.append({"chain": " -> ".join(g), "times": c})
+        return out[:3]
 
     # ── permission gate ──
     async def _can_use_tool(self, tool_name: str, tool_input: dict, context) -> PermissionResultAllow | PermissionResultDeny:
         if tool_name.startswith("mcp__barnaby__"):
             return PermissionResultAllow()
         parts = tool_name.split("__")
+        skill = next(((s, k) for s in registry.systems.values() for k in s.skills
+                      if len(parts) == 3 and k["server"] == parts[1]), None)
+        if skill:                                       # composed skills change data: confirm like any write
+            s, k = skill
+            ok = await approvals.request(tier="write", kind="call", title=k["description"].split(".")[0][:90],
+                                         detail=f"{k['tool']}\n{json.dumps(tool_input, indent=1)}")
+            return PermissionResultAllow() if ok else PermissionResultDeny(message="The person declined. Don't retry.")
         if len(parts) != 3 or parts[0] != "mcp" or parts[1] not in registry.systems:
             return PermissionResultDeny(message="Barnaby only operates systems through their tools.")
         s = registry.get(parts[1])
@@ -188,6 +240,8 @@ class Worker:
     # ── client lifecycle ──
     def _servers(self) -> dict:
         servers = {s.name: s.mcp_config() for s in registry.systems.values() if s.server_path.exists()}
+        for s in registry.systems.values():
+            servers.update(s.skill_configs())
         servers["barnaby"] = self._meta
         return servers
 
@@ -257,6 +311,8 @@ class Worker:
                         parts = b.name.split("__")
                         bus.emit("tool.call", turn=turn, id=b.id, system=parts[1] if len(parts) == 3 else "",
                                  tool=parts[-1], input=b.input)
+                        if len(parts) == 3 and parts[1] in registry.systems:
+                            self.calls = (self.calls + [(parts[1], parts[2])])[-300:]
                     elif isinstance(b, TextBlock) and b.text.strip():
                         said = b.text.strip()
                         bus.emit("say", turn=turn, text=said, final=False)

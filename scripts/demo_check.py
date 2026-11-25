@@ -11,6 +11,7 @@ shop's own API and git history. Runs on the local Claude Code login (no API key 
   3 Unlock    "order ten pairs of those pads"                     -> POST /api/purchase-orders unlocked, PO placed
   4 Build     "who's overloaded this week?"                       -> new report endpoint written, tested, merged, used
   5 Act       "move Dev's two wheel builds to Priya"              -> both jobs reassigned in the 2009 system
+  6 Compose   "hand back job 4481, and make it one step"          -> Synapse Custom composes a skill; Barnaby uses it
 """
 from __future__ import annotations
 
@@ -39,7 +40,7 @@ def check(name: str, ok: bool, detail: str = "") -> bool:
 
 async def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--until", type=int, default=5)
+    ap.add_argument("--until", type=int, default=6)
     ap.add_argument("--no-reset", action="store_true")
     a = ap.parse_args()
     settings.auto_approve = {"write", "grow", "build"}
@@ -116,6 +117,28 @@ async def main() -> int:
     said = await worker.ask("Move Dev's two wheel builds to Priya, please.")
     jobs = {j["job_id"]: j for j in httpx.get(f"{shop_url}/api/jobs/open").json()}
     check("5 Act: both wheel builds now with Priya", jobs[4471]["mechanic"] == "Priya" and jobs[4472]["mechanic"] == "Priya",
+          f"{time.perf_counter() - t0:.1f}s: {said[:140]}")
+    if a.until < 6:
+        return report()
+
+    from barnaby import synapse
+    if not synapse.has_key():
+        check("6 Compose: skipped (no SYNAPSE_API_KEY in .env)", True)
+        return report()
+    from barnaby.events import bus
+    mark = bus.history()[-1].id if bus.history() else 0
+    t0 = time.perf_counter()
+    said = await worker.ask("Tom's bike is done, job 4481. Hand it back: text him it's ready and mark it ready. "
+                            "And make handing back a bike a single step, would you? I do it a dozen times a day.")
+    shop = registry.get("shop")
+    job = httpx.get(f"{shop_url}/api/jobs/4481").json().get("job", {})
+    sent = httpx.get(f"{shop_url}/api/notifications/recent").json()
+    used = [e.data.get("tool") for e in bus.history() if e.id > mark and e.type == "tool.call"
+            and str(e.data.get("system", "")).startswith("shop-k")]
+    check("6 Compose: Synapse Custom composed a skill", bool(shop.skills), ", ".join(k["tool"] for k in shop.skills))
+    check("6 Compose: Barnaby used the new skill", bool(used), ", ".join(used))
+    check("6 Compose: job 4481 marked ready", job.get("status") == "ready", str(job.get("status")))
+    check("6 Compose: Tom was texted", "Tom" in str(sent)[:2000] or "4481" in str(sent)[:2000],
           f"{time.perf_counter() - t0:.1f}s: {said[:140]}")
     return report()
 

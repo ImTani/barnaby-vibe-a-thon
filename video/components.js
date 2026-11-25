@@ -137,8 +137,8 @@ function endpointMap(o = {}) {
   };
 }
 
-/** A speaker label + line, for on-screen dialogue (who: 'Theo'|'June'|'Priya'|'Barnaby'). */
-function line(parent, { x = 0, y = 0, w = 1200, who = 'June', text = '', size = 34 } = {}) {
+/** A speaker label + line, for on-screen dialogue (who: 'Theo'|'Martin'|'Priya'|'Barnaby'). */
+function line(parent, { x = 0, y = 0, w = 1200, who = 'Martin', text = '', size = 34 } = {}) {
   const isB = who === 'Barnaby';
   const root = el('div', { cls: 'abs', style: `left:${x}px;top:${y}px;width:${w}px` }, parent);
   root.innerHTML = `<div style="font:600 15px 'Segoe UI',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:${isB ? COL.brass : COL.muted};margin-bottom:6px">${esc(who)}</div>

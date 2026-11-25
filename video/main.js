@@ -3,7 +3,7 @@
  * Pure function of t: nothing here depends on the previous frame. */
 (function () {
 'use strict';
-window.DURATION = window.FILM_DURATION || 140;
+window.DURATION = window.FILM_DURATION || 160;
 window.__errors = [];
 const logErr = (where, e) => { const m = `[${where}] ${e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : e}`; window.__errors.push(m); console.error(m); };
 window.addEventListener('error', ev => logErr('window', ev.error || ev.message));

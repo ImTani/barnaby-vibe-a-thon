@@ -1,37 +1,34 @@
 /* Scene X: <name> (<start>–<end> s). Copy to scenes/X.js. Only edit your own scene file.
- * Timing comes from STORYBOARD.md. Everything must be a pure function of t:
+ * Timing comes from STORYBOARD.md and cues.json. Everything must be a pure function of t:
  *  - create DOM ONCE in build(); in render() only SET properties, and set them every frame
- *    (use show()/typeText()/xf(), which always write, instead of `if (t > x) el.style...`).
+ *    (use show()/typeText()/xf()/setText(), which always write, instead of `if (t > x) el.style...`).
  *  - no Date.now(), Math.random(), CSS transitions/animations, setTimeout, rAF. Use rand(i, salt).
+ * See scenes/B.js for a complete example.
  */
 (function () {
-  const START = 0, END = 10;               // <- from the storyboard
-  let title, card, lap, net;               // DOM refs created in build()
+  const START = 0, END = 10;                // <- from the storyboard
+  const VO = { line: 3.0 };                 // <- cues.json -> voice
+  const SAY = 'A line Barnaby says.', SAY_DUR = 2.5;   // <- audio/voice/manifest.json
+  let shop, hd, row;                        // DOM refs created in build()
 
   Scene({
-    id: 'X', start: START, end: END,
-    // fadeIn: .5, fadeOut: .5,             // crossfade seconds centred on the boundary
-    // drift: .03,                          // root zoom 1.00 -> 1.03 across the scene (0 to disable)
-    captions: [[START + 6, END - .2, 'Caption text, ~3 words per second of hold.']],
+    id: 'X', start: START, end: END, drift: .02,
+    captions: [[START + 6, END - .2, 'Caption text, at least 3 words per second of hold.']],
 
     build(root) {
-      title = el('div', { cls: 'abs hero', style: 'left:0;right:0;top:300px;text-align:center;font-size:140px', text: 'Hello' }, root);
-      card = el('div', { cls: 'card', style: 'left:160px;top:520px;width:700px;height:240px;padding:28px' }, root);
-      lap = makeLaptop({ parent: root, x: 1000, y: 460, w: 760, h: 420, title: "Tanishk's laptop · on a shoot", status: 'online' });
-      net = netGraph({ parent: lap.body, x: 0, y: 0, w: 700, h: 110 });
+      shop = shop2009({ parent: root, x: 80, y: 150, w: 1100, page: 'Jobs' });
+      hd = hud({ parent: root, x: 1000, y: 120, w: 840 });
+      row = traceRow(hd.trace, { kind: 'read', name: 'jobs_due', args: '{day: tomorrow}', tag: 'read' });
     },
 
-    render(t, lt, fade) {
-      show(title, t, START + .5, .8, { dy: 30 });
-      show(card, t, START + 1.2, .7, { dx: -60, dy: 0 });
-      show(lap.el, t, START + 1.5, .7, { dy: 40 });
-      lap.setStatus(t < START + 3 ? 'online' : 'offline', pulse(t, START + 3, .15));
-      net.render(t, { offAt: START + 3, onAt: Infinity });
-
-      // 3D cloud: declare what you want THIS frame (immediate mode, blended across crossfades).
-      cloud.set({ opacity: .6, rect: { x: 860, y: 0, w: 1060, h: 1080 } });
-      cloud.setCamera({ dist: lerp(4.6, 3.6, easeInOutCubic(P(t, START, END - START))), yaw: .3, pitch: .25 });
-      cloud.addKeyPoint('note18', { pos: cloud.KEYS.note18, color: COL.amber, label: '18th · Tanishk · queued', bornAt: START + 4 });
-    }
+    render(t) {
+      show(shop.el, t, START + .3, .6, { dx: -60, dy: 0 });
+      show(hd.el, t, START + .5, .6, { dx: 60, dy: 0 });
+      hd.setState(t < VO.line ? 'thinking' : 'speaking');
+      hd.setYou('Martin', 'Which repairs are due tomorrow?');
+      row.render(t, START + 1.0);
+      hd.say(SAY, t, VO.line, SAY.length / (SAY_DUR * .92));
+      shop.set(3, 0, '4478', .8 * E(t, START + 2, .5));
+    },
   });
 })();

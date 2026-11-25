@@ -138,6 +138,67 @@ async def build(system: str, repo: Path, endpoints: list[str] | None = None, dis
     return BuildResult(True, dest, secs, n, out)
 
 
+# ── Compose: Synapse Custom mode (hosted; needs SYNAPSE_API_KEY, or --local with a model key) ──
+
+@dataclass
+class CustomResult:
+    ok: bool
+    tool: str | None
+    server: Path | None
+    seconds: float
+    output: str
+
+
+def has_key() -> bool:
+    return bool(os.environ.get("SYNAPSE_API_KEY", "").strip())
+
+
+async def ensure_init(repo: Path) -> bool:
+    """Hosted builds need `synapse init` once per repo (it writes .synapse/config.json; the key stays in the env)."""
+    cfg = repo / ".synapse" / "config.json"
+    try:
+        if cfg.exists() and json.loads(cfg.read_text(encoding="utf-8")).get("initialized"):
+            return True
+    except ValueError:
+        pass
+    code, out = await _run(["init"], repo, timeout=90)
+    return code == 0
+
+
+async def build_custom(system: str, repo: Path, query: str) -> CustomResult:
+    """Compose internal functions into ONE tool with `synapse build --custom -q "<query>"` (hosted Synapse).
+
+    Synapse writes <tool>_server.py into the repo root; we move it to .demo/barnaby/servers/<system>/skills/ so the
+    repo stays clean and later Custom builds don't scan earlier outputs (a known 0.1.9 issue).
+    """
+    t0 = time.perf_counter()
+    if not has_key():
+        return CustomResult(False, None, None, 0, "No SYNAPSE_API_KEY: Compose needs a Synapse key (or a model key for --local).")
+    if not await ensure_init(repo):
+        return CustomResult(False, None, None, time.perf_counter() - t0, "synapse init failed")
+    before = {p.name for p in repo.glob("*_server.py")}
+    had_env_example = (repo / ".env.example").exists()
+    bus.emit("synapse.run", system=system, args=["build", "--custom", "-q", query])
+    code, out = await _run(["build", "--custom", "-q", query], repo, timeout=420)
+    if not had_env_example and (repo / ".env.example").exists():
+        (repo / ".env.example").unlink()
+    m = re.search(r"Tool\s+(\w+)", out)
+    o = re.search(r"Output\s+(\S+_server\.py)", out)
+    created = [p for p in repo.glob("*_server.py") if p.name not in before]
+    src = (repo / o.group(1)) if o and (repo / o.group(1)).exists() else (created[0] if created else None)
+    if code != 0 or not src:
+        bus.emit("synapse.failed", system=system, code=code, output=out[-1500:])
+        return CustomResult(False, None, None, time.perf_counter() - t0, out)
+    dest_dir = SERVERS / system / "skills"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / src.name
+    shutil.move(str(src), dest)
+    tool = m.group(1) if m else src.stem.removesuffix("_server")
+    secs = time.perf_counter() - t0
+    bus.emit("synapse.composed", system=system, tool=tool, seconds=round(secs, 1))
+    return CustomResult(True, tool, dest, secs, out)
+
+
 # ── fix-up pass (disclosed in the README): known Synapse 0.1.9 output issues ──
 
 _ERR_RETURN = (

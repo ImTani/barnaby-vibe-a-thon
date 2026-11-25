@@ -33,6 +33,7 @@ class System:
     exposed: list[str] = field(default_factory=list)  # endpoint keys exposed as tools ("GET /api/jobs/open")
     denied: list[str] = field(default_factory=list)   # never exposed, whoever asks
     starter: list[str] = field(default_factory=list)  # preferred first exposure (else: read-only endpoints)
+    skills: list[dict] = field(default_factory=list)  # composed tools: {server, tool, path, description}
     pid: int | None = None
 
     @property
@@ -50,10 +51,19 @@ class System:
         return {"type": "stdio", "command": str(MCP_RUNTIME_PY), "args": [str(self.server_path)],
                 "env": {"ENDPOINT_BASE_URL": self.base_url}}
 
+    def skill_configs(self) -> dict[str, dict]:
+        """One MCP server per composed skill. Synapse Custom output imports the repo's own modules, so it runs with
+        the repo on PYTHONPATH and the system's env (e.g. its database path)."""
+        out = {}
+        for sk in self.skills:
+            out[sk["server"]] = {"type": "stdio", "command": str(MCP_RUNTIME_PY), "args": [sk["path"]],
+                                 "env": {"PYTHONPATH": self.repo, **self.env}}
+        return out
+
     def summary(self) -> dict:
         eps = self.endpoints()
         return {"name": self.name, "title": self.title, "repo": self.repo, "base_url": self.base_url,
-                "running": self.is_running(), "exposed": self.exposed, "denied": self.denied,
+                "running": self.is_running(), "exposed": self.exposed, "denied": self.denied, "skills": self.skills,
                 "endpoints": [e.brief() | {"exposed": e.key in self.exposed, "denied": e.key in self.denied} for e in eps]}
 
     def is_running(self) -> bool:
@@ -140,6 +150,16 @@ class Registry:
         bus.emit("system.connected", system=s.name, title=s.title, discovered=len(eps), exposed=starter,
                  read_only=sum(e.read_only for e in eps), seconds=round(res.seconds, 2))
         return {"ok": res.ok, "discovered": len(eps), "exposed": starter}
+
+    async def compose(self, s: System, description: str) -> synapse.CustomResult:
+        """Compose a new skill with Synapse Custom mode and register it as an MCP server for this system."""
+        res = await synapse.build_custom(s.name, s.repo_path, description)
+        if res.ok:
+            s.skills = [k for k in s.skills if k["tool"] != res.tool]
+            s.skills.append({"server": f"{s.name}-k{len(s.skills) + 1}", "tool": res.tool, "path": str(res.server),
+                             "description": description})
+            self.save()
+        return res
 
     async def expose(self, s: System, add: list[str], discover: bool = False) -> synapse.BuildResult:
         """Rebuild the system's MCP server with more endpoints (Unlock, and the last step of Build)."""

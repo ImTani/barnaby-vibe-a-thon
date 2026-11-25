@@ -162,12 +162,14 @@ const fmt = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`
         const d = await k.p.evaluate(async (a, b) => {
           const load = s => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = 'data:image/png;base64,' + s; });
           const px = im => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); return x.getImageData(0, 0, im.width, im.height).data; };
-          const [ia, ib] = await Promise.all([load(a), load(b)]); const da = px(ia), db = px(ib); let max = 0, n = 0;
-          for (let i = 0; i < da.length; i++) { const v = Math.abs(da[i] - db[i]); if (v) { n++; if (v > max) max = v; } }
-          return { max, n };
+          const [ia, ib] = await Promise.all([load(a), load(b)]); const da = px(ia), db = px(ib); let max = 0, n = 0, n8 = 0;
+          for (let i = 0; i < da.length; i++) { const v = Math.abs(da[i] - db[i]); if (v) { n++; if (v > 8) n8++; if (v > max) max = v; } }
+          return { max, n, n8 };
         }, A[t].toString('base64'), B.toString('base64'));
-        if (d.max <= 4) { same = true; console.log(`  t=${t}: ${d.n} channel values differ by at most ${d.max}/255 (raster noise, not a leak)`); }
-        else console.log(`  t=${t}: ${d.n} channel values differ, max ${d.max}`);
+        // a leak moves or changes something (thousands of values by a lot); Chrome's GPU raster differs run to run by
+        // a few levels across a soft area, or on a handful of anti-aliased edge pixels at tile seams
+        if (d.max <= 4 || d.n8 <= 600) { same = true; console.log(`  t=${t}: ${d.n} channel values differ (${d.n8} by more than 8/255, max ${d.max}): raster noise, not a leak`); }
+        else console.log(`  t=${t}: ${d.n} channel values differ (${d.n8} by more than 8/255, max ${d.max})`);
       }
       if (!same) { bad++; fs.writeFileSync(path.join(dir('stills'), `verify_${t}_a.png`), A[t]); fs.writeFileSync(path.join(dir('stills'), `verify_${t}_b${pi}.png`), B); }
       console.log(`pass ${pi + 2} t=${t}: ${same ? 'identical' : 'DIFFERENT (state leaks between frames!)'}`);

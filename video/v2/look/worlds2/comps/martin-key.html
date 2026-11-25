@@ -56,14 +56,15 @@
 
   /* film state (all optional; none = the approved frame, 08:55): walk 0..1 along his route (WALK_AT_DRAWER = at the
      drawer), pads 0..1 the shortfall note, ask 0..1 the key disc, keyRot deg (the key turning), card 0..1 sliding in,
-     martin 0..1 his line, say 0..1 Barnaby's line typed, press 0..1 Allow pressed, time 'HH:MM' */
+     martin 0..1 his line, say 0..1 Barnaby's line typed, press 0..1 Allow pressed, time 'HH:MM', given 0|1 (after the
+     unlock: ordering is his, a filled pip by the back door) */
   function render(st) {
     st = st || {};
     const walk = st.walk == null ? 1 : st.walk, pads = st.pads == null ? 1 : st.pads, ask = st.ask == null ? 1 : st.ask;
     svg.innerHTML = '';
     const route = M.cut(ROUTE, walk), here = route[route.length - 1], arr = Math.max(0, Math.min(1, (walk - .985) / .015));
     M.plan(svg, {
-      moment: 'martinKey', x: 90, y: 286, s: 60, focus: 'goodsin', built: false, labelSize: 32, pipR: 7,
+      moment: st.given ? 'build' : 'martinKey', x: 90, y: 286, s: 60, focus: 'goodsin', built: false, labelSize: 32, pipR: 7,   // given: the key turned, ordering is his
       labelAt: { shop: [0.5, 6.1], office: [6.78, 2.42], reports: [10.08, 1.42], workshop: [7.0, 4.78], stockroom: [15.32, 4.22], goodsin: [15.32, 6.12] },
       labelLines: { office: ['Back', 'office'] }, labelSizes: { office: 28 },
       standNames: true, standNameSize: 19,

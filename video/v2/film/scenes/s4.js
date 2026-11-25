@@ -22,7 +22,7 @@
             card: +clamp((t - M('card')) / .6).toFixed(3), martin: +clamp((t - V(13)) / .35).toFixed(3),
             say: +clamp((t - V(14)) / (VE(14) - V(14) - .15)).toFixed(3), time: t < arrive ? '08:54' : '08:55',
             press: +(clamp((t - cu + .02) / .06) * (1 - clamp((t - cu - .16) / .14))).toFixed(3),
-            keyRot: +(90 * easeInOutCubic(P(t, u, .4))).toFixed(2),
+            keyRot: +(90 * easeInOutCubic(P(t, u, .4))).toFixed(2), given: t >= u + .42 ? 1 : 0,
           }),
           build: l => {
             flash = el('div', {}, l); css(flash, { left: '1251px', top: '669px', width: '80px', height: '80px', borderRadius: '50%', background: '#fff', mixBlendMode: 'screen' });

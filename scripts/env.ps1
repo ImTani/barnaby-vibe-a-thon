@@ -11,6 +11,12 @@ $env:HF_HOME             = Join-Path $root "models\hf"
 $env:BARNABY_MODELS      = Join-Path $root "models"
 $env:UV_PYTHON_DOWNLOADS = "never"
 $env:SYNAPSE_TELEMETRY   = "0"
-foreach ($d in $env:UV_CACHE_DIR, $env:PIP_CACHE_DIR, $env:npm_config_cache, $env:HF_HOME) {
+$env:IMPECCABLE_HOME     = Join-Path $root ".cache\impeccable"   # impeccable skill engine (else ~/.impeccable)
+$env:BLENDER_USER_RESOURCES  = Join-Path $root ".cache\blender"  # Blender user dirs (else %APPDATA%)
+$env:BLENDER_USER_CONFIG     = Join-Path $root ".cache\blender\config"
+$env:BLENDER_USER_SCRIPTS    = Join-Path $root ".cache\blender\scripts"
+$env:BLENDER_USER_DATAFILES  = Join-Path $root ".cache\blender\datafiles"
+$env:BLENDER_USER_EXTENSIONS = Join-Path $root ".cache\blender\extensions"
+foreach ($d in $env:UV_CACHE_DIR, $env:PIP_CACHE_DIR, $env:npm_config_cache, $env:HF_HOME, $env:IMPECCABLE_HOME, $env:BLENDER_USER_CONFIG) {
   New-Item -ItemType Directory -Force $d | Out-Null
 }

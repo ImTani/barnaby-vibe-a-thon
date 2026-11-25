@@ -12,5 +12,12 @@ export HF_HOME="$BARNABY_ROOT/models/hf"
 export BARNABY_MODELS="$BARNABY_ROOT/models"
 export UV_PYTHON_DOWNLOADS=never
 export SYNAPSE_TELEMETRY=0
-mkdir -p "$UV_CACHE_DIR" "$PIP_CACHE_DIR" "$npm_config_cache" "$HF_HOME"
+export IMPECCABLE_HOME="$BARNABY_ROOT/.cache/impeccable"          # the impeccable skill's engine binary (else ~/.impeccable)
+# Blender (film diorama): user config/scripts/datafiles inside the repo (else %APPDATA%\Blender Foundation)
+export BLENDER_USER_RESOURCES="$BARNABY_ROOT/.cache/blender"
+export BLENDER_USER_CONFIG="$BARNABY_ROOT/.cache/blender/config"
+export BLENDER_USER_SCRIPTS="$BARNABY_ROOT/.cache/blender/scripts"
+export BLENDER_USER_DATAFILES="$BARNABY_ROOT/.cache/blender/datafiles"
+export BLENDER_USER_EXTENSIONS="$BARNABY_ROOT/.cache/blender/extensions"
+mkdir -p "$UV_CACHE_DIR" "$PIP_CACHE_DIR" "$npm_config_cache" "$HF_HOME" "$IMPECCABLE_HOME" "$BLENDER_USER_CONFIG"
 unset _here

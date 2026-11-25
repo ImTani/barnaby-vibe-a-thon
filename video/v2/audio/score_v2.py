@@ -7,8 +7,8 @@ and master (glue, true-peak limiter, -16 LUFS integrated, <= -1 dBTP, 48 kHz ste
   ... score_v2.py --no-vst      quick structural check with a plain synth stand-in (never ship this)
   ... score_v2.py --fresh       re-render the instruments even if the cached render matches the notes
 
-Writes video/v2/audio/soundtrack.wav and its stems {music,sfx,ambience,voice}.wav (48 kHz, cues.json -> duration; the
-stems sum to the soundtrack). The instrument renders are cached under .cache/audio/music/ (keyed by the notes).
+Writes video/v2/audio/soundtrack.wav and its stems music.wav + sfx.wav + voice.wav (48 kHz, cues.json -> duration; they
+sum to the soundtrack), with sfx.wav also split into effects.wav and ambience.wav. The instrument renders are cached under .cache/audio/music/ (keyed by the notes).
 
 - Music: D major, 80 BPM (bar = 3 s), on a grid that puts a downbeat exactly on the tab change in scene 6
   (marks.tab_change: "the music builds, then releases on the click and the tab change"). Sections follow cues.json ->
@@ -470,9 +470,12 @@ def main() -> int:
     for lab, t, ta in late:
         print(f"    {lab}: cue {t:.2f}, sound at {ta:.2f} ({(ta - t) * 1000:+.0f} ms)")
     print("mastering ...")
-    st = master({"music": music.astype(np.float64), "sfx": sfx.astype(np.float64), "ambience": amb.astype(np.float64),
+    st = master({"music": music.astype(np.float64), "effects": sfx.astype(np.float64), "ambience": amb.astype(np.float64),
                  "voice": voice.astype(np.float64)}, a.target)
-    for name, x in {**st, "soundtrack": sum(st.values())}.items():
+    # sfx.wav keeps its old meaning (effects + ambience: music + sfx + voice = the soundtrack, and the DubMate backing
+    # is music + sfx); effects.wav and ambience.wav are its two halves
+    out = {**st, "sfx": st["effects"] + st["ambience"], "soundtrack": sum(st.values())}
+    for name, x in out.items():
         cq.write_wav(str(HERE / f"{name}.wav"), x)
     print(f"wrote {HERE / 'soundtrack.wav'} + stems ({DUR:.2f} s) in {time.time() - t0:.1f}s")
     return 0

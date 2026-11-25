@@ -1,7 +1,8 @@
 # Barnaby: the soundtrack
 
-`video/v2/audio/soundtrack.wav` (48 kHz stereo, 217.94 s, the film's length) and its stems `music.wav`, `sfx.wav`,
-`ambience.wav`, `voice.wav`, which sum to it. All wav files are gitignored; this file and the scripts are the record.
+`video/v2/audio/soundtrack.wav` (48 kHz stereo, 217.94 s, the film's length) and its stems `music.wav` + `sfx.wav` +
+`voice.wav`, which sum to it; `sfx.wav` is `effects.wav` + `ambience.wav` (kept whole because the DubMate backing is
+music + sfx). All wav files are gitignored; this file and the scripts are the record.
 
 ```
 runtime/audio/.venv/Scripts/python video/v2/audio/score_v2.py     # music (VSTs) + foley + voices -> mix and master
@@ -59,23 +60,24 @@ its bar line on each run.
 | true peak | <= -1 dBTP | -1.8 dBTP (ffmpeg, 4x), -1.8 dBTP (4x polyphase) |
 | loudness range | - | 6.7 LU |
 | format | 48 kHz stereo | 48000 Hz, 2 ch, PCM_16, 217.94 s (film 217.94 s) |
-| stems sum to the soundtrack | exact | max difference -76.3 dBFS (dither) |
-| stems, integrated | - | music -30.0 LUFS, sfx -29.3 LUFS, ambience -33.0 LUFS, voice -15.5 LUFS |
+| music + effects + ambience + voice = soundtrack | exact | max difference -76.3 dBFS (dither) |
+| sfx.wav = effects + ambience | exact | max difference -84.3 dBFS (dither) |
+| stems, integrated | - | music -30.0 LUFS, effects -29.3 LUFS, ambience -33.0 LUFS, voice -15.5 LUFS |
 | dialogue over everything under it | always clear | min 10.6 dB (line 50), median 15.5 dB over 54 lines (RMS in each line's speech window) |
-| effects on their cues | on the cue | 64 one-shots: median 4 ms, max 32 ms from cue to the first rise in the sfx stem |
+| effects on their cues | on the cue | 64 one-shots: median 4 ms, max 32 ms from cue to the first rise in the effects stem |
 
 ## Key moments (excerpts in .cache/audio/excerpts/)
 
 | moment | excerpt | excerpt loudness | at the event: peak / loudest 400 ms | stems RMS at the event (dBFS) |
 |---|---|---|---|---|
-| s2_bell_arrival | 16.5-22.5 s | -18.8 LUFS | -6.1 dBFS / -17.0 LUFS | music -37.0, sfx -23.6, ambience -30.1, voice -96.4 |
-| s4_key_turn | 68.47-72.02 s | -16.2 LUFS | -4.1 dBFS / -22.3 LUFS | music -29.2, sfx -32.7, ambience -33.8, voice -96.5 |
-| s6_click_tab_change | 141.32-145.92 s | -18.8 LUFS | -5.1 dBFS / -17.2 LUFS | music -39.2, sfx -36.1, ambience -42.3, voice -23.4 |
-| s9_final_bell | 207.44-213.44 s | -24.3 LUFS | -7.6 dBFS / -18.2 LUFS | music -36.3, sfx -24.6, ambience -33.9, voice -96.3 |
+| s2_bell_arrival | 16.5-22.5 s | -18.8 LUFS | -6.1 dBFS / -17.0 LUFS | music -37.0, effects -23.6, ambience -30.1, voice -96.4 |
+| s4_key_turn | 68.47-72.02 s | -16.2 LUFS | -4.0 dBFS / -22.3 LUFS | music -29.2, effects -32.7, ambience -33.8, voice -96.5 |
+| s6_click_tab_change | 141.32-145.92 s | -18.8 LUFS | -5.1 dBFS / -17.2 LUFS | music -39.2, effects -36.1, ambience -42.3, voice -23.4 |
+| s9_final_bell | 207.44-213.44 s | -24.3 LUFS | -7.7 dBFS / -18.2 LUFS | music -36.3, effects -24.6, ambience -33.9, voice -96.3 |
 
 ## Effect cues: source and processing
 
-Core Library paths are under `C:/ProgramData/Ableton/Live 12 Suite/Resources/Core Library/Samples/`. Measured: onset = cue to the first rise in the sfx stem; peak and loudest 400 ms of the sfx stem alone (0-0.6 s after the cue; overlapping sounds count).
+Core Library paths are under `C:/ProgramData/Ableton/Live 12 Suite/Resources/Core Library/Samples/`. Measured: onset = cue to the first rise in the effects stem; peak and loudest 400 ms of the effects stem alone (0-0.6 s after the cue; overlapping sounds count).
 
 ### rain
 
@@ -130,7 +132,7 @@ Processing: 10 ms grains of the tiny perc (-3..+2 st) at irregular seek interval
 | 0.90 | hard drive chatter | +0 ms | -21.3 | -37.2 LUFS |
 | 5.08 |  | -30 ms | -16.7 | -33.7 LUFS |
 | 6.10 |  | -32 ms | -16.4 | -35.2 LUFS |
-| 6.78 |  | -30 ms | -16.2 | -33.8 LUFS |
+| 6.78 |  | -30 ms | -16.1 | -33.8 LUFS |
 
 ### tab
 
@@ -147,8 +149,8 @@ Processing: old shop mouse: the cassette's latch (from 46 ms) -1 st (down) + vin
 | 5.71 |  | -8 ms | -16.5 | -34.3 LUFS |
 | 6.05 |  | -8 ms | -16.4 | -33.4 LUFS |
 | 6.39 |  | -8 ms | -16.3 | -33.8 LUFS |
-| 6.73 |  | -8 ms | -16.2 | -32.6 LUFS |
-| 7.07 |  | -14 ms | -16.2 | -35.8 LUFS |
+| 6.73 |  | -8 ms | -16.1 | -32.6 LUFS |
+| 7.07 |  | -14 ms | -16.1 | -35.8 LUFS |
 | 7.80 |  | -8 ms | -16.7 | -37.6 LUFS |
 | 8.52 |  | -8 ms | -16.7 | -37.6 LUFS |
 
@@ -166,7 +168,7 @@ Processing: as tab, a little lighter
 | 16.45 |  | -8 ms | -17.3 | -35.2 LUFS |
 | 16.65 |  | -8 ms | -17.3 | -35.1 LUFS |
 | 16.85 |  | -8 ms | -17.3 | -35.1 LUFS |
-| 17.05 |  | -8 ms | -17.3 | -35.2 LUFS |
+| 17.05 |  | -8 ms | -17.3 | -35.1 LUFS |
 | 17.25 |  | -8 ms | -17.4 | -35.3 LUFS |
 | 17.45 |  | -8 ms | -6.6 | -38.4 LUFS |
 
@@ -307,7 +309,7 @@ Processing: the lock recording as is (lead-in trimmed): the key in, the turn, th
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 69.52 | a real key turning in a lock | -6 ms | -4.6 | -25.3 LUFS |
+| 69.52 | a real key turning in a lock | -6 ms | -4.5 | -25.3 LUFS |
 
 ### bell_soft
 
@@ -402,7 +404,7 @@ Processing: three overlapping handfuls of the jingle (+-0.5 st) and a metal ratt
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 200.70 | Martin's keys | -2 ms | -15.1 | -26.0 LUFS |
+| 200.70 | Martin's keys | -2 ms | -15.0 | -26.0 LUFS |
 
 ### street_night
 

@@ -24,7 +24,7 @@ ROOT = V2.parents[1]
 CUES = json.loads((V2 / "cues.json").read_text(encoding="utf-8"))
 MARK = CUES["marks"]
 OUT = ROOT / ".cache" / "audio" / "excerpts"
-STEMS = ("music", "sfx", "ambience", "voice")
+STEMS = ("music", "effects", "ambience", "voice")        # sfx.wav = effects + ambience
 SWELLS = {"timelapse", "compressor"}                 # these rise slowly by design: no single transient to time
 MOMENTS = {                                          # name: (from, to, the event's time)
     "s2_bell_arrival": (MARK["bell_arrive"] - 1.5, MARK["bell_arrive"] + 4.5, MARK["bell_arrive"]),
@@ -63,7 +63,7 @@ def env_db(x, sr, hop=.002):
 
 
 def cue_onsets(fx, sr):
-    """For each one-shot cue: the first rise in the sfx stem within -30..+250 ms of the cue (9 dB over the 50 ms
+    """For each one-shot cue: the first rise in the effects stem within -30..+250 ms of the cue (9 dB over the 50 ms
     before it, and above -60 dBFS); and the effect's peak and loudiest 400 ms (momentary loudness) in the next 0.6 s."""
     e, hop = env_db(fx, sr)
     meter = pyln.Meter(sr, block_size=.4)
@@ -110,10 +110,10 @@ def dialogue_clearance(st, sr):
         a, b = line.get("speech", [line["t"], line["t"] + line["dur"]])
         sl = slice(int(a * sr), int(b * sr))
         v = st["voice"][sl]
-        bed = st["music"][sl] + st["sfx"][sl] + st["ambience"][sl]
+        bed = st["music"][sl] + st["effects"][sl] + st["ambience"][sl]
         rows.append({"line": i, "who": line["who"], "t": a, "voice_db": round(db(rms(v)), 1),
                      "under_db": round(db(rms(bed)), 1), "clear_db": round(db(rms(v)) - db(rms(bed)), 1),
-                     "under": {k: round(db(rms(st[k][sl])), 1) for k in ("music", "sfx", "ambience")}})
+                     "under": {k: round(db(rms(st[k][sl])), 1) for k in ("music", "effects", "ambience")}})
     return rows
 
 
@@ -131,7 +131,8 @@ def write_sound_md(res: dict) -> None:
          f"| loudness range | - | {res['ffmpeg']['LRA']} LU |",
          f"| format | 48 kHz stereo | {res['file']['sr']} Hz, {res['file']['channels']} ch, {res['file']['subtype']}, "
          f"{res['file']['dur']} s (film {res['file']['film']} s) |",
-         f"| stems sum to the soundtrack | exact | max difference {res['stems_sum_err_db']} dBFS (dither) |",
+         f"| music + effects + ambience + voice = soundtrack | exact | max difference {res['stems_sum_err_db']} dBFS (dither) |",
+         f"| sfx.wav = effects + ambience | exact | max difference {res['sfx_is_effects_plus_ambience_db']} dBFS (dither) |",
          f"| stems, integrated | - | " + ", ".join(f"{k} {v} LUFS" for k, v in res["stems_I"].items()) + " |"]
     dl = res["dialogue"]
     cl = sorted(dl, key=lambda r: r["clear_db"])
@@ -139,7 +140,7 @@ def write_sound_md(res: dict) -> None:
           f"{float(np.median([r['clear_db'] for r in dl])):.1f} dB over {len(dl)} lines (RMS in each line's speech window) |"]
     devs = [abs(r["dev_ms"]) for r in res["cues"] if r["dev_ms"] is not None]
     L += [f"| effects on their cues | on the cue | {len(devs)} one-shots: median {np.median(devs):.0f} ms, max {max(devs)} ms "
-          f"from cue to the first rise in the sfx stem |", ""]
+          f"from cue to the first rise in the effects stem |", ""]
     L += ["## Key moments (excerpts in .cache/audio/excerpts/)", "",
           "| moment | excerpt | excerpt loudness | at the event: peak / loudest 400 ms | stems RMS at the event (dBFS) |",
           "|---|---|---|---|---|"]
@@ -148,7 +149,7 @@ def write_sound_md(res: dict) -> None:
                  f"{m['event_momentary_lufs']} LUFS | " + ", ".join(f"{k} {v}" for k, v in m["event_stems_rms_db"].items()) + " |")
     L += ["", "## Effect cues: source and processing", "",
           "Core Library paths are under `C:/ProgramData/Ableton/Live 12 Suite/Resources/Core Library/Samples/`. "
-          "Measured: onset = cue to the first rise in the sfx stem; peak and loudest 400 ms of the sfx stem alone "
+          "Measured: onset = cue to the first rise in the effects stem; peak and loudest 400 ms of the effects stem alone "
           "(0-0.6 s after the cue; overlapping sounds count).", ""]
     meas = {(round(r["t"], 3), r["type"]): r for r in res["cues"]}
     items = sorted(CUES["sfx"] + foley.extra_cues(CUES), key=lambda s: s["t"])
@@ -201,13 +202,15 @@ def main() -> int:
     res["sample_peak_dbfs"] = round(db(np.abs(mix).max()), 2)
     res["ffmpeg"] = ffmpeg_ebur128(path)
     res["stems_sum_err_db"] = round(db(np.abs(sum(st.values()) - mix).max()), 1)
+    sfx_wav = sf.read(str(HERE / "sfx.wav"), always_2d=True)[0]
+    res["sfx_is_effects_plus_ambience_db"] = round(db(np.abs(sfx_wav - st["effects"] - st["ambience"]).max()), 1)
     res["stems_I"] = {k: (round(meter.integrated_loudness(x), 1) if rms(x) > 1e-6 else None) for k, x in st.items()}
     print(f"soundtrack: {res['file']}")
     print(f"  integrated {res['pyloudnorm_I']} LUFS (pyloudnorm), ffmpeg ebur128 {res['ffmpeg']}")
     print(f"  true peak {res['true_peak_dbtp_4x']} dBTP (4x), sample peak {res['sample_peak_dbfs']} dBFS")
     print(f"  stems sum to the mix within {res['stems_sum_err_db']} dBFS; stems integrated: {res['stems_I']}")
 
-    rows = cue_onsets(st["sfx"], sr)
+    rows = cue_onsets(st["effects"], sr)
     res["cues"] = rows
     bad = [r for r in rows if r["onset"] is None or abs(r["dev_ms"]) > 40]
     devs = [abs(r["dev_ms"]) for r in rows if r["dev_ms"] is not None]
@@ -217,7 +220,7 @@ def main() -> int:
     by = {}
     for r in rows:
         by.setdefault(r["type"], []).append(r)
-    print("  per type: peak dBFS / loudest 400 ms (LUFS), sfx stem alone")
+    print("  per type: peak dBFS / loudest 400 ms (LUFS), effects stem alone")
     for k, v in by.items():
         print(f"    {k:12} n={len(v):2d}  peak {max(r['peak_dbfs'] for r in v):6.1f}  momentary {max(r['mom_lufs'] for r in v):6.1f}")
 

@@ -8,7 +8,7 @@
 (function () {
   const C = CUES.scenes[1], S = C.start, E = C.end, FI = .35;
   const TABS = ['shop', 'supplier', 'sms', 'xls', 'parts', 'invoices', 'email', 'bank', 'cal'];
-  let run, shop, X = null;
+  let run, shop, X = null, BW = null, bellWin, bellMark;
   const ct = () => M('close_tabs');
   // the i-th close (0..8), on the cue sheet's own tab_close sounds (the layout's .25 + i * .2 if there are none)
   const CLOSES = () => { const c = sfxAll('tab_close', ct() - .5, ct() + 20); return c.length === 9 ? c : [...Array(9)].map((_, i) => ct() + .25 + i * .2); };
@@ -35,33 +35,43 @@
     }
     const c = clicks.length ? hand(t, [ct(), rest[0], rest[1]], clicks, [closeAt(8) + 1.2, rest[0] + 40, rest[1] + 120]) : rest;
     st.cursor = { x: +c[0].toFixed(2), y: +c[1].toFixed(2) };
-    if (n === 0) Object.assign(st, { browser: false, tabs: [] });
+    if (n === 0) Object.assign(st, { browser: false, tabs: [], barnaby: t >= M('bell_arrive') - .05 ? 'frame' : 'off' });
     else Object.assign(st, { tabs: TABS.slice(0, n), active: TABS[n - 1], tabIn: +easeInOutSine(fold).toFixed(4) });
     return st;
   }
   Scene({
-    id: '2', start: S, end: E, fadeIn: FI,
+    id: '2', start: S, end: E, fadeIn: 0,
     build(root) {
       const sweepA = M('reading') + .1, sweepB = M('six_lit') - .9;
       const SIX = M('six_lit') + .2;
       run = seq(root, [
-        // holds: each still held (an imperceptible drift at most); a detail is a cut, not a push
-        { src: 'world/photo_2009.png', at: S - FI, cam: hold(750, 550, 1.06) },
-        { src: 'world/x_board_night.png', at: M('calendar'), fi: .5, cam: hold(400, 620, 1.55) },
-        { src: 'world/01_wide_night.png', at: M('box'), fi: .5, cam: hold(1120, 670, 2.1) },
-        { src: 'live/shop', at: ct(), fi: .3, cam: [960, 540, 1], state: t => shopState(t) },
-        { src: 'world/x_bell.png', at: M('bell_arrive') - .05, fi: .2, cam: hold(880, 640, 1.12) },
-        { src: 'comp/theo-handover-1-reading', at: M('reading') - .25, fi: .4, cam: [960, 540, 1],
+        // 2.1 the photo: a very slow push (memory); 2.2 the calendar, held; 2.3 the desk at night for "Seventeen years."
+        { src: 'world/photo_2009.png', at: S, cam: move(S + .3, M('calendar') - S - .5, [750, 550, 1.04], [730, 540, 1.12], 0) },
+        { src: 'world/x_board_night.png', at: M('calendar'), cam: hold(400, 620, 1.55) },
+        { src: 'world/02_medium_night.png', at: M('box'), cam: hold(960, 610, 1.08) },
+        // 2.4 the tabs close (locked); 2.5 on the bell, Barnaby's window opens on the desktop, his mark ringing
+        { src: 'live/shop', at: ct(), cam: [960, 540, 1], state: t => shopState(t),
+          build: l => { bellWin = el('div', {}, l); css(bellWin, { position: 'absolute', display: 'none', background: '#14110E' });
+            bellMark = el('div', { html: markSVG('#D3A14A') }, bellWin); css(bellMark, { position: 'absolute', width: '150px', height: '150px' }); },
+          over: t => {
+            if (!BW || t < M('bell_arrive') - .05) { bellWin.style.display = 'none'; return; }
+            const k = easeOutCubic(clamp((t - M('bell_arrive') + .05) / .35));
+            css(bellWin, { display: 'block', left: BW[0] + 'px', top: BW[1] + 'px', width: BW[2] + 'px', height: BW[3] + 'px', opacity: k.toFixed(3) });
+            css(bellMark, { left: (BW[2] / 2 - 75) + 'px', top: (BW[3] / 2 - 95) + 'px' });
+            markAnim(bellMark, t, sfxT('bell', M('bell_arrive')));
+          } },
+        // 2.6 Theo's hologram (held): the scan, the six; 2.7 the same, modest, on the 2009 PC (locked)
+        { src: 'comp/theo-handover-1-reading', at: M('reading'), cam: [960, 540, 1],
           state: t => ({ scan: +lerp(-.6, 20.6, easeInOutSine(clamp((t - sweepA) / (sweepB - sweepA)))).toFixed(3),
             heardK: +clamp((t - V(5)) / (VE(5) - V(5) - .1)).toFixed(3) }) },
-        { src: 'comp/theo-handover-2-taken', at: M('six_lit'), fi: .35, cam: [960, 540, 1],
+        { src: 'comp/theo-handover-2-taken', at: M('six_lit'), cam: [960, 540, 1],
           state: t => ({ lit: +clamp((t - SIX) / .26, 0, 6).toFixed(3), counts: +clamp((t - SIX - 1.6) / .4).toFixed(3),
             sayK: +clamp((t - V(6)) / (VE(6) - V(6) - .1)).toFixed(3) }) },
-        { src: 'comp/theo-handover-pc', at: M('old_pc'), fi: .5, cam: [960, 540, 1],
+        { src: 'comp/theo-handover-pc', at: M('old_pc'), cam: [960, 540, 1],
           state: t => ({ lit: +clamp((t - M('old_pc') - .2) / .16, 0, 6).toFixed(3), sayK: +clamp((t - V(6)) / (VE(6) - V(6) - .1)).toFixed(3) }) },
-        { src: 'world/02_medium_night.png', at: M('desk_detail'), fi: .4, cam: hold(960, 620, 1.12) },
-        // the scene's one move: the key landing (Blender's s2_key_lamp; on the still, a slow settle onto the key)
-        { src: 'world/03_keys_night.png', at: M('key'), fi: .4, cam: move(M('key') + .2, 1.6, [760, 700, 1.1], [700, 800, 1.3], 0),
+        // 2.8 back to the room: the desk at night for "It's Theo..." / "Noted."; 2.9 the key (Blender's s2_key_lamp)
+        { src: 'world/02_medium_night.png', at: M('desk_detail'), cam: hold(960, 620, 1.1) },
+        { src: 'world/03_keys_night.png', at: M('key'), cam: move(M('key') + .2, 1.6, [760, 700, 1.1], [700, 800, 1.3], 0),
           grade: t => `brightness(${lerp(1, .16, easeOutCubic(P(t, M('lamp_off'), .15))).toFixed(3)})` },
       ], E);
       shop = run.list[3].s;
@@ -75,6 +85,10 @@
         const r = d.querySelector('.tab.on .tx').getBoundingClientRect();
         X[n] = [(r.left + r.width * .45) / 1.5, (r.top + r.height * .5) / 1.5];
       }
+      // Barnaby's window on the night desktop: its client area (1920x1080 px), where his bell rings
+      pc.render(pc.preset('desktop', { date: '2026-11-19', time: '21:47', barnaby: 'frame', cursor: null }));
+      const c = d.querySelector('#barnaby-client').getBoundingClientRect();
+      BW = [c.left, c.top, c.width, c.height];
     },
     render(t) { run.render(t); },
   });

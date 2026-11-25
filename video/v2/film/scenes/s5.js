@@ -30,7 +30,7 @@
   }
   let run, sw, note, plan, A = null;
   Scene({
-    id: '5', start: S, end: E, fadeIn: FI,
+    id: '5', start: S, end: E, fadeIn: 0,
     build(root) {
       // the walks, quicker each time, timed by their footsteps on the cue sheet (the third has none: quicker still)
       const stepsEnd = (a, b) => { const st = sfxAll('step', a - .05, b); return st.length ? st[st.length - 1] + .25 : a + 1; };
@@ -90,9 +90,9 @@
           cur.at(c[0], c[1], true);
         } }, o); };
       run = seq(root, [
-        { src: 'world/04_medium_monday.png', at: S - FI, grade: AFT, cam: hold(960, 600, 1.1) },
+        { src: 'world/04_medium_monday.png', at: S, grade: AFT, keepGrade: true, cam: hold(960, 600, 1.1) },
         planItem({ at: V(19) - .1, fi: .35, cam: [960, 540, 1] }),
-        planItem({ at: M('walk1'), cam: [620, 540, 1.62] }),
+        planItem({ at: M('walk1'), cam: move(M('passage') + .05, 2.2, [620, 540, 1.62], [600, 525, 1.8], 0) }),   // 5.4 the slow push as it forms
       ], E);
       plan = run.list[1].s;
       sw = sweep(root, { angle: 105, color: 'rgba(255,226,180,.5)' });

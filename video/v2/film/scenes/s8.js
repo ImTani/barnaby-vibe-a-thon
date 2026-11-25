@@ -12,9 +12,9 @@
   const TL = 'worlds/theo-lisbon.png', FORM = { x: 700, y: 400, w: 724, h: 440 }, BTN = [813, 779];
   // the form, step by step (capture.js manifest): 0 empty, 1 click Name, 2-7 "quorum", 8 click Repo path,
   // 9-30 "/home/theo/crew/quorum", 31 click API base URL, 32-52 "http://localhost:8001", 53 hover Connect, 54 pressed
-  // Theo types at about 7 characters a second, unevenly, a Tab between fields (the form shows the same focus as a
-  // click); from the typing sound on the cue sheet (keys_modern) or just after the app comes up, done in time for
-  // the hand to reach Connect at human speed (0.9 s) and press on the click sound. With less room it types faster.
+  // From the `typing` mark Theo types "quorum" at about 8 characters a second, unevenly, Tab, pastes the repo path
+  // (Ctrl+V), Tab, types the URL, in time for the hand to reach Connect at human speed and press on the click sound.
+  // With less room than that it types faster (window.__typingFit < 1).
   const PRESS = () => sfxT('mouse_click', M('connect'));
   let FIT = 1;                                                   // how much the typing had to be squeezed (1 = not)
   const STEPS = () => {
@@ -22,8 +22,9 @@
     kind.push('click'); for (let i = 0; i < 6; i++) kind.push('key');
     kind.push('tab'); for (let i = 0; i < 22; i++) kind.push('key');
     kind.push('tab'); for (let i = 0; i < 21; i++) kind.push('key');
-    const gap = (k, i) => k === 'click' ? 0 : k === 'tab' ? .34 + .1 * rand(i, 91) : (1 / 7) * (.65 + .7 * rand(i, 92)) + (rand(i, 93) < .08 ? .18 : 0);
-    const t0 = Math.max(M('realapp_full') + .45, sfxT('keys_modern', M('realapp_full')) - .05), t1 = PRESS() - 1.25;
+    const repo = i => i >= 8 && i <= 29;                         // the repo path's 22 keys arrive at once: pasted
+    const gap = (k, i) => k === 'click' ? 0 : k === 'tab' ? .34 + .1 * rand(i, 91) : repo(i) ? (i === 8 ? .42 : 0) : (1 / 8) * (.65 + .7 * rand(i, 92)) + (rand(i, 93) < .08 ? .16 : 0);
+    const t0 = CUES.marks.typing != null ? M('typing') : Math.max(M('realapp_full') + .45, sfxT('keys_modern', M('realapp_full')) - .05), t1 = PRESS() - 1.25;
     const raw = kind.map((k, i) => gap(k, i)), need = raw.reduce((a, b) => a + b, 0);
     FIT = need > 0 && t1 - t0 < need ? Math.max(.05, (t1 - t0) / need) : 1;
     const at = []; let t = t0;
@@ -38,16 +39,16 @@
     let k = 0; for (let i = 0; i < stepAt.length; i++) if (t >= stepAt[i]) k = i + 1; return k;
   };
   Scene({
-    id: '8', start: S, end: E, fadeIn: FI,
+    id: '8', start: S, end: E, fadeIn: 0,
     build(root) {
       stepAt = STEPS(); window.__typingFit = FIT;                  // < 1: Theo had to type faster than 7/s to fit
-      const qOpen = V(49) + 2.9;
+      const qOpen = M('queue') - .3;
       run = seq(root, [
-        { src: 'world/lisbon_01_wide_day.png', at: S - FI, cam: hold(970, 540, 1.04) },
-        { src: 'world/x_lisbon_detail_day.png', at: M('nata'), fi: .4, cam: hold(880, 580, 1.08) },
-        { src: 'live/lis-main-empty', at: M('realapp'), fi: .3, cam: [960, 540, 1],
+        { src: 'world/lisbon_01_wide_day.png', at: S, cam: move(S + .4, M('nata') - S - .6, [970, 540, 1.0], [1000, 560, 1.12], 0) },
+        { src: 'world/x_lisbon_detail_day.png', at: M('nata'), cam: hold(880, 580, 1.06) },
+        { src: 'live/lis-main-empty', at: M('realapp'), fi: .12, pin: { shot: 's8_lisbon_day', d: .6 }, cam: [960, 540, 1],
           state: t => ({ preset: 'realapp', app: +easeOutCubic(clamp((t - M('realapp') - .05) / .6)).toFixed(4), secs: 40 + Math.floor(t - M('realapp')) }) },
-        { src: 'rapp/base.jpg', at: M('realapp_full'), fi: .25, cam: [712, 560, 1],
+        { src: 'rapp/base.jpg', at: M('realapp_full'), cam: [712, 560, 1],
           build: l => {
             forms = [];
             for (let i = 0; i <= 54; i++) {
@@ -66,20 +67,16 @@
             const c = hand(t, [from, BTN[0] + 330, BTN[1] + 150], [{ t: PRESS(), x: BTN[0] + 6, y: BTN[1] + 4 }]);
             fcur.at(c[0], c[1], true);
           } },
-        { src: 'live/lis-main', at: M('synapse_log') - .1, cam: [600, 700, 1.6],               // a cut to Barnaby's log pane, held
+        { src: 'live/lis-main', at: M('synapse_log') - .1, cam: [600, 700, 1.6],               // Barnaby's log pane, held
           state: t => ({ preset: 'quorum', time: '09:40', secs: 2 + Math.floor((t - M('synapse_log')) * 2), out: Math.floor(lerp(0, 10.99, clamp((t - M('synapse_log')) / 1.6))),
             say: '', sayK: 0, plan: '', mode: 'thinking', level: 0, notify: 0 }) },
-        { src: TL, at: M('theo_world'), fi: .35, cam: [960, 540, 1],
+        { src: TL, at: M('theo_world'), cam: [960, 540, 1],
           build: l => { rv = reveal(l, TL, [[1466, 884, 1840, 912], [1467, 922, 1846, 950], [1467, 959, 1604, 987]], { color: '#14110E', a: V(45), b: VE(45) - .1, chars: [30, 33, 11] }); },
           over: t => rv.render(t) },
-        { src: 'world/lisbon_02_medium_day.png', at: M('still_theo'), cam: hold(1040, 540, 1.6) },
-        { src: 'live/lis-main', at: V(47) - .1, cam: [1612, 650, 1.6],                          // a cut to his slot, held
-          state: t => ({ preset: 'quorum-theo', sayK: +clamp((t - V(47)) / (VE(47) - V(47))).toFixed(3), level: +(.4 * (t < VE(47) ? 1 : 0)).toFixed(2) }) },
-        { src: 'world/lisbon_02_medium_day.png', at: M('render_box'), cam: hold(1300, 600, 1.35) },
-        { src: 'live/lis-studio', at: V(49), fi: .25, cam: [960, 540, 1],
+        { src: 'live/lis-studio', at: V(48), cam: [960, 540, 1],
           state: t => ({ preset: 'comfy', queueOpen: +easeInOutCubic(clamp((t - qOpen + .45) / .55)).toFixed(4), queueHl: +clamp((t - qOpen - .2) / .4).toFixed(3),
-            step: Math.min(28, 9 + Math.floor((t - V(49)) * 2.4)), frame: 123 + 2 * Math.floor((t - V(49)) * 6), secs: 3 + Math.floor(t - V(49)) }) },
-        { src: 'world/lisbon_02_medium_day.png', at: V(50), fi: .3, cam: hold(970, 560, 1.12) },
+            step: Math.min(28, 9 + Math.floor((t - V(48)) * 2)), frame: 123 + 2 * Math.floor((t - V(48)) * 6), secs: 3 + Math.floor(t - V(48)) }) },
+        { src: 'world/lisbon_02_medium_day.png', at: V(50), cam: hold(970, 560, 1.12) },
       ], E);
       chip = label(root, 'The real Barnaby app', 'left:48px;top:40px;font:600 28px "Segoe UI",sans-serif;color:#24211C;background:rgba(241,229,201,.95);border:1px solid #A8772A;padding:6px 16px;border-radius:20px');
       disc = label(root, 'Quorum and ComfyUI scenes staged · endpoint counts from real Synapse scans',

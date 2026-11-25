@@ -28,6 +28,15 @@ const flags = {}, pos = [];
 for (const a of argv) { if (!a.startsWith('--')) { pos.push(a); continue; } const [k, v] = a.slice(2).split('='); flags[k] = v === undefined ? true : v; }
 const FPS = +(flags.fps || 24), WORKERS = +(flags.workers || 2), QUALITY = +(flags.quality || 92), SCALE = +(flags.scale || 1);
 const BLENDER_JSON = path.resolve(HERE, '../world/anim/shots.json');
+// the world stills on disk, with their pixel sizes (PNG header), so new Blender stills swap in when they land
+function worldFiles() {
+  const dir = path.resolve(HERE, '../world/out'), out = {};
+  for (const f of fs.readdirSync(dir)) {
+    if (!/[.]png$/i.test(f)) continue;
+    try { const b = Buffer.alloc(24), fd = fs.openSync(path.join(dir, f), 'r'); fs.readSync(fd, b, 0, 24, 0); fs.closeSync(fd); out[f] = [b.readUInt32BE(16), b.readUInt32BE(20)]; } catch (e) { }
+  }
+  return out;
+}
 // a shot counts as done only if its first and last frames are on disk (a re-render in progress may have cleared them)
 const readBlender = () => {
   let m; try { m = JSON.parse(fs.readFileSync(BLENDER_JSON, 'utf8')); } catch (e) { return null; }
@@ -50,7 +59,7 @@ async function worker(tag, scale = SCALE) {
   p.on('console', m => { if (m.type() === 'error') console.log(`  [page ${tag}]`, m.text()); });
   p.on('pageerror', e => console.log(`  [pageerror ${tag}]`, e.message));
   await p.setViewport({ width: 1920, height: 1080, deviceScaleFactor: scale });
-  await p.evaluateOnNewDocument(m => { window.BLENDER = m; }, readBlender());
+  await p.evaluateOnNewDocument((m, wf) => { window.BLENDER = m; window.WORLD_FILES = wf; }, readBlender(), worldFiles());
   await p.goto(URL, { waitUntil: 'load' });
   await p.waitForFunction('window.__ready === true', { timeout: 180000 });
   await p.evaluate(async () => { await document.fonts.ready; for (let t = 0; t < window.DURATION; t += 2) { window.render(t); await window.settle(); } });
@@ -75,6 +84,10 @@ function ffmpeg(args) {
 const WAV = path.resolve(HERE, '../audio/soundtrack.wav');
 function mux(silent, final) {
   if (!fs.existsSync(WAV)) { console.log('no soundtrack yet:', WAV); return; }
+  // never put a soundtrack cut for another clock on this picture
+  const pr = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', WAV], { encoding: 'utf8' });
+  const wd = parseFloat(pr.stdout);
+  if (!(Math.abs(wd - DUR) < .5)) { console.log(`soundtrack is ${wd} s, the picture ${DUR} s: not muxed (re-run: render.js mux --name=...)`); return; }
   ffmpeg(['-i', silent, '-i', WAV, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', final]);
   console.log('wrote', final);
 }

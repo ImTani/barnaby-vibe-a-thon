@@ -31,12 +31,11 @@
       // the screen is full frame and locked; the one move: on "It's the one with the spanner." a push to the spanner
       const tabCam = move(M('spanner'), Math.min(2.2, E - M('spanner') - .1), [960, 540, 1.0], [720, 262, 2.1], 0);
       run = seq(root, [
-        { src: 'world/01_wide_night.png', at: S,
-          cam: [[M('light_up'), 960, 540, 1.0], [M('medium') + .5, 880, 455, 1.3]],
+        { src: 'world/01_wide_night.png', at: S, cam: hold(960, 540, 1.0),
           grade: t => `brightness(${easeInOutSine(P(t, M('light_up'), 1.8)).toFixed(3)})` },
-        { src: 'world/02_medium_night.png', at: M('medium'), fi: .45,
-          cam: [[M('medium'), 880, 640, 1.04], [M('screen') + .4, 842, 626, 1.6]] },
-        { src: 'live/shop', at: M('screen'), fi: .35, cam: tabCam, state: t => state(t) },
+        { src: 'world/02_medium_night.png', at: M('medium'), cam: move(M('medium') + .4, M('screen') - M('medium') - .5, [880, 640, 1.04], [842, 626, 1.6], 0) },
+        // 1.2 into the screen: the live desktop pinned on the monitor's glass grows to full frame (a cut without a quad)
+        { src: 'live/shop', at: M('screen'), fi: .12, pin: { shot: 's1_open', d: .6 }, cam: tabCam, state: t => state(t) },
       ], E);
       live = run.list[2].s;
     },

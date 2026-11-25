@@ -1,6 +1,6 @@
 {
  "version": "2.2 (paced for picture; timed from the rendered voices by video/v2/audio/layout.py)",
- "duration": 296.85,
+ "duration": 300.05,
  "fps": 15,
  "voices": {
   "Barnaby": "bm_george+bm_fable (75/25)",
@@ -108,7 +108,7 @@
    "title": "Goodnight",
    "where": "Shop 18:40 / Lisbon 20:07, Tue 24 Nov",
    "start": 270.45,
-   "end": 296.85,
+   "end": 300.05,
    "script": [
     165,
     180
@@ -801,12 +801,12 @@
    "pan": 0.29
   },
   {
-   "t": 24.78,
+   "t": 24.79,
    "type": "tab",
    "pan": -0.1
   },
   {
-   "t": 25.56,
+   "t": 25.63,
    "type": "tab",
    "pan": -0.05
   },
@@ -1111,7 +1111,7 @@
    "fade_in": 1.6,
    "level": 0.8,
    "label": "rain returns over the shop (bed; leads the cut)",
-   "until": 296.85
+   "until": 300.05
   },
   {
    "t": 271.45,
@@ -1136,7 +1136,7 @@
    "type": "street_night",
    "level": 1.0,
    "label": "a quieter street outside in Lisbon (bed)",
-   "until": 296.85
+   "until": 300.05
   },
   {
    "t": 283.2,
@@ -1207,8 +1207,8 @@
   "tab8": 19.75,
   "tab9": 20.6,
   "martin_os": 21.2,
-  "tab4_active": 24.7,
-  "tab5_active": 25.5,
+  "tab4_active": 24.71,
+  "tab5_active": 25.57,
   "spanner": 26.77,
   "photo": 30.18,
   "calendar": 33.38,
@@ -1283,9 +1283,10 @@
   "title": 286.15,
   "new_desk_fades": 289.35,
   "old_ones": 290.25,
-  "credit": 292.65,
-  "small_print": 292.95,
-  "fade_out": 295.65,
-  "end": 296.85
+  "end_card": 293.05,
+  "credit": 293.45,
+  "small_print": 293.75,
+  "fade_out": 299.05,
+  "end": 300.05
  }
 }

@@ -10,8 +10,10 @@ Script words that weren't recognised get times interpolated from their neighbour
 layout.py reads words.json through Timeline.word(n, "five") (falls back to its own offsets when a line has no
 timings), so a click lands on "five" and the tab-five page appears with it, whoever reads the line.
 
-The model lives in models/hf inside the repo (downloaded on first use only with the director's go-ahead; delete the
-folder and nothing remains). CPU, int8: about a second per line.
+Backends (no downloads): OpenAI Whisper from DubMate Studio's own runtime and its cached model (~/.cache/whisper/
+base.pt), the default on this machine:
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="X:/Tools/DubMate Studio/ai-packages"       "X:/Tools/DubMate Studio/resources/python-runtime/python.exe" video/v2/audio/align.py
+or faster-whisper (runtime/voice/.venv) with a model in models/hf: --backend faster --model small.en.
 """
 from __future__ import annotations
 
@@ -38,30 +40,48 @@ def script_words(text: str) -> list[str]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="small.en")
+    ap.add_argument("--backend", default="openai", choices=["openai", "faster"])
+    ap.add_argument("--model", default="base")
+    ap.add_argument("--site", default="X:/Tools/DubMate Studio/ai-packages", help="where OpenAI Whisper is installed")
     ap.add_argument("--only", default="")
     a = ap.parse_args()
     man = json.loads((VOICE / "manifest.json").read_text(encoding="utf-8"))
     out_path = VOICE / "words.json"
     words = json.loads(out_path.read_text(encoding="utf-8")) if out_path.exists() else {}
 
-    from faster_whisper import WhisperModel  # runtime/voice/.venv
-    model_dir = MODELS / f"faster-whisper-{a.model}"
-    if not (model_dir / "model.bin").exists():
-        print(f"no model at {model_dir}; download it first (with the go-ahead):\n"
-              f"  runtime/voice/.venv/Scripts/python -c \"from huggingface_hub import snapshot_download; "
-              f"snapshot_download('Systran/faster-whisper-{a.model}', local_dir=r'{model_dir}')\"", file=sys.stderr)
-        return 2
-    model = WhisperModel(str(model_dir), device="cpu", compute_type="int8")
+    if a.backend == "openai":
+        if a.site and a.site not in sys.path:
+            sys.path.insert(0, a.site)
+        import whisper  # DubMate Studio's ai-packages; loads ~/.cache/whisper/<model>.pt, no download
+        cache = Path.home() / ".cache" / "whisper" / f"{a.model}.pt"
+        if not cache.exists():
+            print(f"no cached model {cache}", file=sys.stderr)
+            return 2
+        omodel = whisper.load_model(a.model)
+
+        def recognise(path, prompt):
+            r = omodel.transcribe(str(path), language="en", word_timestamps=True, initial_prompt=prompt, fp16=False)
+            return [(norm(w["word"]), w["start"], w["end"]) for s in r["segments"] for w in s.get("words", [])
+                    if norm(w["word"])]
+    else:
+        from faster_whisper import WhisperModel  # runtime/voice/.venv
+        model_dir = MODELS / f"faster-whisper-{a.model}"
+        if not (model_dir / "model.bin").exists():
+            print(f"no model at {model_dir}", file=sys.stderr)
+            return 2
+        fmodel = WhisperModel(str(model_dir), device="cpu", compute_type="int8")
+
+        def recognise(path, prompt):
+            segs, _ = fmodel.transcribe(str(path), language="en", word_timestamps=True, beam_size=5,
+                                        initial_prompt=prompt, vad_filter=False)
+            return [(norm(w.word), w.start, w.end) for s in segs for w in (s.words or []) if norm(w.word)]
 
     for i, m in enumerate(man, 1):
         if a.only and m["who"] != a.only:
             continue
         path = HERE / m["file"]
         want = script_words(m["text"])
-        segs, _ = model.transcribe(str(path), language="en", word_timestamps=True, beam_size=5,
-                                   initial_prompt=m["text"], vad_filter=False)
-        got = [(norm(w.word), w.start, w.end) for s in segs for w in (s.words or []) if norm(w.word)]
+        got = recognise(path, m["text"])
         sm = difflib.SequenceMatcher(a=want, b=[g[0] for g in got], autojunk=False)
         times: list = [None] * len(want)
         for blk in sm.get_matching_blocks():

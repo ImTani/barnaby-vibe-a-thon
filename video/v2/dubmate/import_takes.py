@@ -1,46 +1,44 @@
-"""Bring takes recorded in DubMate back into the film, exactly where the actors synced them.
+"""Bring takes recorded in DubMate back into the film. The takes drive the timing: the film is re-laid around them.
 
-  runtime/voice/.venv/Scripts/python video/v2/dubmate/import_takes.py <DubMate project .zip or its folder> [--dry-run]
+  runtime/voice/.venv/Scripts/python video/v2/dubmate/import_takes.py <DubMate "Project files" .zip or folder> [--dry-run]
 
-DubMate's "Project files" export (audio_processor.build_project_zip) holds project_manifest.json, with one entry per
-line: start (s), offset_ms, character, is_recorded, take_file (Raw_Takes/Line_NN_<Character>_<Actor> [..].mp3, the
-take as DubMate renders it: trimmed, fitted, levelled, with the actor's chosen sound). DubMate plays a take at
-start + offset_ms.
+DubMate's Project files export (audio_processor.build_project_zip) has project_manifest.json -> "lines": per line
+the text, character, is_recorded, take_file (Raw_Takes/*.mp3: the take as DubMate renders it, trimmed and levelled
+with the actor's chosen sound), offset_ms and stretch (DubMate fits a take to the pack's reference line by up to
++/-8%; 1.0 = as recorded).
 
-Each recorded line is matched to its film line by start time and character (the pack's clips are named with the film
-time, make_pack.py), then written to video/v2/audio/takes/NN_<Who>.wav (48 kHz mono) so that sample 0 is the line's
-cue time t in video/v2/cues.json: the film's mix places a voice file at t, so the take lands where DubMate played it.
-Barnaby is never imported (he stays generated). Nothing is re-timed: don't re-run layout.py after importing.
+For each recorded line (never Barnaby: his voice is ElevenLabs/generated):
+  - matched to its film line by character + text (normalised), so the pack's old timing doesn't matter;
+  - DubMate's stretch undone (ffmpeg atempo 1/stretch), so the read keeps the actor's own pace;
+  - written to video/v2/audio/takes/NN_<Who>.wav (48 kHz mono, 24-bit).
+The offset is ignored: the film is re-timed to the takes.
 
-Then:  runtime/voice/.venv/Scripts/python video/audio/voices.py --cues video/v2/cues.json \
-           --out video/v2/audio/voice --takes video/v2/audio/takes --only none
-and re-run the sound mix.
+Then re-time everything (in order):
+  runtime/voice/.venv/Scripts/python video/audio/voices.py --cues video/v2/cues.json --out video/v2/audio/voice \
+      --takes video/v2/audio/takes --only none            # copies takes in, refreshes the manifest
+  PYTHONDONTWRITEBYTECODE=1 "X:/Tools/DubMate Studio/resources/python-runtime/python.exe" video/v2/audio/align.py
+  runtime/voice/.venv/Scripts/python video/v2/audio/layout.py   # re-lays the film around the real reads
+  (voices.py --only none again to refresh the manifest's times), then the sound mix, then the film render.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import tempfile
 import zipfile
 from pathlib import Path
 
-import numpy as np
-import soundfile as sf
-
 HERE = Path(__file__).resolve().parent
 V2 = HERE.parent
 CUES = json.loads((V2 / "cues.json").read_text(encoding="utf-8"))
 TAKES = V2 / "audio" / "takes"
-SR = 48000
-PRE = 0.03                       # make_pack.py starts each clip this long before the speech onset
 
 
-def decode(path: Path) -> np.ndarray:
-    raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(path), "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"],
-                         capture_output=True, check=True).stdout
-    return np.frombuffer(raw, dtype=np.float32).copy()
+def norm(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", s.lower().replace("’", "'").replace("'", "")).strip()
 
 
 def main() -> int:
@@ -48,6 +46,7 @@ def main() -> int:
     ap.add_argument("project")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
+    film = {(v["who"], norm(v["text"])): n for n, v in enumerate(CUES["voice"], 1)}
 
     with tempfile.TemporaryDirectory() as td:
         src = Path(a.project)
@@ -60,45 +59,36 @@ def main() -> int:
             print("no project_manifest.json found: is this DubMate's Project files export?", file=sys.stderr)
             return 1
         root = mans[0].parent
-        man = json.loads(mans[0].read_text(encoding="utf-8"))
-        lines = man.get("lines") or man.get("timeline") or []
-
-        # the pack's clip starts (cue onset - PRE), per film line
-        film = [(n, v, round(v["t"] + max(0.0, v["speech"][0] - v["t"] - PRE), 3))   # as make_pack.py cuts
-                for n, v in enumerate(CUES["voice"], 1)]
+        lines = json.loads(mans[0].read_text(encoding="utf-8")).get("lines", [])
         TAKES.mkdir(parents=True, exist_ok=True)
         done, skipped = [], []
         for e in lines:
             if not e.get("is_recorded") or not e.get("take_file"):
                 continue
-            who = e.get("character", "")
+            who, text = e.get("character", ""), e.get("text", "")
             if who == "Barnaby":
-                skipped.append(f"line {e.get('line_number')}: Barnaby stays generated")
+                skipped.append(f"line {e.get('line_number')}: Barnaby stays ElevenLabs/generated")
                 continue
-            start = float(e["start"])
-            match = [(n, v) for n, v, s in film if v["who"] == who and abs(s - start) < 0.06]
-            if len(match) != 1:
-                skipped.append(f"line {e.get('line_number')} ({who} at {start:.3f} s): no unique film line")
+            n = film.get((who, norm(text)))
+            if n is None:
+                skipped.append(f"line {e.get('line_number')} ({who}: {text[:40]!r}): no film line with that text")
                 continue
-            n, v = match[0]
-            x = decode(root / e["take_file"])
-            at = start + float(e.get("offset_ms", 0)) / 1000.0          # where DubMate plays it (film time)
-            lead = at - float(v["t"])                                   # seconds after the cue's file start
-            if lead >= 0:
-                x = np.concatenate([np.zeros(int(round(lead * SR)), np.float32), x])
-            else:
-                x = x[int(round(-lead * SR)):]
+            stretch = float(e.get("stretch", 1.0) or 1.0)
             name = f"{n:02d}_{who}.wav"
+            filt = ["-af", f"atempo={1 / stretch:.5f}"] if abs(stretch - 1.0) > 1e-3 else []
             if not a.dry_run:
-                sf.write(str(TAKES / name), x, SR, subtype="PCM_24")
-            done.append(f"{name}  {e.get('actor_name', '?')}  offset {int(e.get('offset_ms', 0)):+d} ms  "
-                        f"stretch {float(e.get('stretch', 1.0)):.2f}  {len(x) / SR:.2f} s")
+                subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(root / e["take_file"]), *filt,
+                                "-ar", "48000", "-ac", "1", "-c:a", "pcm_s24le", str(TAKES / name)], check=True)
+            done.append(f"{name}  {e.get('actor_name', '?')}" + (f"  (DubMate stretch {stretch:.3f} undone)" if filt else ""))
 
     print(("would write" if a.dry_run else f"wrote to {TAKES}") + f": {len(done)} take(s)")
     for d in done:
         print("  " + d)
     for s in skipped:
         print("  skipped " + s)
+    missing = sorted({v["who"] for v in CUES["voice"]} - {"Barnaby"})
+    have = {p.stem.split("_", 1)[1] for p in TAKES.glob("*_*.wav")} if TAKES.exists() else set()
+    print("characters with takes so far:", sorted(have & set(missing)) or "none")
     return 0
 
 

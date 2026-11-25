@@ -321,10 +321,11 @@ def build(T: Timeline) -> float:
     m("title", T.marks["bell_final"] + .8)                 # Barnaby / Every system deserves a butler.
     m("new_desk_fades", T.marks["title"] + 3.2)
     m("old_ones", T.marks["new_desk_fades"] + .9)          # Even the old ones.
-    m("credit", T.marks["old_ones"] + 2.4)                 # Built on Synapse · 2nd Brain Labs × Geek Room Vibe-a-thon
-    m("small_print", T.marks["credit"] + .3)
-    m("fade_out", T.marks["credit"] + 3.0)
-    end = T.marks["fade_out"] + 1.2
+    m("end_card", T.marks["old_ones"] + 2.8)               # the product end card (6 s): mark, what he is, credits
+    m("credit", T.marks["end_card"] + .4)                  # Built on Synapse · 2nd Brain Labs × Geek Room Vibe-a-thon
+    m("small_print", T.marks["credit"] + .3)               # staged scenes, synthetic voices, Barnaby's voice: ElevenLabs
+    m("fade_out", T.marks["end_card"] + 6.0)
+    end = T.marks["fade_out"] + 1.0
     m("end", end)
     T.scenes[-1]["end"] = round(end, 3)
 

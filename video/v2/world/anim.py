@@ -69,6 +69,8 @@ def bezier(x1, y1, x2, y2):
 
 SLOW_SETTLE = bezier(0.42, 0.0, 0.22, 1.0)        # gentle start, long settle
 DRIFT = bezier(0.37, 0.0, 0.63, 1.0)             # a soft symmetric drift
+CALM = bezier(0.3, 0.0, 0.7, 1.0)                # a slow, nearly even drift (trims well anywhere)
+LONG_RES = (1600, 900)                           # the long re-timed shots render here and are upscaled to 1080p
 
 
 def P(t, a, d):
@@ -96,6 +98,46 @@ def catmull(pts, u):
     p3 = pts[i + 2] if i + 2 < len(pts) else pts[-1] * 2 - pts[-2]
     s2, s3 = s * s, s * s * s
     return 0.5 * ((2 * p1) + (-p0 + p2) * s + (2 * p0 - 5 * p1 + 4 * p2 - p3) * s2 + (-p0 + 3 * p1 - 3 * p2 + p3) * s3)
+
+
+def _cr(p0, p1, p2, p3, s, alpha=0.5):
+    """Centripetal Catmull-Rom (Barry-Goldman), s in [0, 1] between p1 and p2."""
+    def nxt(ti, a, b):
+        return ti + max((b - a).length, 1e-6) ** alpha
+    t0 = 0.0
+    t1 = nxt(t0, p0, p1)
+    t2 = nxt(t1, p1, p2)
+    t3 = nxt(t2, p2, p3)
+    t = t1 + (t2 - t1) * s
+    a1 = p0 * ((t1 - t) / (t1 - t0)) + p1 * ((t - t0) / (t1 - t0))
+    a2 = p1 * ((t2 - t) / (t2 - t1)) + p2 * ((t - t1) / (t2 - t1))
+    a3 = p2 * ((t3 - t) / (t3 - t2)) + p3 * ((t - t2) / (t3 - t2))
+    b1 = a1 * ((t2 - t) / (t2 - t0)) + a2 * ((t - t0) / (t2 - t0))
+    b2 = a2 * ((t3 - t) / (t3 - t1)) + a3 * ((t - t1) / (t3 - t1))
+    return b1 * ((t2 - t) / (t2 - t1)) + b2 * ((t - t1) / (t2 - t1))
+
+
+class Path:
+    """A smooth curve through points, parameterised by arc length (u = fraction of the distance travelled), so an
+    eased u gives an eased speed with no jumps at the waypoints."""
+    def __init__(self, pts, n=240):
+        pts = [Vector(p) for p in pts]
+        ext = [pts[0] * 2 - pts[1]] + pts + [pts[-1] * 2 - pts[-2]]
+        self.s = []
+        for i in range(len(pts) - 1):
+            for k in range(n):
+                self.s.append(_cr(ext[i], ext[i + 1], ext[i + 2], ext[i + 3], k / n))
+        self.s.append(pts[-1].copy())
+        self.c = [0.0]
+        for a, b in zip(self.s, self.s[1:]):
+            self.c.append(self.c[-1] + (b - a).length)
+
+    def at(self, u):
+        import bisect
+        d = clamp01(u) * self.c[-1]
+        i = min(max(bisect.bisect_right(self.c, d) - 1, 0), len(self.s) - 2)
+        seg = self.c[i + 1] - self.c[i]
+        return self.s[i].lerp(self.s[i + 1], (d - self.c[i]) / seg if seg > 0 else 0.0)
 
 
 def span(t0, t1):
@@ -167,12 +209,18 @@ class Shot:
         self.start, self.frames = span(t0, t1)
         self.res, self.notes = res, notes
         self.no_probe = False       # the screen's planar probe costs ~1.8 s/frame: off where no screen is seen
+        self.black_until = None     # film time before which the frame is pure black (written, not rendered)
+        self.render_until = None    # film time after which the last rendered frame is held (hidden by the film)
+        self.upscale_to = None      # (w, h): lanczos-upscale the finished frames (rendered smaller for time)
         self.segments = []          # [(time the segment starts, setup())]
         self.frame_fn = None        # (t) -> None, continuous state for film time t
         self.out_dir = os.path.join(OUT_ANIM, sid)
 
     def time(self, f):
         return self.start + (f - 1) / FPS
+
+    def frame(self, t):
+        return int(round((t - self.start) * FPS)) + 1
 
     def seg_ranges(self):
         out = []
@@ -229,6 +277,18 @@ def render_shot(sh, args, test=None):
     os.makedirs(out_dir, exist_ok=True)
     if not args.range:
         manifest_update(sh, "rendering")
+    if sh.black_until is not None and not args.range:
+        blk = os.path.join(OUT_ANIM, f"_black_{sh.res[0]}x{sh.res[1]}.jpg")
+        if not os.path.exists(blk):
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i",
+                            f"color=black:s={sh.res[0]}x{sh.res[1]}", "-frames:v", "1", "-q:v", "2", blk], check=True)
+        import shutil
+        for f in range(1, sh.frames + 1):
+            if sh.time(f) < sh.black_until:
+                shutil.copyfile(blk, os.path.join(out_dir, f"{f:04d}.jpg"))
+                lo = f + 1
+    if sh.render_until is not None and not args.range:
+        hi = max(f for f in range(1, sh.frames + 1) if sh.time(f) <= sh.render_until)
     for fa, fb, setup in sh.seg_ranges():
         fa, fb = max(fa, lo), min(fb, hi)
         if fb < fa:
@@ -238,10 +298,16 @@ def render_shot(sh, args, test=None):
         sc.frame_set(fa)
         sc.render.filepath = os.path.join(out_dir, "####")
         bpy.ops.render.render(animation=True)
+    if sh.render_until is not None and not args.range:
+        import shutil
+        for f in range(hi + 1, sh.frames + 1):
+            shutil.copyfile(os.path.join(out_dir, f"{hi:04d}.jpg"), os.path.join(out_dir, f"{f:04d}.jpg"))
     if args.range:
         dt = time.time() - t1
         print(f"RANGE {sh.id} {lo}-{hi}: {dt:.0f}s ({dt / (hi - lo + 1):.2f} s/frame)")
         return
+    if sh.upscale_to:
+        upscale(out_dir, sh.upscale_to)
     dt = time.time() - t1
     print(f"RENDERED {sh.id}: {sh.frames} frames in {dt:.0f}s ({dt / sh.frames:.2f} s/frame)")
     with open(os.path.join(OUT_ANIM, "_log.txt"), "a") as fh:
@@ -249,6 +315,18 @@ def render_shot(sh, args, test=None):
                  f"samples={args.samples} scale={args.scale}\n")
     if not sh.id.endswith("_half"):
         manifest_update(sh, "done")
+
+
+def upscale(d, size):
+    import shutil
+    tmp = d + "_up"
+    os.makedirs(tmp, exist_ok=True)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-start_number", "1", "-i", os.path.join(d, "%04d.jpg"),
+                    "-vf", f"scale={size[0]}:{size[1]}:flags=lanczos", "-q:v", "2", "-start_number", "1",
+                    os.path.join(tmp, "%04d.jpg")], check=True)
+    for f in os.listdir(tmp):
+        shutil.move(os.path.join(tmp, f), os.path.join(d, f))
+    os.rmdir(tmp)
 
 
 # ------------------------------------------------------------------------------------------------ the manifest
@@ -268,6 +346,10 @@ def manifest_save(m):
 
 def manifest_update(sh, status):
     m = manifest_load()
+    m["shots"] = [s for s in m["shots"] if not s["id"].endswith("_half")]   # halves are internal (see compose)
+    if sh.id.endswith("_half"):
+        manifest_save(m)
+        return
     e = dict(id=sh.id, scene=sh.scene, replaces=sh.replaces[0] if len(sh.replaces) == 1 else sh.replaces,
              start=round(sh.start, 4), frames=sh.frames, status=status, notes=sh.notes)
     m["shots"] = [s for s in m["shots"] if s["id"] != sh.id] + [e]
@@ -328,14 +410,24 @@ def shop_shots(DM, M, hands):
     shots = {}
     base = {}
     rest = [(ob, Vector(ob.location), ob.rotation_euler.copy()) for ob in
-            (bpy.data.objects[n] for n in ("backoffice_key", "key_tag", "lamp_switch", "drawer_BRAKE PADS"))]
+            (bpy.data.objects[n] for n in ("backoffice_key", "key_tag", "lamp_switch", "drawer_BRAKE PADS",
+                                           "rain_streaks"))]
+    streaks = bpy.data.objects["rain_streaks"]
+    streaks_rest = Vector(streaks.location)
+
+    def rain(t):
+        """Falling rain outside the window: the streaks re-scatter every frame, as rain does on film."""
+        import random
+        r = random.Random(int(round(t * FPS)) * 7919 + 17)
+        streaks.location = streaks_rest + Vector((0.0, r.uniform(-0.12, 0.12), r.uniform(-0.3, 0.3)))
 
     def preset(name, ev=0.0):
         def setup():
             for ob, lc, rt in rest:                        # every animated prop back to its approved place
                 ob.location, ob.rotation_euler = Vector(lc), rt.copy()
-            if "A_sweep" in L:
-                L["A_sweep"].data.energy = 0.0
+            for nm in ("A_sweep", "A_car"):
+                if nm in L:
+                    L[nm].data.energy = 0.0
             DM.apply_preset(name, M, hands)
             sc.view_settings.exposure += ev
             RIG["flash"].default_value = 0.0
@@ -370,27 +462,42 @@ def shop_shots(DM, M, hands):
         for nm, b0 in (("L_screen", 5.0), ("L_screen_day", 2.0)):
             L[nm].data.energy = b0 * bright_now * max(lum, 0.01) / 0.16
 
+    car = DM.light("A_car", "SPOT", (-3.4, 4.5, 0.95), 0.0, (1.0, 0.93, 0.82), "SET", spot=38, blend=0.7,
+                   radius=0.12)
+
     # ---------------------------------------------------------------- 1 · s1 opening: up from black, one push
-    sh = Shot("s1_open", 1, ["world/01_wide_night.png", "world/02_medium_night.png"], 0.0, 4.45,
-              notes="Up from black (light_up 0.70 -> 2.50, baked in: drop the still's brightness grade), then one "
-                    "continuous push from the wide into the desk, landing framed on the monitor for the cut to "
-                    "the full-screen PC at 'screen'. Covers both s1 stills; play full frame, no cam crop.")
+    sh = Shot("s1_open", 1, ["world/01_wide_night.png", "world/02_medium_night.png"], 0.0, 15.0)
     A, B = pose("CAM_wide"), pose("CAM_medium")
     C = dict(loc=scr_c + (B["loc"] - scr_c).normalized() * 0.8, tgt=scr_c.copy(), lens=50.0, fstop=2.8,
              focus=scr_c.copy())
-    path_loc = [A["loc"], B["loc"].lerp(C["loc"], 0.15), C["loc"]]
-    path_tgt = [A["tgt"], B["tgt"].lerp(C["tgt"], 0.3), C["tgt"]]
-    path_foc = [A["focus"], B["focus"], C["focus"]]
+    path_loc = Path([A["loc"], B["loc"].lerp(C["loc"], 0.15), C["loc"]])
+    path_tgt = Path([A["tgt"], B["tgt"].lerp(C["tgt"], 0.3), C["tgt"]])
+    path_foc = Path([A["focus"], B["focus"], C["focus"]])
+    ease1 = bezier(0.5, 0.0, 0.3, 1.0)                # the room sits, then a slow approach, a long settle
+    T_UP, T_LIT, T_GO, T_ARRIVE = 0.7, 3.2, 5.0, 14.8
+    T_CAR = (3.9, 6.1)
 
     def f1(t):
-        u = sine(P(t, 0.55, 4.55 - 0.55))
-        set_cam(catmull(path_loc, u), catmull(path_tgt, u), lerp(A["lens"], C["lens"], smoother(u)),
-                catmull(path_foc, u), lerp(1.6, 2.8, u))
-        b = sine(P(t, 0.7, 1.8))
+        u = ease1(P(t, T_GO, T_ARRIVE - T_GO))
+        set_cam(path_loc.at(u), path_tgt.at(u), lerp(A["lens"], C["lens"], smoother(u)),
+                path_foc.at(u), lerp(1.6, 2.8, u))
+        b = sine(P(t, T_UP, T_LIT - T_UP))
         sc.view_settings.exposure = base["exp"] + lerp(0.45, 0.0, smoother(u)) + 2.2 * math.log2(max(b, 1e-4))
+        rain(t)
+        k = P(t, T_CAR[0], T_CAR[1] - T_CAR[0])          # a car passes in the rain: its lights sweep the room
+        car.data.energy = 650.0 * sin(pi * k) ** 2 if 0 < k < 1 else 0.0
+        car.location = Vector((-3.4, lerp(4.5, -1.5, k), 0.95))
+        car.rotation_euler = (Vector((2.4, lerp(0.6, 2.6, k), 1.55)) - car.location).to_track_quat("-Z", "Y").to_euler()
         grid()
     sh.segments = [(sh.start, preset("night"))]
     sh.frame_fn = f1
+    sh.black_until = 0.7                                # before light_up the frame is black: write it, don't render
+    sh.notes = (f"16 s, lived in: up from black ({T_UP}-{T_LIT} s, frames {sh.frame(T_UP)}-{sh.frame(T_LIT)}; baked "
+                f"in, drop the still's brightness grade), the room sits in lamp and monitor light with rain on the "
+                f"window and a car's lights sweeping the wall (frames {sh.frame(T_CAR[0])}-{sh.frame(T_CAR[1])}), "
+                f"then one slow approach from the wide (frame {sh.frame(T_GO)}) that lands framed on the monitor by "
+                f"frame {sh.frame(T_ARRIVE)} for the cut to the full-screen PC. Covers both s1 stills; full frame, "
+                f"no cam crop. 1920x1080, 12 samples.")
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 2+3 · s2: the key lands, the lamp clicks off
@@ -408,6 +515,7 @@ def shop_shots(DM, M, hands):
     tag_rest = (Vector(tag.location), tag.rotation_euler.copy())
     sw_rest = Vector(sw.location)
     T_LAND, T_LAMP = 38.59, 39.79
+    LAMP_OFF_EV = -1.3          # with the lamp off the room drops to the monitor's glow (the animatic's .16)
     # how high above the keyboard the key must start to be out of frame (camera at its start pose)
     from bpy_extras.object_utils import world_to_camera_view
     set_cam(K["loc"], K["tgt"], K["lens"], K["focus"], K["fstop"])
@@ -468,6 +576,7 @@ def shop_shots(DM, M, hands):
         L["L_floor_spill"].data.energy = lerp(2.5, 9.0, lv)
         L["L_bounce"].data.energy = lerp(2.0, 7.0, lv)
         L["L_box_kick"].data.energy = lerp(2.0, 7.0, lv)
+        sc.view_settings.exposure = base["exp"] + LAMP_OFF_EV * (1 - lv)
         press = clamp01(1 - abs(t - (T_LAMP - 0.02)) / 0.07)
         sw.location = sw_rest - Vector((0, 0, 0.0018 * press))
         grid()
@@ -502,9 +611,9 @@ def shop_shots(DM, M, hands):
     def f3(t):
         u = DRIFT(P(t, 40.34, 43.3 - 40.34))
         cam_between(Mm, Mm2, u * u * (1.6 - 0.6 * u))   # creeps first, then pushes in toward the clock
-        flash = clamp01(1 - abs(t - T_SWAP) / 0.32)
-        RIG["flash"].default_value = smoother(flash) ** 1.4
+        RIG["flash"].default_value = sine(1 - abs(t - T_SWAP) / 0.45)   # a soft bloom to white and back
         if t < T_SWAP:
+            rain(t)
             L["L_lamp"].data.energy = 0.0
             bulb.default_value = 0.0
             L["L_floor_spill"].data.energy = 2.5
@@ -513,7 +622,7 @@ def shop_shots(DM, M, hands):
             dawn = sine(P(t, 40.45, T_SWAP - 40.45))
             sweep.data.energy = 30.0 * dawn
             sweep.rotation_euler = sundir(0.35 * dawn).to_track_quat("-Z", "Y").to_euler()
-            sc.view_settings.exposure = base["exp"] + 5.0 * dawn ** 2.2
+            sc.view_settings.exposure = base["exp"] + LAMP_OFF_EV + (5.0 - LAMP_OFF_EV) * dawn ** 2.2
         else:
             k = sine(P(t, T_SWAP, 42.15 - T_SWAP))
             sweep.data.energy = 0.0
@@ -564,14 +673,16 @@ def shop_shots(DM, M, hands):
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 7 · s9 shop night: the PC goes to sleep
-    sh = Shot("s9_shop_night", 9, ["world/x_close_night.png"], 199.7, 204.81,
-              notes="18:40, Martin gone (keys_jingle 200.7), lamp off. The monitor (Tuesday's jobs page) dims at "
-                    "201.5, goes dark at 202.6, then Barnaby's bell glows up in the corner; the power LEDs go "
-                    "blue -> amber as it sleeps. Ends on the approved still. Slow push.")
+    sh = Shot("s9_shop_night", 9, ["world/x_close_night.png"], 199.7, 199.7 + 2 * 5.11, res=LONG_RES)
+    sh.upscale_to = (1920, 1080)
     C0 = pose("CAM_medium")
-    C1 = pushed(C0, 900, 600, 1.15)
+    C1 = pushed(C0, 900, 600, 1.10)
     tue = DM.SCREEN_PATHS["tuesday"]
-    T_DIM, T_OFF = 201.5, 202.6
+    T_DIM, T_OFF = 199.7 + 3.6, 199.7 + 5.2
+    sh.notes = (f"18:40, Martin gone, lamp off. The monitor (Tuesday's jobs page) dims at frame {sh.frame(T_DIM)}, "
+                f"goes dark at frame {sh.frame(T_OFF)}, then Barnaby's bell glows up in the corner (full by frame "
+                f"{sh.frame(T_OFF + 2.2)}); the power LEDs go blue -> amber as it sleeps. Ends on the approved "
+                f"still's state. A calm push (~10%). Rendered 1600x900 at 12 samples, upscaled.")
 
     def setup_awake():
         preset("close", 0.0)()
@@ -586,32 +697,111 @@ def shop_shots(DM, M, hands):
         preset("close", 0.0)()
 
     def f7(t):
-        cam_between(C0, C1, DRIFT(P(t, 199.7, 205.31 - 199.7)))
+        cam_between(C0, C1, CALM(P(t, sh7.start, sh7.frames / FPS)))
         if t < T_OFF + 0.15:
-            lvl = lerp(0.88, 0.34, sine(P(t, T_DIM, 0.35)))
+            lvl = lerp(0.62, 0.24, sine(P(t, T_DIM, 0.35)))     # a dark room at 18:40: the page glows, not blazes
             lvl *= 1 - sine(P(t, T_OFF, 0.15))
             DM.SCREEN["bright"].outputs[0].default_value = lvl
             screen_light(lvl, base.get("mean_awake"))
         else:
-            g = sine(P(t, T_OFF + 0.55, 1.3))
+            g = sine(P(t, T_OFF + 0.6, 1.6))
             DM.SCREEN["bright"].outputs[0].default_value = base["sbright"] * g
             screen_light(base["sbright"] * g)
         grid()
     sh.segments = [(sh.start, setup_awake), (T_OFF + 0.15, setup_asleep)]
+    sh7 = sh
     sh.frame_fn = f7
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 9a · s9 two desks: the shop half
-    sh = Shot("s9_two_desks_shop_half", 9, ["world/close_two_desks.png"], 208.34, 217.94, res=(960, 1080))
+    sh = Shot("s9_two_desks_shop_half", 9, ["world/close_two_desks.png"], 208.34, 208.34 + 2 * 9.6, res=(800, 900))
     H0 = pose("CAM_close_half")
     H1 = pushed(H0, 480, 560, 1.06, res=(960, 1080))
+    sh9 = sh
 
     def f9(t):
-        cam_between(H0, H1, DRIFT(P(t, 207.84, 218.44 - 207.84)))
+        cam_between(H0, H1, CALM(P(t, sh9.start, sh9.frames / FPS)))
         grid()
     sh.segments = [(sh.start, preset("close"))]
     sh.frame_fn = f9
     shots[sh.id] = sh
+
+    # ================================================================ Tier B
+    def drift_shot(sid, scene, still, cam, t0, t1, px, py, s, preset_name, ev, notes, no_probe=True, extra=None):
+        sh = Shot(sid, scene, [still], t0, t1, notes=notes)
+        a = pose(cam)
+        b = pushed(a, px, py, s)
+
+        def fn(t):
+            cam_between(a, b, DRIFT(P(t, t0, t1 + 0.5 - t0)))
+            if extra:
+                extra(t)
+            grid()
+        sh.segments = [(sh.start, preset(preset_name, ev))]
+        sh.frame_fn = fn
+        sh.no_probe = no_probe
+        shots[sid] = sh
+        return sh
+
+    drift_shot("s2_board", 2, "world/x_board_night.png", "CAM_board", 12.8, 14.5, 430, 700, 1.3, "night", 0.2,
+               "A slow pan down the corkboard onto the calendar (Friday circled). Starts on the approved still.")
+
+    # the bell: Barnaby arrives (sfx 'bell' at 18.0): the plunger dips on its own, the dome quivers
+    bell_names = ("bell_plunger", "bell_knob", "bell_dome", "bell_bead")
+    bell_obs = {n: bpy.data.objects[n] for n in bell_names}
+    bell_rest = {n: (Vector(o.location), o.rotation_euler.copy()) for n, o in bell_obs.items()}
+    rest.extend((o, Vector(o.location), o.rotation_euler.copy()) for o in bell_obs.values())
+    T_BELL = 18.0
+
+    def bell(t):
+        dt = t - T_BELL
+        dip = 0.0
+        if -0.06 < dt < 0:
+            dip = sine(P(dt, -0.06, 0.06))
+        elif dt >= 0:
+            dip = exp(-dt / 0.025) - 0.12 * exp(-dt / 0.06) * sin(2 * pi * dt / 0.09)
+        for n in ("bell_plunger", "bell_knob"):
+            bell_obs[n].location = bell_rest[n][0] - Vector((0, 0, 0.0032 * max(dip, -0.2)))
+        q = 0.0 if dt < 0 else exp(-dt / 0.35) * sin(2 * pi * dt / 0.045)
+        for n in ("bell_dome", "bell_bead"):
+            r = bell_rest[n][1].copy()
+            r.x += radians(0.18) * q
+            r.y += radians(0.12) * q * 0.7
+            bell_obs[n].rotation_euler = r
+    drift_shot("s2_bell", 2, "world/x_bell.png", "CAM_bell", 17.95, 19.35, 860, 660, 1.15, "night", 0.3,
+               "Barnaby arrives: the bell's plunger dips on its own on the bell cue (18.0) and the dome quivers "
+               "as it rings; slow push.", extra=bell)
+
+    # the mouse: one click clip, reused for every click (align frame 13 to each mouse_click cue)
+    mb = bpy.data.objects["mouse_body"]
+    me = mb.data
+    if not me.shape_keys:
+        mb.shape_key_add(name="Basis")
+    sk = mb.shape_key_add(name="click_L")
+    wx = -0.0015
+    for i, v in enumerate(me.vertices):
+        x, y, z = v.co
+        yb = 0.0105 + 7.8 * x * x
+        if x < wx - 0.0008 and y > yb + 0.0008:
+            w = clamp01((wx - 0.0008 - x) / 0.004) * clamp01((y - yb) / 0.03)
+            sk.data[i].co = Vector((x, y, z - 0.0009 * w))
+    sk.value = 0.0
+    T_CLICK0 = 69.09
+
+    def click(t):
+        dt = t - T_CLICK0
+        k = sine(P(dt, -0.05, 0.05)) if dt < 0 else 1.0 - sine(P(dt, 0.06, 0.07))
+        sk.value = k
+    sh = drift_shot("x_mouse_click", 4, "world/x_mouse_monday.png", "CAM_mouse", T_CLICK0 - 0.5 + 0.5, T_CLICK0 + 2.0,
+                    960, 575, 1.08, "monday", 0.0,
+                    "One click clip for every mouse_click: the left button dips on frame 13 (0.50 s after frame "
+                    "0001). Start is s4's click (69.09); reuse it with frame 13 on s5's 84.59 and 84.99 and s6's "
+                    "142.32. Slow push.", extra=click)
+
+    drift_shot("s5_pot", 5, "world/x_pot_monday.png", "CAM_pot", 87.11, 88.93, 990, 540, 1.12, "monday", 0.0,
+               "Slow push on the pen pot (Kwame's clunk).")
+    drift_shot("s5_drawer", 5, "world/x_drawer_monday.png", "CAM_drawer", 88.93, 90.72, 930, 560, 1.12, "monday",
+               0.2, "Slow push into drawer 2 (the BACKUP stick).")
     return shots
 
 
@@ -694,16 +884,19 @@ def lisbon_shots(LM, DM, cap):
         base["exp"] = sc.view_settings.exposure
 
     # ---------------------------------------------------------------- 8 · s9 Lisbon night: the monitors sleep
-    sh = Shot("s9_lisbon_night", 9, ["world/lisbon_03_medium_night.png"], 204.31, 209.04,
-              notes="20:07: starts on the approved still; on 'dim' (204.81) the two monitors and the laptop dim "
-                    "and go dark, then the main monitor shows Barnaby's bell, small, bottom right (the shop's "
-                    "sleep screen's twin). Baked in: drop the CSS dimmer overlay. Slow push.")
+    sh = Shot("s9_lisbon_night", 9, ["world/lisbon_03_medium_night.png"], 204.31, 204.31 + 2 * 4.73, res=LONG_RES)
+    sh.upscale_to = (1920, 1080)
+    sh8 = sh
     N0 = pose("LCAM_medium")
-    N1 = pushed(N0, 1040, 540, 1.18)
-    T_DIM, T_DARK = 204.81, 206.25
+    N1 = pushed(N0, 1040, 540, 1.10)
+    T_DIM, T_DARK = 204.31 + 2.5, 204.31 + 5.0
+    sh.notes = (f"20:07: starts on the approved still; from frame {sh.frame(T_DIM)} the two monitors and the "
+                f"laptop dim and go dark (frame {sh.frame(T_DARK)}), then the main monitor shows Barnaby's bell, "
+                f"small, bottom right (the shop's sleep screen's twin), full by frame {sh.frame(T_DARK + 1.95)}. "
+                f"Baked in: drop the CSS dimmer overlay. A calm push (~10%). 1600x900 at 12 samples, upscaled.")
 
     def f8(t):
-        cam_between(N0, N1, DRIFT(P(t, 204.31, 209.54 - 204.31)))
+        cam_between(N0, N1, CALM(P(t, sh8.start, sh8.frames / FPS)))
         if t < T_DARK:
             k = 1 - sine(P(t, T_DIM, T_DARK - T_DIM))
             for slot in ("main", "studio", "laptop"):
@@ -711,7 +904,7 @@ def lisbon_shots(LM, DM, cap):
                 LM.PANELS[slot]["bright"].outputs[0].default_value = b
                 glow(slot, b)
         else:
-            g = sine(P(t, T_DARK + 0.35, 1.2))
+            g = sine(P(t, T_DARK + 0.35, 1.6))
             LM.PANELS["main"]["bright"].outputs[0].default_value = ASLEEP_MAIN * g
             glow("main", ASLEEP_MAIN * g)
             for slot in ("studio", "laptop"):
@@ -722,12 +915,14 @@ def lisbon_shots(LM, DM, cap):
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 9b · s9 two desks: the Lisbon half
-    sh = Shot("s9_two_desks_lisbon_half", 9, ["world/close_two_desks.png"], 208.34, 217.94, res=(960, 1080))
+    sh = Shot("s9_two_desks_lisbon_half", 9, ["world/close_two_desks.png"], 208.34, 208.34 + 2 * 9.6,
+              res=(800, 900))
     H0 = pose("LCAM_close_half")
     H1 = pushed(H0, 480, 560, 1.06, res=(960, 1080))
+    sh9 = sh
 
     def f9(t):
-        cam_between(H0, H1, DRIFT(P(t, 207.84, 218.44 - 207.84)))
+        cam_between(H0, H1, CALM(P(t, sh9.start, sh9.frames / FPS)))
         LM.PANELS["main"]["bright"].outputs[0].default_value = ASLEEP_MAIN
         glow("main", ASLEEP_MAIN)
         for slot in ("studio", "laptop"):
@@ -738,15 +933,19 @@ def lisbon_shots(LM, DM, cap):
     shots[sh.id] = sh
 
     # ---------------------------------------------------------------- 10 · s8 Lisbon day: a push into the desk
-    sh = Shot("s8_lisbon_day", 8, ["world/lisbon_01_wide_day.png"], 176.97, 179.37,
-              notes="Starts on the approved wide, one eased push into the desk toward lisbon_02_medium_day's "
-                    "framing (the detail crossfades in at 'nata', mid-landing). Play full frame, no cam crop.")
+    sh = Shot("s8_lisbon_day", 8, ["world/lisbon_01_wide_day.png"], 176.97, 176.97 + 8.0, res=LONG_RES)
+    sh.upscale_to = (1920, 1080)
+    T8 = (177.6, 184.6)
+    sh.notes = (f"Holds the approved wide, then one slow approach into the desk (frames {sh.frame(T8[0])}-"
+                f"{sh.frame(T8[1])}) landing on lisbon_02_medium_day's framing. Full frame, no cam crop. 1600x900 "
+                f"at 12 samples, upscaled.")
     W0, W1 = pose("LCAM_wide"), pose("LCAM_medium")
     mid_loc = W0["loc"].lerp(W1["loc"], 0.55) + Vector((0.1, 0, 0.25))
+    path8 = Path([W0["loc"], mid_loc, W1["loc"]])
 
     def f10(t):
-        u = SLOW_SETTLE(P(t, 176.97, 179.75 - 176.97))
-        loc = catmull([W0["loc"], mid_loc, W1["loc"]], u)
+        u = bezier(0.45, 0.0, 0.3, 1.0)(P(t, T8[0], T8[1] - T8[0]))
+        loc = path8.at(u)
         set_cam(loc, W0["tgt"].lerp(W1["tgt"], smoother(u)), lerp(W0["lens"], W1["lens"], u),
                 W0["focus"].lerp(W1["focus"], u), lerp(W0["fstop"], W1["fstop"], u))
 
@@ -755,6 +954,22 @@ def lisbon_shots(LM, DM, cap):
         outside_for(W0["loc"], True)                    # the wide's outside, held for the whole move (no pops)
     sh.segments = [(sh.start, setup_wide)]
     sh.frame_fn = f10
+    shots[sh.id] = sh
+
+    # ---------------------------------------------------------------- Tier B · s8 the nata detail
+    sh = Shot("s8_nata", 8, ["world/x_lisbon_detail_day.png"], 178.97, 180.47,
+              notes="A slow push on the nata and the bica. Starts on the approved still.")
+    D0 = pose("LCAM_detail")
+    D1 = pushed(D0, 860, 600, 1.1)
+
+    def f11(t):
+        cam_between(D0, D1, DRIFT(P(t, 178.97, 180.97 - 178.97)))
+
+    def setup_detail():
+        preset("day")()
+        sc.view_settings.exposure += -0.35
+    sh.segments = [(sh.start, setup_detail)]
+    sh.frame_fn = f11
     shots[sh.id] = sh
     return shots
 
@@ -769,14 +984,15 @@ def compose_two_desks():
     n = len([f for f in os.listdir(left) if f.endswith(".jpg")])
     cmd = ["ffmpeg", "-y", "-loglevel", "error", "-framerate", str(FPS), "-i", os.path.join(left, "%04d.jpg"),
            "-framerate", str(FPS), "-i", os.path.join(right, "%04d.jpg"), "-filter_complex",
-           "[0][1]hstack=inputs=2,drawbox=x=957:y=0:w=6:h=1080:color=0x040404:t=fill",
+           "[0][1]hstack=inputs=2,scale=1920:1080:flags=lanczos,drawbox=x=957:y=0:w=6:h=1080:color=0x040404:t=fill",
            "-q:v", "2", "-start_number", "1", os.path.join(out, "%04d.jpg")]
     subprocess.run(cmd, check=True)
-    t0, t1 = 208.34, 217.94
+    t0, t1 = 208.34, 208.34 + 2 * 9.6
     sh = Shot("s9_two_desks", 9, ["world/close_two_desks.png"], t0, t1,
               notes="A slow matched push on both halves (same timing, ~6%), long enough for the titles. Lisbon's "
                     "monitors stay asleep (bell glowing bottom right), continuing lisbon_03's dim; the shop is "
-                    "asleep as approved. Halves rendered separately and joined with the still's seam.")
+                    "asleep as approved. Halves rendered separately (800x900 each, 12 samples), joined with the "
+                    "still's seam and upscaled to 1080p. ~20 s: trim to the new spans.")
     assert n == sh.frames, (n, sh.frames)
     manifest_update(sh, "done")
     print("composed", n, "frames ->", out)

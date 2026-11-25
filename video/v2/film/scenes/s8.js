@@ -70,7 +70,7 @@
         { src: 'live/lis-main', at: M('synapse_log') - .1, cam: [600, 700, 1.6],               // Barnaby's log pane, held
           state: t => ({ preset: 'quorum', time: '09:40', secs: 2 + Math.floor((t - M('synapse_log')) * 2), out: Math.floor(lerp(0, 10.99, clamp((t - M('synapse_log')) / 1.6))),
             say: '', sayK: 0, plan: '', mode: 'thinking', level: 0, notify: 0 }) },
-        { src: TL, at: M('theo_world'), cam: [960, 540, 1],
+        { src: TL, at: M('theo_world'), cam: [960, 540, 1], open: { x: 1650, y: 540, d: .6 },
           build: l => { rv = reveal(l, TL, [[1466, 884, 1840, 912], [1467, 922, 1846, 950], [1467, 959, 1604, 987]], { color: '#14110E', a: V(45), b: VE(45) - .1, chars: [30, 33, 11] }); },
           over: t => rv.render(t) },
         { src: 'live/lis-studio', at: V(48), cam: [960, 540, 1],

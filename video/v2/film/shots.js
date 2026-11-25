@@ -172,10 +172,15 @@ function seq(root, items, end, o = {}) {
   });
   list.forEach((it, i) => {
     const nx = list[i + 1];
-    it.end = it.until != null ? it.until : nx ? nx.at + Math.max(nx.fi || 0, nx.quad ? nx.pin.d || .6 : 0) : end;
+    it.end = it.until != null ? it.until : nx ? nx.at + Math.max(nx.fi || 0, nx.quad ? nx.pin.d || .6 : 0, nx.open ? nx.open.d || .55 : 0) : end;
     it.bl = blenderFor(it.src, it.at, it.end);
     if (it.bl) { it.blDir = `../world/out/anim/${it.bl.id}/`; it.blN = -1; }
     if (isRoom(it.src) && !it.clean) it.finish = finish(it.s.box);
+    if (it.open) {                                     // his mark, at the heart of the opening
+      it.openMark = el('div', { html: markSVG('#D3A14A') }, it.s.box);
+      css(it.openMark, { position: 'absolute', width: '132px', height: '132px', left: (it.open.x - 66) + 'px', top: (it.open.y - 74) + 'px', zIndex: 60, pointerEvents: 'none',
+        filter: 'drop-shadow(0 0 18px rgba(211,161,74,.55))' });
+    }
     if (it.build) it.build(it.s.layer, it.s);
   });
   return {
@@ -206,6 +211,17 @@ function seq(root, items, end, o = {}) {
           it.s.img.style.transform = it.s.layer.style.transform = pinMatrix(q, it.s.w, it.s.h);
         } else it.s.place(t, typeof it.cam === 'function' ? it.cam(t, it) : it.cam, it.fit);
         if (it.finish) it.finish(t);
+        if (it.open) {                                   // Barnaby's window opening out of the screen
+          const d = it.open.d || .55, u = clamp((t - it.at) / d);
+          if (u < 1) {
+            const R = 2300 * easeInOutCubic(u) + 40 * (1 - u);
+            it.s.box.style.clipPath = `circle(${R.toFixed(1)}px at ${it.open.x}px ${it.open.y}px)`;
+          } else if (it.s.box.style.clipPath) it.s.box.style.clipPath = '';
+          const mk = clamp(1 - (t - it.at) / (d * .9));
+          it.openMark.style.display = mk > .01 ? 'block' : 'none';
+          it.openMark.style.opacity = mk.toFixed(3);
+          it.openMark.style.transform = `scale(${(1 + .35 * (1 - mk)).toFixed(3)})`;
+        }
         const b = typeof it.blur === 'function' ? it.blur(t) : (it.blur || 0);
         const f = (g + (b > .05 ? ` blur(${b.toFixed(2)}px)` : '')).trim();
         it.s.img.style.filter = f || 'none';

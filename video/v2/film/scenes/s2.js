@@ -61,7 +61,7 @@
             markAnim(bellMark, t, sfxT('bell', M('bell_arrive')));
           } },
         // 2.6 Theo's hologram (held): the scan, the six; 2.7 the same, modest, on the 2009 PC (locked)
-        { src: 'comp/theo-handover-1-reading', at: M('reading'), cam: [960, 540, 1],
+        { src: 'comp/theo-handover-1-reading', at: M('reading'), cam: [960, 540, 1], open: { x: 1542, y: 520, d: .6 },
           state: t => ({ scan: +lerp(-.6, 20.6, easeInOutSine(clamp((t - sweepA) / (sweepB - sweepA)))).toFixed(3),
             heardK: +clamp((t - V(5)) / (VE(5) - V(5) - .1)).toFixed(3) }) },
         { src: 'comp/theo-handover-2-taken', at: M('six_lit'), cam: [960, 540, 1],

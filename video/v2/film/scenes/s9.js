@@ -12,7 +12,7 @@
       const ASLEEP = pick('world/lisbon_03_medium_night_asleep.png', 'world/lisbon_03_asleep_night.png', 'world/lisbon_03_night_asleep.png', '');
       run = seq(root, [
         { src: 'world/x_close_night.png', at: S, cam: hold(940, 570, 1.08) },
-        { src: 'world/lisbon_03_medium_night.png', at: M('lisbon_night'), fi: .9, cam: hold(1010, 525, 1.06),
+        { src: pick('world/lisbon_03_medium_night_on.png', 'world/lisbon_03_medium_night.png'), at: M('lisbon_night'), fi: .9, cam: hold(1010, 525, 1.06),
           build: l => {
             dimmer = el('div', {}, l);       // everything but Barnaby's slot sinks: the two monitors dim to one small glow
             css(dimmer, { left: '0px', top: '0px', width: '1920px', height: '1080px', background: 'radial-gradient(circle at 1148px 480px, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 60px, rgba(0,0,0,.72) 260px)' });

@@ -152,7 +152,10 @@ function still(parent, key, o = {}) {
       live.apply(img.contentWindow, state); last = j;
     },
     place(t, cam, fit) {
-      const c = camAt(cam, t) || [w / 2, h / 2, 1];
+      let c = camAt(cam, t) || [w / 2, h / 2, 1];
+      // a world still at another size than the approved 1920x1080 (the new 2560x1440 renders) keeps the framing its
+      // camera was written for: cameras for world stills are in 1920x1080 px unless the still's size is listed in SIZE
+      if (cam && key.startsWith('world/') && !SIZE[key] && (w !== W || h !== H)) c = [c[0] * w / W, c[1] * h / H, c[2]];
       const r = frameImg(img, w, h, c[0], c[1], c[2], fit);
       layer.style.transform = img.style.transform;
       return r;

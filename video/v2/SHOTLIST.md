@@ -8,6 +8,34 @@ director's notes on the first animated cut:
 - "Martin's lines are very fast."
 - "Pacing is really important."
 
+## v2.3 revisions: the director on review cut 2 (these override anything below)
+1. **The camera feels handheld and cinematic, not a tripod.**
+   - **Room shots:** a subtle operator's handheld: low-frequency drift (about ±0.5% position, ±0.2° roll, 2–5 s periods, never jittery), done over a 4% overscan on sequences and stills alike.
+   - **Motivated pans and tilts** on wide plates. A 2D pan across a wide high-res render is optically a real pan.
+   - **Screens stay locked** (they're the person's view); Barnaby's worlds stay still.
+2. **More cinema inside the one-desk constraint:**
+   - **Hero inserts with shallow focus:** Theo's WORLD'S OKAYEST NEPHEW mug in lamplight, the key, Martin's glasses, the sticky note, drawer 1, Priya's helmet.
+   - **Rack focus** from a foreground prop to the monitor's glow.
+   - **Angles:** low over the keyboard, past the lamp, the empty chair from behind, the window with rain.
+3. **Transitions between desk states** (no plain fades or white-flash time-lapses):
+   - **Thursday night → Monday:** a match cut on the mug. Theo's OKAYEST NEPHEW mug in lamplight; the lamp clicks off; dark; the same framing at dawn, light rising, Martin's mug in its place.
+   - **Monday morning → afternoon:** a light wipe, the sun's shaft sweeping across the frame.
+   - **Afternoon → dusk:** the lamp clicks on in a blue room (as planned).
+   - **Monday dusk → Tuesday:** a match cut on the chair. The empty chair at dusk, then the same chair in morning sun with Priya's helmet hanging on it.
+   - **Tuesday shop → Lisbon:** a match cut, desk to desk. The shop desk and the Lisbon desk in the same composition: the shop's greens become Lisbon's whites.
+4. **The "same butler" triptych (6.10) is cut;** it read as a collage. Barnaby's line plays over Martin's plan, with the new Workload room's hours (Dev 31 of 20).
+5. **Sound:**
+   - beds much lower, the opening especially;
+   - the crowd bed removed everywhere;
+   - effects targeted: each motivated sound clear and short, nothing decorative;
+   - **the repetition lands**: each of the four hand-back steps (the job, the customer, a text, the status) gets a small chime, the same four-note figure each time, quicker each time. The composed passage plays the four notes as one chord: the steps become one.
+   - **Levels:** a per-category table of peaks and averages in SOUND.md.
+6. **Barnaby is faster** (185 words a minute, +17%) and "me" is no longer mispronounced. His voice may move to ElevenLabs.
+7. **Titles and a product end card, designed properly** (DESIGN.md is the brand):
+   - a typographic hierarchy on a grid, brass as the one accent, the real mark;
+   - the titles over the two desks, then a clean product card: what Barnaby is, the four growth steps, Built on Synapse, the repo, and the disclosures in small print.
+8. **Timing will be re-derived from the real voice takes** (word-level alignment) when they arrive. Marks that sit on a word (the tab-five click, the "Fussy." click) follow the words.
+
 ## What went wrong in the first cut
 - **The pace came from conversation research, not film.** Telephone-speed gaps (200–300 ms) and conversational speaking
   rates were squeezed to a 3-minute cap, so the picture only got the time the dialogue left over.

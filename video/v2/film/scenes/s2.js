@@ -49,7 +49,7 @@
         { src: 'comp/theo-handover-pc', at: M('old_pc'), fi: .5, cam: [[M('old_pc'), 1150, 560, 1.0], [M('desk_detail'), 1480, 620, 1.3]],
           state: t => ({ lit: +clamp((t - M('old_pc') - .2) / .16, 0, 6).toFixed(3), sayK: +clamp((t - V(6)) / (VE(6) - V(6) - .1)).toFixed(3) }) },
         { src: 'world/02_medium_night.png', at: M('desk_detail'), fi: .4, cam: [[M('desk_detail'), 560, 830, 1.55], [M('key'), 1300, 820, 1.55]] },
-        { src: 'world/03_keys_night.png', at: M('key'), fi: .4, keepGrade: true, cam: [[M('key'), 760, 700, 1.1], [E, 640, 840, 1.35]],
+        { src: 'world/03_keys_night.png', at: M('key'), fi: .4, cam: [[M('key'), 760, 700, 1.1], [E, 640, 840, 1.35]],
           grade: t => `brightness(${lerp(1, .16, easeOutCubic(P(t, M('lamp_off'), .15))).toFixed(3)})` },
       ], E);
     },

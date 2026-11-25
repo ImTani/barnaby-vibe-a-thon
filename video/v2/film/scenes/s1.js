@@ -1,8 +1,8 @@
 /* 1 · Nine tabs. INT. SHOP BACK OFFICE, THU 19 NOV 21:47 (CONTINUITY). Black, rain; light comes up on the wide; we
- * drift to the 2009 monitor; full screen, the shop PC LIVE (look/shop-pc, preset `tabs`): Theo's cursor opens the
- * browser from the taskbar, then clicks the new-tab button eight times, one tab per mark (tab1..tab9); each tab grows
- * in, the status bar loads, the CPU needle kicks and the MEMORY needle climbs a notch into the red; the clock
- * gadget's second hand ticks. "Tab four." -> the cursor goes to workload.xls and clicks; "No — five." -> the Parts
+ * drift to the 2009 monitor (the Blender agent's s1_open when it is done); full screen, the shop PC LIVE (look/shop-pc,
+ * preset `tabs`: the nine tabs open, Calendar up, as on the 3D monitor): Theo's cursor clicks through them, one per
+ * mark (tab1..tab9); each click, the old PC loads the page (status bar), the CPU needle kicks and the MEMORY needle
+ * climbs a notch into the red; the clock gadget's second hand ticks. "Tab four." -> the cursor goes to workload.xls and clicks; "No — five." -> the Parts
  * list (approved look-dev 03b); "It's the one with the spanner." -> push in to the spanner by PARTS LIST. */
 (function () {
   const C = CUES.scenes[0], S = C.start, E = C.end;
@@ -10,7 +10,6 @@
   let run, live, G = null;
   const tabT = k => M('tab' + k);                   // the k-th tab opens (k = 1..9)
   const nOpen = t => { let n = 0; for (let k = 1; k <= 9; k++) if (t >= tabT(k)) n = k; return n; };
-  const GROW = .2;                                  // a tab grows in over 0.2 s
   // the needles: each tab adds its notch (eased, a little overshoot, like a real needle), the CPU kicks and settles
   const RAM0 = .38, RAM1 = .93, CPU0 = .14;
   function needles(t) {
@@ -40,53 +39,36 @@
       live = run.list[2].s;
     },
     ready() {
-      // geometry, read once from the live page (logical px = rect / 1.5): the new-tab button with k tabs open, each
-      // tab's centre with all nine open, the taskbar's browser button
+      // geometry, read once from the live page (logical px = rect / 1.5): each tab's centre with all nine open
       const w = live.win(), pc = w.pc, d = w.document, L = r => [(r.left + r.width / 2) / 1.5, (r.top + r.height / 2) / 1.5];
-      G = { nt: [], tab: {} };
-      for (let k = 1; k <= 9; k++) {
-        pc.render(pc.preset('tabs', { tabs: TABS.slice(0, k), active: TABS[k - 1], cursor: null }));
-        G.nt[k] = L(d.querySelector('.tab.newtab').getBoundingClientRect());
-      }
+      pc.render(pc.preset('tabs', { cursor: null }));
+      G = { tab: {} };
       for (const id of TABS) G.tab[id] = L(d.querySelector(`.tab[data-id="${id}"]`).getBoundingClientRect());
-      G.web = L(d.querySelector('.tb-btn[data-id="web"]').getBoundingClientRect());
     },
     render(t) { run.render(t); },
   });
 
   function cursorAt(t) {
-    // 1) the taskbar browser button (tab 1 opens the browser on the Back Office), 2) the new-tab button, which slides
-    // right as each tab grows in, 3) workload.xls, 4) the Parts list, then the hand rests
+    // along the tab strip, a click on each tab at its mark (tab1..tab9), then back to workload.xls, then the Parts list
     const t1 = tabT(1), t9 = tabT(9), a4 = M('tab4_active'), a5 = M('tab5_active');
-    const ntAt = u => {                                     // where the new-tab button is at time u
-      const n = nOpen(u); if (n < 1) return G.nt[1];
-      const grow = clamp((u - tabT(n)) / GROW);
-      const a = G.nt[Math.max(1, n - 1)], b = G.nt[n];
-      return n === 1 ? G.nt[1] : [lerp(a[0], b[0], easeOutCubic(grow)), b[1]];
-    };
-    if (t < t1) return path2(t, [[M('screen'), 300, 560], [t1 - .06, G.web[0] + 4, G.web[1] + 2]]);
-    if (t < t1 + .2) return path2(t, [[t1, G.web[0] + 4, G.web[1] + 2], [t1 + .2, G.web[0] + 6, G.web[1] - 6]]);
-    if (t < tabT(2) - .1) { const nt = G.nt[1]; return path2(t, [[t1 + .2, G.web[0] + 6, G.web[1] - 6], [tabT(2) - .1, nt[0] + 2, nt[1] + 3]]); }
-    if (t < t9 + .25) {                                     // ride the button: follow it, clicking at each mark
-      const p = ntAt(t); return [p[0] + 2 + wiggle(t, 3, 4, .8), p[1] + 3 + wiggle(t, 4, 3.3, .6)];
+    const at = id => G.tab[id];
+    if (t < t9 + .1) {
+      const keys = [[M('screen'), at('shop')[0] + 40, at('shop')[1] + 60]];
+      for (let k = 1; k <= 9; k++) { const p = at(TABS[k - 1]); keys.push([tabT(k) - .05, p[0] - 6, p[1] + 3], [tabT(k) + .05, p[0] - 5, p[1] + 4]); }
+      const c = path2(t, keys); return [c[0] + wiggle(t, 3, 4, .6), c[1] + wiggle(t, 4, 3.3, .5)];
     }
-    const nt9 = G.nt[9], x4 = G.tab.xls, x5 = G.tab.parts;
-    if (t < a5 - .45) return path2(t, [[t9 + .25, nt9[0] + 2, nt9[1] + 3], [t9 + .5, nt9[0] - 40, nt9[1] + 70], [a4 - .05, x4[0] + 10, x4[1] + 2], [a5 - .45, x4[0] + 16, x4[1] + 6]]);
+    const c9 = at('cal'), x4 = at('xls'), x5 = at('parts');
+    if (t < a5 - .45) return path2(t, [[t9 + .1, c9[0] - 5, c9[1] + 4], [t9 + .45, c9[0] - 60, c9[1] + 60], [a4 - .05, x4[0] + 10, x4[1] + 2], [a5 - .45, x4[0] + 16, x4[1] + 6]]);
     return path2(t, [[a5 - .45, x4[0] + 16, x4[1] + 6], [a5 - .05, x5[0] - 8, x5[1] + 2], [M('spanner'), x5[0] - 2, x5[1] + 4], [E, x5[0] + 16, x5[1] + 13]]);
   }
 
   function state(t) {
-    const n = nOpen(t), nd = needles(t);
-    const st = { preset: 'tabs', ram: +nd.ram.toFixed(4), cpu: +nd.cpu.toFixed(4), secs: 12 + Math.floor(Math.max(0, t - M('screen'))) };
-    if (n === 0) Object.assign(st, { browser: false, tabs: [] });
-    else {
-      const a4 = M('tab4_active'), a5 = M('tab5_active');
-      st.tabs = TABS.slice(0, n);
-      st.tabIn = +easeOutCubic(clamp((t - tabT(n)) / GROW)).toFixed(4);
-      st.active = t >= a5 ? 'parts' : t >= a4 ? 'xls' : TABS[n - 1];
-      const since = Math.min(t - tabT(n), t >= a4 ? t - (t >= a5 ? a5 : a4) : 9);
-      st.loading = since < .28 ? +(.15 + .85 * since / .28).toFixed(3) : 0;      // the status bar: "Opening page..."
-    }
+    // all nine already open, as on the 3D monitor (Calendar up); each click makes the old PC load that page
+    const n = nOpen(t), nd = needles(t), a4 = M('tab4_active'), a5 = M('tab5_active');
+    const st = { preset: 'tabs', tabs: TABS, tabIn: 1, ram: +nd.ram.toFixed(4), cpu: +nd.cpu.toFixed(4), secs: 12 + Math.floor(Math.max(0, t - M('screen'))) };
+    st.active = t >= a5 ? 'parts' : t >= a4 ? 'xls' : n ? TABS[n - 1] : 'cal';
+    const last = t >= a5 ? a5 : t >= a4 ? a4 : n ? tabT(n) : -9, since = t - last;
+    st.loading = since < .28 ? +(.15 + .85 * since / .28).toFixed(3) : 0;      // the status bar: "Opening page..."
     if (G) { const c = cursorAt(t); st.cursor = { x: +c[0].toFixed(2), y: +c[1].toFixed(2) }; }
     return st;
   }

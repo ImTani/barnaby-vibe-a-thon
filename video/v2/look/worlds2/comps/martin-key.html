@@ -67,7 +67,7 @@
       labelAt: { shop: [0.5, 6.1], office: [6.78, 2.42], reports: [10.08, 1.42], workshop: [7.0, 4.78], stockroom: [15.32, 4.22], goodsin: [15.32, 6.12] },
       labelLines: { office: ['Back', 'office'] }, labelSizes: { office: 28 },
       standNames: true, standNameSize: 19,
-      route, stops: [[7.3, 8.05, '08:53', -82, 0]].concat(walk >= AT_DRAWER ? [[8.3, 1.65]] : []),
+      route, stops: (walk > .012 ? [[7.3, 8.05, '08:53', -82, 0]] : []).concat(walk >= AT_DRAWER ? [[8.3, 1.65]] : []),   // the stamp as he sets off
       keyAsk: [20.02, 7.05], keyR: 40, keyK: ask >= 1 ? undefined : ask, keyRot: st.keyRot || 0,
       marker: walk >= 1 ? MARK : [here[0] + (MARK[0] - ROUTE[9][0]) * arr, here[1] + (MARK[1] - ROUTE[9][1]) * arr], markerR: 30, markerLabel: walk >= .985 ? ['Barnaby', 0, 28] : null,     // his name in white, once he's on the blue
     });

@@ -1,0 +1,239 @@
+1
+00:00:21,200 --> 00:00:24,380
+MARTIN: Theo — where's the parts list
+again?
+
+2
+00:00:24,730 --> 00:00:26,710
+THEO: Tab four. No — five.
+
+3
+00:00:27,260 --> 00:00:28,990
+THEO: It's the one with the spanner.
+
+4
+00:00:37,040 --> 00:00:39,770
+THEO: Ah… seventeen years.
+
+5
+00:00:48,920 --> 00:00:57,330
+THEO: Right. Barnaby — this is the shop's system. I wrote it
+when I was fourteen, so be kind. Look after them for me.
+
+6
+00:00:57,980 --> 00:01:04,010
+BARNABY: Twenty-three endpoints, sir. I've taken the six
+that only read — nobody's given me any keys yet.
+
+7
+00:01:04,110 --> 00:01:08,620
+THEO: It's Theo. And don't call my uncle
+sir — he'll unplug you.
+
+8
+00:01:08,870 --> 00:01:10,330
+BARNABY: Noted.
+
+9
+00:01:21,380 --> 00:01:23,850
+MARTIN: Right. Barnaby, is it?
+
+10
+00:01:23,950 --> 00:01:25,300
+BARNABY: Good morning, Martin.
+
+11
+00:01:25,550 --> 00:01:29,510
+MARTIN: Can you tell me what's due
+tomorrow — and are we short on anything?
+
+12
+00:01:30,060 --> 00:01:37,100
+BARNABY: Five bikes due tomorrow. Only Anika's is a problem —
+her brakes need two pairs of pads, and we've one left.
+
+13
+00:01:38,550 --> 00:01:40,960
+MARTIN: Alright, order ten from Madison,
+then.
+
+14
+00:01:41,060 --> 00:01:47,280
+BARNABY: I can't order parts myself yet — but Theo
+built the system a way to. Shall I take that on?
+
+15
+00:01:47,730 --> 00:01:48,950
+MARTIN: Go right ahead.
+
+16
+00:01:51,800 --> 00:01:56,020
+BARNABY: Ten pairs from Madison, at six
+pounds fifty a pair. Shall I?
+
+17
+00:01:56,070 --> 00:01:57,410
+MARTIN: Yes.
+
+18
+00:02:02,660 --> 00:02:04,730
+MARTIN: Barnaby — Sofia's bike's done.
+
+19
+00:02:04,830 --> 00:02:08,600
+BARNABY: I'll need to text her and mark it
+ready. May I?
+
+20
+00:02:08,750 --> 00:02:09,990
+MARTIN: Go on.
+
+21
+00:02:12,990 --> 00:02:13,990
+MARTIN: Kwame's.
+
+22
+00:02:15,700 --> 00:02:17,940
+MARTIN: And Jana's.
+
+23
+00:02:18,490 --> 00:02:24,230
+BARNABY: That's three bikes handed back, and the
+same four steps each time. Shall I make it one?
+
+24
+00:02:24,280 --> 00:02:25,910
+MARTIN: Can you?
+
+25
+00:02:26,010 --> 00:02:27,520
+BARNABY: Give me a moment.
+
+26
+00:02:30,120 --> 00:02:31,800
+MARTIN: Tom's Brompton.
+
+27
+00:02:32,050 --> 00:02:34,690
+BARNABY: Tom's been texted, and it's
+marked ready.
+
+28
+00:02:37,540 --> 00:02:40,570
+MARTIN: Okay, who's got too much on this
+week?
+
+29
+00:02:40,820 --> 00:02:46,600
+BARNABY: The system can't tell me — there's no
+report for it. Theo always meant to write one.
+
+30
+00:02:46,950 --> 00:02:49,130
+BARNABY: I could write it, if you like.
+
+31
+00:02:49,230 --> 00:02:51,390
+MARTIN: You can do that?
+
+32
+00:02:51,490 --> 00:02:56,530
+BARNABY: With your say-so. I'll work on a copy
+— nothing changes until you've seen it.
+
+33
+00:03:03,180 --> 00:03:12,530
+BARNABY: Done. It adds up each mechanic's hours, the way Theo's notes count
+them. It only reads, and all of Theo's checks still pass. Shall I add it?
+
+34
+00:03:12,630 --> 00:03:14,000
+MARTIN: Mm-hmm. Add it.
+
+35
+00:03:14,100 --> 00:03:18,810
+BARNABY: That one needs your click, Martin.
+I don't change the system on a word.
+
+36
+00:03:19,060 --> 00:03:20,380
+MARTIN: Ah… fussy.
+
+37
+00:03:24,630 --> 00:03:31,320
+BARNABY: Dev's carrying thirty-one hours against his twenty. Priya
+starts tomorrow — shall I give her the two wheel builds?
+
+38
+00:03:31,570 --> 00:03:32,570
+MARTIN: Good idea.
+
+39
+00:03:39,570 --> 00:03:43,880
+PRIYA: So you're why I've got two wheel
+builds on my first day?
+
+40
+00:03:44,130 --> 00:03:48,660
+BARNABY: Guilty. Dev had thirty-one hours
+booked. You had none.
+
+41
+00:03:48,910 --> 00:03:52,100
+PRIYA: Fair. What else can this thing do?
+
+42
+00:03:52,200 --> 00:04:00,130
+BARNABY: Your jobs, the parts they need, who's collecting what. And
+Theo left you a note: never trust the stock count on a Friday.
+
+43
+00:04:00,580 --> 00:04:02,090
+PRIYA: Noted.
+
+44
+00:04:15,240 --> 00:04:18,200
+THEO: Barnaby — new job. This is the
+crew's memory.
+
+45
+00:04:19,050 --> 00:04:23,940
+BARNABY: Thirteen endpoints, sir — and two
+deadlines in dispute. Shall I flag them?
+
+46
+00:04:24,190 --> 00:04:25,480
+THEO: Still Theo.
+
+47
+00:04:25,630 --> 00:04:26,630
+BARNABY: Theo.
+
+48
+00:04:27,070 --> 00:04:29,690
+THEO: And the render box?
+
+49
+00:04:29,790 --> 00:04:34,490
+BARNABY: Twenty-eight endpoints. It's on
+the big card, and three jobs are queued.
+
+50
+00:04:34,840 --> 00:04:36,020
+THEO: Show-off.
+
+51
+00:04:39,670 --> 00:04:41,680
+MARTIN: Night, Barnaby.
+
+52
+00:04:41,930 --> 00:04:43,340
+BARNABY: Goodnight, Martin.
+
+53
+00:04:46,590 --> 00:04:48,030
+THEO: Night, Barnaby.
+
+54
+00:04:48,280 --> 00:04:49,600
+BARNABY: Goodnight, Theo.

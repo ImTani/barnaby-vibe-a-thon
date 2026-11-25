@@ -24,7 +24,7 @@
         // 3.4 Martin's plan, the whole shop held; Barnaby walks inside it; the one reframe, to the back-office wing,
         // as he reaches drawer 1 and the pads note drops on
         { src: 'comp/martin-key', at: M('martin_world'),
-          cam: move(M('pads_callout') - .15, 1.4, [690, 545, 1.48], [620, 310, 2.0], 0),
+          cam: move(M('pads_callout') - .15, 1.4, [690, 565, 1.48], [620, 310, 2.0], 0),
           state: t => ({ walk: +walkAt(t).toFixed(4), pads: +clamp((t - M('pads_callout')) / .55).toFixed(3), ask: 0, card: 0, say: 0, martin: 0, time: '08:54' }),
           build: l => {
             // Barnaby listening at the job board while Martin asks: his ring breathes (a brass ring, his colour)

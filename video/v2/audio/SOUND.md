@@ -528,6 +528,14 @@ Processing: the same door, smaller, LP 3.5 kHz, off in Theo's flat (Lisbon room 
 - In the dense opening (tabs every 0.34 s with drive chatter between them) the onset column can show a neighbouring
   click; each sound is placed on its cue by construction (the first transient of the clip on the cue time).
 - The time-lapse swell and the compressor rise slowly by design and are not timed by onset.
+- The grid is locked to the tab change, so the build starts on the first bar line after `marks.code` (2.2 s later), and
+  Tuesday's soft picking 1.3 s after its cut (one strum rings over it). "Fussy." has the least clearance (9.5 dB), with
+  the build's top bar under it even after the score steps back.
+- No shutter, door, coat or breath recordings exist in the library: the shutter and the doors are built from metal and
+  wood hits and the lock's bolt; the coat from a paper rustle and soft maracas (kept quiet, off-screen); the chair's breath
+  out is the tail of a breath riser, kept low under Martin's own sigh.
+- The film-pace voices peak harder: the limiter takes up to 2.4 dB on a few plosives. The loudness range is 12.2 LU
+  (long, quiet openings by design).
 
 - The library has no road traffic, so Lisbon's street is part synthesis; it sits low, behind people and birds.
 - `Television Crowd` stands in for customers and passers-by; it is band-limited and low so no words come through.

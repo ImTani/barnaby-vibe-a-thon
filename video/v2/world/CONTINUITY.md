@@ -23,10 +23,15 @@ render against this page.
 
 | Prop | Owner | Notes |
 |---|---|---|
-| The PC, monitor, keyboard (UK ISO, worn), mouse, speakers, lamp | the shop | every lead ends at the tower's rear I/O or the floor strip under the desk (see Cables) |
+| The PC, monitor, keyboard (UK ISO, worn), mouse, speakers, lamp | the shop | every lead ends at the tower's rear I/O or the floor strip under the desk (see Cables). The mouse is a 2009 right-handed ergonomic, wired USB: silver palm cap over black, gloss-black buttons, rubber-tread wheel, two thumb buttons, on the old WHEELWRIGHT cloth pad (worn, front-right corner curling) |
+| Dymo strip "DO NOT SWITCH OFF" on the tower front | the shop (years old) | red tape sun-faded, right end lifting; machine-embossed, nobody's hand |
+| Pen pot (navy glazed, chipped at the rim) | the shop | in it, each leaning its own way: blue biro (cap posted), black biro upside down (cap lost), yellow HB pencil, black marker, yellow highlighter, orange-handled scissors, blue tyre lever, a red three-way spoke key hooked over the rim. A red biro lies in front of it, its cap pulled off beside it |
+| Delivery note on the in-tray | the shop (Wheelwright, account SPO-114) | half out of the tray and askew, its front-left corner curling; "rec'd M." in Martin's blue Ink Free |
+| Crumpled till receipt by the in-tray | the shop | Thursday and Monday only: Martin tidies it away before Priya's first morning |
+| Waste bin under the desk | the shop | dark steel, a dent from the chair; crumpled paper settled in a partial layer, nothing above the rim |
 | WORLD'S OKAYEST NEPHEW mug | Theo's, left behind for Martin | Martin's joke gift; Martin drinks from it from Monday |
 | BACK OFFICE key, split ring, round paper tag in Theo's hand | Theo → Martin | ONE key off Theo's own ring; Theo keeps his ring with the chainring fob |
-| Headphones (teal pads) | Theo | shop: on the desk, plugged into the tower's front jack; Lisbon: on a walnut stand, lead wound round it |
+| Headphones (teal velour pads, closed-back, swivel cups) | Theo | the lead enters the LEFT cup. Shop: put down flat on the desk in front of the tower, cups on their pads, the band's crown by the tower's right side, the lead curling round on the desk and hanging up to the tower's front jack; Lisbon: hung on a walnut stand (band on the cradle, pads facing in), the lead wound twice round the stem, the green jack resting on the base |
 | Snake plant in a terracotta pot | Theo | shop: in the moving box; Lisbon: on the window sill ("plant survived the flight") |
 | 2009 photo, walnut frame, easel back | Theo | shop: standing on the right of the desk; Lisbon: on the desk by the monitors |
 | Moving box "THEO, LISBON" (plant, poster tube, hoodie) | Theo | Thursday only |
@@ -34,12 +39,14 @@ render against this page.
 | README (pinned) | Theo | item 2: backup USB stick, desk drawer 2; item 3: supplier logins in the red binder; item 4: never trust the stock count on a Friday |
 | Backup USB stick, paper tag "BACKUP (Fridays!)" | Theo | desk drawer 2, left open, except on Tuesday morning when it's shut (Martin tidied up for Priya) |
 | Corkboard calendar (Wheelwright, Nov 2026) | Martin's (red pen, Ink Free) | Mon 16–Wed 18 crossed off, Fri 20 circled "THEO'S LAST DAY :("; Martin doesn't cross days off, so it's unchanged on Monday/Tuesday |
-| Reading glasses on a cord, rag, pencil | Martin | |
-| Job card 4478 (Anika Banerjee, Trek FX 3, brake bleed + pads F+R, 2 pairs, due Tue 24/11) | Martin's hand | matches the jobs list on the screens |
+| Reading glasses on a cord, rag, pencil | Martin | (the pencil behind the keyboard; the one in the pen pot is the shop's) |
+| Job card 4478 (Anika Banerjee, Trek FX 3, brake bleed + pads F+R, 2 pairs, due Tue 24/11) | Martin's hand | matches the jobs list on the screens; the manila job cards are dog-eared at the bottom-right corner |
 | Job cards 4471 (Rachel Okafor, front wheel build) and 4472 (Magnus Lindqvist, rear), Mech: ~~Dev~~ Priya | Martin's hand | the reassignment on screen (frame 08); left on the keyboard for her |
 | Road helmet (matt white, coral accent, black EPS rim, twelve vents, retention dial), takeaway coffee "PRIYA", waxed-canvas toolroll | Priya | the helmet perches on the corner of the chair back, its unbuckled straps and buckle hanging |
 | Studio badge "ANDORINHA · Theo Hartley · Pipeline · DESK 14", teal lanyard | Theo (Lisbon) | Quorum: desk 14; the to-do list: "badge, desk 14, wifi" |
-| Pastel de nata on a pastelaria napkin, a bica | Theo (Lisbon) | to-do list: "find the good pastelaria (ask Inês)" |
+| Pastel de nata on a pastelaria napkin, a bica | Theo (Lisbon) | to-do list: "find the good pastelaria (ask Inês)"; yesterday's bica left a faint ring on the desk |
+| Laptop and its stand | the studio (Lisbon) | a one-piece bent aluminium stand (platform sloping up to the back, rolling over into a column that curves forward into a foot), silicone strips and a front lip; the laptop sits on it, lid at ~102° from the desk |
+| Mouse (Lisbon) | the studio | a modern ergonomic wireless mouse, soft-touch graphite, knurled steel wheel, thumb wheel and two side buttons, USB-C charge port; its receiver is in the dock |
 
 Handwriting: Segoe Print is Theo's (the sticky note, the box, the key tag, the CD-R in the photo, the BACKUP tag,
 "SHELF A"). Ink Free is Martin's (calendar, drawer labels, binders, boxes, job cards). Mistral is the barista's (the
@@ -56,6 +63,7 @@ cup). Kristen ITC is a child's (the thank-you drawing). Nobody else's hand appea
 | Key + tag on the keyboard | ✓ | (taken in the scene 3 time-lapse) | | | | |
 | Headphones | ✓ desk, plugged in | | | | ✓ on the stand | ✓ |
 | Photo frame | ✓ | | | | ✓ | ✓ |
+| Crumpled receipt by the in-tray | ✓ | ✓ | | | | |
 | Moving box with the plant | ✓ | | | | plant on the sill | plant on the sill |
 | Mug | cold coffee | tea | half-drunk tea, moved beside Priya's cup | empty | | |
 | Sticky note on the bezel | ✓ | ✓ | **gone** | gone | | |
@@ -66,7 +74,21 @@ cup). Kristen ITC is a child's (the thank-you drawing). Nobody else's hand appea
 | Chair | by the box | same | pushed in by the pedestal, the helmet perched on its corner | turned in | | |
 
 Always on the shop set: the service bell and its RING FOR SERVICE card (on the counter), the corkboard, the shelf, the
-cables, the workshop through the door.
+cables, the workshop through the door, the pen pot and the red biro in front of it, the delivery note on the in-tray, the
+bin's rubbish, the Dymo strip.
+
+## Wear (pass 4: materials, not props)
+
+Procedural and per object, the same every run (`weather()`/`weather_all()` in desk.py, rule tables `WEAR_RULES` and
+`LISBON_RULES`): roughness breakup everywhere; fingerprints and smudges on gloss plastics, the monitor bezel and (faintly)
+the LCD glass; fine scratches and scuffs on plastics, metals and the floor; worn, paler edges on the desk, shelf and
+trim; dust on whatever faces up where nobody wipes (the monitor's top, the tower's top, the shelf and what's on it, the
+rails, the radiator); paper yellowed at the edges by age (the README and calendar nearly new, the thank-you drawing and
+the binder labels old); Martin's old labels with their marker faded. Permanent marks on the shop desk: two overlapping
+cup rings by the mug's spot (1.67, 2.29), one by the keyboard (1.22, 2.40), the varnish worn pale along the front edge.
+Cork: pin holes, two darker unfaded ghosts of old notices with their old pin holes. Floor: a worn path from the
+workshop door to the chair, caster arcs round the chair, dust along the skirting. Lisbon is two days in: the desk is
+nearly clean (one faint bica ring), the old building isn't (crazed azulejos with the odd chipped corner, a worn floor).
 
 ## The parts cabinet agrees with Theo's parts list (shop-pc-03b)
 

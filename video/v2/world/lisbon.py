@@ -10,12 +10,14 @@ Run from the repo root (Git Bash):
 
 Options (after the `--`):
     --shots a,b,...    stills (default: wide_day,medium_day,medium_night; also close_half, pair (the two-desk close,
-                       needs desk.py's out/x_close_half_shop.png), detail_day)
+                       needs desk.py's out/x_close_half_shop.png), detail_day, and the hero props close: mouse_day,
+                       stand_day)
     --scale N / --samples N / --save-blend / --no-render     as desk.py
 
 Screens: video/v2/look/frames/lisbon-02-realapp-{main,studio,laptop}.png by day (Mon 23 Nov, 09:39, scene 8) and
 lisbon-05-night-* at night (Tue 24 Nov, 20:07, scene 9), else placeholders from make_screens.py.
-Collections: SET, OUTSIDE (the rooftops), DAY and NIGHT (lights), CAMS.
+Collections: SET, OUTSIDE (the rooftops), DAY and NIGHT (lights), CAMS. dress_lisbon() wears the set after the build
+(desk.py's weather machinery with LISBON_RULES: two days in, an old building).
 """
 import argparse
 import math
@@ -54,6 +56,9 @@ SHOTS = {
     "medium_night": ("LCAM_medium", "night", "lisbon_03_medium_night.png", 0.0),
     "detail_day": ("LCAM_detail", "day", "x_lisbon_detail_day.png", -0.35),
     "close_half": ("LCAM_close_half", "night", "x_close_half_lisbon.png", 0.0, (960, 1080)),
+    # hero props, close (pass 4)
+    "mouse_day": ("LCAM_mouse", "day", "x_lisbon_mouse_day.png", -0.25),
+    "stand_day": ("LCAM_stand", "day", "x_lisbon_stand_day.png", -0.25),
 }
 DEFAULT_SHOTS = "wide_day,medium_day,medium_night"
 
@@ -457,6 +462,51 @@ def build_desk(M):
     return (tx0, tx1, ty0, ty1, tz0, tz1)
 
 
+def laptop_stand(M, lp, alu, th, w, t):
+    """A one-piece bent aluminium laptop stand (in the laptop group's space: y forward-to-back, z up): a platform
+    sloping up toward the back, rolling over into a column that curves forward into a foot on the desk, silicone
+    strips on the platform and a lip at its front edge. Returns the platform's top front edge (y, z) as a Vector."""
+    F = Vector((-0.104, 0.062))                               # (y, z) of the platform's top front edge
+    u, n = Vector((cos(th), sin(th))), Vector((-sin(th), cos(th)))
+    c0 = F - n * t / 2
+    line = [c0 + u * s for s in np.linspace(0.0, 0.19, 9)]
+    R, R2 = 0.022, 0.012
+    O = line[-1] - n * R                                      # roll over at the back
+    a0 = math.atan2((line[-1] - O).y, (line[-1] - O).x)
+    col_dir = radians(-100)
+    a1 = a0 - (th - col_dir)
+    line += [O + Vector((cos(a), sin(a))) * R for a in np.linspace(a0, a1, 12)[1:]]
+    Pa = line[-1]
+    d = Vector((cos(col_dir), sin(col_dir)))
+    zb = t / 2 + R2 - R2 * sin(radians(10))                   # where the column meets the bottom bend
+    Pb = Pa + d * ((Pa.y - zb) / -d.y)
+    line += [Pa + (Pb - Pa) * f for f in np.linspace(0, 1, 5)[1:]]
+    O2 = Pb + Vector((d.y, -d.x)) * R2                         # (the right of the column's direction: forward)
+    b0 = math.atan2((Pb - O2).y, (Pb - O2).x)
+    line += [O2 + Vector((cos(a), sin(a))) * R2 for a in np.linspace(b0, -pi / 2, 9)[1:]]
+    foot_end = Vector((-0.05, t / 2))
+    line += [line[-1] + (foot_end - line[-1]) * f for f in np.linspace(0, 1, 6)[1:]]
+    left, right = [], []
+    for i, p in enumerate(line):
+        a, b = line[max(i - 1, 0)], line[min(i + 1, len(line) - 1)]
+        dd = (b - a).normalized()
+        nn = Vector((-dd.y, dd.x))
+        left.append(p + nn * t / 2)
+        right.append(p - nn * t / 2)
+    outline = [(p.x, p.y) for p in left + right[::-1]]
+    prism("stand_sheet", outline, w, loc=(-w / 2, 0, 0), rot=(90, 0, 90), m=alu, bev=0.0012, parent=lp)
+    sil = mat("lx_silicone", "#2a2b2e", 0.7)
+    Fv = Vector((0, F.x, F.y))
+    U, N = Vector((0, u.x, u.y)), Vector((0, n.x, n.y))
+    lip = grp("stand_lip_g", Fv + U * 0.004 + N * 0.003, (math.degrees(th), 0, 0), parent=lp)
+    box("stand_lip", (w - 0.02, 0.0055, 0.006), (0, 0, 0), sil, bev=0.002, parent=lip)
+    for s in (-1, 1):
+        g = grp(f"stand_pad_g{s}", Fv + U * 0.1 + N * 0.0006 + Vector((s * 0.085, 0, 0)), (math.degrees(th), 0, 0),
+                parent=lp)
+        box(f"stand_pad{s}", (0.014, 0.15, 0.0013), (0, 0, 0), sil, bev=0.0004, parent=g)
+    return Fv
+
+
 def build_arm_and_monitors(M):
     """Two 27in 16:9 monitors on a dual arm clamped to the back edge (main straight ahead, studio angled in), and the
     docked laptop on an aluminium riser to the left."""
@@ -497,18 +547,34 @@ def build_arm_and_monitors(M):
             tube(f"arm_{slot}_{nm}", a, b, 0.016, steel, n=12)
             sphere(f"arm_{slot}_{nm}_j", 0.02, a, steel, seg=12, rings=8)
         cyl(f"arm_{slot}_collar", 0.026, 0.04, top, steel, n=16)
-    # the docked laptop on its riser
+    # the docked laptop on its stand
     lp = grp("laptop", (0.62, 2.3, DZ), (0, 0, 8))
     alu = mat("lx_alu", "#b9bcc1", 0.28, metal=0.9)
-    for s in (-1, 1):
-        prism(f"riser{s}", [(-0.12, 0.0), (0.12, 0.0), (0.12, 0.012), (0.1, 0.012), (-0.11, 0.11), (-0.12, 0.11)],
-              0.008, loc=(s * 0.11, 0, 0), rot=(90, 0, 90), m=alu, bev=0.002, parent=lp)
-    tilt = grp("laptop_tilt", (0, -0.005, 0.065), (24, 0, 0), parent=lp)
+    plat_th, w_st, t_st = radians(16), 0.24, 0.006
+    F = laptop_stand(M, lp, alu, plat_th, w_st, t_st)
+    u = Vector((0, cos(plat_th), sin(plat_th)))
+    nrm = Vector((0, -sin(plat_th), cos(plat_th)))
+    tilt = grp("laptop_tilt", F + u * (0.009 + 0.109) + nrm * 0.0013, (16, 0, 0), parent=lp)
     box("laptop_base", (0.312, 0.218, 0.014), (0, 0, 0.007), alu, bev=0.004, parent=tilt)
-    box("laptop_keys", (0.27, 0.1, 0.001), (0, 0.035, 0.0142), mat("lx_keys", "#25272b", 0.5), bev=0, parent=tilt)
+    box("laptop_well", (0.276, 0.104, 0.0006), (0, 0.035, 0.0139), mat("lx_keys", "#25272b", 0.5), bev=0,
+        parent=tilt)
+    kb = bmesh.new()                                          # the keys, a 6-row chiclet grid with a space bar
+    for r in range(6):
+        cols = [(c, 1.0) for c in range(14)] if r < 5 else [(0, 1.0), (1, 1.0), (2, 1.0), (3, 5.0), (8, 1.0),
+                                                              (9, 1.0), (10, 1.0), (11, 1.0), (12, 1.0), (13, 1.0)]
+        for c, wk in cols:
+            x0 = -0.1309 + c * 0.0187 + 0.0012
+            x1 = x0 + wk * 0.0187 - 0.0024 - (0.0 if wk == 1.0 else 0.0)
+            y1 = 0.0835 - r * 0.0172
+            y0 = y1 - (0.0148 if r else 0.009)
+            vs = [kb.verts.new(p) for p in ((x0, y0, 0.0140), (x1, y0, 0.0140), (x1, y1, 0.0140), (x0, y1, 0.0140),
+                                            (x0, y0, 0.0149), (x1, y0, 0.0149), (x1, y1, 0.0149), (x0, y1, 0.0149))]
+            for idx in ((4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)):
+                kb.faces.new([vs[i] for i in idx])
+    D.bevel(finish("laptop_keys", kb, mat("lx_keycap", "#1f2023", 0.42), tilt, angle=30), 0.0006, 1, 30)
     box("laptop_pad", (0.11, 0.07, 0.0006), (0, -0.065, 0.0142), mat("lx_pad", "#aeb1b6", 0.3, metal=0.7), bev=0,
         parent=tilt)
-    lid = grp("laptop_lid", (0, 0.109, 0.014), (-128, 0, 0), parent=tilt)
+    lid = grp("laptop_lid", (0, 0.109, 0.014), (-118, 0, 0), parent=tilt)
     box("laptop_lid_shell", (0.312, 0.218, 0.006), (0, -0.109, 0.003), alu, bev=0.003, parent=lid)
     sg = grp("laptop_screen_g", (0, -0.109, -0.0002), (90, 0, 0), parent=lid)
     box("laptop_bezel", (0.306, 0.004, 0.21), (0, 0.0, 0.0), bez, bev=0.001, parent=sg)
@@ -629,20 +695,78 @@ def build_keyboard75(M):
     return g
 
 
+LX_MOUSE_OUTLINE = [(0.0, 0.064), (-0.012, 0.0625), (-0.022, 0.057), (-0.028, 0.047), (-0.031, 0.036),
+                    (-0.036, 0.026), (-0.045, 0.016), (-0.053, 0.004), (-0.056, -0.01), (-0.053, -0.024),
+                    (-0.044, -0.036), (-0.034, -0.048), (-0.022, -0.061), (-0.006, -0.067), (0.01, -0.065),
+                    (0.022, -0.057), (0.029, -0.042), (0.032, -0.022), (0.033, 0.0), (0.032, 0.022), (0.029, 0.04),
+                    (0.023, 0.053), (0.013, 0.061)]
+
+
+def _lx_mouse_top(x, y):
+    hy = D._spline(y, [-0.068, -0.054, -0.036, -0.016, 0.004, 0.024, 0.044, 0.065], [0.3, 0.6, 0.88, 1.0, 0.94, 0.78,
+                                                                                    0.6, 0.44])
+    qx = D._spline(x, [-0.058, -0.048, -0.038, -0.028, -0.014, 0.0, 0.016, 0.028, 0.036], [0.26, 0.28, 0.36, 0.62, 0.9,
+                                                                                          1.0, 0.86, 0.6, 0.4])
+    z = 0.046 * hy * qx
+    return z - 0.006 * math.exp(-((x + 0.035) / 0.008) ** 2) * math.exp(-((y + 0.004) / 0.026) ** 2)
+
+
+def lx_mouse_material():
+    """Soft-touch graphite: the buttons a shade smoother than the palm, the thumb wing a slightly paler rubber."""
+    if "lx_mouse_m" in MATS:
+        return MATS["lx_mouse_m"]
+    m = mat("lx_mouse_m", "#3a3c41", 0.55)
+    nt, b = m.node_tree, principled(m)
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    x, y, z = D._xyz(nt, tc.outputs["Object"])
+    yb = D._math(nt, "ADD", 0.012, D._math(nt, "MULTIPLY", D._math(nt, "MULTIPLY", x, x), 6.0))
+    btn = D._ramp(nt, D._math(nt, "SUBTRACT", y, yb), -0.0004, 0.0004)
+    wing = D._math(nt, "MULTIPLY", D._ramp(nt, x, -0.034, -0.04), D._ramp(nt, z, 0.021, 0.016))
+    col = D._mixc(nt, btn, "#3a3c41", "#33353a")
+    col = D._mixc(nt, wing, col, "#46484d")
+    r = D._lerp(nt, btn, 0.56, 0.42)
+    r = D._lerp(nt, wing, r, 0.74)
+    nt.links.new(col, b.inputs["Base Color"])
+    nt.links.new(r, b.inputs["Roughness"])
+    return m
+
+
+def build_modern_mouse(M, loc, yaw):
+    """Theo's studio mouse (2026): a sculpted ergonomic wireless mouse, soft-touch graphite, the high back falling to
+    the right, a broad low thumb wing with a scoop, a knurled steel scroll wheel in its well, a thumb wheel and two
+    buttons on the side, the button seams, a USB-C charging port at the front. Wireless: the receiver is in the dock."""
+    g = grp("lx_mouse", loc, (0, 0, yaw))
+    sh = D.Shell(LX_MOUSE_OUTLINE, (-0.006, -0.004), _lx_mouse_top, lift=0.0012)
+    sh.mesh("lx_mouse_body", lx_mouse_material(), g)
+    seam = mat("lx_mouse_seam", "#1b1c1f", 0.6)
+    wx, wy0, wy1 = -0.001, 0.016, 0.046
+    yb = lambda x: 0.012 + 6.0 * x * x                                       # noqa: E731
+    sh.line("lx_mouse_seam_split", [(wx, 0.064), (wx, wy1 + 0.001)], 0.00032, seam, g)
+    sh.line("lx_mouse_seam_back", [(x, yb(x)) for x in np.linspace(-0.029, 0.031, 22)], 0.00032, seam, g)
+    well = [(wx + 0.0068 * cos(a), (wy0 + wy1) / 2 + 0.0162 * sin(a)) for a in np.linspace(0, 2 * pi, 22,
+                                                                                            endpoint=False)]
+    sh.patch("lx_mouse_well", well, M["hole"], g)
+    wz = sh.z(wx, 0.031)
+    knurl = mat("lx_wheel_steel", "#a3a7ad", 0.3, metal=0.9)
+    D.toothed_wheel("lx_mouse_wheel", 0.0088, 0.0072, 44, 0.0003, knurl, g, (wx, 0.031, wz - 0.0046))
+    # the thumb wheel, set into the side above the wing, and the two side buttons behind it
+    tx, ty = -0.0312, 0.016
+    n = sh.normal(tx, ty)
+    tg = D.framed("lx_mouse_thumb_g", D.frame_matrix(sh.at(tx, ty, -0.0042), n, (0, 0, 1)), parent=g)
+    D.toothed_wheel("lx_mouse_thumbwheel", 0.0078, 0.0042, 26, 0.00035, mat("lx_thumbwheel", "#2a2c30", 0.5), tg,
+                    (0, 0, 0), rot=(0, 0, 0))
+    side = mat("lx_mouse_side", "#34363b", 0.45)
+    sh.raised("lx_mouse_side_fwd", -0.0333, -0.0035, 0.0135, 0.0042, 0.0011, side, g, along=(0.25, 1.0))
+    sh.raised("lx_mouse_side_back", -0.0349, -0.0185, 0.0135, 0.0042, 0.0011, side, g, along=(0.3, 1.0))
+    box("lx_mouse_usbc", (0.0088, 0.003, 0.0031), (0.0, 0.0632, 0.0086), M["hole"], bev=0.0012, parent=g)
+    return g
+
+
 def build_desk_kit(M):
     """Mouse, drawing tablet and pen, headphones on their stand, the plant and the photo (the same props as the shop),
     the studio badge on its lanyard, a pastel de nata on a napkin and a bica."""
     use("SET")
-    # mouse (wireless: its receiver is in the dock)
-    ms = grp("lx_mouse", (1.36, 2.0, DZ), (0, 0, -8))
-    bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=16, v_segments=10, radius=1.0)
-    for v in bm.verts:
-        x, y, z = v.co
-        v.co = Vector((x * 0.034 * (1 - 0.15 * y), y * 0.06, max(z, -0.1) * 0.022 * (0.8 + 0.3 * (0.5 - y * 0.5))
-                       + 0.002))
-    finish("lx_mouse_body", bm, mat("lx_mouse_m", "#3b3d42", 0.4), ms, angle=60)
-    cyl("lx_mouse_wheel", 0.006, 0.005, (0, 0.03, 0.023), M["rubber"], rot=(0, 90, 0), n=12, parent=ms)
+    build_modern_mouse(M, (1.42, 2.012, DZ), -10)
     # drawing tablet and pen
     tb = grp("tablet", (1.69, 2.03, DZ), (0, 0, -6))
     tab_m = mat("lx_tablet", "#1a1b1e", 0.55)
@@ -670,11 +794,22 @@ def build_desk_kit(M):
     cyl("hps_base", 0.06, 0.012, (0, 0, 0), walnut, n=24, base=True, bev=0.003, parent=hs)
     cyl("hps_stem", 0.011, 0.25, (0, 0, 0.012), walnut, n=12, base=True, parent=hs)
     torus("hps_cradle", 0.05, 0.012, (0, 0, 0.262), walnut, rot=(90, 0, 0), nR=16, nr=8, arc=(0, 180), parent=hs)
-    hp = D.build_headphones(M, grp("headphones", (0, 0, 0.312 - 0.167 + 0.006), (0, 0, 0), parent=hs), name="lhp")
-    pts = [(0.017 * cos(t), 0.017 * sin(t), 0.06 + 0.012 * t / (2 * pi)) for t in np.linspace(0, 8 * pi, 60)]
-    curve("hps_lead", [(-0.08, 0.0, 0.17), (-0.05, 0.0, 0.12), (0.0, -0.017, 0.11)] + [tuple(p) for p in pts[::-1]] +
-          [(0.03, -0.02, 0.05), (0.045, -0.03, 0.016)], 0.0016, M["plastic_blk"], parent=hs, res=4)
-    cyl("hps_jack", 0.0035, 0.02, (0.052, -0.036, 0.016), mat("jack_green", "#5aa55a", 0.45), rot=(0, 90, 30), n=10,
+    hp = grp("headphones", (0, 0, 0), parent=hs)
+    crown = D.build_headphones(M, hp, name="lhp", pose="stand")
+    hp.location.z = 0.262 + 0.05 + 0.012 - crown               # the band's cushion rests on the cradle
+    bpy.context.view_layer.update()
+    # the lead: out of the left cup, down and round the stem a few turns, the jack resting on the base
+    at, dl = port_frame("lhp_lead")
+    p0 = connector("lhp_lead_bush", "relief", at, dl, M)
+    inv = hs.matrix_world.inverted()
+    q0 = inv @ p0
+    spiral = [(0.0175 * cos(t), 0.0175 * sin(t), 0.075 - 0.04 * (t - pi) / (4 * pi)) for t in np.linspace(pi, 5 * pi,
+                                                                                                         40)]
+    pts = [q0, q0 + Vector((0, 0, -0.012)), q0 + Vector((0.012, -0.004, -0.03)), Vector((-0.03, -0.006, 0.08))]
+    pts += [Vector(p) for p in spiral] + [Vector((0.026, -0.02, 0.03)), Vector((0.04, -0.03, 0.017)),
+                                          Vector((0.046, -0.034, 0.0156))]
+    curve("hps_lead", [tuple(p) for p in pts], 0.0016, M["plastic_blk"], parent=hs, res=4)
+    cyl("hps_jack", 0.0035, 0.02, (0.056, -0.04, 0.0156), mat("jack_green", "#5aa55a", 0.45), rot=(0, 90, 32), n=10,
         parent=hs)
     # the plant (survived the flight) by the window, the 2009 photo by the monitors
     D.build_plant(M, grp("plant", (-0.14, 2.12, WIN[2])))     # on the sunny marble sill
@@ -701,8 +836,9 @@ def build_desk_kit(M):
              fit=0.046 if k == 0 else 0.026)
     clip = box("badge_clip", (0.012, 0.012, 0.003), (0, 0.05, 0.0015), M["chrome"], bev=0.001, parent=bg)
     lg = grp("lanyard_g", (0, 0, DZ + 0.0015))
-    curve("lanyard", [(1.31, 1.975, 0), (1.27, 2.03, 0), (1.25, 2.12, 0), (1.32, 2.175, 0), (1.43, 2.13, 0),
-                      (1.425, 2.04, 0), (1.345, 1.98, 0)], 0.0055, teal, parent=lg, res=8, bres=1, flatz=0.18)
+    curve("lanyard", [(1.312, 1.976, 0), (1.288, 2.03, 0), (1.248, 2.1, 0), (1.268, 2.166, 0), (1.322, 2.172, 0),
+                      (1.345, 2.115, 0), (1.333, 2.045, 0), (1.322, 1.99, 0)], 0.0055, teal, parent=lg, res=8, bres=1,
+          flatz=0.18)
     # pastel de nata on a napkin, and a bica
     build_nata(M, (0.8, 1.99, DZ), 15)
     cup = grp("bica", (0.66, 2.1, DZ))
@@ -972,6 +1108,79 @@ def build_storyboard(M):
         D.pushpin(f"sb_pin{k}", p, 0, 0.058, M["pin_red"] if k % 3 else M["pin_yellow"])
 
 
+# ================================================================ wear and tear (Theo's second day; the building is old)
+LISBON_RULES = [
+    (D.PRINT_SKIP + ("lx_led_red", "lx_disp", "lx_win_*", "lx_sky", "lx_river", "lx_hills", "telha", "fac*",
+                     "lx_church", "lx_dome", "bk_*", "artbook*", "monstera*", "seagrass", "lx_keycap"), None),
+    (("birch_ply",), dict(rv=0.06, scratch=0.22, edge=0.5, edge_val=1.12, edge_w=0.004)),
+    (("lx_floor*",), dict(rv=0.1, scratch=0.55, scuff=0.3, edge=1.0, edge_val=0.55, edge_sat=1.05, edge_rough=0.85,
+                          edge_w=0.004)),
+    (("lime",), dict(rv=0.06, cv=0.04, scuff=0.18)),
+    (("azulejo",), dict(rv=0.04)),
+    (("lx_marble",), dict(rv=0.05, scratch=0.25)),
+    (("lx_paint", "lx_cream", "lx_socket*"), dict(rv=0.06, scuff=0.2, edge=0.55, edge_val=1.1, edge_w=0.004)),
+    (("lx_mon", "lx_bezel", "lx_case", "lx_tablet", "lx_dock", "lx_chair_blk", "lx_steel_blk", "lx_pen",
+      "lx_tab_key"), dict(rv=0.06, smudge=0.45, scratch=0.12)),
+    (("lx_alu", "lx_arm_alu", "lx_pad", "lx_wheel_steel"), dict(rv=0.05, smudge=0.55, scratch=0.18)),
+    (("lx_mouse_m", "lx_mouse_side", "lx_thumbwheel"), dict(rv=0.04, smudge=0.35)),
+    (("mk_*",), dict(rv=0.04, smudge=0.15)),
+    (("lx_tablet_area", "lx_silicone", "lx_mesh", "lx_seat", "arraiolos", "rug_border"), dict(rv=0.05)),
+] + D.WEAR_RULES
+LISBON_PROPS = [
+    ("case_top", {"dust": 0.5}), ("artbook*", {"dust": 0.4}), ("lx_sill", {"dust": 0.35}),
+    ("mon_*_body", {"dust": 0.35}), ("mon_*_back", {"dust": 0.45}), ("lx_pole_cap", {"dust": 0.6}),
+    ("poster_fr_t", {"dust": 0.7}), ("lx_bullnose_*", {"dust": 0.45}), ("sb_board", {"dust": 0.3}),
+    ("lx_frame_*", {"dust": 0.4}), ("lx_bar_h*", {"dust": 0.5}), ("lx_shutter*", {"dust": 0.4}),
+    ("lx_wall_socket", {"dust": 0.3}), ("mq_base", {"dust": 0.5}), ("hps_base", {"dust": 0.2}),
+    ("sb_paper*", {"age": 0.02}), ("badge_card", {"age": 0.0}), ("napkin", {"age": 0.0}),
+]
+
+
+def tile_craze(m):
+    """Old azulejos: a fine crackle in the glaze and the odd chipped corner showing the biscuit."""
+    nt, b, col, r = D._bsdf_io(m)
+    p, p0 = D._wcoords(nt)
+    v = nt.nodes.new("ShaderNodeTexVoronoi")
+    v.feature = "DISTANCE_TO_EDGE"
+    v.inputs["Scale"].default_value = 55.0
+    nt.links.new(p, v.inputs["Vector"])
+    crack = D._math(nt, "MULTIPLY", D._ramp(nt, v.outputs["Distance"], 0.014, 0.0),
+                    D._ramp(nt, D._nz(nt, p, 6.0, 3.0), 0.45, 0.6))
+    col = D._mixc(nt, D._math(nt, "MULTIPLY", crack, 0.35), col, "#6d6656")
+    dv, dc = D._vor(nt, p, 7.0)
+    chip = D._math(nt, "MULTIPLY", D._ramp(nt, dv, 0.11, 0.07), D._ramp(nt, dc, 0.9, 0.92))
+    col = D._mixc(nt, chip, col, "#d9c9a8")
+    nt.links.new(col, b.inputs["Base Color"])
+    nt.links.new(D._lerp(nt, chip, r, 0.85), b.inputs["Roughness"])
+
+
+def tablet_sheen(m):
+    """The drawing surface polished where the side of his hand rests (a right-hander, lower right), a few nib trails."""
+    nt, b, col, r = D._bsdf_io(m)
+    p, p0 = D._wcoords(nt)
+    x, y, z = D._xyz(nt, p0)
+    hand = D._math(nt, "MULTIPLY", D._ramp(nt, D._dist2(nt, x, y, 0.06, -0.035, 1.4, 1.0), 0.07, 0.02),
+                   D._ramp(nt, D._nz(nt, p, 30.0, 3.0), 0.3, 0.6))
+    nt.links.new(D._lerp(nt, hand, r, 0.42), b.inputs["Roughness"])
+    nt.links.new(D._mixc(nt, D._math(nt, "MULTIPLY", hand, 0.4), col, "#2a2b30"), b.inputs["Base Color"])
+
+
+def dress_lisbon(M):
+    D.set_props(LISBON_PROPS)
+    D.weather_all(LISBON_RULES)
+    for m in [x for x in bpy.data.materials if x.name.startswith("lx_floor")]:
+        D.floor_wear(m, path=(1.9, -0.05, 1.05, 1.05, 0.3), chair=(0.95, 1.22, 0.45), walls=(0.0, LD))
+    nt, b, col, r = D._bsdf_io(MATS["birch_ply"])           # yesterday's bica left a faint ring
+    pos, x, y, z = D._world_xy(nt)
+    col, r = D.ring_marks(nt, col, r, x, y, [(0.742, 2.168, 0.0215, 0.62)], stain="#8a6a48")
+    nt.links.new(col, b.inputs["Base Color"])
+    nt.links.new(r, b.inputs["Roughness"])
+    tile_craze(MATS["azulejo"])
+    tablet_sheen(MATS["lx_tablet_area"])
+    D.cork_marks(MATS["felt_grey"], ghosts=[], old_pins=[(-0.4, 0.2), (0.33, -0.18), (0.05, 0.22)], hole_k=0.55,
+                 hole_rgb="#2c2f33")
+
+
 # ================================================================ lights, cameras, presets
 def build_lights(M, heads):
     bpy.context.view_layer.update()
@@ -1008,6 +1217,8 @@ def build_cameras():
     camera("LCAM_medium", (2.3, 0.55, 1.5), (0.92, 2.32, 1.02), 26, 2.8, (1.1, 2.15, 0.9))
     camera("LCAM_detail", (1.05, 1.45, 1.05), (0.85, 2.1, 0.76), 40, 2.8, (0.8, 2.0, 0.76))
     camera("LCAM_close_half", (1.55, 0.95, 1.38), (1.07, 2.5, 1.02), 30, 2.8, (1.07, 2.2, 0.9))
+    camera("LCAM_mouse", (1.31, 2.13, 0.895), (1.423, 2.014, 0.768), 55, 13.0, (1.423, 2.014, 0.772))
+    camera("LCAM_stand", (0.99, 1.99, 0.9), (0.63, 2.31, 0.82), 40, 5.6, (0.63, 2.3, 0.82))
 
 
 def apply_preset(name, M, sky_m, lit_m):
@@ -1088,6 +1299,7 @@ def main():
     build_storyboard(M)
     build_studio_corner(M)
     D.apply_fits()
+    dress_lisbon(M)
     build_lights(M, heads)
     build_cameras()
     print(f"built {len(bpy.data.objects)} objects in {time.time() - t0:.1f}s")

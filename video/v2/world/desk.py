@@ -10,7 +10,8 @@ Run from the repo root (Git Bash):
 
 Options (after the `--`):
     --shots a,b,...    which stills to render (default: DEFAULT_SHOTS; extras: board_night, shelf_monday, bell_night,
-                       screen_night, close_night, drawer_monday)
+                       screen_night, close_night, drawer_monday, close_half, cables_top, cables_under, and the hero
+                       props close: mouse_monday, hp_night, pot_monday, bin_monday)
     --scale N          resolution percentage of 1920x1080 (default 100; use 40 for quick looks)
     --samples N        Eevee render samples (default 64)
     --screen PATH      one PNG for the monitor in every preset (overrides the per-preset screens below)
@@ -25,8 +26,10 @@ Options (after the `--`):
 
 Collections: SET (the room, desk, PC, corkboard, shelf), WORKSHOP (through the doorway), THEO (Thursday night only),
 MARTIN (Monday only), MARTIN_KIT (Monday and Tuesday), PRIYA (Tuesday only), CLOSE (the goodnight shot only),
-NOTE (the sticky note: Thursday and Monday), NIGHT and MONDAY (each preset's lights), REFLECT (the room's fourth
-wall, seen only in the glossy screen), CAMS. apply_preset() swaps them. Presets: night, monday, tuesday, close.
+NOTE (the sticky note: Thursday and Monday), MESS (the crumpled receipt: Thursday and Monday), NIGHT and MONDAY (each
+preset's lights), REFLECT (the room's fourth wall, seen only in the glossy screen), CAMS. apply_preset() swaps them.
+Presets: night, monday, tuesday, close. After the build, dress_shop() wears every surface (weather() and friends:
+roughness breakup, smudges, scratches, worn edges, dust, yellowed paper, cup rings; see WEAR_RULES).
 Dates and times: CONTINUITY.md (and CLOCK below). Handwriting: Segoe Print is Theo's (the sticky note, the box, the
 key tag), Ink Free is Martin's (calendar, labels, job cards, binders), Mistral is the barista's (Priya's cup),
 Kristen ITC is a child's (the thank-you drawing).
@@ -69,6 +72,11 @@ SHOTS = {
     "close_half": ("CAM_close_half", "close", "x_close_half_shop.png", 0.0, (960, 1080)),
     "cables_top": ("CAM_cables_top", "monday", "x_cables_top.png", 0.0),
     "cables_under": ("CAM_cables_under", "monday", "x_cables_under.png", 1.2),
+    # hero props, close (pass 4)
+    "mouse_monday": ("CAM_mouse", "monday", "x_mouse_monday.png", 0.0),
+    "hp_night": ("CAM_hp", "night", "x_headphones_night.png", 0.15),
+    "pot_monday": ("CAM_pot", "monday", "x_pot_monday.png", 0.0),
+    "bin_monday": ("CAM_bin", "monday", "x_bin_monday.png", 0.9),
 }
 DEFAULT_SHOTS = "wide_night,medium_night,keys_night,medium_monday,medium_tuesday"
 
@@ -322,6 +330,404 @@ def stripes(name, c1, c2, freq=400.0, rough=0.3, metal=0.6):
     return m
 
 
+# ================================================================ wear and tear: procedural, in object space
+# Every material gets a pass of weather() at the end of the build (weather_all, with a rule table per set): roughness
+# breakup, a little tonal drift, and per kind of surface fingerprints/smudges, fine scratches, scuffs, worn edges, dust
+# on whatever faces up, yellowed paper edges. Per-object amounts come from custom properties read by Attribute nodes:
+# "hs" (a box's half-size, set by box(); "hc" its centre if not at the origin) drives the edge wear, "dust" the dust
+# on the object's upward faces, "age" how yellowed a sheet of paper is.
+def _src(nt, inp):
+    """The socket feeding `inp`, or a constant node holding its value."""
+    if inp.is_linked:
+        return inp.links[0].from_socket
+    if inp.type == "RGBA":
+        n = nt.nodes.new("ShaderNodeRGB")
+        n.outputs[0].default_value = tuple(inp.default_value)
+    else:
+        n = nt.nodes.new("ShaderNodeValue")
+        n.outputs[0].default_value = float(inp.default_value)
+    return n.outputs[0]
+
+
+def _link(nt, v, inp):
+    if isinstance(v, (int, float)):
+        inp.default_value = v
+    else:
+        nt.links.new(v, inp)
+
+
+def _nz(nt, vec, scale, detail=2.0, rough=0.5, dist=0.0):
+    n = nt.nodes.new("ShaderNodeTexNoise")
+    n.inputs["Scale"].default_value = scale
+    n.inputs["Detail"].default_value = detail
+    n.inputs["Roughness"].default_value = rough
+    n.inputs["Distortion"].default_value = dist
+    nt.links.new(vec, n.inputs["Vector"])
+    return n.outputs["Fac"]
+
+
+def _vor(nt, vec, scale, rand=1.0):
+    v = nt.nodes.new("ShaderNodeTexVoronoi")
+    v.inputs["Scale"].default_value = scale
+    v.inputs["Randomness"].default_value = rand
+    nt.links.new(vec, v.inputs["Vector"])
+    sep = nt.nodes.new("ShaderNodeSeparateColor")
+    nt.links.new(v.outputs["Color"], sep.inputs[0])
+    return v.outputs["Distance"], sep.outputs[0]
+
+
+def _ramp(nt, v, a, b, smooth=True):
+    """v mapped from [a, b] to [0, 1], clamped (a > b inverts)."""
+    mr = nt.nodes.new("ShaderNodeMapRange")
+    if smooth:
+        mr.interpolation_type = "SMOOTHSTEP"
+    _link(nt, a, mr.inputs["From Min"])
+    _link(nt, b, mr.inputs["From Max"])
+    _link(nt, v, mr.inputs["Value"])
+    return mr.outputs["Result"]
+
+
+def _lerp(nt, f, a, b):
+    """a + (b - a) * f for floats or sockets."""
+    return _math(nt, "ADD", a, _math(nt, "MULTIPLY", f, _math(nt, "SUBTRACT", b, a)))
+
+
+def _mixc(nt, f, a, b, blend="MIX"):
+    mx = nt.nodes.new("ShaderNodeMix")
+    mx.data_type = "RGBA"
+    mx.blend_type = blend
+    _link(nt, f, sock(mx.inputs, "Factor_Float"))
+    for ident, v in (("A_Color", a), ("B_Color", b)):
+        if isinstance(v, (str, tuple)):
+            sock(mx.inputs, ident).default_value = rgba(v)
+        else:
+            nt.links.new(v, sock(mx.inputs, ident))
+    return sock(mx.outputs, "Result_Color")
+
+
+def _hsv(nt, col, val=1.0, sat=1.0):
+    h = nt.nodes.new("ShaderNodeHueSaturation")
+    nt.links.new(col, h.inputs["Color"])
+    _link(nt, val, h.inputs["Value"])
+    _link(nt, sat, h.inputs["Saturation"])
+    return h.outputs["Color"]
+
+
+def _oattr(nt, name, out="Fac"):
+    a = nt.nodes.new("ShaderNodeAttribute")
+    a.attribute_type = "OBJECT"
+    a.attribute_name = name
+    return a.outputs[out]
+
+
+def _vmath(nt, op, a, b=None):
+    n = nt.nodes.new("ShaderNodeVectorMath")
+    n.operation = op
+    nt.links.new(a, n.inputs[0])
+    if isinstance(b, tuple):
+        n.inputs[1].default_value = b
+    elif b is not None:
+        nt.links.new(b, n.inputs[1])
+    return n.outputs[0]
+
+
+def _xyz(nt, v):
+    s = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(v, s.inputs[0])
+    return s.outputs["X"], s.outputs["Y"], s.outputs["Z"]
+
+
+def _wcoords(nt):
+    """Object-space position, offset per object (so two mugs don't share a pattern), and the raw position."""
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    oi = nt.nodes.new("ShaderNodeObjectInfo")
+    cmb = nt.nodes.new("ShaderNodeCombineXYZ")
+    for i, k in enumerate((17.0, 31.0, 7.0)):
+        nt.links.new(_math(nt, "MULTIPLY", oi.outputs["Random"], k), cmb.inputs[i])
+    return _vmath(nt, "ADD", tc.outputs["Object"], cmb.outputs[0]), tc.outputs["Object"]
+
+
+def _edge_dist(nt, p):
+    """Distance to the nearest edge of the object's box (from its "hs"/"hc" properties) and a 0/1 'has a box'."""
+    hs = _oattr(nt, "hs", "Vector")
+    hc = _oattr(nt, "hc", "Vector")
+    d = _vmath(nt, "SUBTRACT", hs, _vmath(nt, "ABSOLUTE", _vmath(nt, "SUBTRACT", p, hc)))
+    x, y, z = _xyz(nt, d)
+    mn = _math(nt, "MINIMUM", _math(nt, "MINIMUM", x, y), z)
+    mx = _math(nt, "MAXIMUM", _math(nt, "MAXIMUM", x, y), z)
+    mid = _math(nt, "SUBTRACT", _math(nt, "SUBTRACT", _math(nt, "ADD", _math(nt, "ADD", x, y), z), mn), mx)
+    hx, _, _ = _xyz(nt, hs)
+    return mid, _math(nt, "GREATER_THAN", hx, 0.0)
+
+
+def _lines(nt, p, scale, stretch, rot, width, density):
+    """Fine straight scratches: noise stretched along one axis, kept where it crosses 0.5, thinned out."""
+    mp = nt.nodes.new("ShaderNodeMapping")
+    mp.inputs["Rotation"].default_value = [radians(a) for a in rot]
+    mp.inputs["Scale"].default_value = (scale, scale * stretch, scale)
+    nt.links.new(p, mp.inputs["Vector"])
+    n = _nz(nt, mp.outputs["Vector"], 1.0, 1.0, 0.5)
+    line = _ramp(nt, _math(nt, "ABSOLUTE", _math(nt, "SUBTRACT", n, 0.5)), width, 0.0)
+    keep = _ramp(nt, _nz(nt, p, scale * 0.12, 2.0), 1.0 - density, 1.05 - density)
+    return _math(nt, "MULTIPLY", line, keep)
+
+
+def weather(m, rv=0.08, cv=0.04, smudge=0.0, scratch=0.0, scuff=0.0, dust=0.0, edge=0.0, edge_val=1.3,
+            edge_sat=0.85, edge_rough=None, edge_w=0.006, age=None, scale=1.0, dust_rgb="#b4ac9f", grime=0.0):
+    """Wear a material in place (see the section comment). Amounts are 0..1-ish; `scale` scales every pattern."""
+    if m is None or not m.use_nodes or m.get("weathered"):
+        return m
+    m["weathered"] = True
+    nt = m.node_tree
+    b = principled(m)
+    col = _src(nt, b.inputs["Base Color"])
+    r = _src(nt, b.inputs["Roughness"])
+    p, p0 = _wcoords(nt)
+    n1 = _nz(nt, p, 9.0 * scale, 4.0, 0.55)
+    n2 = _nz(nt, p, 120.0 * scale, 2.0, 0.5)
+    r = _math(nt, "ADD", r, _math(nt, "MULTIPLY", _math(nt, "SUBTRACT", n1, 0.5), 2.0 * rv))
+    r = _math(nt, "ADD", r, _math(nt, "MULTIPLY", _math(nt, "SUBTRACT", n2, 0.5), rv))
+    if cv:
+        col = _hsv(nt, col, _math(nt, "ADD", 1.0, _math(nt, "MULTIPLY", _math(nt, "SUBTRACT", n1, 0.5), 2.0 * cv)))
+    smear = None
+    if smudge:                                                # oily patches and the odd fingertip
+        s1 = _ramp(nt, _nz(nt, p, 14.0 * scale, 3.0, 0.6, dist=0.8), 0.54, 0.7)
+        dv, dc = _vor(nt, p, 38.0 * scale)
+        tip = _math(nt, "MULTIPLY", _ramp(nt, dv, 0.3, 0.17), _ramp(nt, dc, 0.68, 0.72))
+        smear = _math(nt, "MULTIPLY", _math(nt, "MAXIMUM", _math(nt, "MULTIPLY", s1, 0.7), tip), smudge)
+        r = _math(nt, "ADD", r, _math(nt, "MULTIPLY", smear, 0.26))
+    if scratch:
+        ln = _math(nt, "MAXIMUM", _lines(nt, p, 22.0 * scale, 40.0, (0, 0, 23), 0.006, 0.45),
+                   _lines(nt, p, 17.0 * scale, 55.0, (31, 12, 117), 0.005, 0.4))
+        ln = _math(nt, "MULTIPLY", ln, scratch)
+        col = _mixc(nt, _math(nt, "MULTIPLY", ln, 0.7), col, _hsv(nt, col, 1.3, 0.8))
+        r = _lerp(nt, ln, r, 0.55)
+    if scuff:
+        sc = _math(nt, "MULTIPLY", _ramp(nt, _nz(nt, p, 6.0 * scale, 5.0, 0.62), 0.6, 0.72), scuff)
+        col = _mixc(nt, _math(nt, "MULTIPLY", sc, 0.6), col, _hsv(nt, col, 0.7))
+        r = _lerp(nt, _math(nt, "MULTIPLY", sc, 0.5), r, 0.75)
+    if grime:                                                 # dirt settled low on the object
+        gz = _ramp(nt, _xyz(nt, p0)[2], 0.02, -0.03)
+        g = _math(nt, "MULTIPLY", _math(nt, "MULTIPLY", gz, _ramp(nt, n1, 0.35, 0.65)), grime)
+        col = _mixc(nt, g, col, _hsv(nt, col, 0.65, 0.9))
+    if edge:
+        mid, has = _edge_dist(nt, p0)
+        brk = _ramp(nt, _nz(nt, p, 60.0 * scale, 3.0, 0.6), 0.36, 0.58)
+        ew = _math(nt, "MULTIPLY", _math(nt, "MULTIPLY", _ramp(nt, mid, edge_w, 0.0), has),
+                   _math(nt, "MULTIPLY", brk, edge))
+        col = _mixc(nt, ew, col, _hsv(nt, col, edge_val, edge_sat))
+        if edge_rough is not None:
+            r = _lerp(nt, ew, r, edge_rough)
+    if age is not None:                                       # paper: yellowed at the edges, foxed if old
+        a = _math(nt, "ADD", _oattr(nt, "age"), age)
+        mid, has = _edge_dist(nt, p0)
+        band = _ramp(nt, mid, _math(nt, "ADD", 0.004, _math(nt, "MULTIPLY", n1, 0.014)), 0.0)
+        yel = _math(nt, "MULTIPLY", _math(nt, "ADD", _math(nt, "MULTIPLY", band, has), 0.3), a)
+        col = _mixc(nt, _math(nt, "MINIMUM", yel, 0.85), col, "#cfb886")
+        dv, dc = _vor(nt, p, 260.0 * scale)
+        fox = _math(nt, "MULTIPLY", _math(nt, "MULTIPLY", _ramp(nt, dv, 0.16, 0.08), _ramp(nt, dc, 0.9, 0.93)),
+                    _ramp(nt, a, 0.3, 0.8))
+        col = _mixc(nt, _math(nt, "MULTIPLY", fox, 0.5), col, "#a88456")
+    # dust on whatever faces up: a baseline plus the object's own "dust" amount
+    geo = nt.nodes.new("ShaderNodeNewGeometry")
+    up = _ramp(nt, _xyz(nt, geo.outputs["Normal"])[2], 0.45, 0.93)
+    amt = _math(nt, "ADD", _oattr(nt, "dust"), dust)
+    dn = _ramp(nt, _nz(nt, p, 150.0 * scale, 6.0, 0.7), 0.3, 0.72)
+    dm = _math(nt, "MULTIPLY", _math(nt, "MULTIPLY", up, amt), _math(nt, "ADD", 0.72, _math(nt, "MULTIPLY", dn, 0.28)),
+               clamp=True)
+    col = _mixc(nt, _math(nt, "MULTIPLY", dm, 0.5), col, dust_rgb)
+    r = _lerp(nt, _math(nt, "MULTIPLY", dm, 0.85), r, 0.9)
+    nt.links.new(col, b.inputs["Base Color"])
+    nt.links.new(_math(nt, "MAXIMUM", _math(nt, "MINIMUM", r, 1.0), 0.03), b.inputs["Roughness"])
+    cw = b.inputs["Coat Weight"]
+    if cw.is_linked or cw.default_value > 0:
+        nt.links.new(_math(nt, "MULTIPLY", _src(nt, cw), _math(nt, "SUBTRACT", 1.0, dm)), cw)
+        if smear is not None:
+            cr = b.inputs["Coat Roughness"]
+            nt.links.new(_math(nt, "ADD", _src(nt, cr), _math(nt, "MULTIPLY", smear, 0.3)), cr)
+    return m
+
+
+def weather_all(rules, skip_prefix=("refl_", "halation")):
+    """Apply weather() to every material by the first matching rule: [((patterns...), kwargs or None to skip)]."""
+    import fnmatch
+    n = 0
+    for m in list(bpy.data.materials):
+        if not m.use_nodes or m.name.startswith(skip_prefix) or m.get("weathered"):
+            continue
+        b = next((x for x in m.node_tree.nodes if x.type == "BSDF_PRINCIPLED"), None)
+        if b is None:
+            continue
+        emissive = b.inputs["Emission Strength"].default_value > 0 or b.inputs["Emission Strength"].is_linked
+        if emissive or b.inputs["Alpha"].default_value < 1.0:
+            continue
+        for pats, kw in rules:
+            if any(fnmatch.fnmatchcase(m.name, pt) for pt in pats):
+                if kw is not None:
+                    weather(m, **kw)
+                    n += 1
+                break
+    print(f"weathered {n} materials")
+
+
+def set_props(rules):
+    """Custom properties per object by name pattern, e.g. [("shelf", {"dust": 1.0})]."""
+    import fnmatch
+    for ob in bpy.data.objects:
+        for pat, props in rules:
+            if fnmatch.fnmatchcase(ob.name, pat):
+                for k, v in props.items():
+                    ob[k] = v
+
+
+def _bsdf_io(m):
+    nt = m.node_tree
+    b = principled(m)
+    return nt, b, _src(nt, b.inputs["Base Color"]), _src(nt, b.inputs["Roughness"])
+
+
+def _world_xy(nt):
+    geo = nt.nodes.new("ShaderNodeNewGeometry")
+    x, y, z = _xyz(nt, geo.outputs["Position"])
+    return geo.outputs["Position"], x, y, z
+
+
+def _dist2(nt, x, y, cx, cy, sx=1.0, sy=1.0):
+    dx = _math(nt, "MULTIPLY", _math(nt, "SUBTRACT", x, cx), 1.0 / sx)
+    dy = _math(nt, "MULTIPLY", _math(nt, "SUBTRACT", y, cy), 1.0 / sy)
+    return _math(nt, "SQRT", _math(nt, "ADD", _math(nt, "MULTIPLY", dx, dx), _math(nt, "MULTIPLY", dy, dy)))
+
+
+def ring_marks(nt, col, r, x, y, rings, stain="#5b3920"):
+    """Dried cup rings: a dark, broken edge where the liquid dried (coffee-ring effect) and a faint fill."""
+    pos = nt.nodes.new("ShaderNodeCombineXYZ")
+    nt.links.new(x, pos.inputs[0])
+    nt.links.new(y, pos.inputs[1])
+    tot = None
+    for cx, cy, R, s in rings:
+        d = _dist2(nt, x, y, cx, cy)
+        rim = _ramp(nt, _math(nt, "ABSOLUTE", _math(nt, "SUBTRACT", d, R)), 0.0022, 0.0003)
+        rim = _math(nt, "MULTIPLY", rim, _ramp(nt, _nz(nt, pos.outputs[0], 30.0 + 10 * s, 3.0, 0.6), 0.38, 0.6))
+        fill = _math(nt, "MULTIPLY", _ramp(nt, d, R, R - 0.004), 0.16)
+        mk = _math(nt, "MULTIPLY", _math(nt, "MAXIMUM", rim, fill), s)
+        tot = mk if tot is None else _math(nt, "MAXIMUM", tot, mk)
+    col = _mixc(nt, _math(nt, "MULTIPLY", tot, 0.55), col, stain)
+    r = _lerp(nt, _math(nt, "MULTIPLY", tot, 0.7), r, 0.62)
+    return col, r
+
+
+def desk_marks(m):
+    """The desk top: three cup rings (two overlapping by the mug's spot, one by the keyboard), the varnish worn pale
+    and matte along the front edge where forearms rest, a few darker dents."""
+    nt, b, col, r = _bsdf_io(m)
+    pos, x, y, z = _world_xy(nt)
+    col, r = ring_marks(nt, col, r, x, y, [(1.668, 2.292, 0.0405, 1.0), (1.684, 2.304, 0.0398, 0.55),
+                                           (1.222, 2.402, 0.0345, 0.7)])
+    band = _ramp(nt, y, 2.17, 2.075)
+    xr = _math(nt, "MULTIPLY", _ramp(nt, x, 0.62, 0.78), _ramp(nt, x, 1.62, 1.46))
+    wear = _math(nt, "MULTIPLY", _math(nt, "MULTIPLY", band, xr), _ramp(nt, _nz(nt, pos, 18.0, 4.0, 0.6), 0.3, 0.62))
+    col = _mixc(nt, _math(nt, "MULTIPLY", wear, 0.6), col, _hsv(nt, col, 1.16, 0.78))
+    r = _lerp(nt, _math(nt, "MULTIPLY", wear, 0.8), r, 0.66)
+    dv, dc = _vor(nt, pos, 22.0)
+    dent = _math(nt, "MULTIPLY", _ramp(nt, dv, 0.05, 0.02), _ramp(nt, dc, 0.93, 0.95))
+    col = _mixc(nt, _math(nt, "MULTIPLY", dent, 0.5), col, _hsv(nt, col, 0.6))
+    nt.links.new(col, b.inputs["Base Color"])
+    nt.links.new(r, b.inputs["Roughness"])
+    cw = b.inputs["Coat Weight"]
+    nt.links.new(_math(nt, "MULTIPLY", _src(nt, cw), _math(nt, "SUBTRACT", 1.0, wear)), cw)
+
+
+def floor_wear(m, path, chair, walls):
+    """Floorboards: a worn, paler path (`path`: segment (x0, y0, x1, y1, half-width)), the chair's caster arcs round
+    `chair` (x, y, radius), dark rubber scuffs, and grey dust along the skirting (`walls`: (x_min, y_max))."""
+    nt, b, col, r = _bsdf_io(m)
+    pos, x, y, z = _world_xy(nt)
+    x0, y0, x1, y1, hw = path
+    ax, ay = x1 - x0, y1 - y0
+    L2 = ax * ax + ay * ay
+    t = _math(nt, "MULTIPLY", _math(nt, "ADD", _math(nt, "MULTIPLY", _math(nt, "SUBTRACT", x, x0), ax),
+                                     _math(nt, "MULTIPLY", _math(nt, "SUBTRACT", y, y0), ay)), 1.0 / L2, clamp=True)
+    px = _math(nt, "ADD", x0, _math(nt, "MULTIPLY", t, ax))
+    py = _math(nt, "ADD", y0, _math(nt, "MULTIPLY", t, ay))
+    dpath = _dist2(nt, x, y, px, py)
+    worn = _math(nt, "MULTIPLY", _ramp(nt, dpath, hw, hw * 0.3), _ramp(nt, _nz(nt, pos, 3.5, 4.0, 0.6), 0.3, 0.6))
+    cx, cy, cr = chair
+    dch = _dist2(nt, x, y, cx, cy)
+    worn = _math(nt, "MAXIMUM", worn, _math(nt, "MULTIPLY", _ramp(nt, dch, cr, cr * 0.4), 0.8))
+    col = _mixc(nt, _math(nt, "MULTIPLY", worn, 0.55), col, _hsv(nt, col, 1.22, 0.75))
+    r = _lerp(nt, _math(nt, "MULTIPLY", worn, 0.7), r, 0.82)
+    arcs = _math(nt, "SINE", _math(nt, "MULTIPLY", dch, 260.0))
+    arcs = _math(nt, "MULTIPLY", _ramp(nt, arcs, 0.93, 0.995), _ramp(nt, _nz(nt, pos, 9.0, 3.0), 0.48, 0.62))
+    arcs = _math(nt, "MULTIPLY", arcs, _ramp(nt, dch, cr * 1.05, cr * 0.5))
+    col = _mixc(nt, _math(nt, "MULTIPLY", arcs, 0.5), col, _hsv(nt, col, 1.45, 0.6))
+    scuff = _ramp(nt, _nz(nt, pos, 4.0, 6.0, 0.65, dist=1.5), 0.67, 0.72)
+    col = _mixc(nt, _math(nt, "MULTIPLY", scuff, 0.55), col, "#1c1612")
+    xm, ym = walls
+    near = _math(nt, "MAXIMUM", _ramp(nt, x, xm + 0.1, xm), _ramp(nt, y, ym - 0.1, ym))
+    near = _math(nt, "MULTIPLY", near, _ramp(nt, _nz(nt, pos, 7.0, 5.0), 0.35, 0.7))
+    col = _mixc(nt, _math(nt, "MULTIPLY", near, 0.45), col, "#8d857a")
+    r = _lerp(nt, near, r, 0.9)
+    nt.links.new(col, b.inputs["Base Color"])
+    nt.links.new(r, b.inputs["Roughness"])
+
+
+def cork_marks(m, ghosts, old_pins, x_axis="X", z_axis="Z", hole_k=0.92, hole_rgb="#1e140c"):
+    """Cork: pin holes everywhere (more where notices used to hang), and darker, unfaded ghosts of old notices.
+    `ghosts`: (cx, cz, half-w, half-h) in the board's object space; `old_pins`: (x, z) of single holes."""
+    nt, b, col, r = _bsdf_io(m)
+    p, p0 = _wcoords(nt)
+    xs = dict(zip("XYZ", _xyz(nt, p0)))
+    u, v = xs[x_axis], xs[z_axis]
+    holes = None
+    for sc, th, keep in ((70.0, 0.07, 0.62), (150.0, 0.08, 0.72)):
+        dv, dc = _vor(nt, p, sc)
+        h = _math(nt, "MULTIPLY", _ramp(nt, dv, th, th * 0.55), _ramp(nt, dc, keep, keep + 0.02))
+        holes = h if holes is None else _math(nt, "MAXIMUM", holes, h)
+    for ox, oz in old_pins:
+        h = _ramp(nt, _dist2(nt, u, v, ox, oz), 0.0011, 0.0006)
+        holes = _math(nt, "MAXIMUM", holes, h)
+    g = None
+    for cx, cz, hw, hh in ghosts:
+        gx = _ramp(nt, _math(nt, "ABSOLUTE", _math(nt, "SUBTRACT", u, cx)), hw, hw - 0.006)
+        gz = _ramp(nt, _math(nt, "ABSOLUTE", _math(nt, "SUBTRACT", v, cz)), hh, hh - 0.006)
+        gg = _math(nt, "MULTIPLY", gx, gz)
+        g = gg if g is None else _math(nt, "MAXIMUM", g, gg)
+    if g is not None:
+        col = _mixc(nt, _math(nt, "MULTIPLY", g, 0.5), col, _hsv(nt, col, 0.78, 1.12))
+        r = _math(nt, "SUBTRACT", r, _math(nt, "MULTIPLY", g, 0.08))
+    col = _mixc(nt, _math(nt, "MULTIPLY", holes, hole_k), col, hole_rgb)
+    nt.links.new(col, b.inputs["Base Color"])
+    nt.links.new(r, b.inputs["Roughness"])
+
+
+def pad_wear(m, worn=(0.02, 0.012, 0.075, 0.06)):
+    """A cloth mousepad after years: the pile flattened and greyed where the mouse lives (a faint sheen), the edges
+    grubby and fraying, a small old coffee drip."""
+    nt, b, col, r = _bsdf_io(m)
+    p, p0 = _wcoords(nt)
+    x, y, z = _xyz(nt, p0)
+    cx, cy, sx, sy = worn
+    e = _dist2(nt, x, y, cx, cy, sx, sy)
+    w = _math(nt, "MULTIPLY", _ramp(nt, e, 1.0, 0.25), _ramp(nt, _nz(nt, p, 40.0, 4.0, 0.6), 0.25, 0.6))
+    col = _mixc(nt, _math(nt, "MULTIPLY", w, 0.65), col, _hsv(nt, col, 1.18, 0.55))
+    r = _lerp(nt, w, r, 0.68)
+    mid, has = _edge_dist(nt, p0)
+    fray = _math(nt, "MULTIPLY", _ramp(nt, mid, _math(nt, "ADD", 0.003, _math(nt, "MULTIPLY",
+                                                                              _nz(nt, p, 90.0, 3.0), 0.008)), 0.0), has)
+    col = _mixc(nt, _math(nt, "MULTIPLY", fray, 0.6), col, _hsv(nt, col, 0.55, 0.7))
+    col, r = ring_marks(nt, col, r, x, y, [(-0.078, 0.058, 0.009, 0.6)], stain="#3d2b1c")
+    nt.links.new(col, b.inputs["Base Color"])
+    nt.links.new(r, b.inputs["Roughness"])
+
+
+def legend_wear(m, cap_rgb):
+    """Key legends worn half away: blotchy, fading into the cap colour."""
+    nt, b, col, r = _bsdf_io(m)
+    p, _ = _wcoords(nt)
+    f = _ramp(nt, _nz(nt, p, 260.0, 3.0, 0.6), 0.38, 0.62)
+    nt.links.new(_mixc(nt, f, col, cap_rgb), b.inputs["Base Color"])
+
+
 # ---------------------------------------------------------------- palette (warm, slightly desaturated)
 def build_materials():
     M = {}
@@ -334,6 +740,7 @@ def build_materials():
                                 ("#6a4a33", "#523727")]):
         M[f"floor{i}"] = wood(f"floor{i}", a, b, 0.68, axis="Y", grain=5.0)
     M["oak"] = wood("oak", "#ab7b4c", "#8a5c37", 0.42, coat=0.25)
+    M["oak_desk"] = wood("oak_desk", "#ab7b4c", "#8a5c37", 0.42, coat=0.25)   # its own: rings, worn front edge
     M["oak_lt"] = wood("oak_lt", "#b88a5a", "#996c43", 0.45)
     M["oak_y"] = wood("oak_y", "#ab7b4c", "#8a5c37", 0.42, axis="Y")
     M["pc"] = mat("pc", "#1b1b1d", 0.45, spec=0.45)
@@ -482,6 +889,7 @@ def box(name, size, loc=(0, 0, 0), m=None, rot=(0, 0, 0), bev=0.003, seg=2, pare
         v.co.y *= size[1]
         v.co.z *= size[2]
     ob = finish(name, bm, m, parent, loc, rot, coll=coll)
+    ob["hs"] = [s / 2 for s in size]                  # for the edge wear (weather)
     if bev > 0:
         bevel(ob, bev, seg)
     return ob
@@ -695,6 +1103,116 @@ def curve(name, pts, r, m=None, parent=None, cyclic=False, order=3, res=6, bres=
     if flatz:
         ob.scale = (1, 1, flatz)
     return link(ob, parent, coll)
+
+
+def frame_matrix(origin, x_axis, y_axis):
+    """A 4x4 matrix with the given origin, x and y axes (z = x cross y)."""
+    from mathutils import Matrix
+    x = Vector(x_axis).normalized()
+    y = Vector(y_axis).normalized()
+    z = x.cross(y).normalized()
+    y = z.cross(x)
+    o = Vector(origin)
+    return Matrix(((x.x, y.x, z.x, o.x), (x.y, y.y, z.y, o.y), (x.z, y.z, z.z, o.z), (0, 0, 0, 1)))
+
+
+def framed(name, mtx, parent=None, coll=None):
+    """An empty placed by a matrix (in its parent's space)."""
+    e = grp(name, parent=parent, coll=coll)
+    e.matrix_basis = mtx
+    return e
+
+
+def rounded_rect(hw, ht, n=12, k=0.35):
+    """Cross-section points of a rounded rectangle (superellipse), half-width hw, half-thickness ht."""
+    return [(hw * math.copysign(abs(cos(a)) ** k, cos(a)), ht * math.copysign(abs(sin(a)) ** k, sin(a)))
+            for a in (2 * pi * i / n for i in range(n))]
+
+
+def sweep(name, pts, bvec, prof, m, parent=None, taper=None, angle=60, coll=None):
+    """Loft a cross-section along a path. prof = [(w, h)]: w along the binormal `bvec`, h along the normal
+    (bvec x tangent). `taper` scales the section per path point."""
+    pts = [Vector(p) for p in pts]
+    bvec = Vector(bvec).normalized()
+    bm = bmesh.new()
+    rings = []
+    for i, p in enumerate(pts):
+        t = (pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]).normalized()
+        nrm = bvec.cross(t).normalized()
+        b2 = t.cross(nrm)
+        s = taper[i] if taper else 1.0
+        rings.append([bm.verts.new(p + b2 * w * s + nrm * h * s) for w, h in prof])
+    k = len(prof)
+    for a, c in zip(rings, rings[1:]):
+        for j in range(k):
+            bm.faces.new((a[j], a[(j + 1) % k], c[(j + 1) % k], c[j]))
+    bm.faces.new(rings[0][::-1])
+    bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return finish(name, bm, m, parent, angle=angle, coll=coll)
+
+
+def crumple(name, r, m, loc=(0, 0, 0), rot=(0, 0, 0), seed=0, squash=(1.0, 1.0, 1.0), parent=None, coll=None, bm=None):
+    """A ball of crumpled paper: an icosphere pushed in and out at random and flat shaded, so it breaks into the
+    sharp facets of a creased sheet. With `bm`, adds to that bmesh instead (one mesh for a binful)."""
+    rng = random.Random(seed)
+    own = bm is None
+    if own:
+        bm = bmesh.new()
+    before = set(bm.verts)
+    bmesh.ops.create_icosphere(bm, subdivisions=3, radius=r)
+    new = [v for v in bm.verts if v not in before]
+    folds = [(Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-1, 1))).normalized(),
+              rng.uniform(-0.5, 0.5), rng.uniform(0.14, 0.3) * rng.choice((1, -1))) for _ in range(14)]
+    q = Euler([radians(a) for a in rot]).to_quaternion() if own else Euler((rng.uniform(0, 6.3),
+                                                                            rng.uniform(0, 6.3),
+                                                                            rng.uniform(0, 6.3))).to_quaternion()
+    for v in new:
+        d = v.co.normalized()
+        k = rng.uniform(0.93, 1.04)
+        for n, off, a in folds:                               # each fold: a sharp ridge (a > 0) or valley along a line
+            t = abs(d.dot(n) - off)
+            if t < 0.24:
+                k += a * (0.24 - t) / 0.24 * 0.5
+        v.co = d * r * max(0.62, min(1.12, k))
+        v.co = Vector((v.co.x * squash[0], v.co.y * squash[1], v.co.z * squash[2]))
+        if not own:
+            v.co = q @ v.co + Vector(loc)
+    if own:
+        ob = finish(name, bm, m, parent, loc, rot, smooth=False, coll=coll)
+        return ob
+    return new
+
+
+def slab(name, w, d, t, m, lift=None, nx=16, ny=14, parent=None, loc=(0, 0, 0), rot=(0, 0, 0), coll=None):
+    """A thin sheet (mousepad, card) on a grid whose height is lifted by lift(x, y) (a curled corner)."""
+    lift = lift or (lambda x, y: 0.0)
+    bm = bmesh.new()
+    top, bot = [], []
+    for j in range(ny + 1):
+        rt, rb = [], []
+        for i in range(nx + 1):
+            x, y = -w / 2 + w * i / nx, -d / 2 + d * j / ny
+            h = lift(x, y)
+            rt.append(bm.verts.new((x, y, h + t)))
+            rb.append(bm.verts.new((x, y, h)))
+        top.append(rt)
+        bot.append(rb)
+    for j in range(ny):
+        for i in range(nx):
+            bm.faces.new((top[j][i], top[j][i + 1], top[j + 1][i + 1], top[j + 1][i]))
+            bm.faces.new((bot[j][i], bot[j + 1][i], bot[j + 1][i + 1], bot[j][i + 1]))
+    ring_t = [top[0][i] for i in range(nx + 1)] + [top[j][nx] for j in range(1, ny + 1)] + \
+             [top[ny][i] for i in range(nx - 1, -1, -1)] + [top[j][0] for j in range(ny - 1, 0, -1)]
+    ring_b = [bot[0][i] for i in range(nx + 1)] + [bot[j][nx] for j in range(1, ny + 1)] + \
+             [bot[ny][i] for i in range(nx - 1, -1, -1)] + [bot[j][0] for j in range(ny - 1, 0, -1)]
+    for k in range(len(ring_t)):
+        k2 = (k + 1) % len(ring_t)
+        bm.faces.new((ring_b[k], ring_b[k2], ring_t[k2], ring_t[k]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    ob = finish(name, bm, m, parent, loc, rot, angle=50, coll=coll)
+    ob["hs"] = [w / 2, d / 2, 0.0]
+    return ob
 
 
 def no_shadow(*obs):
@@ -946,6 +1464,17 @@ def lcd_material(name="screen", plain=False):
     bright.outputs[0].default_value = 1.0
     nt.links.new(bright.outputs[0], b.inputs["Emission Strength"])
     SCREEN.update(mat=m, bsdf=b, tex=tx, mapping=mp, bright=bright, plain=plain, img=None)
+    if not plain:                                             # faint smudges on the glass, mostly low and right
+        tc = nt.nodes.new("ShaderNodeTexCoord")
+        p = tc.outputs["Object"]
+        x, _, z = _xyz(nt, p)
+        sm = _math(nt, "MULTIPLY", _ramp(nt, _nz(nt, p, 11.0, 3.0, 0.6, dist=0.9), 0.55, 0.72),
+                   _math(nt, "ADD", 0.35, _math(nt, "MULTIPLY", _ramp(nt, x, -0.08, 0.18), 0.65)))
+        tip_d, tip_c = _vor(nt, p, 30.0)
+        tip = _math(nt, "MULTIPLY", _ramp(nt, tip_d, 0.26, 0.15), _ramp(nt, tip_c, 0.82, 0.86))
+        sm = _math(nt, "MAXIMUM", sm, _math(nt, "MULTIPLY", tip, _ramp(nt, z, -0.02, -0.11)))
+        nt.links.new(_math(nt, "ADD", 0.015, _math(nt, "MULTIPLY", sm, 0.07)), b.inputs["Coat Roughness"])
+        nt.links.new(_math(nt, "ADD", 0.06, _math(nt, "MULTIPLY", sm, 0.1)), b.inputs["Roughness"])
     if plain:
         nt.links.new(tx.outputs["Color"], b.inputs["Emission Color"])
         return m
@@ -1488,7 +2017,7 @@ DESK_BACK = D - 0.032          # the desk stands against the skirting, so its to
 
 def build_desk(M):
     use("SET")
-    boxmm("desk_top", (0.22, 2.06, DZ - 0.045), (2.2, DESK_BACK, DZ), M["oak"], bev=0.012, seg=3)
+    boxmm("desk_top", (0.22, 2.06, DZ - 0.045), (2.2, DESK_BACK, DZ), M["oak_desk"], bev=0.012, seg=3)
     boxmm("desk_leg_L", (0.245, 2.1, 0), (0.29, D - 0.04, DZ - 0.045), M["oak"], bev=0.008)
     px0, px1 = 1.76, 2.17
     boxmm("desk_ped", (px0, 2.1, 0.02), (px1, D - 0.04, DZ - 0.045), M["oak"], bev=0.008)
@@ -1635,6 +2164,13 @@ def build_tower(M):
     box("sticker_spec_in", (0.014, 0.0006, 0.012), (0.042, fy - 0.0035, 0.193), M["pin_blue"], bev=0, parent=g)
     box("sticker_energy", (0.026, 0.0006, 0.018), (0.05, fy - 0.003, 0.162), M["pin_white"], bev=0, parent=g)
     disc("sticker_star", 0, 0, 0.006, 0, M["pin_blue"], g, n=5, loc=(0.05, fy - 0.0037, 0.162), rot=(90, 0, 0))
+    # a Dymo strip from years back (README item 1, in Martin's day), the red tape sun-faded, its right end lifting
+    dymo = mat("dymo_red", "#b55a4e", 0.35, spec=0.55)
+    box("dymo_tape", (0.078, 0.0006, 0.0095), (-0.006, fy - 0.0004, 0.287), dymo, bev=0, parent=g)
+    de = grp("dymo_end_g", (0.033, fy - 0.0004, 0.287), (0, 0, -16), parent=g)
+    box("dymo_tape_end", (0.012, 0.0006, 0.0095), (0.006, 0, 0), dymo, bev=0, parent=de)
+    text("dymo_text", "DO NOT SWITCH OFF", "verdanab.ttf", 0.0047, (-0.006, fy - 0.0009, 0.2868),
+         mat("dymo_letters", "#eee3d6", 0.5), rot=(90, 0, 0), parent=g, extrude=0.00015, fit=0.07)
     side = grp("tower_side_tag", (w / 2 + 0.0004, 0.08, 0.3), (90, 0, 90), parent=g)
     rect("tag_bg", -0.04, -0.015, 0.04, 0.015, 0, M["pin_white"], side)
     for i in range(22):
@@ -1875,26 +2411,270 @@ def build_backoffice_key(M, kb):
     return g
 
 
+def _catmull(pts, n_per=4):
+    """A closed Catmull-Rom loop through 2D points."""
+    P = [Vector(p) for p in pts]
+    N = len(P)
+    out = []
+    for i in range(N):
+        p0, p1, p2, p3 = P[i - 1], P[i], P[(i + 1) % N], P[(i + 2) % N]
+        for k in range(n_per):
+            t = k / n_per
+            out.append(0.5 * ((2 * p1) + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t +
+                              (3 * p1 - p0 - 3 * p2 + p3) * t * t * t))
+    return out
+
+
+def _spline(v, xs, ys):
+    """Cubic Hermite through (xs, ys) with finite-difference tangents; flat beyond the ends."""
+    n = len(xs)
+    if v <= xs[0]:
+        return ys[0]
+    if v >= xs[-1]:
+        return ys[-1]
+    k = max(i for i in range(n - 1) if xs[i] <= v)
+
+    def tan(i):
+        a, c = max(i - 1, 0), min(i + 1, n - 1)
+        return (ys[c] - ys[a]) / (xs[c] - xs[a])
+    h = xs[k + 1] - xs[k]
+    t = (v - xs[k]) / h
+    t2, t3 = t * t, t * t * t
+    return ((2 * t3 - 3 * t2 + 1) * ys[k] + (t3 - 2 * t2 + t) * tan(k) * h + (-2 * t3 + 3 * t2) * ys[k + 1] +
+            (t3 - t2) * tan(k + 1) * h)
+
+
+class Shell:
+    """A mouse shell as a height field over a footprint: z = top(x, y) * E(s), s the fraction of the way from the
+    centre to the outline, E rounding the sides down to the base steeply. Mouse space: x right, y forward (the
+    cable end), z up; the base sits `lift` up on its feet."""
+
+    RINGS = (0.0, 0.1, 0.22, 0.34, 0.46, 0.57, 0.67, 0.76, 0.84, 0.9, 0.94, 0.966, 0.982, 0.993, 1.0)
+
+    def __init__(self, outline, centre, top, lift=0.0014, p=5.0, q=3.2):
+        self.out = _catmull(outline, 4)
+        self.c = Vector(centre)
+        self.top, self.lift, self.p, self.q = top, lift, p, q
+        a = np.array([math.atan2(o.y - self.c.y, o.x - self.c.x) for o in self.out])
+        r = np.array([(o - self.c).length for o in self.out])
+        order = np.argsort(a)
+        self.ang, self.rad = a[order], r[order]
+
+    def E(self, s):
+        return max(0.0, 1.0 - min(s, 1.0) ** self.p) ** (1.0 / self.q)
+
+    def s(self, x, y):
+        d = Vector((x, y)) - self.c
+        R = float(np.interp(math.atan2(d.y, d.x), self.ang, self.rad, period=2 * pi))
+        return d.length / R
+
+    def z(self, x, y):
+        return self.top(x, y) * self.E(self.s(x, y)) + self.lift
+
+    def normal(self, x, y, e=0.0005):
+        dzx = (self.z(x + e, y) - self.z(x - e, y)) / (2 * e)
+        dzy = (self.z(x, y + e) - self.z(x, y - e)) / (2 * e)
+        return Vector((-dzx, -dzy, 1.0)).normalized()
+
+    def at(self, x, y, off=0.0):
+        return Vector((x, y, self.z(x, y))) + self.normal(x, y) * off
+
+    def mesh(self, name, m, parent):
+        bm = bmesh.new()
+        c = self.c
+        centre = bm.verts.new((c.x, c.y, self.top(c.x, c.y) + self.lift))
+        rings = []
+        for s in self.RINGS[1:]:
+            ring = []
+            for o in self.out:
+                p = c + (o - c) * s
+                ring.append(bm.verts.new((p.x, p.y, self.top(p.x, p.y) * self.E(s) + self.lift)))
+            rings.append(ring)
+        n = len(self.out)
+        for i in range(n):
+            bm.faces.new((centre, rings[0][i], rings[0][(i + 1) % n]))
+        for a, b in zip(rings, rings[1:]):
+            for i in range(n):
+                bm.faces.new((a[i], b[i], b[(i + 1) % n], a[(i + 1) % n]))
+        bm.faces.new(rings[-1][::-1])
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        return finish(name, bm, m, parent, angle=75)
+
+    def line(self, name, pts, r, m, parent, lift=0.00012, step=0.0015):
+        """A seam: a thin dark line following the surface through 2D points."""
+        P = [Vector(p) for p in pts]
+        dense = [P[0]]
+        for a, b in zip(P, P[1:]):
+            k = max(1, int((b - a).length / step))
+            dense += [a + (b - a) * (i / k) for i in range(1, k + 1)]
+        return curve(name, [tuple(self.at(p.x, p.y, lift)) for p in dense], r, m, parent=parent, res=2, bres=1)
+
+    def patch(self, name, outline, m, parent, lift=0.00022):
+        """A flat-coloured patch lying on the surface (the wheel well), fanned from its centroid."""
+        P = [Vector(p) for p in outline]
+        c = sum(P, Vector((0, 0))) / len(P)
+        bm = bmesh.new()
+        cv = bm.verts.new(self.at(c.x, c.y, lift))
+        rings = [[bm.verts.new(self.at(*(c + (p - c) * s), lift)) for p in P] for s in (0.5, 1.0)]
+        n = len(P)
+        for i in range(n):
+            bm.faces.new((cv, rings[0][i], rings[0][(i + 1) % n]))
+            bm.faces.new((rings[0][i], rings[1][i], rings[1][(i + 1) % n], rings[0][(i + 1) % n]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        return finish(name, bm, m, parent, angle=80)
+
+    def raised(self, name, cx, cy, length, width, h, m, parent, along=(0.0, 1.0), n=18):
+        """A moulded button: a rounded patch of the shell itself lifted by h along the surface normal, its edge
+        rolling back down into the shell (follows the curvature, so it reads as part of the moulding)."""
+        a = Vector(along).normalized()
+        bb = Vector((-a.y, a.x))
+        c = Vector((cx, cy))
+        P = [c + a * (length / 2 * math.copysign(abs(cos(t)) ** 0.45, cos(t))) +
+             bb * (width / 2 * math.copysign(abs(sin(t)) ** 0.45, sin(t))) for t in np.linspace(0, 2 * pi, n,
+                                                                                               endpoint=False)]
+        bm = bmesh.new()
+        cv = bm.verts.new(self.at(c.x, c.y, h))
+        rings = [[bm.verts.new(self.at(*(c + (p - c) * s), off)) for p in P]
+                 for s, off in ((0.45, h), (0.8, h), (0.94, h * 0.8), (1.0, h * 0.35), (1.0, -0.0006))]
+        for i in range(n):
+            bm.faces.new((cv, rings[0][i], rings[0][(i + 1) % n]))
+        for r0, r1 in zip(rings, rings[1:]):
+            for i in range(n):
+                bm.faces.new((r0[i], r1[i], r1[(i + 1) % n], r0[(i + 1) % n]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        return finish(name, bm, m, parent, angle=70)
+
+    def pill(self, name, x, y, length, width, height, m, parent, along=(0.0, 1.0), bev=0.0012, sink=0.0003):
+        """A side button: a rounded pill sitting on the surface, its long axis along `along`."""
+        n = self.normal(x, y)
+        a = Vector((along[0], along[1], 0.0))
+        a = (a - n * a.dot(n)).normalized()
+        g = framed(name + "_g", frame_matrix(self.at(x, y, height / 2 - sink), a, n.cross(a)), parent=parent)
+        box(name, (length, width, height), (0, 0, 0), m, bev=bev, seg=2, parent=g)
+        return g
+
+
+def toothed_wheel(name, r, w, teeth, depth, m, parent, loc, rot=(0, 90, 0)):
+    """A scroll wheel: a short cylinder whose rim alternates radius (rubber tread or metal knurl)."""
+    bm = bmesh.new()
+    n = teeth * 2
+    rings = []
+    for z in (-w / 2, -w / 2 + 0.0008, w / 2 - 0.0008, w / 2):
+        edge = abs(z) > w / 2 - 0.0001
+        ring = []
+        for i in range(n):
+            a = 2 * pi * i / n
+            rr = (r - (depth if i % 2 else 0.0)) - (0.0006 if edge else 0.0)
+            ring.append(bm.verts.new((rr * cos(a), rr * sin(a), z)))
+        rings.append(ring)
+    for a_, b_ in zip(rings, rings[1:]):
+        for i in range(n):
+            bm.faces.new((a_[i], a_[(i + 1) % n], b_[(i + 1) % n], b_[i]))
+    bm.faces.new(rings[0][::-1])
+    bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return finish(name, bm, m, parent, loc, rot, smooth=True, angle=35)
+
+
+def _mouse_masks(nt):
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    return _xyz(nt, tc.outputs["Object"])
+
+
+def mouse2009_material():
+    """The shop mouse's shell, 2009 two-tone: a brushed silver-grey palm cap over black, gloss-black buttons, black
+    rubber grips low on both sides; the buttons polished where two fingertips have rested for years, the palm cap a
+    little greasy and worn through to grey at its peak."""
+    if "mouse2009" in MATS:
+        return MATS["mouse2009"]
+    m = mat("mouse2009", "#2a2c30", 0.42, spec=0.5)
+    nt, b = m.node_tree, principled(m)
+    x, y, z = _mouse_masks(nt)
+    yb = _math(nt, "ADD", 0.0105, _math(nt, "MULTIPLY", _math(nt, "MULTIPLY", x, x), 7.8))
+    btn = _ramp(nt, _math(nt, "SUBTRACT", y, yb), -0.0004, 0.0004)
+    cap = _math(nt, "MULTIPLY", _math(nt, "MULTIPLY", _ramp(nt, z, 0.0262, 0.0278), _ramp(nt, x, -0.0255, -0.0215)),
+                _math(nt, "SUBTRACT", 1.0, btn))
+    grip = _math(nt, "MAXIMUM",
+                 _math(nt, "MULTIPLY", _ramp(nt, x, -0.024, -0.03), _ramp(nt, z, 0.025, 0.019)),
+                 _math(nt, "MULTIPLY", _ramp(nt, x, 0.024, 0.03), _ramp(nt, z, 0.016, 0.011)))
+    col = _mixc(nt, btn, "#26282c", "#141518")
+    col = _mixc(nt, cap, col, "#8d9299")
+    col = _mixc(nt, grip, col, "#121214")
+    r = _lerp(nt, btn, 0.46, 0.2)
+    r = _lerp(nt, cap, r, 0.34)
+    r = _lerp(nt, grip, r, 0.82)
+    nt.links.new(_math(nt, "MULTIPLY", cap, 0.45), b.inputs["Metallic"])
+    tips = _math(nt, "MAXIMUM", _ramp(nt, _dist2(nt, x, y, -0.0135, 0.041, 1.0, 1.5), 0.011, 0.003),
+                 _ramp(nt, _dist2(nt, x, y, 0.0115, 0.037, 1.0, 1.5), 0.011, 0.003))
+    palm = _ramp(nt, _dist2(nt, x, y, -0.004, -0.032, 1.3, 1.0), 0.03, 0.008)
+    r = _math(nt, "SUBTRACT", r, _math(nt, "ADD", _math(nt, "MULTIPLY", tips, 0.13), _math(nt, "MULTIPLY", palm, 0.14)))
+    col = _mixc(nt, _math(nt, "MULTIPLY", palm, 0.35), col, "#45474b")
+    nt.links.new(col, b.inputs["Base Color"])
+    nt.links.new(r, b.inputs["Roughness"])
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    _bump(nt, b, _math(nt, "MULTIPLY", _nz(nt, tc.outputs["Object"], 900.0, 2.0), grip), 0.25, 0.0004)
+    return m
+
+
+def _shop_mouse_top(x, y):
+    hy = _spline(y, [-0.067, -0.053, -0.035, -0.018, 0.0, 0.02, 0.04, 0.064], [0.3, 0.6, 0.88, 1.0, 0.95, 0.8, 0.63,
+                                                                                0.48])
+    qx = _spline(x, [-0.05, -0.04, -0.03, -0.02, -0.006, 0.01, 0.024, 0.036], [0.36, 0.44, 0.62, 0.86, 1.0, 0.92, 0.7,
+                                                                                0.48])
+    z = 0.039 * hy * qx
+    return z - 0.0065 * math.exp(-((x + 0.035) / 0.0075) ** 2) * math.exp(-((y + 0.003) / 0.024) ** 2)
+
+
+SHOP_MOUSE_OUTLINE = [(-0.002, 0.0625), (-0.014, 0.0612), (-0.024, 0.056), (-0.029, 0.046), (-0.032, 0.034),
+                      (-0.037, 0.024), (-0.043, 0.012), (-0.046, -0.002), (-0.045, -0.016), (-0.039, -0.028),
+                      (-0.034, -0.04), (-0.028, -0.054), (-0.018, -0.063), (-0.004, -0.066), (0.01, -0.064),
+                      (0.022, -0.056), (0.03, -0.042), (0.034, -0.024), (0.034, -0.004), (0.032, 0.018),
+                      (0.029, 0.036), (0.024, 0.05), (0.014, 0.059)]
+
+
+def build_shop_mouse(M, loc, yaw):
+    """The shop PC's mouse (2009): a sculpted right-handed ergonomic, wired. A high back that falls away to the right,
+    a flared thumb rest with a scoop on the left, two side buttons above it, split gloss buttons, a rubber-treaded
+    wheel in its well with a mode button behind, rubber grips, and the USB lead out of a strain relief at the front."""
+    g = grp("mouse", loc, (0, 0, yaw))
+    sh = Shell(SHOP_MOUSE_OUTLINE, (-0.004, -0.004), _shop_mouse_top)
+    sh.mesh("mouse_body", mouse2009_material(), g)
+    seam = mat("mouse_seam", "#08080a", 0.6)
+    wx, wy0, wy1 = -0.0015, 0.017, 0.044
+    yb = lambda x: 0.0105 + 7.8 * x * x                                       # noqa: E731
+    sh.line("mouse_seam_split", [(wx, 0.0625), (wx, wy1 + 0.001)], 0.00042, seam, g)
+    sh.line("mouse_seam_split_b", [(wx, wy0 - 0.001), (wx, yb(wx))], 0.00042, seam, g)
+    sh.line("mouse_seam_back", [(x, yb(x)) for x in np.linspace(-0.03, 0.0305, 24)], 0.00042, seam, g)
+    well = [(wx + 0.0061 * cos(a), (wy0 + wy1) / 2 + 0.0145 * sin(a)) for a in np.linspace(0, 2 * pi, 20,
+                                                                                            endpoint=False)]
+    sh.patch("mouse_well", well, M["hole"], g)
+    wz = sh.z(wx, 0.0305)
+    toothed_wheel("mouse_wheel", 0.0072, 0.0064, 24, 0.0005, mat("mouse_tread", "#18181a", 0.8), g,
+                  (wx, 0.0305, wz - 0.0028))
+    cyl("mouse_wheel_hub", 0.0042, 0.0070, (wx, 0.0305, wz - 0.0028), M["steel_dk"], rot=(0, 90, 0), n=12, parent=g)
+    side = mat("mouse_side_btn", "#1d1e22", 0.28, spec=0.55)
+    sh.raised("mouse_side_fwd", -0.0283, 0.0172, 0.0175, 0.0046, 0.0013, side, g, along=(0.12, 1.0))
+    sh.raised("mouse_side_back", -0.0297, -0.0036, 0.0175, 0.0046, 0.0013, side, g, along=(0.2, 1.0))
+    sh.line("mouse_seam_grip", [(-0.026 - 0.008 * (1 - abs(t)), 0.03 * t - 0.002) for t in np.linspace(-1, 1, 14)],
+            0.00035, seam, g)
+    disc("mouse_glow", 0, 0, 0.004, 0.0003, mat("mouse_red", "#ff2a1a", 0.5, emit="#ff2a1a", estr=2.0), g, n=10)
+    fy = 0.0605
+    cyl("mouse_relief_seat", 0.0046, 0.004, (wx, fy, 0.0102), seam, rot=(-90, 0, 0), n=12, parent=g)
+    port("mouse", (wx, fy + 0.0015, 0.0102), (0, 1, 0.08), g)
+    return g
+
+
 def build_mouse(M):
+    """The shop mouse on its old cloth pad (WHEELWRIGHT, a supplier freebie): front-right corner curling up."""
     use("SET")
-    pad = box("mousepad", (0.23, 0.195, 0.0035), (1.395, 2.225, DZ + 0.00175), M["mousepad"], rot=(0, 0, -4), bev=0.0015)
+    lift = lambda x, y: 0.0042 * max(0.0, 1 - math.hypot(x - 0.115, y + 0.0975) / 0.055) ** 2   # noqa: E731
+    slab("mousepad", 0.23, 0.195, 0.0035, M["mousepad"], lift=lift, loc=(1.395, 2.225, DZ), rot=(0, 0, -4))
     pg = grp("pad_print", (1.395, 2.225, DZ + 0.0036), (0, 0, -4))
     torus("pad_logo_wheel", 0.014, 0.0012, (-0.07, -0.072, 0), mat("pad_print", "#8a97a8", 0.9), nR=20, nr=4,
           parent=pg).scale = (1, 1, 0.2)
-    text("pad_logo_text", "WHEELWRIGHT", "verdanab.ttf", 0.0085, (-0.05, -0.072, 0), MATS["pad_print"], ax="LEFT", parent=pg)
-    m = grp("mouse", (1.41, 2.235, DZ + 0.0035), (0, 0, -9))
-    bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=14, v_segments=10, radius=1.0)
-    for v in bm.verts:
-        x, y, z = v.co
-        hump = 0.75 + 0.35 * max(0.0, min(1.0, 0.5 - y * 0.6))
-        v.co = Vector((x * 0.031 * (1 - 0.12 * y), y * 0.056, max(z, -0.05) * 0.024 * hump + 0.0012))
-    body = finish("mouse_body", bm, M["pc"], m, angle=60)
-    box("mouse_split", (0.0012, 0.04, 0.004), (0, 0.03, 0.021), M["hole"], bev=0, parent=m)
-    cyl("mouse_wheel", 0.0055, 0.004, (0, 0.03, 0.022), M["rubber"], rot=(0, 90, 0), n=12, parent=m)
-    disc("mouse_glow", 0, 0, 0.012, 0.0004, mat("mouse_red", "#ff2a1a", 0.5, emit="#ff2a1a", estr=2.0), m, n=10)
-    port("mouse", (0, 0.057, 0.012), (0, 1, 0.15), m)
-    return body
+    text("pad_logo_text", "WHEELWRIGHT", "verdanab.ttf", 0.0085, (-0.05, -0.072, 0), MATS["pad_print"], ax="LEFT",
+         parent=pg)
+    return build_shop_mouse(M, (1.41, 2.235, DZ + 0.0035), -13)
 
 
 def build_speakers(M):
@@ -1968,7 +2748,7 @@ def build_cables(M):
     gap_y = (BACK + D - 0.012) / 2                            # the 2 cm slot between desk and panelling
 
     def lane(y, xs):
-        return [(x, y, lane_z) for x in xs]
+        return [(x, y + 0.0022 * sin(x * 23.0 + 0.7), lane_z) for x in xs]
 
     def tower_rise(x_port, z_port, y_lane, x_lane):
         """From a rear port: bend down over the desk's back edge and settle into the cable lane."""
@@ -1989,8 +2769,9 @@ def build_cables(M):
               bush_end("kb_lead", "kb_out", M))
     # mouse: off the back of the pad, left of the right speaker, along the back, into a USB port
     tower_run("mouse_cable", "usb", "usb_a", 0.0018, 2.742,
-              lane(2.742, (0.7, 1.0, 1.17)) + [(1.23, 2.66, lane_z), (1.25, 2.53, lane_z), (1.29, 2.43, lane_z),
-                                               (1.39, 2.37, DZ + 0.0055), (1.42, 2.335, DZ + 0.0055)],
+              lane(2.742, (0.7, 1.0, 1.17)) + [(1.23, 2.66, lane_z), (1.25, 2.53, lane_z), (1.3, 2.44, lane_z),
+                                               (1.37, 2.395, DZ + 0.0055), (1.445, 2.36, DZ + 0.0055),
+                                               (1.44, 2.33, DZ + 0.0055)],
               bush_end("mouse_lead", "mouse", M, out=0.015))
     # powered speaker (right): audio into the green jack, USB for power
     for nm, kind, prt, src, yl in (("spk_audio_cable", "jack", "aud_green", "spk_audio", 2.754),
@@ -2420,6 +3201,7 @@ def build_readme(M, parent):
     if f.normal.z < 0:
         f.normal_flip()
     sheet = finish("readme_paper", bm, M["paper"], parent, smooth=False)
+    sheet["hs"], sheet["hc"] = [w / 2, h / 2, 0.0], [0.0, -h / 2, 0.0]
     sd = sheet.modifiers.new("Solid", "SOLIDIFY")
     sd.thickness = 0.0005
     sd.offset = -1
@@ -2455,6 +3237,7 @@ def curled_sheet(name, w, h, m, parent, curl=0.0, flat_to=0.93, rows=10):
         if f.normal.z < 0:
             f.normal_flip()
     ob = finish(name, bm, m, parent, smooth=True)
+    ob["hs"], ob["hc"] = [w / 2, h / 2, 0.0], [0.0, -h / 2, 0.0]       # its extent, for the yellowed edges
     sd = ob.modifiers.new("Solid", "SOLIDIFY")
     sd.thickness = 0.0005
     sd.offset = -1
@@ -3033,6 +3816,231 @@ def build_shelf(M):
 
 
 # ================================================================ desk-top props
+def rest_on(ob, z):
+    """Drop a mesh object so its lowest vertex (world) sits at height z."""
+    bpy.context.view_layer.update()
+    mw = ob.matrix_world
+    lo = min((mw @ v.co).z for v in ob.data.vertices)
+    ob.location.z += z - lo
+    return ob
+
+
+def biro(name, g, M, cap_rgb, ink_rgb, cap="posted", chewed=False, ink_left=0.6):
+    """A clear hexagonal ballpoint, built from its writing tip (origin) along +z: brass tip, clear cone and barrel
+    with the ink tube inside (part used), coloured end plug, the cap with its clip posted on the end, on the tip, or
+    lost (cap=None). A chewed cap is flattened and its clip bent."""
+    clear = mat("biro_clear", "#dfe6ea", 0.12, spec=0.6, alpha=0.38)
+    col = mat("biro_" + cap_rgb.lstrip("#"), cap_rgb, 0.35, spec=0.5)
+    cyl(name + "_ball", 0.0004, 0.0012, (0, 0, 0.0006), M["chrome"], n=6, parent=g)
+    cyl(name + "_tip", 0.0007, 0.0028, (0, 0, 0.0026), M["brass"], r2=0.0011, n=8, parent=g)
+    cyl(name + "_cone", 0.0013, 0.012, (0, 0, 0.0105), clear, r2=0.0039, n=12, parent=g)
+    cyl(name + "_barrel", 0.0043, 0.118, (0, 0, 0.0755), clear, n=6, parent=g)
+    zi = 0.006 + 0.124 * ink_left
+    cyl(name + "_ink", 0.0012, zi - 0.006, (0, 0, (0.006 + zi) / 2), mat("ink_" + ink_rgb.lstrip("#"), ink_rgb, 0.4),
+        n=8, parent=g)
+    cyl(name + "_tube", 0.0012, 0.13 - zi, (0, 0, (zi + 0.13) / 2), mat("ink_tube", "#e9ecee", 0.3), n=8, parent=g)
+    cyl(name + "_plug", 0.0027, 0.007, (0, 0, 0.1365), col, n=10, bev=0.0006, parent=g)
+    if cap is None:
+        return 0.14
+    z0 = 0.118 if cap == "posted" else -0.008
+    c = grp(name + "_cap", (0, 0, z0), parent=g)
+    capm = lathe(name + "_capbody", [(0.0, 0.0), (0.0049, 0.0), (0.0049, 0.026), (0.0042, 0.03), (0.0026, 0.032),
+                                     (0.0, 0.032)], n=14, m=col, parent=c)
+    if chewed:
+        capm.scale = (1.18, 0.8, 1.0)
+    clip = grp(name + "_clipg", (0.0052, 0, 0.028), (0, 10 if chewed else 2, 0), parent=c)
+    box(name + "_clip", (0.0014, 0.0026, 0.025), (0.0, 0, -0.0125), col, bev=0.0005, parent=clip)
+    return z0 + 0.032
+
+
+def pencil(name, g, M, worn=0.6):
+    """A yellow HB pencil from its eraser end (origin) up: worn pink eraser, ribbed ferrule, hex body, sharpened."""
+    lathe(name + "_eraser", [(0.0, 0.0012 * worn), (0.0022, 0.0), (0.0033, 0.0016), (0.0033, 0.008), (0.0, 0.008)],
+          n=12, m=M["eraser"], parent=g)
+    cyl(name + "_ferrule", 0.0037, 0.01, (0, 0, 0.0115), M["steel"], n=14, parent=g)
+    for k in range(3):
+        torus(f"{name}_rib{k}", 0.0037, 0.0004, (0, 0, 0.008 + 0.0035 * k), M["steel"], nR=14, nr=4, parent=g)
+    cyl(name + "_body", 0.0041, 0.128, (0, 0, 0.0805), M["pencil"], n=6, parent=g)
+    cyl(name + "_wood", 0.0041, 0.017, (0, 0, 0.153), M["pencil_wood"], r2=0.0012, n=6, parent=g)
+    cyl(name + "_lead", 0.0012, 0.0045, (0, 0, 0.16375), mat("graphite", "#2a2a2c", 0.3, metal=0.4), r2=0.0002, n=6,
+        parent=g)
+    return 0.166
+
+
+def marker(name, g, M):
+    """A permanent marker, cap up: black end, grey barrel with a black band, black cap with a ridge and clip."""
+    grey = mat("marker_grey", "#8c9096", 0.38)
+    blk = mat("marker_black", "#18181a", 0.35)
+    cyl(name + "_end", 0.0056, 0.008, (0, 0, 0.004), blk, n=14, bev=0.0012, parent=g)
+    cyl(name + "_barrel", 0.0055, 0.088, (0, 0, 0.052), grey, n=14, parent=g)
+    cyl(name + "_band", 0.00555, 0.012, (0, 0, 0.07), blk, n=14, parent=g)
+    lathe(name + "_cap", [(0.0, 0.088), (0.0063, 0.088), (0.0064, 0.092), (0.006, 0.093), (0.0061, 0.128),
+                          (0.005, 0.135), (0.0, 0.1365)], n=16, m=blk, parent=g)
+    box(name + "_clip", (0.0028, 0.0016, 0.032), (0.0067, 0, 0.116), blk, bev=0.0006, parent=g)
+    return 0.1365
+
+
+def highlighter(name, g, M):
+    """A fluorescent yellow highlighter, cap up: a flattened barrel, a paler cap with a clip."""
+    fl = mat("hi_yellow", "#e8e43a", 0.35, spec=0.5)
+    cap = mat("hi_cap", "#f0ea6a", 0.3)
+    b = cyl(name + "_barrel", 0.0066, 0.084, (0, 0, 0.042), fl, n=18, parent=g)
+    b.scale = (1.35, 1.0, 1.0)
+    c = lathe(name + "_cap", [(0.0, 0.074), (0.0071, 0.074), (0.0071, 0.112), (0.0055, 0.117), (0.0, 0.118)], n=18,
+              m=cap, parent=g)
+    c.scale = (1.33, 1.0, 1.0)
+    box(name + "_clip", (0.0016, 0.004, 0.03), (0.0101, 0, 0.1), cap, bev=0.0006, parent=g)
+    return 0.118
+
+
+def scissors(name, g, M):
+    """Office scissors, points down: two steel blades closed on a pivot screw, orange handles (a round thumb loop
+    and a longer finger loop) up."""
+    orange = mat("scissor_orange", "#d6642c", 0.4, spec=0.5)
+    for s in (-1, 1):
+        prism(f"{name}_blade{s}", [(0.0, 0.0), (0.0025 * s, 0.002), (0.0052 * s, 0.07), (0.0045 * s, 0.09),
+                                   (-0.001 * s, 0.092), (-0.0005 * s, 0.04)], 0.0012,
+              loc=(0, s * 0.0007 - 0.0006, 0), rot=(90, 0, 0), m=M["steel"], parent=g)
+    cyl(name + "_screw", 0.0028, 0.004, (0, 0, 0.086), M["chrome"], rot=(90, 0, 0), n=12, parent=g)
+    for s, (cx, cz, sx, sz) in ((1, (0.012, 0.118, 0.0105, 0.012)), (-1, (-0.012, 0.124, 0.0105, 0.021))):
+        tube(f"{name}_shank{s}", (s * 0.002, 0, 0.09), (cx - s * 0.002, 0, cz - sz + 0.004), 0.003, orange, n=8,
+             parent=g)
+        torus(f"{name}_loop{s}", 1.0, 0.0032 / 0.0105, (cx, 0, cz), orange, rot=(90, 0, 0), nR=22, nr=8, parent=g,
+              scale=(sx, sz, sx))
+    return 0.145
+
+
+def tyre_lever(name, g, M):
+    """A blue nylon tyre lever, hook up: flat blade with a spoke notch at the foot, the hooked lip at the top."""
+    blue = mat("lever_nylon", "#2f61b0", 0.42, spec=0.5)
+    prism(name + "_blade", [(-0.0085, 0.0), (0.0085, 0.0), (0.0075, 0.112), (0.0055, 0.118), (-0.0055, 0.118),
+                            (-0.0075, 0.112)], 0.0046, loc=(0, 0.0023, 0), rot=(90, 0, 0), m=blue, bev=0.0012,
+          parent=g)
+    box(name + "_lip", (0.011, 0.007, 0.004), (0, -0.0042, 0.1175), blue, rot=(-28, 0, 0), bev=0.0012, parent=g)
+    box(name + "_notch", (0.004, 0.0048, 0.012), (0, 0, 0.006), M["hole"], bev=0, parent=g)
+    return 0.106
+
+
+def spoke_key(name, g, M):
+    """A three-way spoke key (a Y, three nipple sizes), its plane XZ, one arm pointing down (-z) with the jaw notch
+    at its end. Origin at the bottom of the down arm's notch."""
+    red = mat("spoke_key_red", "#b3392c", 0.35, coat=0.3)
+    L, hub = 0.021, 0.0075
+    c = Vector((0, 0, L + 0.0035))
+    disc_ = cyl(name + "_hub", hub, 0.0048, c, red, rot=(90, 0, 0), n=18, bev=0.0008, parent=g)
+    for k, a in enumerate((-90, 30, 150)):
+        d = Vector((cos(radians(a)), 0, sin(radians(a))))
+        end = c + d * L
+        ag = framed(f"{name}_arm_g{k}", frame_matrix((c + end) / 2, d, (0, 1, 0)), parent=g)
+        box(f"{name}_arm{k}", (L, 0.0048, 0.0076), (0, 0, 0), red, bev=0.0012, parent=ag)
+        cyl(f"{name}_tipdisc{k}", 0.0048, 0.0048, end, red, rot=(90, 0, 0), n=14, bev=0.0006, parent=g)
+        sg = framed(f"{name}_slot_g{k}", frame_matrix(end + d * 0.0018, d, (0, 1, 0)), parent=g)
+        box(f"{name}_slot{k}", (0.0056, 0.0052, 0.0034 - 0.0004 * k), (0, 0, 0), M["hole"], bev=0, parent=sg)
+    cyl(name + "_rivet", 0.0022, 0.0052, c, M["steel"], rot=(90, 0, 0), n=10, parent=g)
+    return disc_
+
+
+def pot_place(name, pot, theta, alpha, r_item, spin, R_rim=0.0322, z_floor=0.006, z_rim=0.1):
+    """A group for one thing standing in the pen pot: its bottom on the pot's floor, leaning toward azimuth `theta`
+    by `alpha` degrees so that it rests against the rim; spun `spin` degrees about its own axis."""
+    th, al = radians(theta), radians(alpha)
+    axis = Vector((sin(al) * cos(th), sin(al) * sin(th), cos(al)))
+    rim = Vector(((R_rim - r_item) * cos(th), (R_rim - r_item) * sin(th), z_rim))
+    base = rim - axis * ((z_rim - z_floor) / cos(al))
+    base.z = z_floor
+    g = grp(name, base, parent=pot)
+    g.rotation_mode = "QUATERNION"
+    g.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis) @ Quaternion((0, 0, 1), radians(spin))
+    return g
+
+
+def build_pen_pot(M, loc):
+    """The pen pot (the shop's): a navy glazed pot, chipped at the rim, and what's in it, each leaning its own way
+    against the rim: a blue biro with its cap posted, a black one upside down with its cap long lost, a pencil
+    sharpened up, a black marker, a yellow highlighter, the office scissors, a blue tyre lever, and a red three-way
+    spoke key hooked over the rim by its jaw."""
+    pot = grp("pen_pot", loc)
+    lathe("pen_pot_jar", [(0.0, 0.0), (0.033, 0.0), (0.035, 0.004), (0.035, 0.1), (0.032, 0.1), (0.032, 0.006),
+                          (0.0, 0.006)], n=24, m=M["navy"], parent=pot)
+    torus("pen_pot_lip", 0.0335, 0.0016, (0, 0, 0.1), M["navy"], nR=24, nr=6, parent=pot)
+    a = radians(236)
+    flat("pen_pot_chip", [(-0.0028, 0.0), (-0.0016, -0.0019), (0.0004, -0.0027), (0.0022, -0.0012), (0.0026, 0.0)],
+         0.0, mat("pot_chip", "#cfc4b0", 0.85), None, loc=(loc[0] + 0.03515 * cos(a), loc[1] + 0.03515 * sin(a),
+                                                          loc[2] + 0.0999), rot=(90, 0, 236 + 90))
+    biro("pot_biro_blue", pot_place("pot_item_biro_b", pot, 205, 17, 0.0045, 20), M, "#2a4fb0", "#2a3f86", cap="posted")
+    g = pot_place("pot_item_biro_k", pot, 252, 21, 0.0045, -10)
+    flip = grp("pot_biro_k_flip", (0, 0, 0.14), (180, 0, 0), parent=g)
+    biro("pot_biro_black", flip, M, "#1d1d20", "#1d1d20", cap=None, ink_left=0.3)
+    pencil("pot_pencil", pot_place("pot_item_pencil", pot, 128, 25, 0.0042, 15), M)
+    marker("pot_marker", pot_place("pot_item_marker", pot, 302, 11, 0.0062, 75), M)
+    highlighter("pot_hiliter", pot_place("pot_item_hi", pot, 18, 18, 0.009, 40), M)
+    scissors("pot_scissors", pot_place("pot_item_scissors", pot, 92, 13, 0.004, 168), M)
+    tyre_lever("pot_lever", pot_place("pot_item_lever", pot, 282, 15, 0.0085, 35), M)
+    az = radians(172)                                         # the spoke key, hooked over the rim
+    kg = grp("pot_item_spokekey", (0.0335 * cos(az), 0.0335 * sin(az), 0.1 - 0.0021), parent=pot)
+    kg.rotation_euler = (0, 0, az)                          # its plane radial: the jaw straddles the wall
+    spoke_key("pot_spokekey", grp("pot_spokekey_tilt", (0, 0, 0), (0, 4, 0), parent=kg), M)
+    return pot
+
+
+def settle(radii, rin, z_floor, seed, iters=900, squish=0.88):
+    """Drop balls of crumpled paper into a bin and let them settle (position-based: gravity, no overlap beyond the
+    squish of crumpled paper, the floor, the tapered wall). Returns their centres."""
+    rng = np.random.default_rng(seed)
+    r = np.array(radii, float)
+    n = len(r)
+    p = np.zeros((n, 3))
+    for i in range(n):
+        a, rr = rng.uniform(0, 2 * pi), rng.uniform(0, 0.05)
+        p[i] = (rr * cos(a), rr * sin(a), z_floor + 0.06 + i * 0.035)
+    eye = np.eye(n) * 1e9
+    for it in range(iters + 40):
+        if it < iters:
+            p[:, 2] -= 0.0016
+        for _ in range(3):
+            d = p[:, None, :] - p[None, :, :]
+            L = np.linalg.norm(d, axis=2) + eye
+            ov = np.clip((r[:, None] + r[None, :]) * squish - L, 0, None)
+            p += ((d / L[..., None]) * ov[..., None] * 0.5).sum(axis=1)
+            p[:, 2] = np.maximum(p[:, 2], z_floor + r * 0.86)
+            rho = np.linalg.norm(p[:, :2], axis=1) + 1e-9
+            lim = rin(p[:, 2]) - r * 0.92
+            k = rho > lim
+            p[k, :2] *= (lim[k] / rho[k])[:, None]
+    return p
+
+
+def build_bin(M, loc):
+    """The office bin under the desk: a dark powder-coated steel bin with a rolled rim and a dent, and in it a pile of
+    crumpled paper that has settled: a partial layer at the bottom, a few balls on top, nothing floating."""
+    g = grp("waste_bin", loc)
+    binm = mat("bin_metal", "#34373a", 0.45, metal=0.55)
+    body = lathe("bin", [(0.0, 0.0), (0.11, 0.0), (0.13, 0.3), (0.124, 0.3), (0.105, 0.008), (0.0, 0.008)], n=32,
+                 m=binm, parent=g)
+    for v in body.data.vertices:                              # a dent where the chair has hit it
+        a = math.atan2(v.co.y, v.co.x)
+        k = math.exp(-((a - radians(-70)) / 0.25) ** 2) * math.exp(-((v.co.z - 0.17) / 0.05) ** 2)
+        v.co.x *= 1 - 0.07 * k
+        v.co.y *= 1 - 0.07 * k
+    torus("bin_rim", 0.127, 0.0035, (0, 0, 0.3), binm, nR=40, nr=6, parent=g)
+    rin = lambda z: 0.105 + 0.019 * (np.asarray(z) - 0.008) / 0.292      # noqa: E731
+    rng = random.Random(41)
+    radii = [rng.uniform(0.024, 0.034) for _ in range(36)] + [rng.uniform(0.028, 0.04) for _ in range(10)]
+    P = settle(radii, rin, 0.008, 41)
+    kinds = ["paper", "paper", "paper", "paper_back", "paper_back", "manila", "receipt", "receipt", "kraft"]
+    bms = {}
+    for i, (p, r) in enumerate(zip(P, radii)):
+        k = kinds[rng.randrange(len(kinds))]
+        bms.setdefault(k, bmesh.new())
+        crumple(None, r, None, loc=tuple(p), seed=100 + i, squash=(1.0, rng.uniform(0.85, 1.0), rng.uniform(0.8, 0.95)),
+                bm=bms[k])
+    rm = {"receipt": mat("receipt", "#efede6", 0.6, spec=0.45)}
+    for k, bm in bms.items():
+        finish(f"bin_paper_{k}", bm, rm.get(k) or M[k], g, smooth=False)
+    print(f"bin: rubbish settles to {max(P[:, 2] + np.array(radii)):.3f} m (rim 0.300)")
+    return g
+
+
 def build_desk_props(M):
     use("SET")
     # CD-R spindle (era), letter tray, pen pot, bin, the OKAYEST NEPHEW mug
@@ -3050,22 +4058,39 @@ def build_desk_props(M):
     for s in (-1, 1):
         box(f"tray_side{s}", (0.006, 0.33, 0.06), (s * 0.127, 0, 0.03), M["plastic_blk"], bev=0.002, parent=tr)
     box("tray_back", (0.26, 0.006, 0.06), (0, 0.162, 0.03), M["plastic_blk"], bev=0.002, parent=tr)
-    for i in range(6):
-        box(f"tray_paper{i}", (0.21, 0.297, 0.0012), (RNG.uniform(-0.006, 0.006), RNG.uniform(-0.01, 0.004), 0.007 + i * 0.0014),
-            M["paper"] if i % 2 else M["paper_back"], rot=(0, 0, RNG.uniform(-3, 3)), bev=0, parent=tr)
-    pot = grp("pen_pot", (1.79, 2.69, DZ))
-    lathe("pen_pot_jar", [(0.0, 0.0), (0.033, 0.0), (0.035, 0.004), (0.035, 0.1), (0.032, 0.1), (0.032, 0.006), (0.0, 0.006)],
-          n=18, m=M["navy"], parent=pot)
-    for i, (dx, dy, c, ln) in enumerate(((0.01, 0.004, "blue", 0.14), (-0.012, 0.006, "red", 0.13), (0.0, -0.012, "yellow", 0.16),
-                                          (-0.006, -0.002, "white", 0.15))):
-        tube(f"pen{i}", (dx * 0.4, dy * 0.4, 0.01), (dx * 2.2, dy * 2.2, 0.01 + ln), 0.004, M["pin_" + c], n=6, parent=pot)
-    tube("pot_scissors", (0.0, 0.0, 0.01), (0.022, 0.016, 0.15), 0.0025, M["steel"], n=6, parent=pot)
-    torus("pot_scissor_loop", 0.009, 0.0025, (0.024, 0.018, 0.158), M["pin_red"], rot=(60, 0, 30), nR=12, nr=5, parent=pot)
-    bin_ = grp("waste_bin", (0.62, 2.45, 0))
-    lathe("bin", [(0.0, 0.0), (0.11, 0.0), (0.13, 0.3), (0.124, 0.3), (0.105, 0.008), (0.0, 0.008)], n=20, m=M["steel_dk"], parent=bin_)
-    for i in range(3):
-        sphere(f"bin_paper{i}", 0.04, (RNG.uniform(-0.03, 0.03), RNG.uniform(-0.03, 0.03), 0.27 + i * 0.012), M["paper"],
-               ico=1, parent=bin_, scale=(1.0, 0.9, 0.8))
+    for i in range(4):                                        # the in-tray: a stack, not squared up
+        box(f"tray_paper{i}", (0.21, 0.297, 0.0012), (RNG.uniform(-0.01, 0.01), RNG.uniform(-0.016, 0.006),
+                                                      0.007 + i * 0.0014),
+            M["paper"] if i % 2 else M["paper_back"], rot=(0, 0, RNG.uniform(-4.5, 4.5)), bev=0, parent=tr)
+    # on top, Wheelwright's delivery note pulled half out and askew, its front-left corner curling up
+    curl = lambda x, y: 0.011 * max(0.0, 1 - math.hypot(x + 0.105, y + 0.1485) / 0.075) ** 2   # noqa: E731
+    dn = slab("tray_note", 0.21, 0.297, 0.0003, M["paper"], lift=curl, nx=12, ny=16, parent=tr,
+              loc=(0.006, -0.034, 0.0128), rot=(0, 0, 7))
+    dn["age"] = 0.05
+    zt = 0.0004
+    text("tray_note_head", "DELIVERY NOTE", "verdanab.ttf", 0.0085, (-0.088, 0.122, zt), M["ink"], ax="LEFT", parent=dn)
+    text("tray_note_from", "Wheelwright Cycle Supply  ·  account SPO-114", "verdana.ttf", 0.0042, (-0.088, 0.11, zt),
+         M["print_grey"], ax="LEFT", parent=dn, fit=0.17)
+    for k in range(11):
+        y = 0.088 - k * 0.0125
+        w_ = (0.15, 0.12, 0.16, 0.1, 0.14, 0.15, 0.09, 0.13, 0.16, 0.11, 0.06)[k]
+        rect(f"tray_note_l{k}", -0.088, y, -0.088 + w_, y + 0.0032, zt, M["print_grey"], dn)
+    rect("tray_note_rule", -0.088, 0.1, 0.088, 0.1006, zt, M["ink"], dn)
+    text("tray_note_sig", "rec'd  M.", "Inkfree.ttf", 0.009, (0.04, -0.06, zt), M["blue_ink"], parent=dn, rot=(0, 0, 6))
+    build_pen_pot(M, (1.79, 2.69, DZ))
+    # a red biro out of the pot, lying in front of it, its cap pulled off beside it
+    rb = grp("red_biro", (1.652, 2.592, DZ + 0.0037), (0, 90, 12))
+    biro("red_biro", grp("red_biro_spin", (0, 0, 0), (0, 0, 30), parent=rb), M, "#c0362c", "#b3302a", cap=None)
+    rc = grp("red_biro_cap", (1.633, 2.556, DZ + 0.0056), (0, 90, 64))
+    lathe("red_biro_cap_body", [(0.0, 0.0), (0.0049, 0.0), (0.0049, 0.026), (0.0042, 0.03), (0.0026, 0.032),
+                                (0.0, 0.032)], n=14, m=MATS["biro_c0362c"], parent=rc).scale = (1.15, 0.82, 1.0)
+    box("red_biro_clip", (0.0014, 0.0026, 0.025), (-0.0063, 0, 0.0155), MATS["biro_c0362c"], bev=0.0005, parent=rc)
+    build_bin(M, (0.62, 2.45, 0))
+    # Thursday/Monday mess (Martin tidies before Priya's first morning): a crumpled till receipt by the tray
+    use("MESS")
+    rest_on(crumple("receipt_crumpled", 0.017, mat("receipt", "#efede6", 0.6, spec=0.45), (1.866, 2.302, DZ),
+                    (8, 3, 40), seed=7, squash=(1.45, 1.0, 0.62)), DZ + 0.0002)
+    use("SET")
     # the mug, text wrapped round the body
     mug = grp("mug", (1.74, 2.36, DZ), (0, 0, -16))
     R = 0.042
@@ -3088,18 +4113,71 @@ def build_desk_props(M):
     return mug
 
 
-def build_headphones(M, hp, name="hp"):
-    """Theo's headphones (teal pads), standing on their cups; they go to Lisbon with him."""
-    pad_m = mat("hp_pad", "#2f6f6a", 0.85)
+def hp_pad_material():
+    """Teal velour ear pads, a few years old: the pile crushed and darker where they've pressed on ears."""
+    if "hp_pad" in MATS:
+        return MATS["hp_pad"]
+    m = noisy("hp_pad", "#2f6f6a", "#285f5a", 0.88, scale=420.0, bump=0.25, detail=4.0)
+    return m
+
+
+def build_headphones(M, hp, name="hp", pose="stand"):
+    """Theo's closed-back headphones (teal velour pads), modelled per part in cup space (z = the way the pad faces,
+    y = toward the headband): shell, brushed outer plate, pad, the U-yoke round the cup on two pivots, its stem and
+    the band's slider; a padded band swept between the sliders; the lead enters the LEFT cup through a strain relief
+    (port f"{name}_lead"). pose="stand": upright, pads facing in (hung on a stand); pose="flat": put down on a desk,
+    cups swivelled flat on their pads, the band lying on its edge, its crown touching the desk.
+    Returns the height of the band's inner crown above the group origin (what it hangs from)."""
+    pad_m = hp_pad_material()
+    shell_m = mat("hp_shell", "#1c1c1f", 0.38, spec=0.5)
+    band_m = mat("hp_band", "#1e1e21", 0.4)
+    leather = noisy("hp_leather", "#202023", "#18181a", 0.55, scale=180.0, bump=0.18)
+    plate_m = mat("hp_plate", "#55585d", 0.32, metal=0.85)
+    D_ = 0.079                                                # cup centres from the middle
+    E_off = 0.09                                              # cup centre to the band's end, along cup y
+    if pose == "flat":
+        phi = radians(12)                                     # the band tips down to rest its crown on the desk
+        frames = {s: frame_matrix((s * D_, 0.0, 0.0235), (-1, 0, 0), (0, 1, 0)) for s in (-1, 1)}
+        v_hat = Vector((0, cos(phi), -sin(phi)))
+    else:
+        frames = {s: frame_matrix((s * D_, 0.0, 0.0), (0, -s, 0), (0, 0, 1)) for s in (-1, 1)}
+        v_hat = Vector((0, 0, 1))
+    ends = {}
     for s in (-1, 1):
-        cup = grp(f"{name}_cup{s}", (s * 0.072, 0, 0.044), (0, 90 * s, 0), parent=hp)
-        cyl(f"{name}_shell{s}", 0.044, 0.03, (0, 0, -0.012), M["plastic_blk"], n=20, bev=0.01, seg=2, parent=cup)
-        torus(f"{name}_pad{s}", 0.032, 0.012, (0, 0, 0.008), pad_m, nR=20, nr=8, parent=cup)
-        cyl(f"{name}_cap{s}", 0.022, 0.004, (0, 0, -0.028), M["steel_dk"], n=16, parent=cup)
-        tube(f"{name}_yoke{s}", (s * 0.09, 0, 0.07), (s * 0.084, 0, 0.115), 0.004, M["steel"], n=6, parent=hp)
-    arc = [(0.086 * cos(radians(a)), 0.0, 0.082 + 0.085 * sin(radians(a))) for a in range(0, 181, 15)]
-    curve(f"{name}_band", arc, 0.0085, M["plastic_blk"], parent=hp, res=6).scale = (1.0, 2.2, 1.0)
-    return hp
+        cup = framed(f"{name}_cup{s}", frames[s], parent=hp)
+        cyl(f"{name}_shell{s}", 0.043, 0.028, (0, 0, -0.013), shell_m, n=28, bev=0.008, seg=2, parent=cup)
+        cyl(f"{name}_plate{s}", 0.03, 0.0026, (0, 0, -0.0282), plate_m, n=28, bev=0.0008, parent=cup)
+        torus(f"{name}_plate_ring{s}", 0.0305, 0.0011, (0, 0, -0.0293), M["steel_dk"], nR=28, nr=4, parent=cup)
+        torus(f"{name}_pad{s}", 0.0305, 0.0125, (0, 0, 0.0108), pad_m, nR=28, nr=10, parent=cup).scale = (1, 1, 0.92)
+        disc(f"{name}_grille{s}", 0, 0, 0.021, 0.004, mat("hp_grille", "#0e0e10", 0.9), cup, n=20)
+        for px in (-1, 1):                                    # pivots and the U-yoke round the band side of the cup
+            cyl(f"{name}_pivot{s}{px}", 0.0042, 0.007, (px * 0.0465, 0, -0.012), M["steel"], rot=(0, 90, 0), n=10,
+                parent=cup)
+        torus(f"{name}_yoke{s}", 0.049, 0.0032, (0, 0, -0.012), M["steel"], nR=20, nr=6, arc=(0, 180), parent=cup)
+        tube(f"{name}_stem{s}", (0, 0.049, -0.012), (0, 0.067, -0.012), 0.0036, M["steel"], n=8, parent=cup)
+        box(f"{name}_slider{s}", (0.009, 0.026, 0.0042), (0, 0.079, -0.012), M["steel"], bev=0.0012, parent=cup)
+        ends[s] = frames[s] @ Vector((0, E_off, -0.012))
+        if s == -1:                                           # the lead's strain relief on the left cup
+            cyl(f"{name}_relief", 0.0042, 0.012, (0, -0.046, -0.014), shell_m, r2=0.0031, rot=(90, 0, 0), n=12,
+                parent=cup)
+            port(f"{name}_lead", (0, -0.052, -0.014), (0, -1, 0), cup)
+    # the band: half an ellipse from slider to slider, a padded leatherette cushion under its crown
+    eL, eR = ends[-1], ends[1]
+    C = (eL + eR) / 2
+    u = (eR - eL).normalized()
+    A, B = (eR - eL).length / 2, 0.095
+    path = [C + u * (A * cos(a)) + v_hat * (B * sin(a)) for a in np.linspace(pi, 0, 33)]
+    bvec = u.cross(v_hat)
+    sweep(f"{name}_band", path, bvec, rounded_rect(0.0155, 0.0042), band_m, parent=hp)
+    cush = [C + u * ((A - 0.0095) * cos(a)) + v_hat * ((B - 0.0095) * sin(a)) for a in np.linspace(0.8 * pi, 0.2 * pi,
+                                                                                                    21)]
+    taper = [0.55 + 0.45 * sin(pi * i / 20) ** 0.5 for i in range(21)]
+    sweep(f"{name}_cushion", cush, bvec, rounded_rect(0.0135, 0.0052), leather, parent=hp, taper=taper)
+    for s, e in ((-1, eL), (1, eR)):                         # the band's end caps over the sliders
+        box(f"{name}_bandcap{s}", (0.034, 0.012, 0.012), (0, 0, 0), band_m, bev=0.004, parent=framed(
+            f"{name}_bandcap_g{s}", frame_matrix(e + v_hat * 0.004, bvec, v_hat), parent=hp))
+    crown = C + v_hat * (B - 0.0095 - 0.0052)                # the cushion's underside at the top of the arc
+    return crown.z
 
 
 def build_plant(M, parent, name="plant"):
@@ -3126,16 +4204,20 @@ def build_theo(M, kb, mug):
     build_backoffice_key(M, kb)
     use("THEO")
     cyl("coffee", 0.0362, 0.002, (0, 0, 0.026), M["coffee"], n=24, parent=mug)
-    # headphones on the desk, left of the keyboard
-    hp = build_headphones(M, grp("headphones", (0.57, 2.2, DZ), (0, 0, 18)))
-    port("hp_cup", (-0.112, 0.0, 0.03), (-0.4, -0.25, -0.88), hp)
-    # the lead runs to the tower's front headphone jack
+    # headphones put down flat on the desk in front of the tower, cups on their pads, the band's crown tucked past the
+    # tower's right side; the lead leaves the left cup, curls round on the desk and hangs up to the front jack
+    hp = grp("headphones", (0.548, 2.13, DZ), (0, 0, -5))
+    build_headphones(M, hp, pose="flat")
     at, d = port_frame("hp")
     st = connector("hp_jack_plug", "jack", at, d, M)
-    cable("hp_cable", [st, st + d * 0.012, at + d * 0.05 + Vector((0.0, 0, -0.05)), (0.375, 2.2, DZ + 0.02),
-                       (0.4, 2.16, DZ + 0.0018), (0.45, 2.13, DZ + 0.0018), (0.5, 2.15, DZ + 0.0018)] +
-          bush_end("hp_lead", "hp_cup", M, out=0.03),
-          0.0016, M["plastic_blk"])
+    lead = port_frame("hp_lead")
+    p0 = connector("hp_lead_bush", "relief", lead[0], lead[1], M)
+    lz = DZ + 0.0017
+    cable("hp_cable", [st, st + d * 0.012, (at.x - 0.001, at.y - 0.03, at.z - 0.03), (at.x - 0.004, at.y - 0.045,
+                                                                                    DZ + 0.06),
+                       (at.x - 0.008, at.y - 0.05, DZ + 0.01), (0.348, 2.18, lz), (0.358, 2.12, lz),
+                       (0.39, 2.088, lz), (0.43, 2.072, lz), (p0.x - 0.006, p0.y - 0.012, DZ + 0.006),
+                       p0 + lead[1] * 0.012, p0], 0.0016, M["plastic_blk"])
     # the 2009 photo, framed, on his side of the desk (it goes to Lisbon with him)
     build_photo_frame(M, (1.585, 2.47, DZ), -14)
     # the moving box, half packed, on the floor by the desk
@@ -3320,7 +4402,12 @@ def job_card(M, name, loc, yaw, no, fields, mech=None, parent=None, tilt=(0, 0))
     """A Spokes & Sprockets paper job card, filled in by Martin at the counter (Ink Free is his hand). `mech` =
     (crossed-out name, new name) adds the mechanic line with a correction."""
     jc = grp(name, loc, (tilt[0], tilt[1], yaw), parent=parent)
-    box(name + "_card", (0.1, 0.15, 0.0008), (0, 0, 0), M["manila"], bev=0, parent=jc)
+    c = 0.014                                                 # the bottom-right corner dog-eared over
+    card = prism(name + "_card", [(-0.05, -0.075), (0.05 - c, -0.075), (0.05, -0.075 + c), (0.05, 0.075),
+                                  (-0.05, 0.075)], 0.0008, loc=(0, 0, -0.0004), m=M["manila"], parent=jc)
+    card["hs"] = [0.05, 0.075, 0.0]
+    flat(name + "_ear", [(0.05 - c, -0.075), (0.05, -0.075 + c), (0.05 - c, -0.075 + c)], 0.00045,
+         mat("manila_back", "#d6c08f", 0.78, spec=0.3), jc)
     zt = 0.0006
     text(name + "_head", "SPOKES & SPROCKETS", "verdanab.ttf", 0.0062, (0, 0.062, zt), M["ink"], parent=jc, fit=0.088)
     text(name + "_head2", "JOB CARD", "verdana.ttf", 0.0055, (0, 0.053, zt), M["print_grey"], parent=jc)
@@ -3763,6 +4850,10 @@ def build_cameras():
     camera("CAM_drawer", (2.04, 1.7, 1.1), (1.96, 1.98, 0.3), 32, 5.6, (1.96, 1.98, 0.3))
     camera("CAM_cables_top", (1.42, 2.66, 0.9), (0.5, 2.73, 0.77), 20, 16.0, (0.8, 2.73, 0.77))
     camera("CAM_cables_under", (0.75, 1.55, 0.32), (0.62, 2.74, 0.14), 22, 16.0, (0.62, 2.7, 0.1))
+    camera("CAM_mouse", (1.3, 2.36, 0.905), (1.418, 2.242, 0.772), 55, 13.0, (1.418, 2.242, 0.776))
+    camera("CAM_hp", (0.79, 1.84, 1.0), (0.53, 2.17, 0.78), 42, 5.6, (0.53, 2.15, 0.78))
+    camera("CAM_pot", (1.6, 2.44, 1.02), (1.775, 2.672, 0.86), 50, 5.6, (1.78, 2.68, 0.86))
+    camera("CAM_bin", (0.77, 1.97, 0.655), (0.62, 2.45, 0.15), 34, 5.6, (0.62, 2.45, 0.2))
 
 
 CHAIR_POSE = {"night": ((1.66, 1.55, 0.0), 58), "monday": ((1.66, 1.55, 0.0), 58),
@@ -3775,7 +4866,7 @@ def apply_preset(name, M, hands):
     night = name in ("night", "close")
     vis = {"NIGHT": night, "MONDAY": not night, "THEO": name == "night", "MARTIN": name == "monday",
            "MARTIN_KIT": name in ("monday", "tuesday"), "PRIYA": name == "tuesday", "CLOSE": name == "close",
-           "NOTE": name in ("night", "monday")}
+           "NOTE": name in ("night", "monday"), "MESS": name in ("night", "monday")}
     for k, v in vis.items():
         COLL[k].hide_render = not v
     sc = bpy.context.scene
@@ -3916,6 +5007,90 @@ def build_compositor():
         pass
 
 
+# ================================================================ wear and tear: the rules for the shop
+PRINT_SKIP = ("ink", "marker", "marker_faded", "red_ink", "blue_ink", "print_grey", "legend", "crayon_*", "cal_*",
+              "fl_*", "flyer_ink", "pl_highlight", "pl_crease", "sb_ink", "mk_ink*", "poster_*", "napkin_blue",
+              "bell_card_gold", "*_print", "dymo_letters", "hole", "section", "plinth", "mouse_seam", "hp_grille",
+              "ink_*", "ink_tube", "graphite", "led_off", "usb_led", "jack_*", "jackring*", "ps2_purple", "vga_blue",
+              "cd", "cd_top", "tea", "coffee", "crema", "soil", "nata_*", "cinnamon", "napkin_line*", "badge_*",
+              "ph_*", "clay*", "*_accent", "lx_photo_bg", "lx_jumper")
+WEAR_RULES = [
+    (PRINT_SKIP, None),
+    (("oak_desk",), dict(rv=0.07, scratch=0.3, edge=1.0, edge_val=1.32, edge_rough=0.66, edge_w=0.008)),
+    (("oak", "oak_lt", "oak_y", "walnut", "lx_oak_case", "case_*"), dict(rv=0.08, scratch=0.3, edge=0.85, edge_val=1.3,
+                                                                         edge_rough=0.62, edge_w=0.007)),
+    (("floor*",), dict(rv=0.1, scratch=0.55, scuff=0.35, edge=1.0, edge_val=0.5, edge_sat=1.05, edge_rough=0.85,
+                       edge_w=0.0045)),
+    (("wall",), dict(rv=0.06, cv=0.03, scuff=0.2)),
+    (("panel", "trim", "radiator", "counter_paint"), dict(rv=0.07, cv=0.03, scuff=0.25, scratch=0.15, edge=0.6,
+                                                          edge_val=1.15, edge_w=0.004)),
+    (("cork", "mousepad", "felt_grey"), dict(rv=0.06, cv=0.03)),
+    (("mouse2009",), dict(rv=0.05, smudge=0.55, scratch=0.35)),
+    (("gloss",), dict(rv=0.04, smudge=0.3, scratch=0.12)),
+    (("bin_metal",), dict(rv=0.1, scratch=0.7, scuff=0.45, grime=0.5, smudge=0.2)),
+    (("mustard",), dict(rv=0.05, scratch=0.15, smudge=0.15, edge=0.3, edge_val=1.2)),
+    (("pc_dk", "key_worn", "bell_enamel", "helmet_shell", "ceramic", "teal", "bikered", "paper_cup",
+      "cup_lid", "hp_shell", "mouse_btn", "mouse_side_btn"), dict(rv=0.05, smudge=0.75, scratch=0.25)),
+    (("steel", "steel_dk", "chrome", "brass", "brass_old", "hp_plate"), dict(rv=0.08, scratch=0.6, smudge=0.35)),
+    (("paper", "paper_back", "manila", "manila_back", "cartridge", "flyer_green", "label", "tag_card", "bell_card", "cable_card",
+      "receipt", "napkin", "sb_panel"), dict(rv=0.04, age=0.1)),
+    (("card", "kraft", "kraft_c", "shoebox*", "sleeve_kraft", "staple_box"), dict(rv=0.06, scuff=0.25, edge=0.6,
+                                                                                 edge_val=0.8, edge_sat=1.1,
+                                                                                 edge_w=0.004)),
+    (("fabric", "hoodie", "shop_rag", "waxed_canvas*", "bell_felt", "tyre", "saddle", "hp_pad", "hp_leather", "rag",
+      "rubber_band", "pad_compound", "mouse_tread", "webbing", "leather"), dict(rv=0.05)),
+    (("pc", "plastic_blk", "plug_*", "strip_white", "strip_face", "binder_*", "drawer_body", "stapler_red",
+      "usb_blue", "mustard", "headset_box", "tape_box", "chain_box", "tube_box", "bb_box", "rubber", "hp_band",
+      "dymo_red", "biro_*", "marker_*", "hi_*", "scissor_orange", "lever_*", "spoke_key_red",
+      "shade_in", "navy", "pot_chip"), dict(rv=0.09, scratch=0.3, scuff=0.1, smudge=0.2, edge=0.3, edge_val=1.3)),
+    (("*",), dict(rv=0.06, scratch=0.12)),
+]
+SHOP_PROPS = [
+    # dust where nobody wipes: the shelf and everything on it, the monitor's top, the tower, speakers, rails
+    ("shelf", {"dust": 1.0}), ("bezel_top", {"dust": 1.2}), ("mon_hump", {"dust": 1.0}),
+    ("mon_backplate", {"dust": 0.6}),
+    ("tower_case", {"dust": 0.9}), ("spk_*_body", {"dust": 0.55}), ("lamp_base", {"dust": 0.5}),
+    ("lamp_shade", {"dust": 0.6}), ("lamp_cap", {"dust": 0.6}), ("cab_top", {"dust": 0.9}),
+    ("binder*_body", {"dust": 1.0}), ("archive_lid", {"dust": 1.0}), ("shoe_lid", {"dust": 1.0}),
+    ("xmas_body", {"dust": 1.1}), ("xmas_tape", {"dust": 0.9}), ("headset_box", {"dust": 0.9}),
+    ("spindle_dome", {"dust": 0.7}), ("tray_side*", {"dust": 0.5}), ("tray_back", {"dust": 0.6}),
+    ("clock_rim", {"dust": 1.0}), ("win_board", {"dust": 0.5}), ("rail_*", {"dust": 0.8}), ("skirt_*", {"dust": 0.8}),
+    ("door_cas_T", {"dust": 1.0}), ("rad_*", {"dust": 0.9}), ("kb_base", {"dust": 0.3}), ("kb_well", {"dust": 0.6}),
+    ("strip_body", {"dust": 0.9}), ("cork_fr_T", {"dust": 0.9}), ("sash_*", {"dust": 0.5}), ("psu_*", {"dust": 0.5}),
+    ("wall_socket", {"dust": 0.5}), ("photo_frame_top", {"dust": 0.5}), ("bin_rim", {"dust": 0.4}),
+    ("tg_*", {"dust": 0.25}), ("pen_pot_lip", {"dust": 0.3}),
+    # how old each sheet of paper is (yellowing, foxing)
+    ("cal_paper", {"age": 0.03}), ("readme_paper", {"age": 0.0}), ("flyer_paper", {"age": 0.25}),
+    ("ty_paper", {"age": 0.5}), ("pl_paper", {"age": 0.32}), ("biz_madison_card", {"age": 0.4}),
+    ("biz_signs_card", {"age": 0.7}), ("tray_paper*", {"age": 0.3}), ("cd_sleeve*_env", {"age": 0.55}),
+    ("dr_label", {"age": 0.6}), ("binder*_label", {"age": 0.75}), ("archive_label", {"age": 0.8}),
+    ("shelfA_label", {"age": 0.45}), ("xmas_label", {"age": 0.65}), ("usb_tag_card", {"age": 0.2}),
+    ("card_side*", {"age": 0.4}), ("job_*_card", {"age": 0.06}), ("bin_paper_*", {"age": 0.35}), ("cable_set*_card", {"age": 0.3}),
+]
+FADED_TEXT = ("dr_label_text", "binder*_text", "archive_text", "shoe_text", "xmas_text", "shelfA_text")
+
+
+def dress_shop(M):
+    """The lived-in pass over the shop (after the build): per-object amounts, the rule table, then the surfaces with
+    their own story (the desk top, the floor, the cork, the mousepad, the keyboard legends), and Martin's old labels
+    with their marker faded."""
+    import fnmatch
+    set_props(SHOP_PROPS)
+    faded = mat("marker_faded", "#4f4842", 0.6)
+    for ob in bpy.data.objects:
+        if ob.type == "FONT" and any(fnmatch.fnmatchcase(ob.name, p) for p in FADED_TEXT):
+            ob.data.materials[0] = faded
+    weather_all(WEAR_RULES)
+    desk_marks(M["oak_desk"])
+    for i in range(4):
+        floor_wear(M[f"floor{i}"], path=(3.02, 2.8, 1.72, 1.62, 0.3), chair=(1.7, 1.62, 0.5), walls=(0.0, D))
+    cork_marks(M["cork"], ghosts=[(-0.03, -0.17, 0.052, 0.074), (0.072, -0.255, 0.043, 0.027)],
+               old_pins=[(-0.03, -0.1), (-0.026, -0.104), (0.073, -0.233), (-0.12, 0.01), (0.1, 0.13),
+                         (-0.17, -0.22), (0.15, -0.05), (-0.09, 0.21)])
+    pad_wear(M["mousepad"])
+    legend_wear(MATS["legend_worn"], "#2a2a2c")
+
+
 # ================================================================ main
 def main():
     args = parse_args()
@@ -3923,8 +5098,8 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob, do_unlink=True)
-    for name in ("SET", "WORKSHOP", "THEO", "MARTIN", "MARTIN_KIT", "PRIYA", "CLOSE", "NOTE", "NIGHT", "MONDAY",
-                 "REFLECT", "CAMS"):
+    for name in ("SET", "WORKSHOP", "THEO", "MARTIN", "MARTIN_KIT", "PRIYA", "CLOSE", "NOTE", "MESS", "NIGHT",
+                 "MONDAY", "REFLECT", "CAMS"):
         c = bpy.data.collections.new(name)
         bpy.context.scene.collection.children.link(c)
         COLL[name] = c
@@ -3963,6 +5138,7 @@ def main():
     build_close(M, kb)
     build_note(M, mon_head)
     apply_fits()
+    dress_shop(M)
     build_lights(M, lamp_head, mon_head)
     build_cameras()
     print(f"built {len(bpy.data.objects)} objects in {time.time() - t0:.1f}s")

@@ -1,0 +1,1234 @@
+{
+ "version": "2.1 animatic (timed from the rendered voices by video/v2/audio/layout.py)",
+ "duration": 221.13,
+ "fps": 15,
+ "voices": {
+  "Barnaby": "bm_george+bm_fable (75/25)",
+  "Theo": "bm_lewis",
+  "Martin": "bm_fable",
+  "Priya": "bf_isabella"
+ },
+ "scenes": [
+  {
+   "id": 1,
+   "title": "Nine tabs",
+   "where": "Shop, Thu 19 Nov 21:47",
+   "start": 0.0,
+   "end": 11.55,
+   "script": [
+    0,
+    12
+   ]
+  },
+  {
+   "id": 2,
+   "title": "The handover",
+   "where": "Shop, Thu 19 Nov night",
+   "start": 11.55,
+   "end": 40.34,
+   "script": [
+    12,
+    40
+   ]
+  },
+  {
+   "id": 3,
+   "title": "Monday",
+   "where": "Shop, Mon 23 Nov 08:52",
+   "start": 40.34,
+   "end": 58.56,
+   "script": [
+    40,
+    56
+   ]
+  },
+  {
+   "id": 4,
+   "title": "A key",
+   "where": "Shop, Mon 23 Nov",
+   "start": 58.56,
+   "end": 78.12,
+   "script": [
+    56,
+    73
+   ]
+  },
+  {
+   "id": 5,
+   "title": "The same four steps",
+   "where": "Shop, Mon 23 Nov afternoon",
+   "start": 78.12,
+   "end": 104.78,
+   "script": [
+    73,
+    95
+   ]
+  },
+  {
+   "id": 6,
+   "title": "A room Theo never built",
+   "where": "Shop, Mon 23 Nov 16:08-16:21",
+   "start": 104.78,
+   "end": 159.0,
+   "script": [
+    95,
+    128
+   ]
+  },
+  {
+   "id": 7,
+   "title": "Priya, day one",
+   "where": "Shop, Tue 24 Nov 08:34",
+   "start": 159.0,
+   "end": 179.96,
+   "script": [
+    128,
+    144
+   ]
+  },
+  {
+   "id": 8,
+   "title": "Any house",
+   "where": "Lisbon, Tue 24 Nov 09:39",
+   "start": 179.96,
+   "end": 202.79,
+   "script": [
+    144,
+    165
+   ]
+  },
+  {
+   "id": 9,
+   "title": "Goodnight",
+   "where": "Shop 18:40 / Lisbon 20:07, Tue 24 Nov",
+   "start": 202.79,
+   "end": 221.13,
+   "script": [
+    165,
+    180
+   ]
+  }
+ ],
+ "voice": [
+  {
+   "t": 5.17,
+   "scene": 1,
+   "who": "Martin",
+   "pace": "tired",
+   "text": "Theo — where's the parts list again?",
+   "speech": [
+    5.2,
+    7.38
+   ]
+  },
+  {
+   "t": 7.63,
+   "scene": 1,
+   "who": "Theo",
+   "pace": "brisk",
+   "text": "Tab four. No — five.",
+   "speech": [
+    7.68,
+    8.8
+   ]
+  },
+  {
+   "t": 9.31,
+   "scene": 1,
+   "who": "Theo",
+   "pace": "neutral",
+   "text": "It's the one with the spanner.",
+   "speech": [
+    9.35,
+    11.1
+   ]
+  },
+  {
+   "t": 14.27,
+   "scene": 2,
+   "who": "Theo",
+   "pace": "wistful",
+   "text": "Seventeen years.",
+   "speech": [
+    14.3,
+    15.25
+   ]
+  },
+  {
+   "t": 19.01,
+   "scene": 2,
+   "who": "Theo",
+   "pace": "wistful",
+   "text": "Right. Barnaby — this is the shop's system. I wrote it when I was fourteen, so be kind. Look after them for me.",
+   "speech": [
+    19.05,
+    26.34
+   ]
+  },
+  {
+   "t": 26.61,
+   "scene": 2,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "Twenty-three endpoints, sir. I've taken the six that only read — nobody's given me any keys yet.",
+   "speech": [
+    26.64,
+    32.92
+   ]
+  },
+  {
+   "t": 33.18,
+   "scene": 2,
+   "who": "Theo",
+   "pace": "dry",
+   "text": "It's Theo. And don't call my uncle sir — he'll unplug you.",
+   "speech": [
+    33.22,
+    36.8
+   ]
+  },
+  {
+   "t": 37.08,
+   "scene": 2,
+   "who": "Barnaby",
+   "pace": "dry",
+   "text": "Noted.",
+   "speech": [
+    37.1,
+    37.79
+   ]
+  },
+  {
+   "t": 43.39,
+   "scene": 3,
+   "who": "Martin",
+   "pace": "tired",
+   "text": "Right. Barnaby, is it?",
+   "speech": [
+    43.44,
+    45.15
+   ]
+  },
+  {
+   "t": 45.43,
+   "scene": 3,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "Good morning, Martin.",
+   "speech": [
+    45.45,
+    46.87
+   ]
+  },
+  {
+   "t": 47.11,
+   "scene": 3,
+   "who": "Martin",
+   "pace": "brisk",
+   "text": "What's due tomorrow — and are we short on anything?",
+   "speech": [
+    47.17,
+    50.19
+   ]
+  },
+  {
+   "t": 50.71,
+   "scene": 3,
+   "who": "Barnaby",
+   "pace": "explain",
+   "text": "Five bikes due tomorrow. Only Anika's is a problem — her brakes need two pairs of pads, and we've one left.",
+   "speech": [
+    50.74,
+    58.11
+   ]
+  },
+  {
+   "t": 58.82,
+   "scene": 4,
+   "who": "Martin",
+   "pace": "brisk",
+   "text": "Order ten from Madison, then.",
+   "speech": [
+    58.86,
+    60.64
+   ]
+  },
+  {
+   "t": 60.91,
+   "scene": 4,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "I can't order parts myself yet — but Theo built the system a way to. Shall I take that on?",
+   "speech": [
+    60.94,
+    67.33
+   ]
+  },
+  {
+   "t": 67.59,
+   "scene": 4,
+   "who": "Martin",
+   "pace": "neutral",
+   "text": "Go on, then.",
+   "speech": [
+    67.63,
+    68.67
+   ]
+  },
+  {
+   "t": 70.74,
+   "scene": 4,
+   "who": "Barnaby",
+   "pace": "explain",
+   "text": "Ten pairs from Madison, at six pounds fifty a pair. Shall I?",
+   "speech": [
+    70.77,
+    75.19
+   ]
+  },
+  {
+   "t": 75.37,
+   "scene": 4,
+   "who": "Martin",
+   "pace": "neutral",
+   "text": "Yes.",
+   "speech": [
+    75.41,
+    75.85
+   ]
+  },
+  {
+   "t": 78.89,
+   "scene": 5,
+   "who": "Martin",
+   "pace": "brisk",
+   "text": "Barnaby — Sofia's bike's done.",
+   "speech": [
+    78.92,
+    80.49
+   ]
+  },
+  {
+   "t": 80.76,
+   "scene": 5,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "I'll need to text her and mark it ready. May I?",
+   "speech": [
+    80.79,
+    84.32
+   ]
+  },
+  {
+   "t": 84.49,
+   "scene": 5,
+   "who": "Martin",
+   "pace": "brisk",
+   "text": "Go on.",
+   "speech": [
+    84.54,
+    85.26
+   ]
+  },
+  {
+   "t": 87.36,
+   "scene": 5,
+   "who": "Martin",
+   "pace": "brisk",
+   "text": "Kwame's.",
+   "speech": [
+    87.41,
+    87.93
+   ]
+  },
+  {
+   "t": 89.16,
+   "scene": 5,
+   "who": "Martin",
+   "pace": "brisk",
+   "text": "And Jana's.",
+   "speech": [
+    89.21,
+    90.1
+   ]
+  },
+  {
+   "t": 90.36,
+   "scene": 5,
+   "who": "Barnaby",
+   "pace": "dry",
+   "text": "That's three bikes handed back, and the same four steps each time. Shall I make it one?",
+   "speech": [
+    90.4,
+    96.08
+   ]
+  },
+  {
+   "t": 96.26,
+   "scene": 5,
+   "who": "Martin",
+   "pace": "surprised",
+   "text": "Can you?",
+   "speech": [
+    96.3,
+    97.0
+   ]
+  },
+  {
+   "t": 97.28,
+   "scene": 5,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "Give me a moment.",
+   "speech": [
+    97.3,
+    98.81
+   ]
+  },
+  {
+   "t": 100.52,
+   "scene": 5,
+   "who": "Martin",
+   "pace": "neutral",
+   "text": "Tom's Brompton.",
+   "speech": [
+    100.56,
+    101.52
+   ]
+  },
+  {
+   "t": 101.79,
+   "scene": 5,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "Tom's been texted, and it's marked ready.",
+   "speech": [
+    101.82,
+    104.28
+   ]
+  },
+  {
+   "t": 105.09,
+   "scene": 6,
+   "who": "Martin",
+   "pace": "neutral",
+   "text": "Who's got too much on this week?",
+   "speech": [
+    105.13,
+    107.2
+   ]
+  },
+  {
+   "t": 107.46,
+   "scene": 6,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "The system can't tell me — there's no report for it. Theo always meant to write one.",
+   "speech": [
+    107.5,
+    112.94
+   ]
+  },
+  {
+   "t": 113.37,
+   "scene": 6,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "I could write it, if you like.",
+   "speech": [
+    113.39,
+    115.53
+   ]
+  },
+  {
+   "t": 115.78,
+   "scene": 6,
+   "who": "Martin",
+   "pace": "surprised",
+   "text": "You can do that?",
+   "speech": [
+    115.83,
+    117.03
+   ]
+  },
+  {
+   "t": 117.3,
+   "scene": 6,
+   "who": "Barnaby",
+   "pace": "explain",
+   "text": "With your say-so. I'll work on a copy — nothing changes until you've seen it.",
+   "speech": [
+    117.33,
+    122.82
+   ]
+  },
+  {
+   "t": 125.89,
+   "scene": 6,
+   "who": "Barnaby",
+   "pace": "explain",
+   "text": "Done. It adds up each mechanic's hours for the week, the way Theo's notes count them. It only reads — it can't change a thing — and all of Theo's checks still pass. Shall I add it?",
+   "speech": [
+    125.92,
+    138.23
+   ]
+  },
+  {
+   "t": 138.5,
+   "scene": 6,
+   "who": "Martin",
+   "pace": "neutral",
+   "text": "Add it.",
+   "speech": [
+    138.53,
+    139.29
+   ]
+  },
+  {
+   "t": 139.56,
+   "scene": 6,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "That one needs your click, Martin. I don't change the system on a word.",
+   "speech": [
+    139.59,
+    144.21
+   ]
+  },
+  {
+   "t": 144.46,
+   "scene": 6,
+   "who": "Martin",
+   "pace": "dry",
+   "text": "Fussy.",
+   "speech": [
+    144.51,
+    145.15
+   ]
+  },
+  {
+   "t": 148.12,
+   "scene": 6,
+   "who": "Barnaby",
+   "pace": "explain",
+   "text": "Dev's carrying thirty-one hours against his twenty. Priya starts tomorrow — shall I give her the two wheel builds?",
+   "speech": [
+    148.16,
+    155.55
+   ]
+  },
+  {
+   "t": 155.8,
+   "scene": 6,
+   "who": "Martin",
+   "pace": "neutral",
+   "text": "Good idea.",
+   "speech": [
+    155.85,
+    156.8
+   ]
+  },
+  {
+   "t": 160.26,
+   "scene": 7,
+   "who": "Priya",
+   "pace": "dry",
+   "text": "So you're why I've got two wheel builds on my first day?",
+   "speech": [
+    160.3,
+    164.05
+   ]
+  },
+  {
+   "t": 164.33,
+   "scene": 7,
+   "who": "Barnaby",
+   "pace": "dry",
+   "text": "Guilty. Dev had thirty-one hours booked. You had none.",
+   "speech": [
+    164.35,
+    168.01
+   ]
+  },
+  {
+   "t": 168.27,
+   "scene": 7,
+   "who": "Priya",
+   "pace": "dry",
+   "text": "Fair. What else can this thing do?",
+   "speech": [
+    168.31,
+    170.36
+   ]
+  },
+  {
+   "t": 170.62,
+   "scene": 7,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "Your jobs, the parts they need, who's collecting what. And Theo left you a note: never trust the stock count on a Friday.",
+   "speech": [
+    170.66,
+    178.45
+   ]
+  },
+  {
+   "t": 178.71,
+   "scene": 7,
+   "who": "Priya",
+   "pace": "dry",
+   "text": "Noted.",
+   "speech": [
+    178.75,
+    179.36
+   ]
+  },
+  {
+   "t": 185.24,
+   "scene": 8,
+   "who": "Theo",
+   "pace": "neutral",
+   "text": "Barnaby — new job. This is the crew's memory.",
+   "speech": [
+    185.26,
+    187.9
+   ]
+  },
+  {
+   "t": 188.15,
+   "scene": 8,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "Thirteen endpoints, sir — and two deadlines in dispute. Shall I flag them?",
+   "speech": [
+    188.2,
+    192.51
+   ]
+  },
+  {
+   "t": 192.78,
+   "scene": 8,
+   "who": "Theo",
+   "pace": "dry",
+   "text": "Still Theo.",
+   "speech": [
+    192.81,
+    193.71
+   ]
+  },
+  {
+   "t": 193.98,
+   "scene": 8,
+   "who": "Barnaby",
+   "pace": "dry",
+   "text": "Theo.",
+   "speech": [
+    194.01,
+    194.68
+   ]
+  },
+  {
+   "t": 194.96,
+   "scene": 8,
+   "who": "Theo",
+   "pace": "neutral",
+   "text": "And the render box?",
+   "speech": [
+    194.98,
+    196.29
+   ]
+  },
+  {
+   "t": 196.56,
+   "scene": 8,
+   "who": "Barnaby",
+   "pace": "neutral",
+   "text": "Twenty-eight endpoints. It's on the big card, and three jobs are queued.",
+   "speech": [
+    196.59,
+    200.98
+   ]
+  },
+  {
+   "t": 201.26,
+   "scene": 8,
+   "who": "Theo",
+   "pace": "dry",
+   "text": "Show-off.",
+   "speech": [
+    201.28,
+    202.04
+   ]
+  },
+  {
+   "t": 203.65,
+   "scene": 9,
+   "who": "Martin",
+   "pace": "closing",
+   "text": "Night, Barnaby.",
+   "speech": [
+    203.69,
+    204.92
+   ]
+  },
+  {
+   "t": 205.18,
+   "scene": 9,
+   "who": "Barnaby",
+   "pace": "closing",
+   "text": "Goodnight, Martin.",
+   "speech": [
+    205.22,
+    206.5
+   ]
+  },
+  {
+   "t": 207.67,
+   "scene": 9,
+   "who": "Theo",
+   "pace": "closing",
+   "text": "Night, Barnaby.",
+   "speech": [
+    207.7,
+    208.82
+   ]
+  },
+  {
+   "t": 209.09,
+   "scene": 9,
+   "who": "Barnaby",
+   "pace": "closing",
+   "text": "Goodnight, Theo.",
+   "speech": [
+    209.12,
+    210.38
+   ]
+  }
+ ],
+ "sfx": [
+  {
+   "t": 0.0,
+   "type": "rain",
+   "fade_in": 2.2,
+   "level": 1.0,
+   "label": "rain on the window (bed)",
+   "until": 41.94
+  },
+  {
+   "t": 0.2,
+   "type": "radio",
+   "level": 0.55,
+   "label": "a radio far off in the workshop (bed)",
+   "until": 40.94
+  },
+  {
+   "t": 0.35,
+   "type": "fan",
+   "level": 1.0,
+   "label": "PC fan spins up, then hums (bed)",
+   "until": 41.54
+  },
+  {
+   "t": 0.9,
+   "type": "hdd",
+   "dur": 1.6,
+   "label": "hard drive chatter"
+  },
+  {
+   "t": 4.35,
+   "type": "tab",
+   "pan": -0.35
+  },
+  {
+   "t": 4.69,
+   "type": "tab",
+   "pan": -0.27
+  },
+  {
+   "t": 5.03,
+   "type": "tab",
+   "pan": -0.19
+  },
+  {
+   "t": 5.08,
+   "type": "hdd",
+   "dur": 0.5
+  },
+  {
+   "t": 5.37,
+   "type": "tab",
+   "pan": -0.11
+  },
+  {
+   "t": 5.71,
+   "type": "tab",
+   "pan": -0.03
+  },
+  {
+   "t": 6.05,
+   "type": "tab",
+   "pan": 0.05
+  },
+  {
+   "t": 6.1,
+   "type": "hdd",
+   "dur": 0.5
+  },
+  {
+   "t": 6.39,
+   "type": "tab",
+   "pan": 0.13
+  },
+  {
+   "t": 6.73,
+   "type": "tab",
+   "pan": 0.21
+  },
+  {
+   "t": 6.78,
+   "type": "hdd",
+   "dur": 0.5
+  },
+  {
+   "t": 7.07,
+   "type": "tab",
+   "pan": 0.29
+  },
+  {
+   "t": 7.8,
+   "type": "tab",
+   "pan": -0.1
+  },
+  {
+   "t": 8.52,
+   "type": "tab",
+   "pan": -0.05
+  },
+  {
+   "t": 15.85,
+   "type": "tab_close",
+   "pan": 0.3
+  },
+  {
+   "t": 16.05,
+   "type": "tab_close",
+   "pan": 0.23
+  },
+  {
+   "t": 16.25,
+   "type": "tab_close",
+   "pan": 0.16
+  },
+  {
+   "t": 16.45,
+   "type": "tab_close",
+   "pan": 0.09
+  },
+  {
+   "t": 16.65,
+   "type": "tab_close",
+   "pan": 0.02
+  },
+  {
+   "t": 16.85,
+   "type": "tab_close",
+   "pan": -0.05
+  },
+  {
+   "t": 17.05,
+   "type": "tab_close",
+   "pan": -0.12
+  },
+  {
+   "t": 17.25,
+   "type": "tab_close",
+   "pan": -0.19
+  },
+  {
+   "t": 17.45,
+   "type": "tab_close",
+   "pan": -0.26
+  },
+  {
+   "t": 18.0,
+   "type": "bell",
+   "gain": 0.5,
+   "label": "the brass bell: Barnaby arrives"
+  },
+  {
+   "t": 26.24,
+   "type": "pop",
+   "gain": 0.18,
+   "label": "six light up"
+  },
+  {
+   "t": 38.59,
+   "type": "key_tap",
+   "gain": 0.6,
+   "label": "the key on the keyboard: a small clean metal tap"
+  },
+  {
+   "t": 39.79,
+   "type": "lamp_click",
+   "gain": 0.55,
+   "label": "the lamp clicks off"
+  },
+  {
+   "t": 40.34,
+   "type": "timelapse",
+   "dur": 2.2,
+   "gain": 0.35,
+   "label": "time passes: a soft swell"
+  },
+  {
+   "t": 41.74,
+   "type": "workshop",
+   "level": 1.0,
+   "label": "workshop morning bed: room, radio, tools",
+   "until": 159.8
+  },
+  {
+   "t": 43.34,
+   "type": "freewheel",
+   "gain": 0.3
+  },
+  {
+   "t": 48.99,
+   "type": "compressor",
+   "gain": 0.22
+  },
+  {
+   "t": 69.09,
+   "type": "mouse_click",
+   "gain": 0.6
+  },
+  {
+   "t": 69.52,
+   "type": "key_turn",
+   "gain": 0.65,
+   "label": "a real key turning in a lock"
+  },
+  {
+   "t": 70.27,
+   "type": "bell_soft",
+   "gain": 0.32,
+   "label": "the bell's soft confirm"
+  },
+  {
+   "t": 75.97,
+   "type": "mouse_click",
+   "gain": 0.55
+  },
+  {
+   "t": 76.67,
+   "type": "pop",
+   "gain": 0.2,
+   "label": "order 3 lands"
+  },
+  {
+   "t": 78.47,
+   "type": "clunk",
+   "gain": 0.55,
+   "label": "repair stand clamp releases: Sofia's"
+  },
+  {
+   "t": 84.59,
+   "type": "mouse_click",
+   "gain": 0.5
+  },
+  {
+   "t": 84.99,
+   "type": "mouse_click",
+   "gain": 0.5
+  },
+  {
+   "t": 85.51,
+   "type": "step",
+   "gain": 0.16
+  },
+  {
+   "t": 85.89,
+   "type": "step",
+   "gain": 0.16
+  },
+  {
+   "t": 86.27,
+   "type": "step",
+   "gain": 0.16
+  },
+  {
+   "t": 86.65,
+   "type": "step",
+   "gain": 0.16
+  },
+  {
+   "t": 87.11,
+   "type": "clunk",
+   "gain": 0.5,
+   "label": "Kwame's"
+  },
+  {
+   "t": 88.08,
+   "type": "step",
+   "gain": 0.15
+  },
+  {
+   "t": 88.28,
+   "type": "step",
+   "gain": 0.15
+  },
+  {
+   "t": 88.48,
+   "type": "step",
+   "gain": 0.15
+  },
+  {
+   "t": 88.68,
+   "type": "step",
+   "gain": 0.15
+  },
+  {
+   "t": 88.93,
+   "type": "clunk",
+   "gain": 0.5,
+   "label": "Jana's"
+  },
+  {
+   "t": 99.36,
+   "type": "bell_soft",
+   "gain": 0.28,
+   "label": "the passage opens"
+  },
+  {
+   "t": 100.26,
+   "type": "clunk",
+   "gain": 0.5,
+   "label": "Tom's Brompton"
+  },
+  {
+   "t": 121.62,
+   "type": "typing",
+   "dur": 4.2,
+   "gain": 0.55,
+   "label": "keyboard foley under the code"
+  },
+  {
+   "t": 125.02,
+   "type": "ding",
+   "gain": 0.25,
+   "label": "checks pass"
+  },
+  {
+   "t": 144.81,
+   "type": "mouse_click",
+   "gain": 0.62
+  },
+  {
+   "t": 145.11,
+   "type": "reload",
+   "gain": 0.25,
+   "label": "the page reloads"
+  },
+  {
+   "t": 147.36,
+   "type": "bell_soft",
+   "gain": 0.3,
+   "label": "a new room"
+  },
+  {
+   "t": 157.5,
+   "type": "pop",
+   "gain": 0.18,
+   "label": "two rows change"
+  },
+  {
+   "t": 159.0,
+   "type": "bustle",
+   "level": 1.0,
+   "label": "Tuesday workshop bustle (bed)",
+   "until": 180.26
+  },
+  {
+   "t": 179.96,
+   "type": "street",
+   "level": 1.0,
+   "label": "Lisbon: street below the window (bed)",
+   "until": 203.39
+  },
+  {
+   "t": 183.66,
+   "type": "keys_modern",
+   "dur": 1.0,
+   "gain": 0.4,
+   "label": "Theo types"
+  },
+  {
+   "t": 184.96,
+   "type": "mouse_click",
+   "gain": 0.5,
+   "label": "Connect"
+  },
+  {
+   "t": 202.79,
+   "type": "rain",
+   "fade_in": 1.2,
+   "level": 0.8,
+   "label": "rain returns over the shop (bed)",
+   "until": 221.13
+  },
+  {
+   "t": 203.19,
+   "type": "keys_jingle",
+   "gain": 0.3,
+   "label": "Martin's keys"
+  },
+  {
+   "t": 206.8,
+   "type": "street_night",
+   "level": 1.0,
+   "label": "a quieter street outside in Lisbon (bed)",
+   "until": 221.13
+  },
+  {
+   "t": 211.43,
+   "type": "bell",
+   "gain": 0.42,
+   "label": "the real bell, once"
+  }
+ ],
+ "music": [
+  {
+   "t": 18.15,
+   "section": "handover",
+   "mood": "sparse, warm acoustic guitar enters after the bell"
+  },
+  {
+   "t": 42.34,
+   "section": "work",
+   "mood": "light, walking pace"
+  },
+  {
+   "t": 104.78,
+   "section": "before_build",
+   "mood": "quieter, the walking figure thins out under the question"
+  },
+  {
+   "t": 121.62,
+   "section": "build",
+   "mood": "rising, focused: builds to the click"
+  },
+  {
+   "t": 145.91,
+   "section": "lift",
+   "mood": "release on the click and the tab change"
+  },
+  {
+   "t": 159.0,
+   "section": "tuesday",
+   "mood": "settles: soft picking"
+  },
+  {
+   "t": 179.96,
+   "section": "lisbon",
+   "mood": "brighter, fuller: the new desk"
+  },
+  {
+   "t": 202.79,
+   "section": "close",
+   "mood": "resolve: a held chord, the bell, a last roll"
+  }
+ ],
+ "marks": {
+  "light_up": 0.7,
+  "medium": 2.9,
+  "screen": 4.1,
+  "tab1": 4.35,
+  "tab2": 4.69,
+  "tab3": 5.03,
+  "tab4": 5.37,
+  "tab5": 5.71,
+  "tab6": 6.05,
+  "tab7": 6.39,
+  "tab8": 6.73,
+  "tab9": 7.07,
+  "martin_os": 5.2,
+  "tab4_active": 7.73,
+  "tab5_active": 8.46,
+  "spanner": 9.35,
+  "photo": 11.55,
+  "calendar": 12.8,
+  "box": 14.0,
+  "close_tabs": 15.6,
+  "desktop_night": 17.65,
+  "bell_arrive": 18.0,
+  "reading": 19.2,
+  "six_lit": 26.14,
+  "old_pc": 29.84,
+  "desk_detail": 33.02,
+  "key": 38.04,
+  "lamp_off": 39.79,
+  "timelapse": 40.34,
+  "monday": 41.74,
+  "clock": 42.94,
+  "martin_world": 45.35,
+  "walk": 50.24,
+  "pads_callout": 53.34,
+  "shelf": 56.21,
+  "card": 63.14,
+  "click_unlock": 68.97,
+  "unlock": 69.52,
+  "engine_unlock": 70.02,
+  "click_order": 75.97,
+  "po": 76.12,
+  "afternoon": 78.12,
+  "clunk1": 78.47,
+  "cards2": 81.99,
+  "click_text": 84.59,
+  "click_ready": 84.99,
+  "walk1": 85.36,
+  "clunk2": 87.11,
+  "walk2": 87.98,
+  "clunk3": 88.93,
+  "walk3": 90.12,
+  "passage": 99.01,
+  "engine_compose": 99.61,
+  "clunk4": 100.26,
+  "walk4": 101.57,
+  "late": 104.78,
+  "sticky": 107.8,
+  "soon_tab": 110.5,
+  "code": 121.62,
+  "checks": 125.02,
+  "glasses": 129.92,
+  "click_build": 144.81,
+  "reload": 145.11,
+  "tab_change": 145.91,
+  "new_room": 147.26,
+  "same_butler": 148.56,
+  "reassign": 157.0,
+  "priya_world": 164.25,
+  "readme_note": 175.06,
+  "lisbon_wide": 179.96,
+  "nata": 181.46,
+  "realapp": 182.66,
+  "realapp_full": 183.56,
+  "connect": 184.96,
+  "synapse_log": 186.16,
+  "theo_world": 188.0,
+  "still_theo": 192.71,
+  "render_box": 194.83,
+  "queue": 198.19,
+  "shop_night": 202.79,
+  "lisbon_night": 206.8,
+  "dim": 207.3,
+  "two_desks": 210.83,
+  "bell_final": 211.43,
+  "title": 211.93,
+  "new_desk_fades": 214.83,
+  "old_ones": 215.53,
+  "credit": 217.53,
+  "small_print": 217.83,
+  "fade_out": 220.13,
+  "end": 221.13
+ }
+}

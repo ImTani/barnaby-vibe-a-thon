@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--
+  Barnaby · the film · v2.1 animatic (gate 3). The whole film from the approved stills and screens, on the clock of
+  the real voice lines (video/v2/cues.json, laid out by video/v2/audio/layout.py -> cues.js).
+
+  OPEN     this file directly (1920x1080); window.render(t) draws any moment.
+  RENDER   node video/v2/animatic/render.js            -> out/frames -> out/animatic.mp4 (960x540, 15 fps, with sound)
+           node video/v2/animatic/render.js sheets     -> out/sheets/scene_<n>.jpg (one contact sheet per scene)
+  ENGINE   ../../lib.js (v1: timing, easing, DOM helpers, the Scene registry) + shots.js (stills with a camera) +
+           main.js (frame loop) + scenes/s1..s9.js. No captions: on-screen text only where the script has it.
+-->
+<html lang="en-GB"><head><meta charset="utf-8"><title>Barnaby · v2.1 animatic</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#000;color:#EEEAE1;
+  font-family:"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+#stage{position:absolute;inset:0;overflow:hidden;isolation:isolate;background:#000}
+.scene{position:absolute;left:0;top:0;width:1920px;height:1080px;display:none;overflow:hidden;background:#000}
+.shot{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;display:none}
+.shot img,.shot .layer{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none}
+.shot .layer > *{position:absolute}
+.ov{position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none}
+.label{position:absolute;display:none}
+#black{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:99}
+/* Barnaby's type (ui/skins/app3.css): Sitka Subheading / Sitka Text, brass #D3A14A and ivory #EEEAE1 on charcoal */
+.t-serif{font-family:"Sitka Subheading","Sitka Text",Constantia,Georgia,serif}
+.t-text{font-family:"Sitka Text",Constantia,Georgia,serif}
+.t-mono{font-family:"Cascadia Code","Cascadia Mono",Consolas,monospace}
+.t-martin{font-family:"MFig","Gill Sans MT","Gill Sans","Segoe UI",sans-serif}
+#fontwarm{position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap}
+</style></head>
+<body>
+<div id="stage"></div>
+<div id="black"></div>
+<div id="fontwarm"><span class="t-serif">Barnaby Every system</span> <span class="t-text">Even the old ones ·×</span>
+  <span class="t-mono">synapse · 0.38 s</span> <span class="t-martin">synapse</span></div>
+<script src="../../lib.js"></script>
+<script src="cues.js"></script>
+<script src="shots.js"></script>
+<script src="scenes/manifest.js"></script>
+<script>document.write(SCENE_FILES.map(f => `<script src="scenes/${f}"><\/script>`).join(''));</script>
+<script src="main.js"></script>
+</body></html>

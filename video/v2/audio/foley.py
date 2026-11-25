@@ -706,8 +706,14 @@ def extra_cues(cues: dict) -> list[dict]:
     """Effects the beat sheet describes but cues.json -> sfx does not carry (voice timing is not ours to change):
     Barnaby's steps across the workshop floor and the parts drawer in scene 3, and the back office's night tone."""
     mk = cues["marks"]
-    out = [{"t": round(mk["walk"] + .1 + k * .4, 3), "type": "step", "gain": .14, "label": "Barnaby walks the workshop floor (derived from marks.walk)"} for k in range(4)]
-    out.append({"t": round(mk["shelf"] - .45, 3), "type": "drawer", "gain": .3, "label": "the parts drawer (derived from marks.shelf)"})
+    # the film walks him from marks.walk to drawer 1 by marks.pads_callout - 0.15 (video/v2/film/scenes/s3.js)
+    t0, t1 = mk["walk"] + .15, mk["pads_callout"] - .35
+    n = int((t1 - t0) / .42) + 1
+    out = [{"t": round(t0 + k * (t1 - t0) / max(1, n - 1), 3), "type": "step", "gain": .13 if 0 < k < n - 1 else .1,
+            "label": "Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout)"}
+           for k in range(n)]
+    out.append({"t": round(mk["shelf"] - .45, 3), "type": "drawer", "gain": .3,
+                "label": "drawer 1 of the parts cabinet slides open onto the shelf shot (derived from marks.shelf)"})
     out.append({"t": 0.0, "type": "office_night", "level": 1.0, "fade_in": 2.5, "until": mk["timelapse"] + 1.6,
                 "label": "the back office at night (derived: scenes 1-2)"})
     out.append({"t": mk["shop_night"], "type": "office_night", "level": .8, "fade_in": 1.2, "until": mk["end"],

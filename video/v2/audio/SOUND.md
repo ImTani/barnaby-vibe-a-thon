@@ -58,13 +58,13 @@ its bar line on each run.
 |---|---|---|
 | integrated loudness | -16 LUFS | -16.0 LUFS (ffmpeg ebur128), -16.04 (pyloudnorm) |
 | true peak | <= -1 dBTP | -1.8 dBTP (ffmpeg, 4x), -1.8 dBTP (4x polyphase) |
-| loudness range | - | 6.7 LU |
+| loudness range | - | 6.9 LU |
 | format | 48 kHz stereo | 48000 Hz, 2 ch, PCM_16, 217.94 s (film 217.94 s) |
 | music + effects + ambience + voice = soundtrack | exact | max difference -76.3 dBFS (dither) |
 | sfx.wav = effects + ambience | exact | max difference -84.3 dBFS (dither) |
-| stems, integrated | - | music -30.0 LUFS, effects -29.3 LUFS, ambience -33.0 LUFS, voice -15.5 LUFS |
-| dialogue over everything under it | always clear | min 10.6 dB (line 50), median 15.5 dB over 54 lines (RMS in each line's speech window) |
-| effects on their cues | on the cue | 64 one-shots: median 4 ms, max 32 ms from cue to the first rise in the effects stem |
+| stems, integrated | - | music -30.0 LUFS, effects -29.6 LUFS, ambience -32.9 LUFS, voice -15.5 LUFS |
+| dialogue over everything under it | always clear | min 10.5 dB (line 50), median 15.5 dB over 54 lines (RMS in each line's speech window) |
+| effects on their cues | on the cue | 67 one-shots: median 4 ms, max 32 ms from cue to the first rise in the effects stem |
 
 ## Key moments (excerpts in .cache/audio/excerpts/)
 
@@ -72,8 +72,8 @@ its bar line on each run.
 |---|---|---|---|---|
 | s2_bell_arrival | 16.5-22.5 s | -18.8 LUFS | -6.1 dBFS / -17.0 LUFS | music -37.0, effects -23.6, ambience -30.1, voice -96.4 |
 | s4_key_turn | 68.47-72.02 s | -16.2 LUFS | -4.0 dBFS / -22.3 LUFS | music -29.2, effects -32.7, ambience -33.8, voice -96.5 |
-| s6_click_tab_change | 141.32-145.92 s | -18.8 LUFS | -5.1 dBFS / -17.2 LUFS | music -39.2, effects -36.1, ambience -42.3, voice -23.4 |
-| s9_final_bell | 207.44-213.44 s | -24.3 LUFS | -7.7 dBFS / -18.2 LUFS | music -36.3, effects -24.6, ambience -33.9, voice -96.3 |
+| s6_click_tab_change | 141.32-145.92 s | -18.7 LUFS | -5.1 dBFS / -17.1 LUFS | music -39.1, effects -36.5, ambience -42.3, voice -23.4 |
+| s9_final_bell | 207.44-213.44 s | -23.9 LUFS | -7.0 dBFS / -18.0 LUFS | music -36.4, effects -24.6, ambience -31.6, voice -96.3 |
 
 ## Effect cues: source and processing
 
@@ -192,8 +192,8 @@ Processing: a water drip tuned up the D major pentatonic, LP 4.2 kHz, HP 250 Hz;
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
 | 26.24 | six light up | -4 ms | -14.6 | -26.4 LUFS |
-| 76.67 | order 3 lands | -4 ms | -16.0 | -31.0 LUFS |
-| 155.01 | two rows change | -4 ms | -15.7 | -28.1 LUFS |
+| 76.67 | order 3 lands | -4 ms | -16.0 | -31.2 LUFS |
+| 155.01 | two rows change | -4 ms | -15.7 | -28.0 LUFS |
 
 ### key_tap
 
@@ -263,18 +263,21 @@ Processing: a soft hit -5 st LP 1.4 kHz + a cloth-mallet marimba note an octave 
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 50.34 | Barnaby walks the workshop floor (derived from marks.walk) | +6 ms | -20.2 | -33.6 LUFS |
-| 50.74 | Barnaby walks the workshop floor (derived from marks.walk) | +0 ms | -20.2 | -36.2 LUFS |
-| 51.14 | Barnaby walks the workshop floor (derived from marks.walk) | +0 ms | -21.8 | -36.5 LUFS |
-| 51.54 | Barnaby walks the workshop floor (derived from marks.walk) | +0 ms | -21.8 | -36.6 LUFS |
-| 85.51 |  | -2 ms | -20.3 | -33.7 LUFS |
-| 85.89 |  | +0 ms | -19.3 | -32.9 LUFS |
-| 86.27 |  | +0 ms | -18.9 | -32.7 LUFS |
-| 86.65 |  | +0 ms | -15.6 | -31.5 LUFS |
-| 88.08 |  | -2 ms | -21.2 | -33.2 LUFS |
-| 88.28 |  | +4 ms | -20.9 | -32.8 LUFS |
-| 88.48 |  | +0 ms | -14.6 | -29.3 LUFS |
-| 88.68 |  | +0 ms | -14.6 | -25.7 LUFS |
+| 50.39 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | +10 ms | -21.8 | -35.4 LUFS |
+| 50.82 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -22.6 | -37.6 LUFS |
+| 51.26 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -22.7 | -37.2 LUFS |
+| 51.69 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | +0 ms | -22.7 | -37.5 LUFS |
+| 52.12 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -22.5 | -37.7 LUFS |
+| 52.56 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | -1 ms | -22.5 | -37.5 LUFS |
+| 52.99 | Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout) | +0 ms | -25.2 | -40.1 LUFS |
+| 85.51 |  | -2 ms | -20.3 | -33.9 LUFS |
+| 85.89 |  | +0 ms | -19.2 | -33.1 LUFS |
+| 86.27 |  | +0 ms | -18.7 | -32.6 LUFS |
+| 86.65 |  | +0 ms | -14.9 | -31.5 LUFS |
+| 88.08 |  | -2 ms | -20.1 | -33.0 LUFS |
+| 88.28 |  | +4 ms | -20.1 | -32.6 LUFS |
+| 88.48 |  | +0 ms | -14.8 | -30.3 LUFS |
+| 88.68 |  | +0 ms | -14.8 | -27.1 LUFS |
 
 ### drawer
 
@@ -284,7 +287,7 @@ Processing: the wood scratch -7 st (a slow slide, LP 3.5 kHz, rising) and a dry 
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 55.76 | the parts drawer (derived from marks.shelf) | +0 ms | -16.5 | -30.7 LUFS |
+| 55.76 | drawer 1 of the parts cabinet slides open onto the shelf shot (derived from marks.shelf) | +0 ms | -16.5 | -30.7 LUFS |
 
 ### mouse_click
 
@@ -294,12 +297,12 @@ Processing: the shop: as tab (the old shop mouse). Lisbon: Theo's modern mouse, 
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 69.09 |  | -8 ms | -10.8 | -31.6 LUFS |
+| 69.09 |  | -8 ms | -10.8 | -31.7 LUFS |
 | 75.97 |  | -8 ms | -12.1 | -33.1 LUFS |
 | 84.59 |  | -8 ms | -13.0 | -33.9 LUFS |
-| 84.99 |  | -8 ms | -13.0 | -34.0 LUFS |
-| 142.32 |  | -8 ms | -11.2 | -31.1 LUFS |
-| 182.47 | Connect | -6 ms | -10.9 | -32.9 LUFS |
+| 84.99 |  | -8 ms | -13.0 | -33.9 LUFS |
+| 142.32 |  | -8 ms | -11.1 | -30.4 LUFS |
+| 182.47 | Connect | -8 ms | -11.0 | -32.8 LUFS |
 
 ### key_turn
 
@@ -309,7 +312,7 @@ Processing: the lock recording as is (lead-in trimmed): the key in, the turn, th
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 69.52 | a real key turning in a lock | -6 ms | -4.5 | -25.3 LUFS |
+| 69.52 | a real key turning in a lock | -6 ms | -4.6 | -25.3 LUFS |
 
 ### bell_soft
 
@@ -331,10 +334,10 @@ Processing: the lever's crack (hit, +-1 st) + the jaw's clunk (metal impact -2 s
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 78.47 | repair stand clamp releases: Sofia's | -2 ms | -14.3 | -25.2 LUFS |
-| 87.11 | Kwame's | -2 ms | -15.0 | -25.4 LUFS |
-| 88.93 | Jana's | +0 ms | -14.6 | -25.2 LUFS |
-| 100.26 | Tom's Brompton | +0 ms | -15.2 | -26.0 LUFS |
+| 78.47 | repair stand clamp releases: Sofia's | -2 ms | -14.3 | -25.6 LUFS |
+| 87.11 | Kwame's | +0 ms | -14.4 | -25.4 LUFS |
+| 88.93 | Jana's | +0 ms | -14.8 | -26.5 LUFS |
+| 100.26 | Tom's Brompton | +0 ms | -14.6 | -25.4 LUFS |
 
 ### typing
 
@@ -344,7 +347,7 @@ Processing: the old keyboard: plastic taps (two samples, +-1.5 st; the space bar
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 121.62 | keyboard foley under the code | +0 ms | -13.9 | -31.6 LUFS |
+| 121.62 | keyboard foley under the code | +4 ms | -14.8 | -31.7 LUFS |
 
 ### ding
 
@@ -354,7 +357,7 @@ Processing: the celeste on D (+2 st) with a quiet A above 70 ms later, LP 7 kHz;
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 125.02 | checks pass | +0 ms | -10.9 | -21.5 LUFS |
+| 125.02 | checks pass | +0 ms | -12.2 | -22.6 LUFS |
 
 ### reload
 
@@ -364,7 +367,7 @@ Processing: a 0.55 s burst of the drive's seeks + the fan bed rising and falling
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 142.62 | the page reloads | +0 ms | -17.1 | -32.6 LUFS |
+| 142.62 | the page reloads | +0 ms | -17.0 | -32.9 LUFS |
 
 ### bustle
 
@@ -394,7 +397,7 @@ Processing: Theo's modern keyboard: the same taps -4 st, 50 ms long, LP 3.8 kHz,
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 181.17 | Theo types | +0 ms | -16.0 | -33.1 LUFS |
+| 181.17 | Theo types | +0 ms | -16.5 | -30.8 LUFS |
 
 ### keys_jingle
 
@@ -404,7 +407,7 @@ Processing: three overlapping handfuls of the jingle (+-0.5 st) and a metal ratt
 
 | cue (s) | label | onset | peak dBFS | loudest 400 ms |
 |---|---|---|---|---|
-| 200.70 | Martin's keys | -2 ms | -15.0 | -26.0 LUFS |
+| 200.70 | Martin's keys | -2 ms | -15.5 | -26.2 LUFS |
 
 ### street_night
 

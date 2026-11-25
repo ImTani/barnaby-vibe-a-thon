@@ -1,0 +1,346 @@
+/* Barnaby · Ticket (?skin=ticket), the challenger.
+   The shop's own numbered ticket book, run the way a jet-age ticket wallet ran a journey: every request is a
+   numbered, timed ticket in carrier-navy ink on white coupon stock; what he did is the canary carbon copy in carbon
+   purple; anything that needs your say-so is a coupon with a perforated tear line; and every answer is stamped and
+   kept: nothing disappears, it gets stamped. Franklin Gothic (Office) throughout; condensed capitals only for the
+   field labels of a ticket, never above a heading. */
+
+@font-face { font-family: "TK Cond"; src: local("Franklin Gothic Medium Cond"), local("FranklinGothic-MediumCond"); }
+@font-face { font-family: "TK Cond"; font-weight: 700; src: local("Franklin Gothic Demi Cond"), local("FranklinGothic-DemiCond"); }
+@font-face { font-family: "TK Book"; src: local("Franklin Gothic Book"), local("FranklinGothic-Book"); }
+@font-face { font-family: "TK Book"; font-weight: 700; src: local("Franklin Gothic Demi"), local("FranklinGothic-Demi"); }
+
+:root {
+  color-scheme: light;
+  --wallet: #D8DFE8;        /* the wallet the tickets sit in */
+  --stock: #FFFFFF;         /* coupon stock */
+  --navy: #1B3563;          /* carrier ink: rules, heads, primary buttons (white on it 12:1) */
+  --ink: #14203A;           /* body text on stock (16:1) */
+  --ink-2: #44516B;         /* 8:1 */
+  --ink-3: #5E6A80;         /* 5.6:1 */
+  --hair: #9AA7BC;
+  --red: #C21B2C;           /* the stamp: NOT NOW, and a real problem */
+  --carbon: #45358C;        /* carbon purple: every filled figure, and the whole carbon copy (7.6:1 on canary) */
+  --canary: #FBEC9C;        /* the carbon copy sheet */
+  --canary-rule: #D9C76E;
+  --add: #E1F0E2; --add-ink: #123E1B; --del: #F8E1E0; --del-ink: #5E1515;
+
+  --face: "TK Book", "Franklin Gothic Book", "Segoe UI", Calibri, sans-serif;
+  --cond: "TK Cond", "Franklin Gothic Medium Cond", "Arial Narrow", sans-serif;
+  --tech: Consolas, "Cascadia Mono", monospace;
+
+  --t-answer: 36px; --t-q: 28px; --t-title: 32px; --t-body: 23px; --t-small: 20px; --t-label: 17px;
+  --carbon-w: 560px; --pad: 42px; --drawer: 780px;
+}
+@media (max-width: 1700px) {
+  :root { --t-answer: 31px; --t-q: 24px; --t-title: 28px; --t-body: 20px; --t-small: 18px; --t-label: 15px;
+          --carbon-w: 460px; --pad: 30px; --drawer: 640px; }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--wallet); color: var(--ink);
+  font: 400 var(--t-body)/1.4 var(--face); font-variant-numeric: lining-nums;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--canary); color: var(--ink); }
+input { caret-color: var(--red); }
+:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
+* { scrollbar-width: thin; scrollbar-color: #8794A9 transparent; }
+button { font: 700 var(--t-small)/1 var(--face); cursor: pointer; color: var(--ink); }
+button:disabled { opacity: .45; cursor: default; }
+.ico { width: 24px; height: 24px; flex: none; display: block; }
+h2, h3, h4 { margin: 0; }
+
+/* a field: a small condensed label over its value, the way a ticket is filled in */
+.field-label, .status::before, .sys-chip::before, .msg.user .no::before, .msg.user .when::before, .fact dt {
+  font: 400 var(--t-label)/1 var(--cond); letter-spacing: .02em; text-transform: uppercase; color: var(--ink-3);
+}
+
+/* ── header: the wallet's own cover band ── */
+.top {
+  display: flex; align-items: stretch; gap: 0; height: 90px; padding: 0 var(--pad); background: var(--stock);
+  border-bottom: 3px solid var(--navy); box-shadow: 0 3px 0 var(--stock), 0 7px 0 var(--red); margin-bottom: 7px;
+}
+.brand { display: flex; align-items: center; gap: 15px; padding-right: 30px; font: 700 34px/1 var(--cond); color: var(--navy); }
+.brand svg { width: 46px; height: 46px; padding: 8px; border-radius: 50%; background: var(--navy); color: #fff; }
+.status, .sys-chip {
+  display: grid; align-content: center; gap: 7px; padding: 0 27px; border-left: 1px solid var(--hair); min-width: 0;
+}
+.status::before { content: "Now"; }
+.status .dot { display: none; }
+.status #status-text { font-size: var(--t-small); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.s-growing .status #status-text { color: var(--red); font-weight: 700; }
+.systems-chips { margin-left: auto; display: flex; }
+.sys-chip::before { content: "System"; }
+.sys-chip { grid-template-columns: auto auto; column-gap: 12px; align-items: baseline; font-size: var(--t-small); white-space: nowrap; border-right: 1px solid var(--hair); }
+.sys-chip::before { grid-column: 1 / -1; }
+.sys-chip b { font-weight: 700; }
+.sys-chip span { color: var(--ink-2); font-size: var(--t-label); }
+#toggle-map {
+  align-self: center; margin-left: 27px; height: 52px; padding: 0 22px; border-radius: 6px;
+  border: 2px solid var(--navy); background: var(--stock); color: var(--navy);
+}
+#toggle-map:hover { background: #EEF2F7; }
+#toggle-map[aria-expanded="true"] { background: var(--navy); color: #fff; }
+
+/* ── the wallet: tickets on the left, the carbon copy on the right ── */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) var(--carbon-w); min-height: 0; position: relative; }
+.convo { min-height: 0; overflow-y: auto; padding: 27px var(--pad) 42px; }
+.messages { list-style: none; margin: 0 auto; padding: 0; max-width: 1240px; display: flex; flex-direction: column; }
+
+/* every message is a strip of one ticket; the strips join up into the ticket */
+.msg { position: relative; background: var(--stock); border-left: 2px solid var(--navy); border-right: 2px solid var(--navy); padding: 9px 36px; }
+.msg .who { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.msg .text { overflow-wrap: anywhere; }
+.msg .when { display: none; }
+.messages > .msg:first-child { border-top: 2px solid var(--navy); border-radius: 12px 12px 0 0; padding-top: 24px; }
+.msg:has(+ .msg.user), .messages > .msg:last-child {
+  border-bottom: 2px solid var(--navy); border-radius: 0 0 12px 12px; padding-bottom: 24px; margin-bottom: 24px;
+}
+.messages > .msg:first-child:last-child, .msg.user:has(+ .msg.user) { border-radius: 12px; }
+.convo:has(.cards:not(:empty)) .messages > .msg:last-child { border-radius: 0; margin-bottom: 0; border-bottom: 0; }
+
+/* the head of a ticket: number, time, what you asked */
+.msg.user {
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 0 30px; align-items: start;
+  border-top: 2px solid var(--navy); border-radius: 12px 12px 0 0; padding: 21px 36px 21px;
+  border-bottom: 1px dashed var(--hair);
+}
+.msg.user .no, .msg.user .when { display: grid; gap: 7px; font: 700 var(--t-q)/1 var(--cond); color: var(--carbon); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.msg.user .no::before { content: "Ticket no."; }
+.msg.user .when::before { content: "Time"; }
+.msg.user .no { order: -1; }
+.msg.user .text { font-size: var(--t-q); line-height: 1.3; padding-top: 24px; max-width: 44ch; }
+.msg.user .text::before { content: "\201C"; }
+.msg.user .text::after { content: "\201D"; }
+
+.msg.barnaby .text { font-size: var(--t-answer); line-height: 1.3; max-width: 38em; }
+.msg.user + .msg.barnaby { padding-top: 24px; }
+.msg.barnaby { padding-left: 84px; }
+.msg.barnaby::before {
+  content: ""; position: absolute; left: 30px; top: 14px; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--navy) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M5 17a7 7 0 0 1 14 0'/%3E%3Cpath d='M3 17.5h18'/%3E%3Cpath d='M12 10V7.5'/%3E%3Cpath d='M10.2 7h3.6'/%3E%3C/svg%3E") center / 22px no-repeat;
+}
+.msg.user + .msg.barnaby::before { top: 29px; }
+.msg.barnaby + .msg.barnaby::before { visibility: hidden; }
+.msg.pending .thinking { font-size: var(--t-small); color: var(--carbon); }
+.msg.pending .thinking::after { content: "\2026"; }
+.msg.pending::before { background-color: var(--stock); box-shadow: inset 0 0 0 2px var(--navy); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231B3563' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M5 17a7 7 0 0 1 14 0'/%3E%3Cpath d='M3 17.5h18'/%3E%3Cpath d='M12 10V7.5'/%3E%3Cpath d='M10.2 7h3.6'/%3E%3C/svg%3E"); }
+
+.msg.note { padding-left: 84px; }
+.msg.note .text { font-size: var(--t-small); color: var(--ink-2); max-width: 56ch; }
+.msg.note::before { content: "Connected"; display: block; margin-bottom: 7px; font: 400 var(--t-label)/1 var(--cond); text-transform: uppercase; letter-spacing: .02em; color: var(--ink-3); }
+
+/* the stamp: every yes and no stays on the ticket */
+.msg.decision { padding-top: 12px; padding-bottom: 12px; padding-left: 84px; }
+.msg.decision .text { font-size: var(--t-small); color: var(--ink-2); display: flex; align-items: baseline; gap: 15px; flex-wrap: wrap; }
+.msg.decision .said {
+  flex: none; font: 700 var(--t-small)/1 var(--cond); text-transform: uppercase; letter-spacing: .03em;
+  padding: 6px 12px 5px; border: 3px solid currentColor; border-radius: 4px; transform: rotate(-2deg);
+}
+.msg.decision .sep { display: none; }
+.msg.decision.yes .said { color: var(--navy); }
+.msg.decision.no .said { color: var(--red); }
+.msg.error .text { color: var(--red); font-weight: 700; }
+
+/* earlier tickets: the same ticket, filed smaller */
+.msg.past .text { font-size: var(--t-small); line-height: 1.4; }
+.msg.user.past { padding: 15px 36px; }
+.msg.user.past .no, .msg.user.past .when { font-size: var(--t-small); }
+.msg.user.past .text { font-size: var(--t-small); padding-top: 17px; color: var(--ink-2); }
+.msg.barnaby.past .text { color: var(--ink-2); max-width: 64ch; }
+.msg.barnaby.past::before { width: 28px; height: 28px; background-size: 17px; left: 34px; top: 12px; }
+.msg.user.past + .msg.barnaby::before { top: 20px; }
+.msg.user.past + .msg.barnaby { padding-top: 15px; }
+.msg.decision.past .said { font-size: var(--t-label); border-width: 2px; }
+.msg.barnaby.intro { padding: 36px 36px 36px 96px; }
+.msg.barnaby.intro::before { top: 40px; left: 36px; width: 42px; height: 42px; background-size: 26px; }
+.msg.barnaby.intro .text { font-size: var(--t-answer); }
+
+/* ── the coupon: tear off yes or no ── */
+.cards { max-width: 1240px; margin: 0 auto; display: grid; gap: 24px; }
+.cards:empty { display: none; }
+.card {
+  position: relative; display: grid; grid-template-columns: 138px minmax(0, 1fr); background: var(--stock);
+  border: 2px solid var(--navy); border-top: 0; border-radius: 0 0 12px 12px; min-width: 0;
+}
+.card + .card { border-top: 2px solid var(--navy); border-radius: 12px; }
+/* the tear line, with a punched notch at each end */
+.card::before {
+  content: ""; position: absolute; left: 16px; right: 16px; top: 0; border-top: 3px dashed var(--navy);
+}
+/* the stub: the kind of key, passage or new room, then a second tear line down to the foot */
+.card::after { content: ""; position: absolute; left: 136px; top: 18px; bottom: 18px; border-left: 2px dashed var(--hair); }
+.card .head { display: contents; }
+.card .ico.kind { grid-column: 1; grid-row: 1 / span 2; justify-self: center; width: 60px; height: 60px; margin-top: 33px; color: var(--red); }
+.card .title { grid-column: 2; font: 700 var(--t-title)/1.2 var(--face); color: var(--ink); padding: 33px 39px 0; max-width: 34ch; }
+.card .facts, .card .actions, .card .fold { grid-column: 2; margin-left: 39px; margin-right: 39px; }
+.facts { margin-top: 21px; margin-bottom: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--hair); border-radius: 6px; overflow: hidden; }
+.fact { display: grid; gap: 7px; align-content: start; padding: 12px 15px 14px; border-right: 1px solid var(--hair); border-bottom: 1px solid var(--hair); margin: 0 -1px -1px 0; }
+.fact:only-child, .fact:first-child:nth-last-child(odd) { grid-column: 1 / -1; }
+.fact dd { margin: 0; font-size: var(--t-small); line-height: 1.35; }
+.fact.checks dd { color: var(--navy); font-weight: 700; }
+.card .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 24px; }
+.card .actions button { height: 58px; padding: 0 30px; border-radius: 6px; font-size: var(--t-body); }
+.card .actions .primary { background: var(--navy); color: #fff; border: 2px solid var(--navy); }
+.card .actions .primary:hover { background: #12264A; }
+.card .actions .secondary { background: var(--stock); color: var(--red); border: 2px solid var(--red); }
+.card .actions .secondary:hover { background: #FBEDEE; }
+.card .actions .hint { font-size: var(--t-small); color: var(--ink-2); }
+.card .fold { margin-top: 15px; }
+.card .fold + .fold { margin-top: 3px; }
+.card > :last-child { margin-bottom: 30px; }
+.fold summary {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer; list-style: none; font-size: var(--t-small); color: var(--navy);
+  text-decoration: underline; text-underline-offset: 4px; padding: 6px 0;
+}
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary::before {
+  content: ""; width: 16px; height: 16px; flex: none; transition: transform .2s cubic-bezier(.2, .8, .2, 1);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231B3563' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5.5l6.5 6.5L9 18.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.fold[open] > summary::before { transform: rotate(90deg); }
+.card .fold.technical summary { font-size: var(--t-label); }
+.change-body { margin-top: 9px; }
+.diff-sum { margin: 0 0 9px; font-size: var(--t-small); color: var(--ink-2); }
+.diff { max-height: 38vh; overflow: auto; border: 1px solid var(--navy); border-radius: 6px; font: 15px/1.5 var(--tech); color: var(--ink); background: var(--stock); }
+.diff .file { position: sticky; top: 0; background: #EDF1F6; padding: 6px 15px; font-weight: 700; border-bottom: 1px solid var(--hair); }
+.diff .ln { white-space: pre; padding: 0 15px; }
+.diff .add { background: var(--add); color: var(--add-ink); }
+.diff .del { background: var(--del); color: var(--del-ink); }
+.diff .hunk { background: #F2F4F8; color: var(--ink-3); }
+.technical-body {
+  margin: 9px 0 0; white-space: pre-wrap; word-break: break-word; font: 15px/1.5 var(--tech); color: var(--ink);
+  background: #F2F4F8; border-radius: 6px; padding: 12px 15px; max-height: 260px; overflow: auto;
+}
+
+/* ── the carbon copy: what he did, in carbon purple on canary ── */
+.trace {
+  display: flex; flex-direction: column; min-height: 0; background: var(--canary); color: var(--carbon);
+  border-left: 2px solid var(--canary-rule); padding: 27px 33px 18px;
+}
+.trace .panel-head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 12px; border-bottom: 2px solid var(--carbon); }
+.trace .panel-head h2 { font: 700 var(--t-q)/1 var(--cond); }
+#trace-meta { display: none; }
+.trace-list { list-style: none; margin: 0; padding: 0 6px 0 0; overflow-y: auto; flex: 1; min-height: 0; scrollbar-color: var(--canary-rule) transparent; }
+.trace-list:empty::before { content: "Blank for now. Each thing he does is copied here as he does it."; display: block; padding-top: 15px; font-size: var(--t-small); }
+.turn-sep { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 15px; align-items: baseline; padding: 15px 0 9px; border-bottom: 1px solid var(--canary-rule); }
+.turn-sep:not(.past) { position: sticky; top: 0; z-index: 1; background: var(--canary); }
+.turn-sep .no { font: 700 var(--t-small)/1.2 var(--cond); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.turn-sep .q { font-size: var(--t-small); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tr.step { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px 0; border-bottom: 1px dotted var(--carbon); }
+.tr.step .mark { padding-top: 2px; color: var(--carbon); }
+.tr.step .mark .ico { width: 26px; height: 26px; }
+.tr.step .body { padding-right: 36px; }
+.tr.step .say { font-size: var(--t-small); line-height: 1.3; }
+.tr.step .sub { font-size: var(--t-label); margin-top: 3px; opacity: .85; }
+.tr.step.doing .say { font-style: normal; opacity: .8; }
+.tr.step.ask .say { font-weight: 700; color: var(--red); }
+.tr.step.ask .mark { color: var(--red); }
+.tr.step.no .say { text-decoration: line-through; }
+.tr.step.err .mark, .tr.step.err .say { color: var(--red); }
+.tr.step.new .say { font-weight: 700; }
+.tr.step .fold summary {
+  position: absolute; right: 0; top: 11px; width: 30px; height: 30px; padding: 0; justify-content: center; font-size: 0;
+  border-radius: 5px; box-shadow: inset 0 0 0 1px var(--carbon); text-decoration: none;
+}
+.tr.step .fold summary::before { width: 14px; height: 14px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2345358C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5.5l6.5 6.5L9 18.5'/%3E%3C/svg%3E"); }
+.tr.step .technical-body { background: #FFF8CF; color: var(--ink); font-size: 13px; max-height: 200px; }
+.turn-sep.past { padding: 9px 0 4px; border-bottom: 0; }
+.turn-sep.past .q { -webkit-line-clamp: 1; font-size: var(--t-label); }
+.turn-sep.past .no { font-size: var(--t-label); }
+.tr.step.past { grid-template-columns: 20px minmax(0, 1fr); gap: 8px; padding: 2px 0; border-bottom: 0; opacity: .8; }
+.tr.step.past .mark .ico { width: 18px; height: 18px; }
+.tr.step.past .say { font-size: var(--t-label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 400; color: var(--carbon); }
+.tr.step.past .sub, .tr.step.past .fold { display: none; }
+
+/* ── what he can do: the fare table of the house, and the connect form; it takes the carbon's place ── */
+.map { grid-column: 2; grid-row: 1; min-height: 0; overflow-y: auto; background: var(--stock); border-left: 2px solid var(--navy); padding: 27px 39px 39px; }
+.map[hidden] { display: none; }
+.grid:has(.map:not([hidden])) { grid-template-columns: minmax(0, 1fr) min(var(--drawer), 56vw); }
+.grid:has(.map:not([hidden])) > .trace { display: none; }
+.map .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-bottom: 15px; border-bottom: 3px solid var(--navy); }
+.map .panel-head h2 { font: 700 var(--t-title)/1.1 var(--cond); color: var(--navy); }
+#close-map { height: 50px; padding: 0 22px; border-radius: 6px; border: 2px solid var(--navy); background: var(--stock); color: var(--navy); }
+.map .legend { list-style: none; margin: 15px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 9px 27px; font-size: var(--t-small); color: var(--ink-2); }
+.map .legend li { display: flex; align-items: center; gap: 8px; }
+.map .legend .use .ico, .map .ab.use .ico, .map .legend .new .ico { color: var(--navy); }
+.map .legend .shut .ico, .map .ab.shut .ico, .map .legend .key .ico, .map .ab.key .ico { color: var(--red); }
+.map .sys { margin-top: 27px; }
+.map .sys h3 { font: 700 var(--t-q)/1.2 var(--face); }
+.map .sys .sub { margin: 6px 0 0; font-size: var(--t-small); color: var(--ink-2); }
+.map .sys.empty { margin: 21px 0 0; font-size: var(--t-body); color: var(--ink-2); max-width: 36em; }
+.map h4 { margin-top: 24px; padding-bottom: 6px; border-bottom: 1px solid var(--navy); font: 400 var(--t-label)/1 var(--cond); text-transform: uppercase; letter-spacing: .02em; color: var(--ink-3); }
+.abilities { list-style: none; margin: 0; padding: 0; }
+.ab { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px dotted var(--hair); font-size: var(--t-small); }
+.ab.shut .what { text-decoration: line-through; color: var(--ink-3); }
+.ab .today { font: 700 15px/1 var(--cond); text-transform: uppercase; color: var(--carbon); border: 2px solid var(--carbon); border-radius: 3px; padding: 4px 7px 3px; transform: rotate(-2deg); }
+.ab .tech { font: 13px/1.3 var(--tech); color: var(--ink-3); text-align: right; max-width: 270px; overflow-wrap: anywhere; }
+.connect { margin-top: 33px; padding: 27px 30px 30px; border: 2px solid var(--navy); border-top: 0; border-radius: 0 0 12px 12px; display: grid; gap: 16px; position: relative; }
+.connect::before { content: ""; position: absolute; left: 0; right: 0; top: 0; border-top: 3px dashed var(--navy); }
+.connect h3 { font: 700 var(--t-q)/1.2 var(--face); }
+.connect label { display: grid; gap: 7px; font: 400 var(--t-label)/1 var(--cond); text-transform: uppercase; letter-spacing: .02em; color: var(--ink-3); }
+.connect input { height: 56px; padding: 0 14px; border: 1px solid var(--navy); border-radius: 6px; background: var(--stock); font: 400 20px var(--tech); color: var(--ink); text-transform: none; letter-spacing: 0; }
+.connect input::placeholder { color: #6C778B; }
+.connect input:focus { outline: 3px solid var(--red); outline-offset: 0; }
+.connect button[type="submit"] { justify-self: start; height: 56px; padding: 0 36px; border-radius: 6px; border: 0; background: var(--navy); color: #fff; font-size: var(--t-body); }
+
+/* ── the talk bar ── */
+.input { display: flex; align-items: center; gap: 18px; min-height: 104px; padding: 18px var(--pad); background: var(--stock); border-top: 2px solid var(--navy); }
+.talk { flex: none; display: flex; align-items: center; gap: 12px; height: 64px; padding: 0 33px 0 24px; border: 0; border-radius: 6px; background: var(--navy); color: #fff; font-size: var(--t-body); }
+.talk:hover { background: #12264A; }
+.talk .mic { width: 28px; height: 28px; }
+.talk .wave { display: none; align-items: center; gap: 4px; height: 24px; }
+.talk .wave i { display: block; width: 4px; height: 6px; border-radius: 2px; background: #fff; }
+.talk.on { background: var(--red); }
+.talk.on .mic { display: none; }
+.talk.on .wave { display: flex; }
+.talk.on .wave i { animation: level 1s cubic-bezier(.3, .7, .4, 1) infinite; }
+.talk.on .wave i:nth-child(2) { animation-delay: .12s; } .talk.on .wave i:nth-child(3) { animation-delay: .24s; }
+.talk.on .wave i:nth-child(4) { animation-delay: .36s; } .talk.on .wave i:nth-child(5) { animation-delay: .48s; }
+@keyframes level { 0%, 100% { height: 6px; } 50% { height: 22px; } }
+.talk-hint { flex: none; font-size: var(--t-small); color: var(--ink-3); white-space: nowrap; }
+.ask { flex: 1; display: flex; gap: 12px; min-width: 0; }
+.ask input { flex: 1; min-width: 0; height: 58px; padding: 0 16px; border: 1px solid var(--navy); border-radius: 6px; font: 400 var(--t-body) var(--face); color: var(--ink); background: var(--stock); }
+.ask input::placeholder { color: #6C778B; }
+.ask input:focus { outline: 3px solid var(--red); outline-offset: 0; }
+.ask button { height: 58px; padding: 0 28px; border-radius: 6px; border: 2px solid var(--navy); background: var(--stock); color: var(--navy); font-size: var(--t-body); }
+
+/* ── overlay: one ticket in the hotkey window ── */
+body.overlay {
+  --t-answer: 26px; --t-q: 20px; --t-title: 23px; --t-body: 19px; --t-small: 17px; --t-label: 14px; --pad: 14px;
+  background: transparent;
+}
+body.overlay .top { height: 66px; border-radius: 12px 12px 0 0; }
+body.overlay .brand { font-size: 26px; padding-right: 18px; }
+body.overlay .brand svg { width: 36px; height: 36px; padding: 6px; }
+body.overlay .status { padding: 0 15px; }
+body.overlay .grid { grid-template-columns: 1fr; }
+body.overlay .trace, body.overlay .systems-chips, body.overlay #toggle-map, body.overlay .talk-hint { display: none; }
+body.overlay .convo { padding: 12px var(--pad) 18px; }
+body.overlay .msg { padding-left: 18px; padding-right: 18px; }
+body.overlay .msg.barnaby, body.overlay .msg.decision, body.overlay .msg.note { padding-left: 58px; }
+body.overlay .msg.barnaby::before { left: 16px; width: 30px; height: 30px; background-size: 18px; }
+body.overlay .msg.user { grid-template-columns: auto auto; gap: 0 18px; padding: 15px 18px; }
+body.overlay .msg.user .text { grid-column: 1 / -1; padding-top: 12px; }
+body.overlay .card { grid-template-columns: 1fr; }
+body.overlay .card::after { display: none; }
+body.overlay .card .ico.kind { grid-row: auto; justify-self: start; margin: 22px 0 0 22px; width: 40px; height: 40px; }
+body.overlay .card .title { grid-column: 1; padding: 6px 22px 0; }
+body.overlay .card .facts, body.overlay .card .actions, body.overlay .card .fold { grid-column: 1; margin-left: 22px; margin-right: 22px; }
+body.overlay .facts { grid-template-columns: 1fr; }
+body.overlay .card .actions button { height: 52px; padding: 0 20px; }
+body.overlay .card > :last-child { margin-bottom: 20px; }
+body.overlay .input { min-height: 80px; padding: 12px var(--pad); border-radius: 0 0 12px 12px; }
+body.overlay .talk { height: 54px; padding: 0 20px 0 16px; }
+body.overlay .ask button { padding: 0 16px; }
+
+@media (max-width: 1000px) {
+  .grid { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .trace { max-height: 36vh; border-left: 0; border-top: 2px solid var(--canary-rule); }
+  .systems-chips, .talk-hint { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

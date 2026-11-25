@@ -3,7 +3,8 @@
    Approval cards pause the replay until you click (or press Y / N). No backend needed.
 
    Keys:  Space play/pause · 1-9 jump to the start of turn N · Y approve / N decline the open card · R restart
-   ?speed=2 replays faster; ?auto=1 auto-approves cards after 1.2 s (for the film capture). */
+   ?speed=2 replays faster; ?auto=1 auto-approves cards after 1.2 s (for the film capture);
+   ?turn=N&paused=1 holds the replay at the start of turn N (Space resumes). */
 (() => {
   'use strict';
   const B = window.Barnaby;
@@ -29,21 +30,25 @@
     return realFetch(url, opts);
   };
 
+  let builtName = '';
   function apply(ev) {
     const d = ev.data;
     // keep the fake state in step with growth so chips and the capability map update
     const sys = state.systems.find(s => s.name === d.system);
     if (ev.type === 'system.connected' && sys) { sys.exposed = d.exposed.slice(); sys.endpoints.forEach(e => (e.exposed = sys.exposed.includes(e.key))); }
     if (ev.type === 'growth.unlock.done' && sys) { sys.exposed.push(d.endpoint); const e = sys.endpoints.find(x => x.key === d.endpoint); if (e) e.exposed = true; }
+    if (ev.type === 'growth.build.explained') builtName = d.name || '';
     if (ev.type === 'growth.build.done' && sys) {
       for (const k of d.endpoints || []) {
         sys.exposed.push(k);
-        if (!sys.endpoints.find(x => x.key === k)) sys.endpoints.push({ key: k, tool: (d.tools[0] || '').split('__').pop(), method: 'GET', read_only: true, exposed: true, description: 'Written by Barnaby' });
+        if (!sys.endpoints.find(x => x.key === k)) sys.endpoints.push({ key: k, path: k.split(' ').pop(), tool: (d.tools[0] || '').split('__').pop(), method: 'GET', read_only: true, exposed: true,
+          description: builtName ? builtName[0].toUpperCase() + builtName.slice(1) + '. Written by Barnaby.' : 'Written by Barnaby' });
       }
     }
     if (ev.type === 'growth.compose.done' && sys) {
-      sys.skills = (sys.skills || []).concat([{ server: d.server, tool: d.tool, description: 'Composed by Synapse' }]);
+      sys.skills = (sys.skills || []).concat([{ server: d.server, tool: d.tool, name: d.name, description: 'Composed by Synapse' }]);
     }
+    if (B.syncState) B.syncState(state);           // the skins name each ability from the state, so hand it over now
     B.onEvent(ev);
   }
 
@@ -77,14 +82,15 @@
     document.getElementById('cards').textContent = '';
     state.systems = JSON.parse(JSON.stringify(run.state_before.systems));
     i = 0; waitingFor = null;
+    builtName = '';
     while (i < run.events.length) {
       const ev = run.events[i];
       if (ev.type === 'turn.start' && ev.data.turn >= n) break;
-      if (ev.type !== 'approval.requested') apply(ev);
+      apply(ev);                                 // cards come and go in the same breath, so the skins keep each yes and no
       i++;
     }
     B.refreshState();
-    playing = true; schedule(300);
+    playing = !params.has('paused'); schedule(300);   // ?paused=1 holds the replay at the start of turn n (stills)
   }
 
   document.addEventListener('keydown', e => {

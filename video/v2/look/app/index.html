@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barnaby's display: the roll, the two skins, and what to decide</title>
+<style>
+  :root { --ink: #16191d; --ink-2: #434a54; --ink-3: #626a75; --rule: #d6dbe1; --wash: #f2f4f6; --face: "Segoe UI", Corbel, Calibri, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: var(--ink); font: 17px/1.5 var(--face); }
+  main { max-width: 1500px; margin: 0 auto; padding: 48px 48px 96px; }
+  h1 { font-size: 40px; line-height: 1.15; margin: 0 0 12px; letter-spacing: -.01em; }
+  h2 { font-size: 30px; line-height: 1.2; margin: 72px 0 12px; padding-top: 24px; border-top: 3px solid var(--ink); }
+  h3 { font-size: 21px; margin: 30px 0 8px; }
+  p, li { max-width: 78ch; }
+  .lede { font-size: 20px; color: var(--ink-2); max-width: 70ch; }
+  code { font: 15px Consolas, monospace; background: var(--wash); padding: 1px 5px; border-radius: 4px; }
+  .switch { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0 0; padding: 0; list-style: none; }
+  .switch li { border: 2px solid var(--ink); border-radius: 8px; padding: 10px 16px; }
+  .switch b { display: block; }
+  .card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 36px; margin-top: 18px; }
+  .card dl { margin: 0; display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 18px; }
+  .card dt { font-weight: 700; color: var(--ink-2); }
+  .card dd { margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink-2); }
+  .chip i { width: 22px; height: 22px; border-radius: 4px; border: 1px solid rgba(0,0,0,.2); display: inline-block; }
+  .raise { margin: 6px 0 0; padding-left: 18px; }
+  .raise li { margin: 4px 0; }
+  .shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+  figure { margin: 0; }
+  figure img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 6px; }
+  figure.tall img { width: auto; max-width: 100%; max-height: 520px; }
+  figcaption { font-size: 15px; color: var(--ink-2); margin-top: 6px; }
+  figcaption a { color: inherit; }
+  .lead { font-size: 18px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 16px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--rule); }
+  th { border-bottom: 2px solid var(--ink); }
+  .quiet { color: var(--ink-3); }
+  ol.derive li { margin: 6px 0; }
+  .decide li { margin: 10px 0; }
+  .verdict { font-weight: 700; }
+  @media (max-width: 1100px) { .card, .shots { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Barnaby's display: two real skins, and what to decide</h1>
+<p class="lede">The brief: the chat screen still looked like the first video's AI tell (dark navy and brass, italic serif,
+bubbles left and right, a status pill, a monospace "live trace"). Below are the impeccable roll, the dealt direction built
+as a working skin of <code>ui/</code>, one challenger built the same way, and the hand they beat. Every picture is the real
+app replaying the recorded run (<code>?mock=1</code>), not a mock-up.</p>
+
+<ul class="switch">
+  <li><b>Signpost</b> (the dealt direction) <code>/?skin=signpost</code></li>
+  <li><b>Ticket</b> (the challenger) <code>/?skin=ticket</code></li>
+  <li><b>Today's look</b> (unchanged) <code>/</code></li>
+</ul>
+<p class="quiet">Add <code>&amp;mock=1</code> to replay the run, <code>&amp;turn=4</code> to jump to the Build, <code>&amp;overlay=1</code> for the hotkey window.
+Nothing changes for anyone until a skin is chosen.</p>
+
+<h2>Signpost: the dealt direction</h2>
+<div class="card">
+  <dl>
+    <dt>World</dt><dd>British cycle-route and road signing (Kinneir &amp; Calvert; the blue cycle-route signs): legends made to be read at a distance by everyone. Martin reads from a step back; this system was designed for exactly that.</dd>
+    <dt>Thesis</dt><dd>Barnaby is signed like a route: his answer is the big legend, the places he went are posted on a blue route sign, and anything that needs your say-so is a yellow temporary panel. No bubbles, no italic, no log.</dd>
+    <dt>Palette</dt><dd><div class="chips"><span class="chip"><i style="background:#0D4C9C"></i>route blue</span><span class="chip"><i style="background:#FFD100"></i>waiting for you</span><span class="chip"><i style="background:#111418"></i>legend black</span><span class="chip"><i style="background:#fff"></i>white panel</span><span class="chip"><i style="background:#C21F1A"></i>kept shut / a problem only</span></div></dd>
+    <dt>Type</dt><dd>Corbel throughout (installed, Windows 7 era), sentence case; Kinneir's two weights: heavier black on white, lighter white on blue. Consolas only inside the folded technical detail and the diff.</dd>
+    <dt>First viewport</dt><dd>White conversation: a pictogram column (the bell tile, the time) then the legend; the question at 30px in quotes, the answer at 42px. Right: the route sign "Where he went", this request's stops at 24px with a mark each, earlier requests folded to a line. Footer: Hold to talk, "or hold the space bar", the input.</dd>
+    <dt>Signature</dt><dd>Panels with a rounded inset border, the sign's own edge: white on the blue route, black on the yellow say-so panel.</dd>
+    <dt>Raised by the hand it beat</dt><dd><ul class="raise">
+      <li><b>From the type specimen:</b> hierarchy by scale alone; one face, no boxes round words.</li>
+      <li><b>From the bitmap specimen:</b> every gap a whole multiple of a 6px tile.</li>
+      <li><b>From the Factory catalogue:</b> every request numbered and timed ("No. 4 · 09:07"); the "What he can do" drawer is the index.</li>
+      <li><b>From the centre-rail setting:</b> a full printed-mark vocabulary for state (filled square, key, ring, tick, cross, no-entry), never colour alone.</li>
+      <li><b>From the transit diagram:</b> never shrink the network into a miniature; the current request's stops stay full size.</li></ul></dd>
+    <dt>Honest risk</dt><dd>The yellow panel is loud by design; if two approvals arrive together the screen gets a lot of yellow. Corbel's figures need lining numerals switched on (done in CSS). Road signs are a public, not a family, object: it belongs to Martin's world as a cyclist more than to the shop counter.</dd>
+  </dl>
+  <div>
+    <figure><img src="frames/signpost-answer-1920.png" alt="Signpost: an answer"><figcaption>An answer (Ask), 1920×1080 · <a href="frames/signpost-answer-1440.png">1440×900</a></figcaption></figure>
+  </div>
+</div>
+<div class="shots">
+  <figure><img src="frames/signpost-unlock-1920.png" alt=""><figcaption>The key card (Unlock) · <a href="frames/signpost-unlock-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/signpost-build-1920.png" alt=""><figcaption>The Build card: does, reads, changes, checks, undo · <a href="frames/signpost-build-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/signpost-change-1920.png" alt=""><figcaption>"See the change" open, the diff in view · <a href="frames/signpost-change-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/signpost-compose-1920.png" alt=""><figcaption>Compose: one step instead of several · <a href="frames/signpost-compose-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/signpost-working-1920.png" alt=""><figcaption>Mid-build: the route fills as he works · <a href="frames/signpost-working-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/signpost-detail-1920.png" alt=""><figcaption>A stop opened to its technical detail · <a href="frames/signpost-detail-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/signpost-empty-1920.png" alt=""><figcaption>Empty, with the connect form (the drawer takes the route's place; nothing is half covered) · <a href="frames/signpost-empty-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/signpost-map-1920.png" alt=""><figcaption>"What he can do" after the run: every ability in plain words, its mark, the technical name beside it · <a href="frames/signpost-map-1440.png">1440</a></figcaption></figure>
+  <figure class="tall"><img src="frames/signpost-overlay-560.png" alt=""><figcaption>Overlay (hotkey window, 560 wide)</figcaption></figure>
+</div>
+
+<h2>Ticket: the challenger (competitive)</h2>
+<div class="card">
+  <dl>
+    <dt>World</dt><dd>Dealt from the catalogue as a jet-age airline ticket wallet, fused with the shop's own numbered repair-ticket book. The form and its grammar come from the wallet; every fact comes from the product.</dd>
+    <dt>Thesis</dt><dd>Every request is a numbered, timed ticket; what he did is the carbon copy; the say-so is a coupon you tear off; every yes and no is stamped and stays. Nothing disappears, it gets stamped.</dd>
+    <dt>Palette</dt><dd><div class="chips"><span class="chip"><i style="background:#1B3563"></i>carrier navy (ink, not ground)</span><span class="chip"><i style="background:#C21B2C"></i>stamp red</span><span class="chip"><i style="background:#45358C"></i>carbon purple</span><span class="chip"><i style="background:#FBEC9C"></i>canary copy</span><span class="chip"><i style="background:#D8DFE8"></i>wallet</span></div></dd>
+    <dt>Type</dt><dd>Franklin Gothic (Office): Book for the words, Demi for titles, Medium/Demi Condensed capitals only for a ticket's field labels (Ticket no., Time, What it reads).</dd>
+    <dt>Signature</dt><dd>The perforated tear line and the stub: the approval is a coupon attached under the ticket that asked for it; a decision becomes a slightly crooked rubber stamp.</dd>
+    <dt>Verdict</dt><dd><span class="verdict">Competitive.</span> It wins on audience identification (Martin writes repair tickets every day; this is the counter, not the road) and loses on product clarity at a distance (field boxes and a canary column are denser than a sign).</dd>
+    <dt>Honest risk</dt><dd>Busier: more rules, more labels; condensed capitals are small. Navy ink and red stamps sit closer to "airline" than "bike shop" unless the director wants the ticket book's literal colours. The canary column is a big warm field next to white.</dd>
+  </dl>
+  <div>
+    <figure><img src="frames/ticket-answer-1920.png" alt="Ticket: an answer"><figcaption>An answer, 1920×1080 · <a href="frames/ticket-answer-1440.png">1440×900</a></figcaption></figure>
+  </div>
+</div>
+<div class="shots">
+  <figure><img src="frames/ticket-unlock-1920.png" alt=""><figcaption>The key card as a coupon · <a href="frames/ticket-unlock-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/ticket-build-1920.png" alt=""><figcaption>The Build card · <a href="frames/ticket-build-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/ticket-change-1920.png" alt=""><figcaption>"See the change" open · <a href="frames/ticket-change-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/ticket-compose-1920.png" alt=""><figcaption>Compose · <a href="frames/ticket-compose-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/ticket-working-1920.png" alt=""><figcaption>Mid-build, with earlier tickets stamped · <a href="frames/ticket-working-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/ticket-detail-1920.png" alt=""><figcaption>A line of the carbon opened to its technical detail · <a href="frames/ticket-detail-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/ticket-empty-1920.png" alt=""><figcaption>Empty, with the connect form · <a href="frames/ticket-empty-1440.png">1440</a></figcaption></figure>
+  <figure><img src="frames/ticket-map-1920.png" alt=""><figcaption>"What he can do" after the run · <a href="frames/ticket-map-1440.png">1440</a></figcaption></figure>
+  <figure class="tall"><img src="frames/ticket-overlay-560.png" alt=""><figcaption>Overlay (560 wide)</figcaption></figure>
+</div>
+
+<h2>Impeccable's pick, not built: the trade parts catalogue</h2>
+<div class="card">
+  <dl>
+    <dt>World</dt><dd>The cycle trade's parts catalogues and dealer manuals: exploded views with numbered callouts, a parts list, black line and one spot colour on white.</dd>
+    <dt>Thesis</dt><dd>Barnaby's answer carries numbered callouts that point at the things he looked at; "What he can do" is the parts list of the house.</dd>
+    <dt>Why it isn't built</dt><dd>It topped my own list, and the dice dealt the third. It is also the nearest to the film's dealer-manual floor plan, so it is the familiar choice: strong, but where most runs on this brief land. Say the word and it becomes a third skin.</dd>
+  </dl>
+  <div><p class="lead">Honest risk: familiarity. It would read as "the film's floor plan, on the app".</p></div>
+</div>
+
+<h2>The rest of the hand</h2>
+<table>
+  <tr><th>Challenger (catalogue)</th><th>Verdict</th><th>What Signpost kept from it</th></tr>
+  <tr><td>Midnight transit diagram <span class="quiet">(wayfinding-cartography-signage-midnight-transit-diagram)</span></td><td>Competitive on clarity (the route as a diagram is very legible), but its midnight-blue enamel ground is the dark-navy tell; not built.</td><td>Never shrink the network into a miniature: this request's stops stay full size.</td></tr>
+  <tr><td>Variable-font specimen <span class="quiet">(variable-font-specimen)</span></td><td>Declined on both axes.</td><td>Hierarchy by scale alone.</td></tr>
+  <tr><td>Emigre bitmap specimen <span class="quiet">(emigre-bitmap-specimen)</span></td><td>Declined on both axes.</td><td>Whole-multiple sizing on a 6px tile.</td></tr>
+  <tr><td>Factory catalogue sleeve <span class="quiet">(brand-identity-canon-saville-catalog-sleeve)</span></td><td>Declined on both axes.</td><td>Every request numbered; the drawer is the index.</td></tr>
+  <tr><td>Centre-rail reference setting <span class="quiet">(rw-centre-rail-reference-setting)</span></td><td>Declined on both axes.</td><td>State as printed marks, never colour alone.</td></tr>
+</table>
+<p class="quiet">The standing exit, the category standard played straight (a clean light chat app with a steps panel), is still a door: say so and it gets built at full fidelity, next to two or three products it should sit alongside.</p>
+
+<h2>Today's look, for comparison</h2>
+<div class="shots">
+  <figure><img src="frames/default-answer-1440.png" alt=""><figcaption>Unchanged default: an answer (1440)</figcaption></figure>
+  <figure><img src="frames/default-unlock-1440.png" alt=""><figcaption>Unchanged default: the key card. Note the question hidden behind the card, and every shop call tagged WRITE in the replay.</figcaption></figure>
+</div>
+
+<h2>What both skins change in how it works</h2>
+<ul>
+  <li>Activity reads in plain words built from each ability's own description: "Looked at repair jobs due on Tue 24 Nov", "Gave a job to a different mechanic", "Used “Hand back a bike in one step”". The method, path, arguments and result sit folded under each line.</li>
+  <li>The builder's ten raw steps become six plain ones, said in the present while he is at it: Started on the missing piece, Read the notes left with the code, Read the code, Wrote the change (3 files), Ran the checks (All 22 pass), Finished writing it (53 seconds).</li>
+  <li>Every yes and not now stays in the conversation and on the route; today the card simply vanishes.</li>
+  <li>The Build card is laid out as What it does / What it reads / What it changes / Checks / If you change your mind, with the buttons before the diff; opening the change brings it into view and says "3 files, 102 lines added, nothing removed".</li>
+  <li>The key card adds "Each time: he still asks you before he does it" only for abilities that change something (true by the tier policy).</li>
+  <li>The drawer is "What he can do": every ability by area in plain words with its state mark, the technical name small beside it, the connect form below; it takes the right column's place, so nothing is half covered.</li>
+</ul>
+
+<h2>For the director to decide</h2>
+<ol class="decide">
+  <li><b>Signpost, Ticket, or neither</b> (a re-roll, the pick as a third skin, or the category standard). Until then <code>/</code> stays exactly as it was.</li>
+  <li><b>The film.</b> The script and the Lisbon PC screens show today's look; switching changes what the "real app" beat shows.</li>
+  <li><b>Wording on the household screens:</b> "What he can do" for "Capabilities", "Where he went" / "Work done" for the trace, the status as a sentence. The connect form keeps the app's real wording.</li>
+  <li><b>DESIGN.md</b> still describes Livery; it gets rewritten from the chosen skin once you pick, not before.</li>
+</ol>
+
+<h2>How the roll was made</h2>
+<p>Mode: operate (a working screen). Seven candidates from the audience's world, none from the tools they operate, ordered by resonance before the dice:</p>
+<ol class="derive">
+  <li>The cycle trade's parts catalogue and dealer manual (exploded views, numbered callouts).</li>
+  <li>The repair tag and job ticket on every bike (manila card, rubber stamps, tear-off stub).</li>
+  <li><b>British cycle-route and road signing</b> (Kinneir &amp; Calvert; blue route signs; legible at distance). <i>Dealt.</i></li>
+  <li>The workshop whiteboard job board (columns per mechanic, magnets, read from across the room).</li>
+  <li>The servants' bell board (the literal butler: one bell per room, a flag drops).</li>
+  <li>The Ordnance Survey map and its legend (club rides; the key to the symbols).</li>
+  <li>The carbon triplicate order pad and the counter day book.</li>
+</ol>
+<p class="quiet">impeccable concept-seed --scope direction --mode operate · seed:a758c6367eb7924e · assigned index 3 · six catalogue challengers dealt.
+Code-led (an operate surface is built, not pictured); no images were generated.</p>
+</main>
+</body>
+</html>

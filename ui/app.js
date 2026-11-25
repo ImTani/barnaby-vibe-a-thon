@@ -330,7 +330,12 @@
     }
     if (a.kind === 'unlock') return { head: a.title, rows: [['Why', lines.join(' ')]].concat(method && method !== 'GET' ? [eachTime] : []) };
     if (a.kind === 'compose') return { head: a.title, rows: [['What it does', lines.join(' ')], eachTime] };
-    if (a.tier === 'write' && lines.length) return { head: lines.join(' '), rows: [['What happens', a.title]] };
+    // a change: what will happen, then to what ("10 × Brake pads (Shimano resin, pair) with Madison"), then what it
+    // costs; his question itself is in the conversation just above, and in the receipt
+    if (a.tier === 'write') {
+      const t = String(a.title || ''), i = t.indexOf(': ');
+      return { head: i > 0 ? t.slice(0, i) : t, rows: (i > 0 ? [['', t.slice(i + 2)]] : []).concat((a.facts || []).filter(f => f && f[1])) };
+    }
     return { head: a.title, rows: lines.length ? [['', lines.join(' ')]] : [] };
   }
   const KIND_ICON = { unlock: 'key', compose: 'passage', build: 'room', call: 'pen' };

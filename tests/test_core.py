@@ -184,6 +184,7 @@ def shop_world(monkeypatch, exposed=("POST /api/purchase-orders", "GET /api/jobs
     cards = Cards()
     monkeypatch.setattr(toolkit, "_registry", lambda: reg)
     monkeypatch.setattr(toolkit, "approvals", cards)
+    monkeypatch.setattr(toolkit, "SEEN", [])                  # nothing looked up yet
     return s, cards
 
 
@@ -208,6 +209,26 @@ def test_write_cards_lead_in_plain_words_with_the_key_tucked_away(monkeypatch):
     [card] = cards.shown
     assert card["title"] == "Order more of a part from a supplier: 10 × part 1 with Madison"
     assert card["technical"].startswith("POST /api/purchase-orders") and '"supplier": "Madison"' in card["technical"]
+    assert card["facts"] is None                                                       # no price on record: no cost
+
+
+def test_write_cards_name_what_barnaby_just_looked_up_and_what_it_costs(monkeypatch):
+    from barnaby import toolkit
+    from barnaby.toolkit import WorkerState, gate
+    _, cards = shop_world(monkeypatch)
+    w = WorkerState()
+    parts = [{"id": 1, "sku": "BP-SH-RES", "name": "Brake pads (Shimano resin, pair)", "stock": 1, "unit_cost": 6.5},
+             {"id": 2, "sku": "CH-KMC-X11", "name": "Chain KMC X11", "stock": 4, "unit_cost": 21.0}]
+    w.note_call(1, "c1", "mcp__shop__parts_low_api_parts_low_get", {})
+    w.note_result(1, "c1", True, [{"type": "text", "text": json.dumps(parts)}])        # as an MCP result comes back
+    asyncio.run(gate("mcp__shop__create_purchase_order", {"part_id": 1, "quantity": 10, "supplier": "Madison"}))
+    [card] = cards.shown
+    assert card["title"] == "Order more of a part from a supplier: 10 × Brake pads (Shimano resin, pair) with Madison"
+    assert card["facts"] == [["Cost", "6.50 each, 65.00 in all"]]
+    assert toolkit.known_as("job", 1) is None              # an id in a call about parts names a part, never a job
+    w.note_call(1, "c2", "mcp__shop__parts_api_parts_get", {})
+    w.note_result(1, "c2", False, "boom")                  # a failed call names nothing
+    assert toolkit.known_as("part", "2") == {"name": "Chain KMC X11", "price": 21.0}  # ids as numbers or strings
 
 
 def test_write_cards_carry_the_question_barnaby_just_asked_and_no_older_words(monkeypatch):

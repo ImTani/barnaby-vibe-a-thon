@@ -333,17 +333,17 @@
     "repo": "X:\\DevProjects\\vibe-a-thon\\.demo\\spokes-and-sprockets"
    },
    "id": 3,
-   "ts": 1795577805.6243691
+   "ts": 1795645506.6663036
   },
   {
    "type": "system.started",
    "data": {
     "system": "shop",
     "base_url": "http://127.0.0.1:8101",
-    "pid": 41244
+    "pid": 37024
    },
    "id": 4,
-   "ts": 1795577809.1852522
+   "ts": 1795645510.1880684
   },
   {
    "type": "synapse.run",
@@ -357,18 +357,18 @@
     ]
    },
    "id": 5,
-   "ts": 1795577809.186276
+   "ts": 1795645510.1880684
   },
   {
    "type": "synapse.built",
    "data": {
     "system": "shop",
-    "seconds": 0.67,
+    "seconds": 6.25,
     "exposed": 23,
     "discovered": 23
    },
    "id": 6,
-   "ts": 1795577809.856871
+   "ts": 1795645516.4381907
   },
   {
    "type": "synapse.run",
@@ -383,18 +383,18 @@
     ]
    },
    "id": 7,
-   "ts": 1795577809.8578744
+   "ts": 1795645516.4396975
   },
   {
    "type": "synapse.built",
    "data": {
     "system": "shop",
-    "seconds": 0.48,
+    "seconds": 0.82,
     "exposed": 6,
     "discovered": 23
    },
    "id": 8,
-   "ts": 1795577810.33643
+   "ts": 1795645517.2596836
   },
   {
    "type": "system.connected",
@@ -411,27 +411,27 @@
      "GET /api/mechanics"
     ],
     "read_only": 13,
-    "seconds": 0.48
+    "seconds": 0.82
    },
    "id": 9,
-   "ts": 1795577810.3374279
+   "ts": 1795645517.2606893
   },
   {
    "type": "tool.result",
    "data": {
     "turn": 1,
-    "id": "toolu_01LdLGuxzeK3p6wYSfoKmDr4",
+    "id": "toolu_01KWg2H3FbGYrE4NSH4uuVzx",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"Connected the shop's back office. Its code can do 23 things; to start you may use the 6 that only look things up, and you'll ask before taking on any of the rest. In one or two plain sentences, tell the person you've taken it on and what you can look into for them now (mention the notes its builder left, if there are any), and stop.\"}]"
    },
    "id": 10,
-   "ts": 1795577810.3504705
+   "ts": 1795645517.2753024
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 1,
-    "id": "toolu_0128BUzjAcV89s97NT4ZVo2C",
+    "id": "toolu_01T8pTJRtsWQD9F548ks1v1b",
     "system": "barnaby",
     "tool": "capabilities",
     "input": {
@@ -439,50 +439,50 @@
     }
    },
    "id": 11,
-   "ts": 1795577812.1287735
+   "ts": 1795645518.718012
   },
   {
    "type": "tool.result",
    "data": {
     "turn": 1,
-    "id": "toolu_0128BUzjAcV89s97NT4ZVo2C",
+    "id": "toolu_01T8pTJRtsWQD9F548ks1v1b",
     "ok": true,
-    "preview": "[{\"type\": \"text\", \"text\": \"[\\n {\\n  \\\"system\\\": \\\"shop\\\",\\n  \\\"title\\\": \\\"the shop's back office\\\",\\n  \\\"notes\\\": \\\"# Spokes & Sprockets back office (v2.3)\\\\n\\\\nThe shop computer's system. Jobs, customers, parts, ordering, mechanics, invoices.\\\\nWritten by me (Theo) in 2009 when I was 16 because the old Access database kept corrupting,\\\\nand patched ever since. Uncle Martin: this file is for whoever looks after it after me. Sorry in advance.\\\\n\\\\n## Running it\\\\n\\\\n```\\\\npip install -r requirements.txt\\\\npython seed.py                    # WIPES the database and puts the demo data back. carefu"
+    "preview": "[{\"type\": \"text\", \"text\": \"[\\n {\\n  \\\"system\\\": \\\"shop\\\",\\n  \\\"title\\\": \\\"the shop's back office\\\",\\n  \\\"notes\\\": \\\"# Spokes & Sprockets back office (v2.3)\\\\n\\\\nThe shop computer's system. Jobs, customers, parts, ordering, mechanics, invoices.\\\\nWritten by me (Theo) in 2009 when I was 14 because the old Access database kept corrupting,\\\\nand patched ever since. Uncle Martin: this file is for whoever looks after it after me. Sorry in advance.\\\\n\\\\n## Running it\\\\n\\\\n```\\\\npip install -r requirements.txt\\\\npython seed.py                    # WIPES the database and puts the demo data back. carefu"
    },
    "id": 12,
-   "ts": 1795577812.1604228
+   "ts": 1795645518.7475264
   },
   {
    "type": "say",
    "data": {
     "turn": 1,
-    "text": "I've taken on Spokes and Sprockets' back office, and Theo left some rather apologetic notes for whoever came after him. For now I can look up open repair jobs and what's due on a given day, find customers, check the mechanics and their weekly hours, and spot parts that are running low. I'll ask you before I take on anything that changes things, like ordering stock or texting customers.",
+    "text": "I've taken on the shop's back office, the one Theo wrote back in 2009, and he left some rather candid notes for whoever came after him. For now I can look up open jobs and what's due on a given day, the details of any job, find customers, see the mechanics and their hours, and check which parts are running low. Anything that changes things, like ordering parts or texting customers, I'll ask you about first.",
     "final": false
    },
    "id": 13,
-   "ts": 1795577814.6706288
+   "ts": 1795645520.695563
   },
   {
    "type": "turn.result",
    "data": {
     "turn": 1,
     "ok": true,
-    "ms": 13148,
+    "ms": 20030,
     "turns": 3,
-    "cost": 0.050626399999999995
+    "cost": 0.08275359999999998
    },
    "id": 14,
-   "ts": 1795577814.7240503
+   "ts": 1795645523.3726022
   },
   {
    "type": "say",
    "data": {
     "turn": 1,
-    "text": "I've taken on Spokes and Sprockets' back office, and Theo left some rather apologetic notes for whoever came after him. For now I can look up open repair jobs and what's due on a given day, find customers, check the mechanics and their weekly hours, and spot parts that are running low. I'll ask you before I take on anything that changes things, like ordering stock or texting customers.",
+    "text": "I've taken on the shop's back office, the one Theo wrote back in 2009, and he left some rather candid notes for whoever came after him. For now I can look up open jobs and what's due on a given day, the details of any job, find customers, see the mechanics and their hours, and check which parts are running low. Anything that changes things, like ordering parts or texting customers, I'll ask you about first.",
     "final": true
    },
    "id": 15,
-   "ts": 1795577814.7240503
+   "ts": 1795645523.373605
   },
   {
    "type": "system.reloaded",
@@ -490,47 +490,15 @@
     "system": "shop"
    },
    "id": 16,
-   "ts": 1795577817.7346795
-  },
-  {
-   "type": "say",
-   "data": {
-    "turn": 1,
-    "text": "I'm all set up with the shop now. I can look up jobs, customers, mechanics and parts that are running low, so just say what you'd like to know.",
-    "final": false
-   },
-   "id": 17,
-   "ts": 1795577823.8771684
-  },
-  {
-   "type": "turn.result",
-   "data": {
-    "turn": 1,
-    "ok": true,
-    "ms": 4326,
-    "turns": 1,
-    "cost": 0.06241819999999999
-   },
-   "id": 18,
-   "ts": 1795577823.9017045
-  },
-  {
-   "type": "say",
-   "data": {
-    "turn": 1,
-    "text": "I'm all set up with the shop now. I can look up jobs, customers, mechanics and parts that are running low, so just say what you'd like to know.",
-    "final": true
-   },
-   "id": 19,
-   "ts": 1795577823.9017045
+   "ts": 1795645525.533007
   },
   {
    "type": "turn.end",
    "data": {
     "turn": 1
    },
-   "id": 20,
-   "ts": 1795577823.9017045
+   "id": 17,
+   "ts": 1795645525.533007
   },
   {
    "type": "turn.start",
@@ -538,221 +506,221 @@
     "turn": 2,
     "text": "Which repairs are due tomorrow, and are we short on parts for any of them?"
    },
-   "id": 21,
-   "ts": 1795577823.9027092
+   "id": 18,
+   "ts": 1795645525.5345154
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 2,
-    "id": "toolu_01JZZNTde1aLBWZ23DSKy9eY",
+    "id": "toolu_019XCPaEv59MDxtA2KRkiYrK",
     "system": "shop",
     "tool": "jobs_due",
     "input": {
      "day": "2026-11-24"
     }
    },
-   "id": 22,
-   "ts": 1795577826.832092
+   "id": 19,
+   "ts": 1795645529.8192782
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 2,
+    "id": "toolu_019XCPaEv59MDxtA2KRkiYrK",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"job_id\\\": 4471,\\n  \\\"work\\\": \\\"Wheel build (front, 32 hole)\\\",\\n  \\\"estimate_hours\\\": 6.0,\\n  \\\"status\\\": \\\"booked\\\",\\n  \\\"due_date\\\": \\\"2026-11-24\\\",\\n  \\\"notes\\\": \\\"\\\",\\n  \\\"customer_id\\\": 1,\\n  \\\"customer\\\": \\\"Rachel Okafor\\\",\\n  \\\"customer_phone\\\": \\\"07700 900101\\\",\\n  \\\"bike\\\": \\\"Genesis Croix de Fer\\\",\\n  \\\"mechanic_id\\\": 1,\\n  \\\"mechanic\\\": \\\"Dev\\\"\\n}\"}, {\"type\": \"text\", \"text\": \"{\\n  \\\"job_id\\\": 4475,\\n  \\\"work\\\": \\\"Full service\\\",\\n  \\\"estimate_hours\\\": 3.0,\\n  \\\"status\\\": \\\"booked\\\",\\n  \\\"due_date\\\": \\\"2026-11-24\\\",\\n  \\\"notes\\\": \\\"\\\",\\n  \\\"customer_"
+   },
+   "id": 20,
+   "ts": 1795645529.8684137
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 2,
-    "id": "toolu_01PhdDqowMUZ9c1ZX9B6ExRq",
+    "id": "toolu_014nnmY1y8YvgCpt8tgSY9sa",
     "system": "shop",
     "tool": "parts_low",
     "input": {}
    },
-   "id": 23,
-   "ts": 1795577826.8556561
+   "id": 21,
+   "ts": 1795645529.8704228
   },
   {
    "type": "tool.result",
    "data": {
     "turn": 2,
-    "id": "toolu_01JZZNTde1aLBWZ23DSKy9eY",
-    "ok": true,
-    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"job_id\\\": 4471,\\n  \\\"work\\\": \\\"Wheel build (front, 32 hole)\\\",\\n  \\\"estimate_hours\\\": 6.0,\\n  \\\"status\\\": \\\"booked\\\",\\n  \\\"due_date\\\": \\\"2026-11-24\\\",\\n  \\\"notes\\\": \\\"\\\",\\n  \\\"customer_id\\\": 1,\\n  \\\"customer\\\": \\\"Rachel Okafor\\\",\\n  \\\"customer_phone\\\": \\\"07700 900101\\\",\\n  \\\"bike\\\": \\\"Genesis Croix de Fer\\\",\\n  \\\"mechanic_id\\\": 1,\\n  \\\"mechanic\\\": \\\"Dev\\\"\\n}\"}, {\"type\": \"text\", \"text\": \"{\\n  \\\"job_id\\\": 4475,\\n  \\\"work\\\": \\\"Full service\\\",\\n  \\\"estimate_hours\\\": 3.0,\\n  \\\"status\\\": \\\"booked\\\",\\n  \\\"due_date\\\": \\\"2026-11-24\\\",\\n  \\\"notes\\\": \\\"\\\",\\n  \\\"customer_"
-   },
-   "id": 24,
-   "ts": 1795577826.9094017
-  },
-  {
-   "type": "tool.result",
-   "data": {
-    "turn": 2,
-    "id": "toolu_01PhdDqowMUZ9c1ZX9B6ExRq",
+    "id": "toolu_014nnmY1y8YvgCpt8tgSY9sa",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"id\\\": 4,\\n  \\\"sku\\\": \\\"TUB-700-25\\\",\\n  \\\"name\\\": \\\"Inner tube 700x25c\\\",\\n  \\\"stock\\\": 0,\\n  \\\"reorder_level\\\": 10,\\n  \\\"supplier\\\": \\\"Schwalbe UK\\\",\\n  \\\"unit_cost\\\": 4.2\\n}\"}, {\"type\": \"text\", \"text\": \"{\\n  \\\"id\\\": 1,\\n  \\\"sku\\\": \\\"BP-SH-RES\\\",\\n  \\\"name\\\": \\\"Brake pads (Shimano resin, pair)\\\",\\n  \\\"stock\\\": 1,\\n  \\\"reorder_level\\\": 4,\\n  \\\"supplier\\\": \\\"Madison\\\",\\n  \\\"unit_cost\\\": 6.5\\n}\"}, {\"type\": \"text\", \"text\": \"{\\n  \\\"id\\\": 6,\\n  \\\"sku\\\": \\\"CAS-11-32\\\",\\n  \\\"name\\\": \\\"Cassette 11-32 (11 speed)\\\",\\n  \\\"stock\\\": 1,\\n  \\\"reorder_level\\\": 2,\\n  \\\"supplie"
    },
-   "id": 25,
-   "ts": 1795577826.9371042
+   "id": 22,
+   "ts": 1795645529.9007576
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 2,
-    "id": "toolu_01Ru4EC6mnUSnpvjLmBaLGZg",
+    "id": "toolu_014KrCMcmRgUDTGXofyABtUB",
     "system": "shop",
     "tool": "job_detail",
     "input": {
      "job_id": 4471
     }
    },
-   "id": 26,
-   "ts": 1795577828.7648785
+   "id": 23,
+   "ts": 1795645531.4116929
   },
   {
    "type": "tool.result",
    "data": {
     "turn": 2,
-    "id": "toolu_01Ru4EC6mnUSnpvjLmBaLGZg",
+    "id": "toolu_014KrCMcmRgUDTGXofyABtUB",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job\\\": {\\n    \\\"job_id\\\": 4471,\\n    \\\"work\\\": \\\"Wheel build (front, 32 hole)\\\",\\n    \\\"estimate_hours\\\": 6.0,\\n    \\\"status\\\": \\\"booked\\\",\\n    \\\"due_date\\\": \\\"2026-11-24\\\",\\n    \\\"notes\\\": \\\"\\\",\\n    \\\"customer_id\\\": 1,\\n    \\\"customer\\\": \\\"Rachel Okafor\\\",\\n    \\\"customer_phone\\\": \\\"07700 900101\\\",\\n    \\\"bike\\\": \\\"Genesis Croix de Fer\\\",\\n    \\\"mechanic_id\\\": 1,\\n    \\\"mechanic\\\": \\\"Dev\\\"\\n  },\\n  \\\"parts\\\": [\\n    {\\n      \\\"part_id\\\": 2,\\n      \\\"sku\\\": \\\"SPK-DT-292\\\",\\n      \\\"name\\\": \\\"Spokes DT Swiss 292mm (each)\\\",\\n      \\\"qty_neede"
    },
-   "id": 27,
-   "ts": 1795577828.8025293
+   "id": 24,
+   "ts": 1795645531.4335744
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 2,
-    "id": "toolu_01XoNpmdV6gMq1ACFhR8c9Gs",
+    "id": "toolu_01683s76e49CXH3zzbzD4nbx",
     "system": "shop",
     "tool": "job_detail",
     "input": {
      "job_id": 4475
     }
    },
-   "id": 28,
-   "ts": 1795577829.1158144
+   "id": 25,
+   "ts": 1795645531.76268
   },
   {
    "type": "tool.result",
    "data": {
     "turn": 2,
-    "id": "toolu_01XoNpmdV6gMq1ACFhR8c9Gs",
+    "id": "toolu_01683s76e49CXH3zzbzD4nbx",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job\\\": {\\n    \\\"job_id\\\": 4475,\\n    \\\"work\\\": \\\"Full service\\\",\\n    \\\"estimate_hours\\\": 3.0,\\n    \\\"status\\\": \\\"booked\\\",\\n    \\\"due_date\\\": \\\"2026-11-24\\\",\\n    \\\"notes\\\": \\\"\\\",\\n    \\\"customer_id\\\": 10,\\n    \\\"customer\\\": \\\"Sofia Ferreira\\\",\\n    \\\"customer_phone\\\": \\\"07700 900110\\\",\\n    \\\"bike\\\": \\\"Giant Defy\\\",\\n    \\\"mechanic_id\\\": 2,\\n    \\\"mechanic\\\": \\\"Ravi\\\"\\n  },\\n  \\\"parts\\\": []\\n}\"}]"
    },
-   "id": 29,
-   "ts": 1795577829.145387
+   "id": 26,
+   "ts": 1795645531.7819805
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 2,
-    "id": "toolu_01BnMW3jG9XNMnLBNpgHgfz9",
+    "id": "toolu_011sGqGPtrkacPDVTf3iSFdo",
     "system": "shop",
     "tool": "job_detail",
     "input": {
      "job_id": 4478
     }
    },
-   "id": 30,
-   "ts": 1795577829.4169562
+   "id": 27,
+   "ts": 1795645532.1123004
   },
   {
    "type": "tool.result",
    "data": {
     "turn": 2,
-    "id": "toolu_01BnMW3jG9XNMnLBNpgHgfz9",
+    "id": "toolu_011sGqGPtrkacPDVTf3iSFdo",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job\\\": {\\n    \\\"job_id\\\": 4478,\\n    \\\"work\\\": \\\"Brake bleed + new pads\\\",\\n    \\\"estimate_hours\\\": 1.5,\\n    \\\"status\\\": \\\"booked\\\",\\n    \\\"due_date\\\": \\\"2026-11-24\\\",\\n    \\\"notes\\\": \\\"\\\",\\n    \\\"customer_id\\\": 3,\\n    \\\"customer\\\": \\\"Anika Banerjee\\\",\\n    \\\"customer_phone\\\": \\\"07700 900103\\\",\\n    \\\"bike\\\": \\\"Trek FX 3\\\",\\n    \\\"mechanic_id\\\": 1,\\n    \\\"mechanic\\\": \\\"Dev\\\"\\n  },\\n  \\\"parts\\\": [\\n    {\\n      \\\"part_id\\\": 1,\\n      \\\"sku\\\": \\\"BP-SH-RES\\\",\\n      \\\"name\\\": \\\"Brake pads (Shimano resin, pair)\\\",\\n      \\\"qty_needed\\\": 2,\\n    "
    },
-   "id": 31,
-   "ts": 1795577829.4435666
+   "id": 28,
+   "ts": 1795645532.1362836
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 2,
-    "id": "toolu_01Mt45BS72RqMmV8MX8CBbHm",
+    "id": "toolu_012Pk3TA8nRxrVrHFeGCvfav",
     "system": "shop",
     "tool": "job_detail",
     "input": {
      "job_id": 4485
     }
    },
-   "id": 32,
-   "ts": 1795577829.771703
+   "id": 29,
+   "ts": 1795645532.463712
   },
   {
    "type": "tool.result",
    "data": {
     "turn": 2,
-    "id": "toolu_01Mt45BS72RqMmV8MX8CBbHm",
+    "id": "toolu_012Pk3TA8nRxrVrHFeGCvfav",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job\\\": {\\n    \\\"job_id\\\": 4485,\\n    \\\"work\\\": \\\"Headset replacement\\\",\\n    \\\"estimate_hours\\\": 1.0,\\n    \\\"status\\\": \\\"booked\\\",\\n    \\\"due_date\\\": \\\"2026-11-24\\\",\\n    \\\"notes\\\": \\\"\\\",\\n    \\\"customer_id\\\": 8,\\n    \\\"customer\\\": \\\"Thanh Nguyen\\\",\\n    \\\"customer_phone\\\": \\\"07700 900108\\\",\\n    \\\"bike\\\": \\\"Surly Long Haul Trucker\\\",\\n    \\\"mechanic_id\\\": 1,\\n    \\\"mechanic\\\": \\\"Dev\\\"\\n  },\\n  \\\"parts\\\": [\\n    {\\n      \\\"part_id\\\": 11,\\n      \\\"sku\\\": \\\"HDS-FSA-118\\\",\\n      \\\"name\\\": \\\"Headset FSA 1-1/8in\\\",\\n      \\\"qty_needed\\\": 1,\\n     "
    },
-   "id": 33,
-   "ts": 1795577829.8102548
+   "id": 30,
+   "ts": 1795645532.4903226
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 2,
-    "id": "toolu_01R4zNosK8T8AR1cM4hQzhR8",
+    "id": "toolu_01JHa6V58eH4gWcwt21zSmgC",
     "system": "shop",
     "tool": "job_detail",
     "input": {
      "job_id": 4490
     }
    },
-   "id": 34,
-   "ts": 1795577830.019731
+   "id": 31,
+   "ts": 1795645532.662758
   },
   {
    "type": "tool.result",
    "data": {
     "turn": 2,
-    "id": "toolu_01R4zNosK8T8AR1cM4hQzhR8",
+    "id": "toolu_01JHa6V58eH4gWcwt21zSmgC",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job\\\": {\\n    \\\"job_id\\\": 4490,\\n    \\\"work\\\": \\\"Bottom bracket replacement\\\",\\n    \\\"estimate_hours\\\": 1.5,\\n    \\\"status\\\": \\\"booked\\\",\\n    \\\"due_date\\\": \\\"2026-11-24\\\",\\n    \\\"notes\\\": \\\"\\\",\\n    \\\"customer_id\\\": 16,\\n    \\\"customer\\\": \\\"Kwame Mensah\\\",\\n    \\\"customer_phone\\\": \\\"07700 900116\\\",\\n    \\\"bike\\\": \\\"Boardman SLR\\\",\\n    \\\"mechanic_id\\\": 2,\\n    \\\"mechanic\\\": \\\"Ravi\\\"\\n  },\\n  \\\"parts\\\": [\\n    {\\n      \\\"part_id\\\": 9,\\n      \\\"sku\\\": \\\"BB-SH-HT2\\\",\\n      \\\"name\\\": \\\"Bottom bracket Shimano HT2\\\",\\n      \\\"qty_needed\\\": 1,\\n   "
    },
-   "id": 35,
-   "ts": 1795577830.050837
+   "id": 32,
+   "ts": 1795645532.7016525
   },
   {
    "type": "say",
    "data": {
     "turn": 2,
-    "text": "Five repairs are due tomorrow, and only one is short. Anika Banerjee's brake job needs two pairs of pads and we've just the one, so that needs ordering. The others are covered, though the wheel build will leave us nearly out of spokes and rims, and Dev has three of tomorrow's jobs even though he's at the other shop on Tuesdays.",
+    "text": "Five repairs are due tomorrow, and only one is short of parts. Anika Banerjee's brake job needs two pairs of pads and we've just the one. Also worth knowing, Dev has three of tomorrow's jobs, including Rachel Okafor's six-hour wheel build, but Theo's notes say Dev works Tuesdays at the other shop.",
     "final": false
    },
-   "id": 36,
-   "ts": 1795577833.8142092
+   "id": 33,
+   "ts": 1795645535.6125097
   },
   {
    "type": "turn.result",
    "data": {
     "turn": 2,
     "ok": true,
-    "ms": 9909,
+    "ms": 9984,
     "turns": 8,
-    "cost": 0.1137508
+    "cost": 0.14034639999999998
    },
-   "id": 37,
-   "ts": 1795577833.8488846
+   "id": 34,
+   "ts": 1795645537.1224902
   },
   {
    "type": "say",
    "data": {
     "turn": 2,
-    "text": "Five repairs are due tomorrow, and only one is short. Anika Banerjee's brake job needs two pairs of pads and we've just the one, so that needs ordering. The others are covered, though the wheel build will leave us nearly out of spokes and rims, and Dev has three of tomorrow's jobs even though he's at the other shop on Tuesdays.",
+    "text": "Five repairs are due tomorrow, and only one is short of parts. Anika Banerjee's brake job needs two pairs of pads and we've just the one. Also worth knowing, Dev has three of tomorrow's jobs, including Rachel Okafor's six-hour wheel build, but Theo's notes say Dev works Tuesdays at the other shop.",
     "final": true
    },
-   "id": 38,
-   "ts": 1795577833.8488846
+   "id": 35,
+   "ts": 1795645537.1224902
   },
   {
    "type": "turn.end",
    "data": {
     "turn": 2
    },
-   "id": 39,
-   "ts": 1795577833.8488846
+   "id": 36,
+   "ts": 1795645537.1224902
   },
   {
    "type": "turn.start",
@@ -760,24 +728,24 @@
     "turn": 3,
     "text": "Order ten pairs of those brake pads from the usual supplier."
    },
-   "id": 40,
-   "ts": 1795577833.8488846
+   "id": 37,
+   "ts": 1795645537.1224902
   },
   {
    "type": "say",
    "data": {
     "turn": 3,
-    "text": "I can't place orders myself yet, but Theo built the system a way to, so shall I take that on?",
+    "text": "I can't place orders myself yet, but Theo built the system a way to. Shall I take that on?",
     "final": false
    },
-   "id": 41,
-   "ts": 1795577835.9601078
+   "id": 38,
+   "ts": 1795645538.49491
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 3,
-    "id": "toolu_01NQAcdmhYUPFz7qHhJgk8Vj",
+    "id": "toolu_011h51ZfphRNnXg4UAX5PY6P",
     "system": "barnaby",
     "tool": "unlock",
     "input": {
@@ -787,8 +755,8 @@
      "reason": "To order ten pairs of brake pads from Madison for tomorrow's brake job."
     }
    },
-   "id": 42,
-   "ts": 1795577836.9148576
+   "id": 39,
+   "ts": 1795645539.4536946
   },
   {
    "type": "growth.unlock.proposed",
@@ -799,8 +767,8 @@
     "reason": "To order ten pairs of brake pads from Madison for tomorrow's brake job.",
     "ability": "order parts from your suppliers"
    },
-   "id": 43,
-   "ts": 1795577836.9444494
+   "id": 40,
+   "ts": 1795645539.4714127
   },
   {
    "type": "approval.requested",
@@ -812,10 +780,11 @@
     "detail": "To order ten pairs of brake pads from Madison for tomorrow's brake job.",
     "technical": "POST /api/purchase-orders (tool create_purchase_order) in the shop's back office\nOrder more of a part from a supplier. supplier defaults to the part's usual one.",
     "diff": null,
+    "facts": null,
     "voice_ok": false
    },
-   "id": 44,
-   "ts": 1795577836.9444494
+   "id": 41,
+   "ts": 1795645539.4714127
   },
   {
    "type": "approval.resolved",
@@ -823,8 +792,8 @@
     "id": "a1",
     "approved": true
    },
-   "id": 44,
-   "ts": 1795577836.9444494
+   "id": 41,
+   "ts": 1795645539.4714127
   },
   {
    "type": "synapse.run",
@@ -838,19 +807,19 @@
      "GET /api/jobs/open,GET /api/jobs/due/{day},GET /api/jobs/{job_id},GET /api/parts/low,GET /api/customers/search/{name},GET /api/mechanics,POST /api/purchase-orders"
     ]
    },
-   "id": 45,
-   "ts": 1795577836.9444494
+   "id": 42,
+   "ts": 1795645539.4714127
   },
   {
    "type": "synapse.built",
    "data": {
     "system": "shop",
-    "seconds": 0.58,
+    "seconds": 0.38,
     "exposed": 7,
     "discovered": 23
    },
-   "id": 46,
-   "ts": 1795577837.52856
+   "id": 43,
+   "ts": 1795645539.8560708
   },
   {
    "type": "growth.unlock.done",
@@ -858,61 +827,61 @@
     "system": "shop",
     "endpoint": "POST /api/purchase-orders",
     "tool": "create_purchase_order",
-    "seconds": 0.58
+    "seconds": 0.38
    },
-   "id": 47,
-   "ts": 1795577837.529561
+   "id": 44,
+   "ts": 1795645539.85707
   },
   {
    "type": "tool.result",
    "data": {
     "turn": 3,
-    "id": "toolu_01NQAcdmhYUPFz7qHhJgk8Vj",
+    "id": "toolu_011h51ZfphRNnXg4UAX5PY6P",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"Unlocked POST /api/purchase-orders (tool mcp__shop__create_purchase_order): you can now order parts from your suppliers. Say in a few plain words that you can do it now, and stop; you'll continue with it automatically in a moment.\"}]"
    },
-   "id": 48,
-   "ts": 1795577837.5360951
+   "id": 45,
+   "ts": 1795645539.8625822
   },
   {
    "type": "say",
    "data": {
     "turn": 3,
-    "text": "I can order parts from the suppliers now.",
+    "text": "I can order parts now.",
     "final": false
    },
-   "id": 49,
-   "ts": 1795577838.4577231
+   "id": 46,
+   "ts": 1795645540.8234434
   },
   {
    "type": "turn.result",
    "data": {
     "turn": 3,
     "ok": true,
-    "ms": 4619,
+    "ms": 6871,
     "turns": 2,
-    "cost": 0.1288056
+    "cost": 0.15465959999999998
    },
-   "id": 50,
-   "ts": 1795577838.476019
+   "id": 47,
+   "ts": 1795645544.006331
   },
   {
    "type": "say",
    "data": {
     "turn": 3,
-    "text": "I can order parts from the suppliers now.",
+    "text": "I can order parts now.",
     "final": true
    },
-   "id": 51,
-   "ts": 1795577838.476019
+   "id": 48,
+   "ts": 1795645544.006331
   },
   {
    "type": "system.reloaded",
    "data": {
     "system": "shop"
    },
-   "id": 52,
-   "ts": 1795577840.0727541
+   "id": 49,
+   "ts": 1795645545.3411665
   },
   {
    "type": "say",
@@ -921,14 +890,14 @@
     "text": "Ten pairs of the Shimano resin pads from Madison, at six pounds fifty a pair, shall I?",
     "final": false
    },
-   "id": 53,
-   "ts": 1795577841.6543772
+   "id": 50,
+   "ts": 1795645546.6197498
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 3,
-    "id": "toolu_01PVPYJgsBjJZzSVxZhsXBb4",
+    "id": "toolu_015ffo8KDMshfrnkCNvreXdw",
     "system": "shop",
     "tool": "create_purchase_order",
     "input": {
@@ -936,8 +905,8 @@
      "quantity": 10
     }
    },
-   "id": 54,
-   "ts": 1795577842.3564074
+   "id": 51,
+   "ts": 1795645547.0215323
   },
   {
    "type": "approval.requested",
@@ -945,14 +914,20 @@
     "id": "a2",
     "tier": "write",
     "kind": "call",
-    "title": "Order more of a part from a supplier: 10 \u00d7 part 1",
+    "title": "Order more of a part from a supplier: 10 \u00d7 Brake pads (Shimano resin, pair)",
     "detail": "Ten pairs of the Shimano resin pads from Madison, at six pounds fifty a pair, shall I?",
     "technical": "POST /api/purchase-orders (tool create_purchase_order)\n{\n \"part_id\": 1,\n \"quantity\": 10\n}",
     "diff": null,
+    "facts": [
+     [
+      "Cost",
+      "6.50 each, 65.00 in all"
+     ]
+    ],
     "voice_ok": true
    },
-   "id": 55,
-   "ts": 1795577842.3634305
+   "id": 52,
+   "ts": 1795645547.0382924
   },
   {
    "type": "approval.resolved",
@@ -960,262 +935,123 @@
     "id": "a2",
     "approved": true
    },
-   "id": 55,
-   "ts": 1795577842.3634305
+   "id": 52,
+   "ts": 1795645547.0382924
   },
   {
    "type": "tool.result",
    "data": {
     "turn": 3,
-    "id": "toolu_01PVPYJgsBjJZzSVxZhsXBb4",
+    "id": "toolu_015ffo8KDMshfrnkCNvreXdw",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"purchase_order_id\\\": 3,\\n  \\\"part\\\": \\\"Brake pads (Shimano resin, pair)\\\",\\n  \\\"quantity\\\": 10,\\n  \\\"supplier\\\": \\\"Madison\\\",\\n  \\\"status\\\": \\\"ordered\\\"\\n}\"}]"
    },
-   "id": 56,
-   "ts": 1795577842.3930178
+   "id": 53,
+   "ts": 1795645547.089609
   },
   {
    "type": "say",
    "data": {
     "turn": 3,
-    "text": "I've ordered ten pairs of brake pads from Madison, which comes to sixty-five pounds, and it's order number three. When they arrive, there'll be plenty for Anika's brake job.",
+    "text": "I've ordered ten pairs of brake pads from Madison, which comes to sixty-five pounds. Once they arrive there'll be enough for Anika's brake job, with plenty left on the shelf.",
     "final": false
    },
-   "id": 57,
-   "ts": 1795577844.3294196
+   "id": 54,
+   "ts": 1795645548.8982668
   },
   {
    "type": "turn.result",
    "data": {
     "turn": 3,
     "ok": true,
-    "ms": 4272,
+    "ms": 6856,
     "turns": 2,
-    "cost": 0.1427972
+    "cost": 0.16913879999999998
    },
-   "id": 58,
-   "ts": 1795577844.3520494
+   "id": 55,
+   "ts": 1795645552.2025917
   },
   {
    "type": "say",
    "data": {
     "turn": 3,
-    "text": "I've ordered ten pairs of brake pads from Madison, which comes to sixty-five pounds, and it's order number three. When they arrive, there'll be plenty for Anika's brake job.",
+    "text": "I've ordered ten pairs of brake pads from Madison, which comes to sixty-five pounds. Once they arrive there'll be enough for Anika's brake job, with plenty left on the shelf.",
     "final": true
    },
-   "id": 59,
-   "ts": 1795577844.3520494
+   "id": 56,
+   "ts": 1795645552.2025917
   },
   {
    "type": "turn.end",
    "data": {
     "turn": 3
    },
-   "id": 60,
-   "ts": 1795577844.3520494
+   "id": 57,
+   "ts": 1795645552.2025917
   },
   {
    "type": "turn.start",
    "data": {
     "turn": 4,
-    "text": "Who's overloaded this week?"
+    "text": "Barnaby, Sofia's bike's done, job 4475. Text her it's ready to collect and mark it ready."
    },
-   "id": 61,
-   "ts": 1795577844.6630378
+   "id": 58,
+   "ts": 1795645552.737072
   },
   {
    "type": "say",
    "data": {
     "turn": 4,
-    "text": "The system can't tell me that yet, so I'll give it a way to work out each mechanic's week.",
+    "text": "I can't text customers or change a job's status myself yet, but Theo built the system ways to do both. Shall I take those on?",
     "final": false
    },
-   "id": 62,
-   "ts": 1795577846.4451215
+   "id": 59,
+   "ts": 1795645554.5731535
   },
   {
    "type": "tool.call",
    "data": {
     "turn": 4,
-    "id": "toolu_01W6ZNKDJ1kD3EfaFdMcaPYk",
+    "id": "toolu_01SmiQU8Eod941DCwmqoLxpF",
     "system": "barnaby",
-    "tool": "build",
+    "tool": "unlock",
     "input": {
      "system": "shop",
-     "method": "GET",
-     "path": "/api/reports/workload/{day}",
-     "spec": "Mechanic workload report for the shop week containing {day}. {day} is YYYY-MM-DD or the word 'today' (resolve 'today' the same way the existing jobs-due route does, honouring SPOKES_TODAY). Per the README: the shop week is Monday to Saturday, so week_start = the Monday on or before {day} and week_end = that Monday + 5 days (Saturday); if {day} is a Sunday, use the week that ends the day before (Mon-Sat just gone). A mechanic's workload = the sum of estimate_hours (hours, not minutes) of their jobs whose due_date falls between week_start and week_end inclusive and whose status is NOT 'ready' or 'collected'. Return {\"ok\": true, \"week_start\": ..., \"week_end\": ..., \"mechanics\": [...]} with one entry per mechanic (include mechanics with zero hours): mechanic_id, name, weekly_capacity_hours, workload_hours, spare_hours (capacity minus workload, negative if over), overloaded (bool, workload_hours > weekly_capacity_hours), job_count. Sort by spare_hours ascending (most overloaded first). Invalid date returns {\"ok\": false, \"error\": \"...\"} with HTTP 200. Put the logic in services.py as a function with a docstring saying what it returns, the route with its full path in routes_reports.py, and a pytest test in tests/ using a throwaway database, covering the week boundaries and the exclusion of ready/collected jobs."
+     "endpoint": "POST /api/customers/{customer_id}/notify",
+     "ability": "text or email customers, for instance to say their bike is ready",
+     "reason": "To text Sofia Ferreira that her Giant Defy is ready to collect."
     }
    },
-   "id": 63,
-   "ts": 1795577851.805956
+   "id": 60,
+   "ts": 1795645555.7283008
   },
   {
-   "type": "growth.build.started",
+   "type": "growth.unlock.proposed",
    "data": {
     "system": "shop",
-    "method": "GET",
-    "path": "/api/reports/workload/{day}",
-    "spec": "Mechanic workload report for the shop week containing {day}. {day} is YYYY-MM-DD or the word 'today' (resolve 'today' the same way the existing jobs-due route does, honouring SPOKES_TODAY). Per the README: the shop week is Monday to Saturday, so week_start = the Monday on or before {day} and week_end = that Monday + 5 days (Saturday); if {day} is a Sunday, use the week that ends the day before (Mon-Sat just gone). A mechanic's workload = the sum of estimate_hours (hours, not minutes) of their jobs whose due_date falls between week_start and week_end inclusive and whose status is NOT 'ready' or 'collected'. Return {\"ok\": true, \"week_start\": ..., \"week_end\": ..., \"mechanics\": [...]} with one entry per mechanic (include mechanics with zero hours): mechanic_id, name, weekly_capacity_hours, workload_hours, spare_hours (capacity minus workload, negative if over), overloaded (bool, workload_hours > weekly_capacity_hours), job_count. Sort by spare_hours ascending (most overloaded first). Invalid date returns {\"ok\": false, \"error\": \"...\"} with HTTP 200. Put the logic in services.py as a function with a docstring saying what it returns, the route with its full path in routes_reports.py, and a pytest test in tests/ using a throwaway database, covering the week boundaries and the exclusion of ready/collected jobs.",
-    "branch": "barnaby/api-reports-workload-day-090731"
+    "endpoint": "POST /api/customers/{customer_id}/notify",
+    "tool": "notify",
+    "reason": "To text Sofia Ferreira that her Giant Defy is ready to collect.",
+    "ability": "text or email customers, for instance to say their bike is ready"
    },
-   "id": 64,
-   "ts": 1795577851.8310084
-  },
-  {
-   "type": "growth.build.step",
-   "data": {
-    "system": "shop",
-    "tool": "Bash",
-    "target": "cat README.md; ls; ls tests; git log --oneline | head -5"
-   },
-   "id": 65,
-   "ts": 1795577858.0848591
-  },
-  {
-   "type": "growth.build.step",
-   "data": {
-    "system": "shop",
-    "tool": "Bash",
-    "target": "cat services.py routes_reports.py tests/test_api.py tests/conftest.py db.py pytest.ini"
-   },
-   "id": 66,
-   "ts": 1795577860.3795412
-  },
-  {
-   "type": "growth.build.step",
-   "data": {
-    "system": "shop",
-    "tool": "Bash",
-    "target": "1-21' and '2026-11-30' order by mechanic_id,due_date\\\"):print(r)\nprint(c.execute('select * from mechanics').fetchall())\""
-   },
-   "id": 67,
-   "ts": 1795577869.0637057
-  },
-  {
-   "type": "growth.build.step",
-   "data": {
-    "system": "shop",
-    "tool": "Grep",
-    "target": "mechanic|2026-11-2|2026-11-30|def |days|timedelta"
-   },
-   "id": 68,
-   "ts": 1795577871.0569956
-  },
-  {
-   "type": "growth.build.step",
-   "data": {
-    "system": "shop",
-    "tool": "Read",
-    "target": "seed.py"
-   },
-   "id": 69,
-   "ts": 1795577872.880645
-  },
-  {
-   "type": "growth.build.step",
-   "data": {
-    "system": "shop",
-    "tool": "Grep",
-    "target": "MECHANICS = \\["
-   },
-   "id": 70,
-   "ts": 1795577876.509583
-  },
-  {
-   "type": "growth.build.step",
-   "data": {
-    "system": "shop",
-    "tool": "Edit",
-    "target": "services.py"
-   },
-   "id": 71,
-   "ts": 1795577884.3420143
-  },
-  {
-   "type": "growth.build.step",
-   "data": {
-    "system": "shop",
-    "tool": "Edit",
-    "target": "routes_reports.py"
-   },
-   "id": 72,
-   "ts": 1795577886.8405714
-  },
-  {
-   "type": "growth.build.step",
-   "data": {
-    "system": "shop",
-    "tool": "Write",
-    "target": "tests\\test_workload.py"
-   },
-   "id": 73,
-   "ts": 1795577899.0255682
-  },
-  {
-   "type": "growth.build.step",
-   "data": {
-    "system": "shop",
-    "tool": "Bash",
-    "target": "python -m pytest -q"
-   },
-   "id": 74,
-   "ts": 1795577901.1137006
-  },
-  {
-   "type": "growth.build.written",
-   "data": {
-    "system": "shop",
-    "seconds": 52.7,
-    "turns": 11,
-    "ok": true
-   },
-   "id": 75,
-   "ts": 1795577907.8324792
-  },
-  {
-   "type": "growth.build.tested",
-   "data": {
-    "system": "shop",
-    "passed": true,
-    "result": "22 passed, 1 warning in 2.01s"
-   },
-   "id": 76,
-   "ts": 1795577911.6695032
-  },
-  {
-   "type": "growth.build.explained",
-   "data": {
-    "system": "shop",
-    "name": "a weekly workload report for the mechanics",
-    "summary": "It shows how many hours of work each mechanic has due in a given shop week compared with the hours they can do, and who is overbooked.\nIt only reads the jobs and the mechanics' weekly hours, and changes nothing.\nTheo's 19 checks still pass, and so do the 3 new ones.\nIf you change your mind, it can be undone."
-   },
-   "id": 77,
-   "ts": 1795577911.7152004
-  },
-  {
-   "type": "say",
-   "data": {
-    "text": "I've made a weekly workload report for the mechanics, which only reads the jobs and the mechanics' weekly hours and changes nothing. Theo's checks all still pass, it can be undone, and it's on your display to approve.",
-    "final": false
-   },
-   "id": 78,
-   "ts": 1795577911.7152004
+   "id": 61,
+   "ts": 1795645555.7491949
   },
   {
    "type": "approval.requested",
    "data": {
     "id": "a3",
-    "tier": "build",
-    "kind": "build",
-    "title": "Add a weekly workload report for the mechanics to the shop's back office",
-    "detail": "It shows how many hours of work each mechanic has due in a given shop week compared with the hours they can do, and who is overbooked.\nIt only reads the jobs and the mechanics' weekly hours, and changes nothing.\nTheo's 19 checks still pass, and so do the 3 new ones.\nIf you change your mind, it can be undone.",
-    "technical": "GET /api/reports/workload/{day} in the shop's back office, on branch barnaby/api-reports-workload-day-090731\nI added a mechanic workload report that shows, for each mechanic in the Monday-to-Saturday week containing a chosen day or \"today\", their booked hours, spare hours and whether they're overloaded; it doesn't count jobs that are ready or collected, and all 22 tests pass.\nTests: 22 passed, 1 warning in 2.01s",
-    "diff": "diff --git a/routes_reports.py b/routes_reports.py\nindex 0168031..f5cafbe 100644\n--- a/routes_reports.py\n+++ b/routes_reports.py\n@@ -19,3 +19,14 @@ def takings(day: str):\n     if day == \"today\":\n         day = today()\n     return services.takings_on(day)\n+\n+\n+@router.get(\"/api/reports/workload/{day}\")\n+def workload(day: str):\n+    \"\"\"Mechanic workload for the shop week (Mon-Sat) containing a day. day is YYYY-MM-DD, or the word 'today';\n+    a Sunday means the Mon-Sat week just gone. Returns {ok, week_start, week_end, mechanics: [{mechanic_id, name,\n+    weekly_capacity_hours, workload_hours, spare_hours, overloaded, job_count}]}, most overloaded first.\n+    Workload is the estimated hours of jobs due that week that aren't ready or collected yet.\"\"\"\n+    if day == \"today\":\n+        day = today()\n+    return services.mechanic_workload(day)\ndiff --git a/services.py b/services.py\nindex b50fa41..066506f 100644\n--- a/services.py\n+++ b/services.py\n@@ -360,3 +360,37 @@ def week_bounds(day=None):\n     monday = date.fromordinal(d.toordinal() - d.weekday())\n     saturday = date.fromordinal(monday.toordinal() + 5)\n     return monday.isoformat(), saturday.isoformat()\n+\n+\n+def mechanic_workload(day):\n+    \"\"\"Each mechanic's workload for the shop week (Mon-Sat) containing `day` (YYYY-MM-DD).\n+\n+    A Sunday counts as the end of the Mon-Sat week just gone. Workload = hours of their jobs due\n+    that week that aren't 'ready' or 'collected' yet.\n+\n+    Returns {ok: True, week_start, week_end, mechanics: [{mechanic_id, name, weekly_capacity_hours,\n+    workload_hours, spare_hours, overloaded, job_count}]} sorted by spare_hours, most overloaded first\n+    (every mechanic is listed, even with no jobs), or {ok: False, error} if the date isn't valid.\n+    \"\"\"\n+    try:\n+        datetime.strptime(day, \"%Y-%m-%d\")\n+    except (TypeError, ValueError):\n+        return {\"ok\": False, \"error\": f\"'{day}' isn't a date. Use YYYY-MM-DD or 'today'\"}\n+    week_start, week_end = week_bounds(day)\n+    con = connect()\n+    rows = con.execute(\n+        \"\"\"SELECT m.id AS mechanic_id, m.name, m.weekly_capacity_hours,\n+                  coalesce(sum(j.estimate_hours), 0) AS workload_hours, count(j.id) AS job_count\n+           FROM mechanics m\n+           LEFT JOIN jobs j ON j.mechanic_id = m.id AND j.due_date BETWEEN ? AND ?\n+                           AND j.status NOT IN ('ready', 'collected')\n+           GROUP BY m.id ORDER BY m.id\"\"\",\n+        (week_start, week_end),\n+    ).fetchall()\n+    con.close()\n+    for r in rows:\n+        r[\"workload_hours\"] = round(r[\"workload_hours\"], 2)\n+        r[\"spare_hours\"] = round(r[\"weekly_capacity_hours\"] - r[\"workload_hours\"], 2)\n+        r[\"overloaded\"] = r[\"workload_hours\"] > r[\"weekly_capacity_hours\"]\n+    rows.sort(key=lambda r: r[\"spare_hours\"])\n+    return {\"ok\": True, \"week_start\": week_start, \"week_end\": week_end, \"mechanics\": rows}\ndiff --git a/tests/test_workload.py b/tests/test_workload.py\nnew file mode 100644\nindex 0000000..eb62311\n--- /dev/null\n+++ b/tests/test_workload.py\n@@ -0,0 +1,69 @@\n+# tests for GET /api/reports/workload/{day}. uses the throwaway database from conftest.py\n+# (\"today\" is Monday 2026-11-23, so this shop week is Mon 2026-11-23 to Sat 2026-11-28).\n+import db\n+\n+\n+def _set_jobs(client, jobs):\n+    \"\"\"Replace every job with our own: (mechanic name, hours, status, due_date).\"\"\"\n+    mech = {m[\"name\"]: m[\"id\"] for m in client.get(\"/api/mechanics\").json()}\n+    con = db.connect()\n+    con.execute(\"DELETE FROM job_parts\")\n+    con.execute(\"DELETE FROM invoices\")\n+    con.execute(\"DELETE FROM jobs\")\n+    for name, hours, status, due in jobs:\n+        con.execute(\n+            \"INSERT INTO jobs (customer_id, mechanic_id, work, estimate_hours, status, due_date, created) \"\n+            \"VALUES (1, ?, 'Service', ?, ?, ?, '2026-11-01 09:00:00')\",\n+            (mech[name], hours, status, due),\n+        )\n+    con.commit()\n+    con.close()\n+\n+\n+JOBS = [\n+    (\"Dev\", 8, \"booked\", \"2026-11-23\"),             # Monday: first day of the week, counts\n+    (\"Dev\", 15, \"in progress\", \"2026-11-28\"),       # Saturday: last day of the week, counts\n+    (\"Dev\", 5, \"booked\", \"2026-11-22\"),             # Sunday before: previous week\n+    (\"Dev\", 5, \"booked\", \"2026-11-29\"),             # Sunday after: not in this week\n+    (\"Ravi\", 2.5, \"waiting on parts\", \"2026-11-25\"),\n+    (\"Ravi\", 10, \"ready\", \"2026-11-25\"),            # ready: doesn't count\n+    (\"Ravi\", 10, \"collected\", \"2026-11-24\"),        # collected: doesn't count\n+    (\"Ravi\", 4, \"booked\", \"2026-11-21\"),            # Saturday of the previous week\n+]\n+\n+\n+def test_workload_week_and_exclusions(client):\n+    _set_jobs(client, JOBS)\n+    r = client.get(\"/api/reports/workload/2026-11-25\").json()\n+    assert r[\"ok\"] is True\n+    assert (r[\"week_start\"], r[\"week_end\"]) == (\"2026-11-23\", \"2026-11-28\")\n+    by_name = {m[\"name\"]: m for m in r[\"mechanics\"]}\n+    assert by_name[\"Dev\"] == {\"mechanic_id\": by_name[\"Dev\"][\"mechanic_id\"], \"name\": \"Dev\", \"weekly_capacity_hours\": 20,\n+                              \"workload_hours\": 23, \"spare_hours\": -3, \"overloaded\": True, \"job_count\": 2}\n+    assert by_name[\"Ravi\"][\"workload_hours\"] == 2.5 and by_name[\"Ravi\"][\"job_count\"] == 1\n+    assert by_name[\"Ravi\"][\"spare_hours\"] == 27.5 and by_name[\"Ravi\"][\"overloaded\"] is False\n+    # mechanics with nothing on are still listed\n+    assert by_name[\"Priya\"][\"workload_hours\"] == 0 and by_name[\"Priya\"][\"job_count\"] == 0\n+    assert by_name[\"Priya\"][\"spare_hours\"] == 30\n+    # most overloaded first\n+    assert [m[\"name\"] for m in r[\"mechanics\"]] == [\"Dev\", \"Ravi\", \"Priya\"]\n+\n+\n+def test_workload_week_boundaries(client):\n+    _set_jobs(client, JOBS)\n+    for day in [\"2026-11-23\", \"2026-11-28\", \"2026-11-29\", \"today\"]:  # Mon, Sat, the Sunday after, today (Mon)\n+        r = client.get(f\"/api/reports/workload/{day}\").json()\n+        assert (r[\"week_start\"], r[\"week_end\"]) == (\"2026-11-23\", \"2026-11-28\"), day\n+    # Sunday 2026-11-22 is the end of the week before\n+    r = client.get(\"/api/reports/workload/2026-11-22\").json()\n+    assert (r[\"week_start\"], r[\"week_end\"]) == (\"2026-11-16\", \"2026-11-21\")\n+    by_name = {m[\"name\"]: m for m in r[\"mechanics\"]}\n+    assert by_name[\"Ravi\"][\"workload_hours\"] == 4 and by_name[\"Dev\"][\"workload_hours\"] == 0\n+\n+\n+def test_workload_bad_date(client):\n+    for day in [\"2026-13-01\", \"next-week\"]:\n+        resp = client.get(f\"/api/reports/workload/{day}\")\n+        assert resp.status_code == 200\n+        body = resp.json()\n+        assert body[\"ok\"] is False and body[\"error\"]\n",
+    "tier": "grow",
+    "kind": "unlock",
+    "title": "Let Barnaby text or email customers, for instance to say their bike is ready",
+    "detail": "To text Sofia Ferreira that her Giant Defy is ready to collect.",
+    "technical": "POST /api/customers/{customer_id}/notify (tool notify) in the shop's back office\nText (channel sms, the default) or email a customer, e.g. to say their bike is ready.",
+    "diff": null,
+    "facts": null,
     "voice_ok": false
    },
-   "id": 79,
-   "ts": 1795577911.7152004
+   "id": 62,
+   "ts": 1795645555.7491949
   },
   {
    "type": "approval.resolved",
@@ -1223,36 +1059,8 @@
     "id": "a3",
     "approved": true
    },
-   "id": 79,
-   "ts": 1795577911.7152004
-  },
-  {
-   "type": "growth.build.merged",
-   "data": {
-    "system": "shop",
-    "branch": "barnaby/api-reports-workload-day-090731"
-   },
-   "id": 80,
-   "ts": 1795577911.9876106
-  },
-  {
-   "type": "system.started",
-   "data": {
-    "system": "shop",
-    "base_url": "http://127.0.0.1:8101",
-    "pid": 15968
-   },
-   "id": 81,
-   "ts": 1795577915.750742
-  },
-  {
-   "type": "system.restarted",
-   "data": {
-    "system": "shop",
-    "ok": true
-   },
-   "id": 82,
-   "ts": 1795577915.750742
+   "id": 62,
+   "ts": 1795645555.7491949
   },
   {
    "type": "synapse.run",
@@ -1263,23 +1071,1183 @@
      "--auto",
      "--local",
      "--endpoints",
-     "GET /api/jobs/open,GET /api/jobs/due/{day},GET /api/jobs/{job_id},GET /api/parts/low,GET /api/customers/search/{name},GET /api/mechanics,POST /api/purchase-orders,GET /api/reports/workload/{day}",
-     "--discover"
+     "GET /api/jobs/open,GET /api/jobs/due/{day},GET /api/jobs/{job_id},GET /api/parts/low,GET /api/customers/search/{name},GET /api/mechanics,POST /api/purchase-orders,POST /api/customers/{customer_id}/notify"
     ]
    },
-   "id": 83,
-   "ts": 1795577916.0890157
+   "id": 63,
+   "ts": 1795645555.7491949
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 4,
+    "id": "toolu_01GiJVfZPEBqvbWCSLKkdM6p",
+    "system": "barnaby",
+    "tool": "unlock",
+    "input": {
+     "system": "shop",
+     "endpoint": "POST /api/jobs/{job_id}/status",
+     "ability": "mark jobs as in progress, ready or collected",
+     "reason": "To mark Sofia's service, job 4475, as ready to collect."
+    }
+   },
+   "id": 64,
+   "ts": 1795645556.8369637
   },
   {
    "type": "synapse.built",
    "data": {
     "system": "shop",
-    "seconds": 0.72,
+    "seconds": 1.33,
     "exposed": 8,
-    "discovered": 24
+    "discovered": 23
+   },
+   "id": 65,
+   "ts": 1795645557.078088
+  },
+  {
+   "type": "growth.unlock.done",
+   "data": {
+    "system": "shop",
+    "endpoint": "POST /api/customers/{customer_id}/notify",
+    "tool": "notify",
+    "seconds": 1.33
+   },
+   "id": 66,
+   "ts": 1795645557.0795968
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 4,
+    "id": "toolu_01SmiQU8Eod941DCwmqoLxpF",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"Unlocked POST /api/customers/{customer_id}/notify (tool mcp__shop__notify): you can now text or email customers, for instance to say their bike is ready. Say in a few plain words that you can do it now, and stop; you'll continue with it automatically in a moment.\"}]"
+   },
+   "id": 67,
+   "ts": 1795645557.1143398
+  },
+  {
+   "type": "growth.unlock.proposed",
+   "data": {
+    "system": "shop",
+    "endpoint": "POST /api/jobs/{job_id}/status",
+    "tool": "update_status",
+    "reason": "To mark Sofia's service, job 4475, as ready to collect.",
+    "ability": "mark jobs as in progress, ready or collected"
+   },
+   "id": 68,
+   "ts": 1795645557.1464157
+  },
+  {
+   "type": "approval.requested",
+   "data": {
+    "id": "a4",
+    "tier": "grow",
+    "kind": "unlock",
+    "title": "Let Barnaby mark jobs as in progress, ready or collected",
+    "detail": "To mark Sofia's service, job 4475, as ready to collect.",
+    "technical": "POST /api/jobs/{job_id}/status (tool update_status) in the shop's back office\nChange a job's status: booked, in progress, waiting on parts, ready, or collected.",
+    "diff": null,
+    "facts": null,
+    "voice_ok": false
+   },
+   "id": 69,
+   "ts": 1795645557.1464157
+  },
+  {
+   "type": "approval.resolved",
+   "data": {
+    "id": "a4",
+    "approved": true
+   },
+   "id": 69,
+   "ts": 1795645557.1464157
+  },
+  {
+   "type": "synapse.run",
+   "data": {
+    "system": "shop",
+    "args": [
+     "build",
+     "--auto",
+     "--local",
+     "--endpoints",
+     "GET /api/jobs/open,GET /api/jobs/due/{day},GET /api/jobs/{job_id},GET /api/parts/low,GET /api/customers/search/{name},GET /api/mechanics,POST /api/purchase-orders,POST /api/customers/{customer_id}/notify,POST /api/jobs/{job_id}/status"
+    ]
+   },
+   "id": 70,
+   "ts": 1795645557.1464157
+  },
+  {
+   "type": "synapse.built",
+   "data": {
+    "system": "shop",
+    "seconds": 1.59,
+    "exposed": 9,
+    "discovered": 23
+   },
+   "id": 71,
+   "ts": 1795645558.7328563
+  },
+  {
+   "type": "growth.unlock.done",
+   "data": {
+    "system": "shop",
+    "endpoint": "POST /api/jobs/{job_id}/status",
+    "tool": "update_status",
+    "seconds": 1.59
+   },
+   "id": 72,
+   "ts": 1795645558.7343693
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 4,
+    "id": "toolu_01GiJVfZPEBqvbWCSLKkdM6p",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"Unlocked POST /api/jobs/{job_id}/status (tool mcp__shop__update_status): you can now mark jobs as in progress, ready or collected. Say in a few plain words that you can do it now, and stop; you'll continue with it automatically in a moment.\"}]"
+   },
+   "id": 73,
+   "ts": 1795645558.7425513
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 4,
+    "text": "I can text customers and mark jobs now.",
+    "final": false
+   },
+   "id": 74,
+   "ts": 1795645559.8916426
+  },
+  {
+   "type": "turn.result",
+   "data": {
+    "turn": 4,
+    "ok": true,
+    "ms": 10601,
+    "turns": 3,
+    "cost": 0.19093859999999999
+   },
+   "id": 75,
+   "ts": 1795645563.3507102
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 4,
+    "text": "I can text customers and mark jobs now.",
+    "final": true
+   },
+   "id": 76,
+   "ts": 1795645563.3507102
+  },
+  {
+   "type": "system.reloaded",
+   "data": {
+    "system": "shop"
+   },
+   "id": 77,
+   "ts": 1795645566.3239384
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 4,
+    "text": "I'll text Sofia that her Giant Defy is ready to collect, then mark the job ready. Shall I?",
+    "final": false
+   },
+   "id": 78,
+   "ts": 1795645567.8149886
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 4,
+    "id": "toolu_01UDQJMw2ZYuhMvK6qT6NNun",
+    "system": "shop",
+    "tool": "notify",
+    "input": {
+     "customer_id": 10,
+     "message": "Hi Sofia, your Giant Defy has had its full service and is ready to collect from Spokes & Sprockets. See you soon!",
+     "job_id": 4475
+    }
+   },
+   "id": 79,
+   "ts": 1795645568.7249115
+  },
+  {
+   "type": "approval.requested",
+   "data": {
+    "id": "a5",
+    "tier": "write",
+    "kind": "call",
+    "title": "Text or email a customer: Sofia Ferreira, \u201cHi Sofia, your Giant Defy has had its full se\u2026\u201d, job 4475",
+    "detail": "I'll text Sofia that her Giant Defy is ready to collect, then mark the job ready. Shall I?",
+    "technical": "POST /api/customers/{customer_id}/notify (tool notify)\n{\n \"customer_id\": 10,\n \"message\": \"Hi Sofia, your Giant Defy has had its full service and is ready to collect from Spokes & Sprockets. See you soon!\",\n \"job_id\": 4475\n}",
+    "diff": null,
+    "facts": null,
+    "voice_ok": true
+   },
+   "id": 80,
+   "ts": 1795645568.7353058
+  },
+  {
+   "type": "approval.resolved",
+   "data": {
+    "id": "a5",
+    "approved": true
+   },
+   "id": 80,
+   "ts": 1795645568.7353058
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 4,
+    "id": "toolu_01UDQJMw2ZYuhMvK6qT6NNun",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"notification_id\\\": 3,\\n  \\\"to\\\": \\\"Sofia Ferreira <07700 900110>\\\",\\n  \\\"channel\\\": \\\"sms\\\",\\n  \\\"message\\\": \\\"Hi Sofia, your Giant Defy has had its full service and is ready to collect from Spokes & Sprockets. See you soon!\\\"\\n}\"}]"
+   },
+   "id": 81,
+   "ts": 1795645568.77751
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 4,
+    "id": "toolu_01H9Pxz2Yvy8yfJCA3KKo2sa",
+    "system": "shop",
+    "tool": "update_status",
+    "input": {
+     "job_id": 4475,
+     "status": "ready"
+    }
+   },
+   "id": 82,
+   "ts": 1795645570.1148207
+  },
+  {
+   "type": "approval.requested",
+   "data": {
+    "id": "a6",
+    "tier": "write",
+    "kind": "call",
+    "title": "Change a job's status: job 4475 to ready",
+    "detail": "",
+    "technical": "POST /api/jobs/{job_id}/status (tool update_status)\n{\n \"job_id\": 4475,\n \"status\": \"ready\"\n}",
+    "diff": null,
+    "facts": null,
+    "voice_ok": true
+   },
+   "id": 83,
+   "ts": 1795645570.1248648
+  },
+  {
+   "type": "approval.resolved",
+   "data": {
+    "id": "a6",
+    "approved": true
+   },
+   "id": 83,
+   "ts": 1795645570.1248648
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 4,
+    "id": "toolu_01H9Pxz2Yvy8yfJCA3KKo2sa",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job_id\\\": 4475,\\n  \\\"old_status\\\": \\\"booked\\\",\\n  \\\"new_status\\\": \\\"ready\\\"\\n}\"}]"
    },
    "id": 84,
-   "ts": 1795577916.8045816
+   "ts": 1795645570.1650617
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 4,
+    "text": "I've texted Sofia that her Giant Defy is ready to collect, and her job is now marked ready. When she picks it up, I can mark it collected, which also updates her last visit.",
+    "final": false
+   },
+   "id": 85,
+   "ts": 1795645571.6229208
+  },
+  {
+   "type": "turn.result",
+   "data": {
+    "turn": 4,
+    "ok": true,
+    "ms": 7020,
+    "turns": 3,
+    "cost": 0.216121
+   },
+   "id": 86,
+   "ts": 1795645573.3524714
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 4,
+    "text": "I've texted Sofia that her Giant Defy is ready to collect, and her job is now marked ready. When she picks it up, I can mark it collected, which also updates her last visit.",
+    "final": true
+   },
+   "id": 87,
+   "ts": 1795645573.3524714
+  },
+  {
+   "type": "turn.end",
+   "data": {
+    "turn": 4
+   },
+   "id": 88,
+   "ts": 1795645573.3524714
+  },
+  {
+   "type": "turn.start",
+   "data": {
+    "turn": 5,
+    "text": "Kwame's bike's done too, job 4490. Text him it's ready to collect and mark it ready."
+   },
+   "id": 89,
+   "ts": 1795645573.3524714
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 5,
+    "id": "toolu_01HVYEPjQVN81MZy6rmu6tWA",
+    "system": "shop",
+    "tool": "notify",
+    "input": {
+     "customer_id": 16,
+     "message": "Hi Kwame, your Boardman SLR has its new bottom bracket and is ready to collect from Spokes & Sprockets. See you soon!",
+     "job_id": 4490
+    }
+   },
+   "id": 90,
+   "ts": 1795645575.0671473
+  },
+  {
+   "type": "approval.requested",
+   "data": {
+    "id": "a7",
+    "tier": "write",
+    "kind": "call",
+    "title": "Text or email a customer: Kwame Mensah, \u201cHi Kwame, your Boardman SLR has its new botto\u2026\u201d, job 4490",
+    "detail": "",
+    "technical": "POST /api/customers/{customer_id}/notify (tool notify)\n{\n \"customer_id\": 16,\n \"message\": \"Hi Kwame, your Boardman SLR has its new bottom bracket and is ready to collect from Spokes & Sprockets. See you soon!\",\n \"job_id\": 4490\n}",
+    "diff": null,
+    "facts": null,
+    "voice_ok": true
+   },
+   "id": 91,
+   "ts": 1795645575.0852277
+  },
+  {
+   "type": "approval.resolved",
+   "data": {
+    "id": "a7",
+    "approved": true
+   },
+   "id": 91,
+   "ts": 1795645575.0852277
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 5,
+    "id": "toolu_01HVYEPjQVN81MZy6rmu6tWA",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"notification_id\\\": 4,\\n  \\\"to\\\": \\\"Kwame Mensah <07700 900116>\\\",\\n  \\\"channel\\\": \\\"sms\\\",\\n  \\\"message\\\": \\\"Hi Kwame, your Boardman SLR has its new bottom bracket and is ready to collect from Spokes & Sprockets. See you soon!\\\"\\n}\"}]"
+   },
+   "id": 92,
+   "ts": 1795645575.1496654
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 5,
+    "id": "toolu_01G7bPPmezhHYhZupyumv1fP",
+    "system": "shop",
+    "tool": "update_status",
+    "input": {
+     "job_id": 4490,
+     "status": "ready"
+    }
+   },
+   "id": 93,
+   "ts": 1795645576.6608999
+  },
+  {
+   "type": "approval.requested",
+   "data": {
+    "id": "a8",
+    "tier": "write",
+    "kind": "call",
+    "title": "Change a job's status: job 4490 to ready",
+    "detail": "",
+    "technical": "POST /api/jobs/{job_id}/status (tool update_status)\n{\n \"job_id\": 4490,\n \"status\": \"ready\"\n}",
+    "diff": null,
+    "facts": null,
+    "voice_ok": true
+   },
+   "id": 94,
+   "ts": 1795645576.6763625
+  },
+  {
+   "type": "approval.resolved",
+   "data": {
+    "id": "a8",
+    "approved": true
+   },
+   "id": 94,
+   "ts": 1795645576.6763625
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 5,
+    "id": "toolu_01G7bPPmezhHYhZupyumv1fP",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job_id\\\": 4490,\\n  \\\"old_status\\\": \\\"booked\\\",\\n  \\\"new_status\\\": \\\"ready\\\"\\n}\"}]"
+   },
+   "id": 95,
+   "ts": 1795645576.739381
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 5,
+    "text": "I've texted Kwame that his Boardman is ready to collect, and his job is now marked ready. Since this is the second time today, would you like me to make texting the customer and marking the job ready a single step?",
+    "final": false
+   },
+   "id": 96,
+   "ts": 1795645578.432394
+  },
+  {
+   "type": "turn.result",
+   "data": {
+    "turn": 5,
+    "ok": true,
+    "ms": 6805,
+    "turns": 3,
+    "cost": 0.2363352
+   },
+   "id": 97,
+   "ts": 1795645580.1664858
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 5,
+    "text": "I've texted Kwame that his Boardman is ready to collect, and his job is now marked ready. Since this is the second time today, would you like me to make texting the customer and marking the job ready a single step?",
+    "final": true
+   },
+   "id": 98,
+   "ts": 1795645580.1664858
+  },
+  {
+   "type": "turn.end",
+   "data": {
+    "turn": 5
+   },
+   "id": 99,
+   "ts": 1795645580.1664858
+  },
+  {
+   "type": "turn.start",
+   "data": {
+    "turn": 6,
+    "text": "And Jana's, job 4488. Text her it's ready to collect and mark it ready."
+   },
+   "id": 100,
+   "ts": 1795645580.1664858
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 6,
+    "id": "toolu_01CWX3TjLSgesoCZdCfxvnbY",
+    "system": "shop",
+    "tool": "job_detail",
+    "input": {
+     "job_id": 4488
+    }
+   },
+   "id": 101,
+   "ts": 1795645581.3132856
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 6,
+    "id": "toolu_01CWX3TjLSgesoCZdCfxvnbY",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job\\\": {\\n    \\\"job_id\\\": 4488,\\n    \\\"work\\\": \\\"Suspension fork service\\\",\\n    \\\"estimate_hours\\\": 4.0,\\n    \\\"status\\\": \\\"booked\\\",\\n    \\\"due_date\\\": \\\"2026-11-26\\\",\\n    \\\"notes\\\": \\\"\\\",\\n    \\\"customer_id\\\": 14,\\n    \\\"customer\\\": \\\"Jana Novak\\\",\\n    \\\"customer_phone\\\": \\\"07700 900114\\\",\\n    \\\"bike\\\": \\\"Canyon Grail\\\",\\n    \\\"mechanic_id\\\": 2,\\n    \\\"mechanic\\\": \\\"Ravi\\\"\\n  },\\n  \\\"parts\\\": []\\n}\"}]"
+   },
+   "id": 102,
+   "ts": 1795645581.3768759
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 6,
+    "id": "toolu_015Tm5QokhfWUEaNhwJqkgHB",
+    "system": "shop",
+    "tool": "notify",
+    "input": {
+     "customer_id": 14,
+     "message": "Hi Jana, your Canyon Grail has had its suspension fork service and is ready to collect from Spokes & Sprockets. See you soon!",
+     "job_id": 4488
+    }
+   },
+   "id": 103,
+   "ts": 1795645583.3245854
+  },
+  {
+   "type": "approval.requested",
+   "data": {
+    "id": "a9",
+    "tier": "write",
+    "kind": "call",
+    "title": "Text or email a customer: Jana Novak, \u201cHi Jana, your Canyon Grail has had its suspen\u2026\u201d, job 4488",
+    "detail": "",
+    "technical": "POST /api/customers/{customer_id}/notify (tool notify)\n{\n \"customer_id\": 14,\n \"message\": \"Hi Jana, your Canyon Grail has had its suspension fork service and is ready to collect from Spokes & Sprockets. See you soon!\",\n \"job_id\": 4488\n}",
+    "diff": null,
+    "facts": null,
+    "voice_ok": true
+   },
+   "id": 104,
+   "ts": 1795645583.3337705
+  },
+  {
+   "type": "approval.resolved",
+   "data": {
+    "id": "a9",
+    "approved": true
+   },
+   "id": 104,
+   "ts": 1795645583.3337705
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 6,
+    "id": "toolu_015Tm5QokhfWUEaNhwJqkgHB",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"notification_id\\\": 5,\\n  \\\"to\\\": \\\"Jana Novak <07700 900114>\\\",\\n  \\\"channel\\\": \\\"sms\\\",\\n  \\\"message\\\": \\\"Hi Jana, your Canyon Grail has had its suspension fork service and is ready to collect from Spokes & Sprockets. See you soon!\\\"\\n}\"}]"
+   },
+   "id": 105,
+   "ts": 1795645583.4025607
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 6,
+    "id": "toolu_01S1MikhE7rU2DQdKF8Ua7Qv",
+    "system": "shop",
+    "tool": "update_status",
+    "input": {
+     "job_id": 4488,
+     "status": "ready"
+    }
+   },
+   "id": 106,
+   "ts": 1795645584.6814814
+  },
+  {
+   "type": "approval.requested",
+   "data": {
+    "id": "a10",
+    "tier": "write",
+    "kind": "call",
+    "title": "Change a job's status: job 4488 to ready",
+    "detail": "",
+    "technical": "POST /api/jobs/{job_id}/status (tool update_status)\n{\n \"job_id\": 4488,\n \"status\": \"ready\"\n}",
+    "diff": null,
+    "facts": null,
+    "voice_ok": true
+   },
+   "id": 107,
+   "ts": 1795645584.7151153
+  },
+  {
+   "type": "approval.resolved",
+   "data": {
+    "id": "a10",
+    "approved": true
+   },
+   "id": 107,
+   "ts": 1795645584.7151153
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 6,
+    "id": "toolu_01S1MikhE7rU2DQdKF8Ua7Qv",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job_id\\\": 4488,\\n  \\\"old_status\\\": \\\"booked\\\",\\n  \\\"new_status\\\": \\\"ready\\\"\\n}\"}]"
+   },
+   "id": 108,
+   "ts": 1795645584.7803924
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 6,
+    "text": "I've texted Jana that her Canyon Grail is ready to collect, and her job is marked ready. That's three in a row now. Shall I make this one step, so you only need to give me the job number?",
+    "final": false
+   },
+   "id": 109,
+   "ts": 1795645586.5815346
+  },
+  {
+   "type": "turn.result",
+   "data": {
+    "turn": 6,
+    "ok": true,
+    "ms": 6447,
+    "turns": 4,
+    "cost": 0.2643092
+   },
+   "id": 110,
+   "ts": 1795645586.6213393
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 6,
+    "text": "I've texted Jana that her Canyon Grail is ready to collect, and her job is marked ready. That's three in a row now. Shall I make this one step, so you only need to give me the job number?",
+    "final": true
+   },
+   "id": 111,
+   "ts": 1795645586.6213393
+  },
+  {
+   "type": "turn.end",
+   "data": {
+    "turn": 6
+   },
+   "id": 112,
+   "ts": 1795645586.6213393
+  },
+  {
+   "type": "turn.start",
+   "data": {
+    "turn": 7,
+    "text": "Tom's bike is done, job 4481. Hand it back: text him it's ready and mark it ready. And make handing back a bike a single step, would you? I do it a dozen times a day."
+   },
+   "id": 113,
+   "ts": 1795645586.6213393
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 7,
+    "text": "Gladly. I'll make you one step that takes a job number, texts the customer that their bike is ready to collect, and marks the job ready, then use it for Tom.",
+    "final": false
+   },
+   "id": 114,
+   "ts": 1795645589.0230207
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 7,
+    "id": "toolu_01Hi5eL91Y2LUE2tLSe28Rot",
+    "system": "barnaby",
+    "tool": "compose",
+    "input": {
+     "system": "shop",
+     "name": "Hand back a bike in one step",
+     "description": "Given a job id, look up the job to find its customer and bike, text that customer by SMS that their bike is ready to collect from Spokes & Sprockets (linked to the job), then change the job's status to ready, and return who was texted, the message sent and the job's old and new status."
+    }
+   },
+   "id": 115,
+   "ts": 1795645590.1974075
+  },
+  {
+   "type": "growth.compose.proposed",
+   "data": {
+    "system": "shop",
+    "description": "Given a job id, look up the job to find its customer and bike, text that customer by SMS that their bike is ready to collect from Spokes & Sprockets (linked to the job), then change the job's status to ready, and return who was texted, the message sent and the job's old and new status.",
+    "name": "Hand back a bike in one step"
+   },
+   "id": 116,
+   "ts": 1795645590.232575
+  },
+  {
+   "type": "approval.requested",
+   "data": {
+    "id": "a11",
+    "tier": "grow",
+    "kind": "compose",
+    "title": "Hand back a bike in one step",
+    "detail": "One step instead of several, made from things the shop's back office already does.",
+    "technical": "Synapse Custom mode composes the shop's back office's own functions into one tool:\nGiven a job id, look up the job to find its customer and bike, text that customer by SMS that their bike is ready to collect from Spokes & Sprockets (linked to the job), then change the job's status to ready, and return who was texted, the message sent and the job's old and new status.",
+    "diff": null,
+    "facts": null,
+    "voice_ok": false
+   },
+   "id": 117,
+   "ts": 1795645590.232575
+  },
+  {
+   "type": "approval.resolved",
+   "data": {
+    "id": "a11",
+    "approved": true
+   },
+   "id": 117,
+   "ts": 1795645590.232575
+  },
+  {
+   "type": "synapse.run",
+   "data": {
+    "system": "shop",
+    "args": [
+     "build",
+     "--custom",
+     "-q",
+     "Given a job id, look up the job to find its customer and bike, text that customer by SMS that their bike is ready to collect from Spokes & Sprockets (linked to the job), then change the job's status to ready, and return who was texted, the message sent and the job's old and new status."
+    ]
+   },
+   "id": 118,
+   "ts": 1795645592.0878258
+  },
+  {
+   "type": "synapse.composed",
+   "data": {
+    "system": "shop",
+    "tool": "notify_job_ready_and_update_status",
+    "seconds": 45.0
+   },
+   "id": 119,
+   "ts": 1795645635.265777
+  },
+  {
+   "type": "growth.compose.done",
+   "data": {
+    "system": "shop",
+    "tool": "notify_job_ready_and_update_status",
+    "server": "shop-k1",
+    "name": "Hand back a bike in one step",
+    "seconds": 45.0
+   },
+   "id": 120,
+   "ts": 1795645635.2667763
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 7,
+    "id": "toolu_01Hi5eL91Y2LUE2tLSe28Rot",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"Composed notify_job_ready_and_update_status (tool mcp__shop-k1__notify_job_ready_and_update_status): Hand back a bike in one step. Say in a few plain words that it's one step now, and stop; you'll continue with it automatically.\"}]"
+   },
+   "id": 121,
+   "ts": 1795645635.2742958
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 7,
+    "text": "Handing back a bike is one step now.",
+    "final": false
+   },
+   "id": 122,
+   "ts": 1795645636.1281705
+  },
+  {
+   "type": "turn.result",
+   "data": {
+    "turn": 7,
+    "ok": true,
+    "ms": 53439,
+    "turns": 2,
+    "cost": 0.28294900000000006
+   },
+   "id": 123,
+   "ts": 1795645640.073283
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 7,
+    "text": "Handing back a bike is one step now.",
+    "final": true
+   },
+   "id": 124,
+   "ts": 1795645640.073283
+  },
+  {
+   "type": "system.reloaded",
+   "data": {
+    "system": "shop-k1"
+   },
+   "id": 125,
+   "ts": 1795645643.4886043
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 7,
+    "id": "toolu_01H1d2WRKoaoZ6mdsdHNGZdV",
+    "system": "shop-k1",
+    "tool": "notify_job_ready_and_update_status",
+    "input": {
+     "job_id": 4481
+    }
+   },
+   "id": 126,
+   "ts": 1795645649.0743563
+  },
+  {
+   "type": "approval.requested",
+   "data": {
+    "id": "a12",
+    "tier": "write",
+    "kind": "call",
+    "title": "Hand back a bike in one step: job 4481",
+    "detail": "",
+    "technical": "notify_job_ready_and_update_status (a skill composed for the shop's back office)\n{\n \"job_id\": 4481\n}",
+    "diff": null,
+    "facts": null,
+    "voice_ok": true
+   },
+   "id": 127,
+   "ts": 1795645649.0979385
+  },
+  {
+   "type": "approval.resolved",
+   "data": {
+    "id": "a12",
+    "approved": true
+   },
+   "id": 127,
+   "ts": 1795645649.0979385
+  },
+  {
+   "type": "tool.result",
+   "data": {
+    "turn": 7,
+    "id": "toolu_01H1d2WRKoaoZ6mdsdHNGZdV",
+    "ok": true,
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job_id\\\": 4481,\\n  \\\"customer\\\": \\\"Tom Whitfield\\\",\\n  \\\"customer_id\\\": 4,\\n  \\\"bike\\\": \\\"Brompton C Line\\\",\\n  \\\"message_sent\\\": \\\"Hi Tom Whitfield, your bike (Brompton C Line) is ready to collect from Spokes & Sprockets!\\\",\\n  \\\"notification_channel\\\": \\\"sms\\\",\\n  \\\"old_status\\\": \\\"in progress\\\",\\n  \\\"new_status\\\": \\\"ready\\\"\\n}\"}]"
+   },
+   "id": 128,
+   "ts": 1795645649.1546824
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 7,
+    "text": "Tom Whitfield's been texted that his Brompton is ready to collect, and the job's now marked ready. From now on, just give me the job number and I'll hand the bike back in one go, all twelve times a day if need be.",
+    "final": false
+   },
+   "id": 129,
+   "ts": 1795645650.9205735
+  },
+  {
+   "type": "turn.result",
+   "data": {
+    "turn": 7,
+    "ok": true,
+    "ms": 5158,
+    "turns": 2,
+    "cost": 0.29864960000000007
+   },
+   "id": 130,
+   "ts": 1795645652.7397673
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 7,
+    "text": "Tom Whitfield's been texted that his Brompton is ready to collect, and the job's now marked ready. From now on, just give me the job number and I'll hand the bike back in one go, all twelve times a day if need be.",
+    "final": true
+   },
+   "id": 131,
+   "ts": 1795645652.7397673
+  },
+  {
+   "type": "turn.end",
+   "data": {
+    "turn": 7
+   },
+   "id": 132,
+   "ts": 1795645652.7397673
+  },
+  {
+   "type": "turn.start",
+   "data": {
+    "turn": 8,
+    "text": "Who's overloaded this week?"
+   },
+   "id": 133,
+   "ts": 1795645654.3947287
+  },
+  {
+   "type": "say",
+   "data": {
+    "turn": 8,
+    "text": "The system can't tell me that yet, a report Theo's had down as coming soon since 2011, so I'll make it one now.",
+    "final": false
+   },
+   "id": 134,
+   "ts": 1795645657.7364514
+  },
+  {
+   "type": "tool.call",
+   "data": {
+    "turn": 8,
+    "id": "toolu_01Lxo7JFRNkyC9trNJSTqr2n",
+    "system": "barnaby",
+    "tool": "build",
+    "input": {
+     "system": "shop",
+     "method": "GET",
+     "path": "/api/reports/workload/{day}",
+     "spec": "Mechanic workload for the shop week containing {day}. {day} is YYYY-MM-DD or the word 'today' (use the app's existing notion of today, honouring SPOKES_TODAY). Per the README, the shop week is Monday to Saturday: week_start = the Monday on or before day, week_end = that Monday + 5 days (Saturday); if day is a Sunday, use the following Monday-Saturday week. A mechanic's workload = the sum of estimate_hours (hours, not minutes) of their jobs whose due_date is between week_start and week_end inclusive and whose status is NOT 'ready' or 'collected'. Compare it with the mechanic's weekly_capacity_hours. Return {\"ok\": true, \"week_start\": \"YYYY-MM-DD\", \"week_end\": \"YYYY-MM-DD\", \"mechanics\": [ {\"mechanic_id\", \"mechanic\" (first name), \"capacity_hours\", \"workload_hours\", \"spare_hours\" (capacity minus workload, negative when over), \"overloaded\" (true when workload_hours > capacity_hours), \"jobs\": [ {\"job_id\", \"work\", \"estimate_hours\", \"due_date\", \"status\", \"customer\"} ] } ]}, including every mechanic even with zero workload, sorted by spare_hours ascending (most overloaded first). Invalid date returns {\"ok\": false, \"error\": \"...\"} with HTTP 200. Follow the README conventions: logic as a documented function in services.py, route with its full path in routes_reports.py, and a pytest test in tests/ using the throwaway database that checks the week boundaries, that ready/collected jobs are excluded, and the overloaded flag."
+    }
+   },
+   "id": 135,
+   "ts": 1795645662.8992925
+  },
+  {
+   "type": "growth.build.started",
+   "data": {
+    "system": "shop",
+    "method": "GET",
+    "path": "/api/reports/workload/{day}",
+    "spec": "Mechanic workload for the shop week containing {day}. {day} is YYYY-MM-DD or the word 'today' (use the app's existing notion of today, honouring SPOKES_TODAY). Per the README, the shop week is Monday to Saturday: week_start = the Monday on or before day, week_end = that Monday + 5 days (Saturday); if day is a Sunday, use the following Monday-Saturday week. A mechanic's workload = the sum of estimate_hours (hours, not minutes) of their jobs whose due_date is between week_start and week_end inclusive and whose status is NOT 'ready' or 'collected'. Compare it with the mechanic's weekly_capacity_hours. Return {\"ok\": true, \"week_start\": \"YYYY-MM-DD\", \"week_end\": \"YYYY-MM-DD\", \"mechanics\": [ {\"mechanic_id\", \"mechanic\" (first name), \"capacity_hours\", \"workload_hours\", \"spare_hours\" (capacity minus workload, negative when over), \"overloaded\" (true when workload_hours > capacity_hours), \"jobs\": [ {\"job_id\", \"work\", \"estimate_hours\", \"due_date\", \"status\", \"customer\"} ] } ]}, including every mechanic even with zero workload, sorted by spare_hours ascending (most overloaded first). Invalid date returns {\"ok\": false, \"error\": \"...\"} with HTTP 200. Follow the README conventions: logic as a documented function in services.py, route with its full path in routes_reports.py, and a pytest test in tests/ using the throwaway database that checks the week boundaries, that ready/collected jobs are excluded, and the overloaded flag.",
+    "branch": "barnaby/api-reports-workload-day-035742"
+   },
+   "id": 136,
+   "ts": 1795645662.942972
+  },
+  {
+   "type": "growth.build.step",
+   "data": {
+    "system": "shop",
+    "tool": "Bash",
+    "target": "s/vibe-a-thon/.demo/worktree-api-reports-workload-day-035742\" && ls -R | grep -v __pycache__ | head -50 && cat README.md"
+   },
+   "id": 137,
+   "ts": 1795645673.4905427
+  },
+  {
+   "type": "growth.build.step",
+   "data": {
+    "system": "shop",
+    "tool": "Bash",
+    "target": "ad-day-035742\" && cat services.py routes_reports.py db.py tests/conftest.py && cat tests/test_api.py && head -80 seed.py"
+   },
+   "id": 138,
+   "ts": 1795645676.390219
+  },
+  {
+   "type": "growth.build.step",
+   "data": {
+    "system": "shop",
+    "tool": "Bash",
+    "target": "worktree-api-reports-workload-day-035742\" && sed -n 80,200p seed.py; grep -rn \"week_bounds\" --include=*.py .; git status"
+   },
+   "id": 139,
+   "ts": 1795645680.3427584
+  },
+  {
+   "type": "growth.build.step",
+   "data": {
+    "system": "shop",
+    "tool": "Bash",
+    "target": ".status_code == 200\n        body = r.json()\n        assert body[\"ok\"] is False and body[\"error\"]\nEOF\npython -m pytest -q"
+   },
+   "id": 140,
+   "ts": 1795645709.0432441
+  },
+  {
+   "type": "growth.build.step",
+   "data": {
+    "system": "shop",
+    "tool": "Read",
+    "target": "services.py"
+   },
+   "id": 141,
+   "ts": 1795645711.0843034
+  },
+  {
+   "type": "growth.build.step",
+   "data": {
+    "system": "shop",
+    "tool": "Read",
+    "target": "routes_reports.py"
+   },
+   "id": 142,
+   "ts": 1795645711.5864005
+  },
+  {
+   "type": "growth.build.step",
+   "data": {
+    "system": "shop",
+    "tool": "Edit",
+    "target": "services.py"
+   },
+   "id": 143,
+   "ts": 1795645721.8101406
+  },
+  {
+   "type": "growth.build.step",
+   "data": {
+    "system": "shop",
+    "tool": "Edit",
+    "target": "routes_reports.py"
+   },
+   "id": 144,
+   "ts": 1795645724.6081057
+  },
+  {
+   "type": "growth.build.step",
+   "data": {
+    "system": "shop",
+    "tool": "Write",
+    "target": "tests\\test_workload.py"
+   },
+   "id": 145,
+   "ts": 1795645737.9195738
+  },
+  {
+   "type": "growth.build.step",
+   "data": {
+    "system": "shop",
+    "tool": "Bash",
+    "target": "python -m pytest -q"
+   },
+   "id": 146,
+   "ts": 1795645739.8656657
+  },
+  {
+   "type": "growth.build.written",
+   "data": {
+    "system": "shop",
+    "seconds": 88.1,
+    "turns": 11,
+    "ok": true
+   },
+   "id": 147,
+   "ts": 1795645756.2213597
+  },
+  {
+   "type": "growth.build.tested",
+   "data": {
+    "system": "shop",
+    "passed": true,
+    "result": "24 passed, 1 warning in 3.36s"
+   },
+   "id": 148,
+   "ts": 1795645764.374477
+  },
+  {
+   "type": "growth.build.explained",
+   "data": {
+    "system": "shop",
+    "name": "a weekly workload report",
+    "summary": "It shows how many hours of unfinished work each mechanic has due in a given week, how that compares with the hours they can do, and who is overbooked.\nIt only reads the jobs, the customers' names and the mechanics' weekly hours, and changes nothing.\nTheo's 19 checks still pass, and so do the 5 new ones.\nIf you change your mind, it can be undone."
+   },
+   "id": 149,
+   "ts": 1795645764.4311173
+  },
+  {
+   "type": "say",
+   "data": {
+    "text": "I've made a weekly workload report, which only reads the jobs, the customers' names and the mechanics' weekly hours and changes nothing. Theo's checks all still pass, it can be undone, and it's on your display to approve.",
+    "final": false
+   },
+   "id": 150,
+   "ts": 1795645764.4321158
+  },
+  {
+   "type": "approval.requested",
+   "data": {
+    "id": "a13",
+    "tier": "build",
+    "kind": "build",
+    "title": "Add a weekly workload report to the shop's back office",
+    "detail": "It shows how many hours of unfinished work each mechanic has due in a given week, how that compares with the hours they can do, and who is overbooked.\nIt only reads the jobs, the customers' names and the mechanics' weekly hours, and changes nothing.\nTheo's 19 checks still pass, and so do the 5 new ones.\nIf you change your mind, it can be undone.",
+    "technical": "GET /api/reports/workload/{day} in the shop's back office, on branch barnaby/api-reports-workload-day-035742\nAdded a weekly mechanic workload report that shows, for the Monday-to-Saturday week containing a given day (a Sunday means the week after), each mechanic's open job hours against their weekly capacity, their spare hours, whether they're overloaded, and the jobs behind those hours, with tests for the week edges, the exclusion of ready and collected jobs, and the overloaded flag.\nTests: 24 passed, 1 warning in 3.36s",
+    "diff": "diff --git a/routes_reports.py b/routes_reports.py\nindex 0168031..7033cf6 100644\n--- a/routes_reports.py\n+++ b/routes_reports.py\n@@ -19,3 +19,18 @@ def takings(day: str):\n     if day == \"today\":\n         day = today()\n     return services.takings_on(day)\n+\n+\n+@router.get(\"/api/reports/workload/{day}\")\n+def workload(day: str):\n+    \"\"\"Mechanic workload for the shop week (Monday to Saturday) containing a day; a Sunday means the week ahead.\n+    day is YYYY-MM-DD, or the word 'today'.\n+\n+    Returns {ok: true, week_start, week_end, mechanics: [{mechanic_id, mechanic, capacity_hours, workload_hours,\n+    spare_hours, overloaded, jobs: [{job_id, work, estimate_hours, due_date, status, customer}]}]}.\n+    Workload is the estimate hours of jobs due that week that aren't ready or collected yet. Every mechanic is\n+    listed, most overloaded (least spare hours) first. A bad date gives {ok: false, error}.\n+    \"\"\"\n+    if day == \"today\":\n+        day = today()\n+    return services.mechanic_workload(day)\ndiff --git a/services.py b/services.py\nindex b50fa41..b5e6de6 100644\n--- a/services.py\n+++ b/services.py\n@@ -360,3 +360,57 @@ def week_bounds(day=None):\n     monday = date.fromordinal(d.toordinal() - d.weekday())\n     saturday = date.fromordinal(monday.toordinal() + 5)\n     return monday.isoformat(), saturday.isoformat()\n+\n+\n+def mechanic_workload(day):\n+    \"\"\"Each mechanic's workload for the shop week (Monday to Saturday) containing `day` (YYYY-MM-DD).\n+\n+    If `day` is a Sunday the following Monday-Saturday week is used. Workload is the estimate hours of a\n+    mechanic's jobs due that week that aren't 'ready' or 'collected' yet, compared with their weekly capacity.\n+\n+    Returns {ok: True, week_start, week_end, mechanics: [{mechanic_id, mechanic, capacity_hours, workload_hours,\n+    spare_hours, overloaded, jobs: [{job_id, work, estimate_hours, due_date, status, customer}]}]}, with every\n+    mechanic included (even with no jobs) and sorted by spare_hours, most overloaded first.\n+    spare_hours is capacity minus workload (negative when over); overloaded is True when workload > capacity.\n+    Returns {ok: False, error} if `day` isn't a valid YYYY-MM-DD date.\n+    \"\"\"\n+    try:\n+        if len(day) != 10:\n+            raise ValueError\n+        d = datetime.strptime(day, \"%Y-%m-%d\").date()\n+    except (TypeError, ValueError):\n+        return {\"ok\": False, \"error\": f\"'{day}' isn't a date. Use YYYY-MM-DD or 'today'\"}\n+    if d.weekday() == 6:  # Sunday: the shop's closed, look at the week ahead\n+        d = date.fromordinal(d.toordinal() + 1)\n+    monday = date.fromordinal(d.toordinal() - d.weekday())\n+    week_start = monday.isoformat()\n+    week_end = date.fromordinal(monday.toordinal() + 5).isoformat()\n+\n+    con = connect()\n+    mechanics = con.execute(\"SELECT id, name, weekly_capacity_hours FROM mechanics ORDER BY id\").fetchall()\n+    jobs = con.execute(\n+        \"\"\"SELECT j.id AS job_id, j.mechanic_id, j.work, j.estimate_hours, j.due_date, j.status, c.name AS customer\n+           FROM jobs j JOIN customers c ON c.id = j.customer_id\n+           WHERE j.due_date BETWEEN ? AND ? AND j.status NOT IN ('ready', 'collected')\n+           ORDER BY j.due_date, j.id\"\"\",\n+        (week_start, week_end),\n+    ).fetchall()\n+    con.close()\n+\n+    result = []\n+    for m in mechanics:\n+        mine = [{k: j[k] for k in (\"job_id\", \"work\", \"estimate_hours\", \"due_date\", \"status\", \"customer\")}\n+                for j in jobs if j[\"mechanic_id\"] == m[\"id\"]]\n+        capacity = m[\"weekly_capacity_hours\"]\n+        workload = round(sum(j[\"estimate_hours\"] for j in mine), 2)\n+        result.append({\n+            \"mechanic_id\": m[\"id\"],\n+            \"mechanic\": m[\"name\"],\n+            \"capacity_hours\": capacity,\n+            \"workload_hours\": workload,\n+            \"spare_hours\": round(capacity - workload, 2),\n+            \"overloaded\": workload > capacity,\n+            \"jobs\": mine,\n+        })\n+    result.sort(key=lambda r: (r[\"spare_hours\"], r[\"mechanic_id\"]))\n+    return {\"ok\": True, \"week_start\": week_start, \"week_end\": week_end, \"mechanics\": result}\ndiff --git a/tests/test_workload.py b/tests/test_workload.py\nnew file mode 100644\nindex 0000000..b56bb20\n--- /dev/null\n+++ b/tests/test_workload.py\n@@ -0,0 +1,78 @@\n+# tests for the mechanic workload report. \"today\" is fixed to Monday 2026-11-23 (see conftest.py).\n+\n+\n+def _by_name(body):\n+    return {m[\"mechanic\"]: m for m in body[\"mechanics\"]}\n+\n+\n+def _book(client, work, hours, due, mechanic):\n+    return client.post(\"/api/jobs\", json={\"customer_id\": 1, \"work\": work, \"estimate_hours\": hours,\n+                                          \"due_date\": due, \"mechanic\": mechanic, \"bike_id\": None}).json()\n+\n+\n+def test_workload_this_week(client):\n+    body = client.get(\"/api/reports/workload/today\").json()\n+    assert body[\"ok\"] is True\n+    assert (body[\"week_start\"], body[\"week_end\"]) == (\"2026-11-23\", \"2026-11-28\")\n+    assert [m[\"mechanic\"] for m in body[\"mechanics\"]] == [\"Dev\", \"Ravi\", \"Priya\"]  # most overloaded first\n+    mechs = _by_name(body)\n+    dev, ravi, priya = mechs[\"Dev\"], mechs[\"Ravi\"], mechs[\"Priya\"]\n+    assert (dev[\"capacity_hours\"], dev[\"workload_hours\"], dev[\"spare_hours\"], dev[\"overloaded\"]) == (20, 34.0, -14.0, True)\n+    assert (ravi[\"workload_hours\"], ravi[\"spare_hours\"], ravi[\"overloaded\"]) == (19.0, 11.0, False)\n+    assert (priya[\"workload_hours\"], priya[\"spare_hours\"], priya[\"overloaded\"], priya[\"jobs\"]) == (0, 30, False, [])\n+    assert set(dev[\"jobs\"][0]) == {\"job_id\", \"work\", \"estimate_hours\", \"due_date\", \"status\", \"customer\"}\n+\n+\n+def test_workload_excludes_ready_and_collected(client):\n+    body = client.get(\"/api/reports/workload/2026-11-25\").json()\n+    job_ids = {j[\"job_id\"] for m in body[\"mechanics\"] for j in m[\"jobs\"]}\n+    assert 4468 not in job_ids and 4465 not in job_ids  # ready, due today\n+    assert all(j[\"status\"] not in (\"ready\", \"collected\") for m in body[\"mechanics\"] for j in m[\"jobs\"])\n+    # Tom's Brompton (3 hours) is fixed: Dev drops from 34 to 31\n+    client.post(\"/api/jobs/4481/status\", json={\"status\": \"ready\"})\n+    dev = _by_name(client.get(\"/api/reports/workload/today\").json())[\"Dev\"]\n+    assert dev[\"workload_hours\"] == 31.0 and 4481 not in {j[\"job_id\"] for j in dev[\"jobs\"]}\n+    # and collected doesn't count either\n+    client.post(\"/api/jobs/4478/status\", json={\"status\": \"collected\"})\n+    dev = _by_name(client.get(\"/api/reports/workload/today\").json())[\"Dev\"]\n+    assert dev[\"workload_hours\"] == 29.5\n+\n+\n+def test_workload_week_boundaries(client):\n+    # Saturday is the last day of the week\n+    sat = client.get(\"/api/reports/workload/2026-11-28\").json()\n+    assert (sat[\"week_start\"], sat[\"week_end\"]) == (\"2026-11-23\", \"2026-11-28\")\n+    # Sunday looks at the following week; this week's jobs fall outside it\n+    sun = client.get(\"/api/reports/workload/2026-11-29\").json()\n+    assert (sun[\"week_start\"], sun[\"week_end\"]) == (\"2026-11-30\", \"2026-12-05\")\n+    assert all(m[\"workload_hours\"] == 0 for m in sun[\"mechanics\"])\n+    assert client.get(\"/api/reports/workload/2026-11-22\").json()[\"week_start\"] == \"2026-11-23\"\n+    assert client.get(\"/api/reports/workload/2026-11-21\").json()[\"week_start\"] == \"2026-11-16\"\n+    # a job due on the Saturday counts; ones due the Sunday before or after don't\n+    sat_job = _book(client, \"Sat job\", 5.0, \"2026-11-28\", \"Priya\")\n+    _book(client, \"Sun after\", 7.0, \"2026-11-29\", \"Priya\")\n+    _book(client, \"Sun before\", 4.0, \"2026-11-22\", \"Priya\")\n+    mon_job = _book(client, \"Mon job\", 2.0, \"2026-11-23\", \"Priya\")\n+    priya = _by_name(client.get(\"/api/reports/workload/today\").json())[\"Priya\"]\n+    assert priya[\"workload_hours\"] == 7.0\n+    assert [j[\"job_id\"] for j in priya[\"jobs\"]] == [mon_job[\"job_id\"], sat_job[\"job_id\"]]\n+\n+\n+def test_workload_overloaded_flag(client):\n+    # Priya at exactly capacity is not overloaded; one more hour tips her over\n+    _book(client, \"Big rebuild\", 30.0, \"2026-11-25\", \"Priya\")\n+    priya = _by_name(client.get(\"/api/reports/workload/today\").json())[\"Priya\"]\n+    assert (priya[\"workload_hours\"], priya[\"spare_hours\"], priya[\"overloaded\"]) == (30.0, 0.0, False)\n+    _book(client, \"Puncture\", 1.0, \"2026-11-26\", \"Priya\")\n+    body = client.get(\"/api/reports/workload/today\").json()\n+    priya = _by_name(body)[\"Priya\"]\n+    assert (priya[\"workload_hours\"], priya[\"spare_hours\"], priya[\"overloaded\"]) == (31.0, -1.0, True)\n+    assert [m[\"mechanic\"] for m in body[\"mechanics\"]] == [\"Dev\", \"Priya\", \"Ravi\"]\n+\n+\n+def test_workload_bad_date(client):\n+    for bad in [\"2026-13-01\", \"tomorrow\", \"2026-11-31\", \"20261123\"]:\n+        r = client.get(f\"/api/reports/workload/{bad}\")\n+        assert r.status_code == 200\n+        body = r.json()\n+        assert body[\"ok\"] is False and body[\"error\"]\n",
+    "facts": null,
+    "voice_ok": false
+   },
+   "id": 151,
+   "ts": 1795645764.4321158
+  },
+  {
+   "type": "approval.resolved",
+   "data": {
+    "id": "a13",
+    "approved": true
+   },
+   "id": 151,
+   "ts": 1795645764.4321158
+  },
+  {
+   "type": "growth.build.merged",
+   "data": {
+    "system": "shop",
+    "branch": "barnaby/api-reports-workload-day-035742"
+   },
+   "id": 152,
+   "ts": 1795645764.6312554
+  },
+  {
+   "type": "system.started",
+   "data": {
+    "system": "shop",
+    "base_url": "http://127.0.0.1:8101",
+    "pid": 18228
+   },
+   "id": 153,
+   "ts": 1795645768.9922426
+  },
+  {
+   "type": "system.restarted",
+   "data": {
+    "system": "shop",
+    "ok": true
+   },
+   "id": 154,
+   "ts": 1795645768.9922426
+  },
+  {
+   "type": "synapse.run",
+   "data": {
+    "system": "shop",
+    "args": [
+     "build",
+     "--auto",
+     "--local",
+     "--endpoints",
+     "GET /api/jobs/open,GET /api/jobs/due/{day},GET /api/jobs/{job_id},GET /api/parts/low,GET /api/customers/search/{name},GET /api/mechanics,POST /api/purchase-orders,POST /api/customers/{customer_id}/notify,POST /api/jobs/{job_id}/status,GET /api/reports/workload/{day}",
+     "--discover"
+    ]
+   },
+   "id": 155,
+   "ts": 1795645769.2002113
+  },
+  {
+   "type": "synapse.built",
+   "data": {
+    "system": "shop",
+    "seconds": 0.48,
+    "exposed": 10,
+    "discovered": 24
+   },
+   "id": 156,
+   "ts": 1795645769.68139
   },
   {
    "type": "growth.build.done",
@@ -1293,160 +2261,160 @@
     ],
     "ok": true
    },
-   "id": 85,
-   "ts": 1795577916.8065825
+   "id": 157,
+   "ts": 1795645769.6823897
   },
   {
    "type": "tool.result",
    "data": {
-    "turn": 4,
-    "id": "toolu_01W6ZNKDJ1kD3EfaFdMcaPYk",
+    "turn": 8,
+    "id": "toolu_01Lxo7JFRNkyC9trNJSTqr2n",
     "ok": true,
-    "preview": "[{\"type\": \"text\", \"text\": \"Added a weekly workload report for the mechanics, with the person's approval (mcp__shop__workload). They have already heard what it does. Say in a few plain words that it's in place, and stop; you'll continue with it automatically.\"}]"
+    "preview": "[{\"type\": \"text\", \"text\": \"Added a weekly workload report, with the person's approval (mcp__shop__workload). They have already heard what it does. Say in a few plain words that it's in place, and stop; you'll continue with it automatically.\"}]"
    },
-   "id": 86,
-   "ts": 1795577916.9520717
+   "id": 158,
+   "ts": 1795645769.7967646
   },
   {
    "type": "say",
    "data": {
-    "turn": 4,
-    "text": "The weekly workload report is set up now.",
+    "turn": 8,
+    "text": "The weekly workload report is in place.",
     "final": false
    },
-   "id": 87,
-   "ts": 1795577918.6190853
+   "id": 159,
+   "ts": 1795645770.623566
   },
   {
    "type": "turn.result",
    "data": {
-    "turn": 4,
+    "turn": 8,
     "ok": true,
-    "ms": 73960,
+    "ms": 118614,
     "turns": 2,
-    "cost": 0.17102040000000002
+    "cost": 0.3337872000000001
    },
-   "id": 88,
-   "ts": 1795577918.6306117
+   "id": 160,
+   "ts": 1795645773.019558
   },
   {
    "type": "say",
    "data": {
-    "turn": 4,
-    "text": "The weekly workload report is set up now.",
+    "turn": 8,
+    "text": "The weekly workload report is in place.",
     "final": true
    },
-   "id": 89,
-   "ts": 1795577918.6306117
+   "id": 161,
+   "ts": 1795645773.019558
   },
   {
    "type": "system.reloaded",
    "data": {
     "system": "shop"
    },
-   "id": 90,
-   "ts": 1795577920.1516526
+   "id": 162,
+   "ts": 1795645774.4653828
   },
   {
    "type": "tool.call",
    "data": {
-    "turn": 4,
-    "id": "toolu_01EE15PUdu1hMuphrM8DPn83",
+    "turn": 8,
+    "id": "toolu_01HQWHDSYGYorURDiLVhaiCG",
     "system": "shop",
     "tool": "workload",
     "input": {
-     "day": "2026-11-23"
+     "day": "today"
     }
    },
-   "id": 91,
-   "ts": 1795577922.297529
+   "id": 163,
+   "ts": 1795645775.894469
   },
   {
    "type": "tool.result",
    "data": {
-    "turn": 4,
-    "id": "toolu_01EE15PUdu1hMuphrM8DPn83",
+    "turn": 8,
+    "id": "toolu_01HQWHDSYGYorURDiLVhaiCG",
     "ok": true,
-    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"week_start\\\": \\\"2026-11-23\\\",\\n  \\\"week_end\\\": \\\"2026-11-28\\\",\\n  \\\"mechanics\\\": [\\n    {\\n      \\\"mechanic_id\\\": 1,\\n      \\\"name\\\": \\\"Dev\\\",\\n      \\\"weekly_capacity_hours\\\": 20.0,\\n      \\\"workload_hours\\\": 31.0,\\n      \\\"spare_hours\\\": -11.0,\\n      \\\"overloaded\\\": true,\\n      \\\"job_count\\\": 9\\n    },\\n    {\\n      \\\"mechanic_id\\\": 2,\\n      \\\"name\\\": \\\"Ravi\\\",\\n      \\\"weekly_capacity_hours\\\": 30.0,\\n      \\\"workload_hours\\\": 22.0,\\n      \\\"spare_hours\\\": 8.0,\\n      \\\"overloaded\\\": false,\\n      \\\"job_count\\\": 9\\n    },\\n    {\\n"
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"week_start\\\": \\\"2026-11-23\\\",\\n  \\\"week_end\\\": \\\"2026-11-28\\\",\\n  \\\"mechanics\\\": [\\n    {\\n      \\\"mechanic_id\\\": 1,\\n      \\\"mechanic\\\": \\\"Dev\\\",\\n      \\\"capacity_hours\\\": 20.0,\\n      \\\"workload_hours\\\": 31.0,\\n      \\\"spare_hours\\\": -11.0,\\n      \\\"overloaded\\\": true,\\n      \\\"jobs\\\": [\\n        {\\n          \\\"job_id\\\": 4471,\\n          \\\"work\\\": \\\"Wheel build (front, 32 hole)\\\",\\n          \\\"estimate_hours\\\": 6.0,\\n          \\\"due_date\\\": \\\"2026-11-24\\\",\\n          \\\"status\\\": \\\"booked\\\",\\n          \\\"customer\\\": \\\"Rachel Okafor\\\"\\n      "
    },
-   "id": 92,
-   "ts": 1795577922.3376665
+   "id": 164,
+   "ts": 1795645775.9267058
   },
   {
    "type": "say",
    "data": {
-    "turn": 4,
-    "text": "Dev's the one who's overloaded. He has thirty-one hours of work this week against his twenty, so he's eleven over. Ravi still has eight hours spare, and Priya has nothing booked at all, so she could take every hour of Dev's overflow if you'd like me to move some of his jobs to her.",
+    "turn": 8,
+    "text": "Dev's the one: he's down for thirty-one hours this week against his twenty, so eleven over. Ravi has nineteen and a half hours spare, and Priya has nothing booked at all. Shall I move tomorrow's three jobs to Priya, since Dev's at the other shop on Tuesdays? That would bring him down to twenty-two and a half hours, so I'd move one more small job as well.",
     "final": false
    },
-   "id": 93,
-   "ts": 1795577924.5101707
+   "id": 165,
+   "ts": 1795645779.3110867
   },
   {
    "type": "turn.result",
    "data": {
-    "turn": 4,
+    "turn": 8,
     "ok": true,
-    "ms": 4371,
+    "ms": 6929,
     "turns": 2,
-    "cost": 0.18760500000000002
+    "cost": 0.3647976000000001
    },
-   "id": 94,
-   "ts": 1795577924.544774
+   "id": 166,
+   "ts": 1795645781.4048905
   },
   {
    "type": "say",
    "data": {
-    "turn": 4,
-    "text": "Dev's the one who's overloaded. He has thirty-one hours of work this week against his twenty, so he's eleven over. Ravi still has eight hours spare, and Priya has nothing booked at all, so she could take every hour of Dev's overflow if you'd like me to move some of his jobs to her.",
+    "turn": 8,
+    "text": "Dev's the one: he's down for thirty-one hours this week against his twenty, so eleven over. Ravi has nineteen and a half hours spare, and Priya has nothing booked at all. Shall I move tomorrow's three jobs to Priya, since Dev's at the other shop on Tuesdays? That would bring him down to twenty-two and a half hours, so I'd move one more small job as well.",
     "final": true
    },
-   "id": 95,
-   "ts": 1795577924.544774
+   "id": 167,
+   "ts": 1795645781.4048905
   },
   {
    "type": "turn.end",
    "data": {
-    "turn": 4
+    "turn": 8
    },
-   "id": 96,
-   "ts": 1795577924.544774
+   "id": 168,
+   "ts": 1795645781.4048905
   },
   {
    "type": "turn.start",
    "data": {
-    "turn": 5,
+    "turn": 9,
     "text": "Move Dev's two wheel builds to Priya, please."
    },
-   "id": 97,
-   "ts": 1795577924.9027588
+   "id": 169,
+   "ts": 1795645781.64687
   },
   {
    "type": "say",
    "data": {
-    "turn": 5,
-    "text": "I can't hand jobs to another mechanic myself yet, but the system has a way to do it, so shall I take that on?",
+    "turn": 9,
+    "text": "I can't reassign jobs myself yet, but Theo built the system a way to. Shall I take that on?",
     "final": false
    },
-   "id": 98,
-   "ts": 1795577927.096415
+   "id": 170,
+   "ts": 1795645782.7186706
   },
   {
    "type": "tool.call",
    "data": {
-    "turn": 5,
-    "id": "toolu_011KznJi1UQxku19oi9UgWXK",
+    "turn": 9,
+    "id": "toolu_01Nic8VfqRVMFkwtSVqfyuRQ",
     "system": "barnaby",
     "tool": "unlock",
     "input": {
      "system": "shop",
      "endpoint": "POST /api/jobs/{job_id}/assign",
-     "ability": "hand jobs from one mechanic to another",
-     "reason": "To move Dev's two wheel builds to Priya, since Dev is eleven hours over this week."
+     "ability": "give jobs to a different mechanic",
+     "reason": "To move Dev's two wheel builds, for Rachel Okafor and Magnus Lindqvist, over to Priya."
     }
    },
-   "id": 99,
-   "ts": 1795577928.254787
+   "id": 171,
+   "ts": 1795645783.770932
   },
   {
    "type": "growth.unlock.proposed",
@@ -1454,35 +2422,36 @@
     "system": "shop",
     "endpoint": "POST /api/jobs/{job_id}/assign",
     "tool": "assign",
-    "reason": "To move Dev's two wheel builds to Priya, since Dev is eleven hours over this week.",
-    "ability": "hand jobs from one mechanic to another"
+    "reason": "To move Dev's two wheel builds, for Rachel Okafor and Magnus Lindqvist, over to Priya.",
+    "ability": "give jobs to a different mechanic"
    },
-   "id": 100,
-   "ts": 1795577928.2778602
+   "id": 172,
+   "ts": 1795645783.78753
   },
   {
    "type": "approval.requested",
    "data": {
-    "id": "a4",
+    "id": "a14",
     "tier": "grow",
     "kind": "unlock",
-    "title": "Let Barnaby hand jobs from one mechanic to another",
-    "detail": "To move Dev's two wheel builds to Priya, since Dev is eleven hours over this week.",
+    "title": "Let Barnaby give jobs to a different mechanic",
+    "detail": "To move Dev's two wheel builds, for Rachel Okafor and Magnus Lindqvist, over to Priya.",
     "technical": "POST /api/jobs/{job_id}/assign (tool assign) in the shop's back office\nGive a job to a different mechanic, by first name (e.g. Priya).",
     "diff": null,
+    "facts": null,
     "voice_ok": false
    },
-   "id": 101,
-   "ts": 1795577928.2778602
+   "id": 173,
+   "ts": 1795645783.78753
   },
   {
    "type": "approval.resolved",
    "data": {
-    "id": "a4",
+    "id": "a14",
     "approved": true
    },
-   "id": 101,
-   "ts": 1795577928.2778602
+   "id": 173,
+   "ts": 1795645783.78753
   },
   {
    "type": "synapse.run",
@@ -1493,34 +2462,22 @@
      "--auto",
      "--local",
      "--endpoints",
-     "GET /api/jobs/open,GET /api/jobs/due/{day},GET /api/jobs/{job_id},GET /api/parts/low,GET /api/customers/search/{name},GET /api/mechanics,POST /api/purchase-orders,GET /api/reports/workload/{day},POST /api/jobs/{job_id}/assign"
+     "GET /api/jobs/open,GET /api/jobs/due/{day},GET /api/jobs/{job_id},GET /api/parts/low,GET /api/customers/search/{name},GET /api/mechanics,POST /api/purchase-orders,POST /api/customers/{customer_id}/notify,POST /api/jobs/{job_id}/status,GET /api/reports/workload/{day},POST /api/jobs/{job_id}/assign"
     ]
    },
-   "id": 102,
-   "ts": 1795577928.2788503
-  },
-  {
-   "type": "tool.call",
-   "data": {
-    "turn": 5,
-    "id": "toolu_017W1x26D5Wv6qQ1zuZCqHne",
-    "system": "shop",
-    "tool": "open_jobs",
-    "input": {}
-   },
-   "id": 103,
-   "ts": 1795577928.3677614
+   "id": 174,
+   "ts": 1795645783.78753
   },
   {
    "type": "synapse.built",
    "data": {
     "system": "shop",
-    "seconds": 0.48,
-    "exposed": 9,
+    "seconds": 0.34,
+    "exposed": 11,
     "discovered": 24
    },
-   "id": 104,
-   "ts": 1795577928.7571344
+   "id": 175,
+   "ts": 1795645784.1276877
   },
   {
    "type": "growth.unlock.done",
@@ -1528,88 +2485,77 @@
     "system": "shop",
     "endpoint": "POST /api/jobs/{job_id}/assign",
     "tool": "assign",
-    "seconds": 0.48
+    "seconds": 0.34
    },
-   "id": 105,
-   "ts": 1795577928.758133
+   "id": 176,
+   "ts": 1795645784.128688
   },
   {
    "type": "tool.result",
    "data": {
-    "turn": 5,
-    "id": "toolu_011KznJi1UQxku19oi9UgWXK",
+    "turn": 9,
+    "id": "toolu_01Nic8VfqRVMFkwtSVqfyuRQ",
     "ok": true,
-    "preview": "[{\"type\": \"text\", \"text\": \"Unlocked POST /api/jobs/{job_id}/assign (tool mcp__shop__assign): you can now hand jobs from one mechanic to another. Say in a few plain words that you can do it now, and stop; you'll continue with it automatically in a moment.\"}]"
+    "preview": "[{\"type\": \"text\", \"text\": \"Unlocked POST /api/jobs/{job_id}/assign (tool mcp__shop__assign): you can now give jobs to a different mechanic. Say in a few plain words that you can do it now, and stop; you'll continue with it automatically in a moment.\"}]"
    },
-   "id": 106,
-   "ts": 1795577928.7666547
-  },
-  {
-   "type": "tool.result",
-   "data": {
-    "turn": 5,
-    "id": "toolu_017W1x26D5Wv6qQ1zuZCqHne",
-    "ok": true,
-    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"job_id\\\": 4460,\\n  \\\"work\\\": \\\"Full service\\\",\\n  \\\"estimate_hours\\\": 3.0,\\n  \\\"status\\\": \\\"ready\\\",\\n  \\\"due_date\\\": \\\"2026-11-22\\\",\\n  \\\"notes\\\": \\\"\\\",\\n  \\\"customer_id\\\": 19,\\n  \\\"customer\\\": \\\"Gareth Hughes\\\",\\n  \\\"customer_phone\\\": \\\"07700 900119\\\",\\n  \\\"bike\\\": \\\"Orbea Orca\\\",\\n  \\\"mechanic_id\\\": 2,\\n  \\\"mechanic\\\": \\\"Ravi\\\"\\n}\"}, {\"type\": \"text\", \"text\": \"{\\n  \\\"job_id\\\": 4462,\\n  \\\"work\\\": \\\"New chain + cassette\\\",\\n  \\\"estimate_hours\\\": 1.0,\\n  \\\"status\\\": \\\"ready\\\",\\n  \\\"due_date\\\": \\\"2026-11-22\\\",\\n  \\\"notes\\\": \\\"\\\",\\n  \\\"customer_id\\\": 20,\\n  \\\"cus"
-   },
-   "id": 107,
-   "ts": 1795577928.7892373
+   "id": 177,
+   "ts": 1795645784.1326969
   },
   {
    "type": "say",
    "data": {
-    "turn": 5,
-    "text": "I can hand jobs between mechanics now.",
+    "turn": 9,
+    "text": "I can move jobs between mechanics now.",
     "final": false
    },
-   "id": 108,
-   "ts": 1795577929.9890203
+   "id": 178,
+   "ts": 1795645785.0744298
   },
   {
    "type": "turn.result",
    "data": {
-    "turn": 5,
+    "turn": 9,
     "ok": true,
-    "ms": 5094,
-    "turns": 3,
-    "cost": 0.2358908
+    "ms": 8121,
+    "turns": 2,
+    "cost": 0.3834710000000001
    },
-   "id": 109,
-   "ts": 1795577930.0086236
+   "id": 179,
+   "ts": 1795645789.772314
   },
   {
    "type": "say",
    "data": {
-    "turn": 5,
-    "text": "I can hand jobs between mechanics now.",
+    "turn": 9,
+    "text": "I can move jobs between mechanics now.",
     "final": true
    },
-   "id": 110,
-   "ts": 1795577930.0086236
+   "id": 180,
+   "ts": 1795645789.772314
   },
   {
    "type": "system.reloaded",
    "data": {
     "system": "shop"
    },
-   "id": 111,
-   "ts": 1795577931.3770897
+   "id": 181,
+   "ts": 1795645791.000361
   },
   {
    "type": "say",
    "data": {
-    "turn": 5,
-    "text": "I'll move Rachel Okafor's front wheel build and Magnus Lindqvist's rear one to Priya, shall I?",
+    "turn": 9,
+    "text": "I'll move Rachel Okafor's and Magnus Lindqvist's wheel builds from Dev to Priya. Shall I?",
     "final": false
    },
-   "id": 112,
-   "ts": 1795577932.8342
+   "id": 182,
+   "ts": 1795645792.2837207
   },
   {
    "type": "tool.call",
    "data": {
-    "turn": 5,
-    "id": "toolu_01BZVqUH8vYzM4GUZx8UxGzB",
+    "turn": 9,
+    "id": "toolu_01DNN6QmobUGAJnjtk6MdGmr",
     "system": "shop",
     "tool": "assign",
     "input": {
@@ -1617,49 +2563,50 @@
      "mechanic": "Priya"
     }
    },
-   "id": 113,
-   "ts": 1795577933.3370373
+   "id": 183,
+   "ts": 1795645792.7844286
   },
   {
    "type": "approval.requested",
    "data": {
-    "id": "a5",
+    "id": "a15",
     "tier": "write",
     "kind": "call",
     "title": "Give a job to a different mechanic: job 4471 to Priya",
-    "detail": "I'll move Rachel Okafor's front wheel build and Magnus Lindqvist's rear one to Priya, shall I?",
+    "detail": "I'll move Rachel Okafor's and Magnus Lindqvist's wheel builds from Dev to Priya. Shall I?",
     "technical": "POST /api/jobs/{job_id}/assign (tool assign)\n{\n \"job_id\": 4471,\n \"mechanic\": \"Priya\"\n}",
     "diff": null,
+    "facts": null,
     "voice_ok": true
    },
-   "id": 114,
-   "ts": 1795577933.3430932
+   "id": 184,
+   "ts": 1795645792.789465
   },
   {
    "type": "approval.resolved",
    "data": {
-    "id": "a5",
+    "id": "a15",
     "approved": true
    },
-   "id": 114,
-   "ts": 1795577933.3430932
+   "id": 184,
+   "ts": 1795645792.789465
   },
   {
    "type": "tool.result",
    "data": {
-    "turn": 5,
-    "id": "toolu_01BZVqUH8vYzM4GUZx8UxGzB",
+    "turn": 9,
+    "id": "toolu_01DNN6QmobUGAJnjtk6MdGmr",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job_id\\\": 4471,\\n  \\\"from_mechanic\\\": \\\"Dev\\\",\\n  \\\"to_mechanic\\\": \\\"Priya\\\"\\n}\"}]"
    },
-   "id": 115,
-   "ts": 1795577933.3686225
+   "id": 185,
+   "ts": 1795645792.806096
   },
   {
    "type": "tool.call",
    "data": {
-    "turn": 5,
-    "id": "toolu_01Xv9C2bwJ3R34UURkCr5m9F",
+    "turn": 9,
+    "id": "toolu_01UFcWUBENzwRdsSDbEah3aX",
     "system": "shop",
     "tool": "assign",
     "input": {
@@ -1667,363 +2614,109 @@
      "mechanic": "Priya"
     }
    },
-   "id": 116,
-   "ts": 1795577933.828679
+   "id": 186,
+   "ts": 1795645793.1417954
   },
   {
    "type": "approval.requested",
    "data": {
-    "id": "a6",
+    "id": "a16",
     "tier": "write",
     "kind": "call",
     "title": "Give a job to a different mechanic: job 4472 to Priya",
     "detail": "",
     "technical": "POST /api/jobs/{job_id}/assign (tool assign)\n{\n \"job_id\": 4472,\n \"mechanic\": \"Priya\"\n}",
     "diff": null,
+    "facts": null,
     "voice_ok": true
    },
-   "id": 117,
-   "ts": 1795577933.8330805
+   "id": 187,
+   "ts": 1795645793.1473334
   },
   {
    "type": "approval.resolved",
    "data": {
-    "id": "a6",
+    "id": "a16",
     "approved": true
    },
-   "id": 117,
-   "ts": 1795577933.8330805
+   "id": 187,
+   "ts": 1795645793.1473334
   },
   {
    "type": "tool.result",
    "data": {
-    "turn": 5,
-    "id": "toolu_01Xv9C2bwJ3R34UURkCr5m9F",
+    "turn": 9,
+    "id": "toolu_01UFcWUBENzwRdsSDbEah3aX",
     "ok": true,
     "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"job_id\\\": 4472,\\n  \\\"from_mechanic\\\": \\\"Dev\\\",\\n  \\\"to_mechanic\\\": \\\"Priya\\\"\\n}\"}]"
    },
-   "id": 118,
-   "ts": 1795577933.856158
+   "id": 188,
+   "ts": 1795645793.164869
   },
   {
    "type": "tool.call",
    "data": {
-    "turn": 5,
-    "id": "toolu_019WYLEj9Hxf1Q452sgLeh3j",
+    "turn": 9,
+    "id": "toolu_014dh3Nx5cSKfjT7tTnGKYRo",
     "system": "shop",
     "tool": "workload",
     "input": {
-     "day": "2026-11-23"
+     "day": "today"
     }
    },
-   "id": 119,
-   "ts": 1795577935.778047
+   "id": 189,
+   "ts": 1795645794.505857
   },
   {
    "type": "tool.result",
    "data": {
-    "turn": 5,
-    "id": "toolu_019WYLEj9Hxf1Q452sgLeh3j",
+    "turn": 9,
+    "id": "toolu_014dh3Nx5cSKfjT7tTnGKYRo",
     "ok": true,
-    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"week_start\\\": \\\"2026-11-23\\\",\\n  \\\"week_end\\\": \\\"2026-11-28\\\",\\n  \\\"mechanics\\\": [\\n    {\\n      \\\"mechanic_id\\\": 1,\\n      \\\"name\\\": \\\"Dev\\\",\\n      \\\"weekly_capacity_hours\\\": 20.0,\\n      \\\"workload_hours\\\": 19.5,\\n      \\\"spare_hours\\\": 0.5,\\n      \\\"overloaded\\\": false,\\n      \\\"job_count\\\": 7\\n    },\\n    {\\n      \\\"mechanic_id\\\": 2,\\n      \\\"name\\\": \\\"Ravi\\\",\\n      \\\"weekly_capacity_hours\\\": 30.0,\\n      \\\"workload_hours\\\": 22.0,\\n      \\\"spare_hours\\\": 8.0,\\n      \\\"overloaded\\\": false,\\n      \\\"job_count\\\": 9\\n    },\\n    {\\n "
+    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"week_start\\\": \\\"2026-11-23\\\",\\n  \\\"week_end\\\": \\\"2026-11-28\\\",\\n  \\\"mechanics\\\": [\\n    {\\n      \\\"mechanic_id\\\": 1,\\n      \\\"mechanic\\\": \\\"Dev\\\",\\n      \\\"capacity_hours\\\": 20.0,\\n      \\\"workload_hours\\\": 19.5,\\n      \\\"spare_hours\\\": 0.5,\\n      \\\"overloaded\\\": false,\\n      \\\"jobs\\\": [\\n        {\\n          \\\"job_id\\\": 4478,\\n          \\\"work\\\": \\\"Brake bleed + new pads\\\",\\n          \\\"estimate_hours\\\": 1.5,\\n          \\\"due_date\\\": \\\"2026-11-24\\\",\\n          \\\"status\\\": \\\"booked\\\",\\n          \\\"customer\\\": \\\"Anika Banerjee\\\"\\n        },\\n"
    },
-   "id": 120,
-   "ts": 1795577935.8133662
+   "id": 190,
+   "ts": 1795645794.5302851
   },
   {
    "type": "say",
    "data": {
-    "turn": 5,
-    "text": "Priya has both wheel builds now, so nobody's overloaded this week. Dev is down to nineteen and a half hours, half an hour under his twenty, and Priya has eleven and a half booked.",
+    "turn": 9,
+    "text": "Both wheel builds are with Priya now, and nobody's overloaded. Dev is down to nineteen and a half hours, just under his twenty, and Priya has eleven and a half. One snag is that Dev still has Anika's brakes and Thanh's headset due tomorrow, when he's at the other shop. Shall I move those as well?",
     "final": false
    },
-   "id": 121,
-   "ts": 1795577937.6516237
+   "id": 191,
+   "ts": 1795645796.8279753
   },
   {
    "type": "turn.result",
    "data": {
-    "turn": 5,
+    "turn": 9,
     "ok": true,
-    "ms": 6286,
+    "ms": 5838,
     "turns": 4,
-    "cost": 0.267701
+    "cost": 0.42661780000000016
    },
-   "id": 122,
-   "ts": 1795577937.6718624
+   "id": 192,
+   "ts": 1795645796.843542
   },
   {
    "type": "say",
    "data": {
-    "turn": 5,
-    "text": "Priya has both wheel builds now, so nobody's overloaded this week. Dev is down to nineteen and a half hours, half an hour under his twenty, and Priya has eleven and a half booked.",
+    "turn": 9,
+    "text": "Both wheel builds are with Priya now, and nobody's overloaded. Dev is down to nineteen and a half hours, just under his twenty, and Priya has eleven and a half. One snag is that Dev still has Anika's brakes and Thanh's headset due tomorrow, when he's at the other shop. Shall I move those as well?",
     "final": true
    },
-   "id": 123,
-   "ts": 1795577937.6723669
+   "id": 193,
+   "ts": 1795645796.843542
   },
   {
    "type": "turn.end",
    "data": {
-    "turn": 5
+    "turn": 9
    },
-   "id": 124,
-   "ts": 1795577937.6723669
-  },
-  {
-   "type": "turn.start",
-   "data": {
-    "turn": 6,
-    "text": "Tom's bike is done, job 4481. Hand it back: text him it's ready and mark it ready. And make handing back a bike a single step, would you? I do it a dozen times a day."
-   },
-   "id": 125,
-   "ts": 1795577937.9695337
-  },
-  {
-   "type": "say",
-   "data": {
-    "turn": 6,
-    "text": "I'll make handing back a bike a single step first, then use it for Tom's Brompton.",
-    "final": false
-   },
-   "id": 126,
-   "ts": 1795577940.616231
-  },
-  {
-   "type": "tool.call",
-   "data": {
-    "turn": 6,
-    "id": "toolu_013yxU5d9bgHXbr8Qjmf6rpk",
-    "system": "barnaby",
-    "tool": "compose",
-    "input": {
-     "system": "shop",
-     "name": "Hand back a bike in one step",
-     "description": "Given a job_id, text the job's customer by SMS that their bike is ready to collect (a friendly message naming the bike and the work done, linked to the job so it shows in the notifications box), then mark that job's status as ready, and return the customer's name, the bike, the message sent and the new status; refuse with an error if the job is already ready or collected."
-    }
-   },
-   "id": 127,
-   "ts": 1795577942.1270876
-  },
-  {
-   "type": "growth.compose.proposed",
-   "data": {
-    "system": "shop",
-    "description": "Given a job_id, text the job's customer by SMS that their bike is ready to collect (a friendly message naming the bike and the work done, linked to the job so it shows in the notifications box), then mark that job's status as ready, and return the customer's name, the bike, the message sent and the new status; refuse with an error if the job is already ready or collected.",
-    "name": "Hand back a bike in one step"
-   },
-   "id": 128,
-   "ts": 1795577942.1533084
-  },
-  {
-   "type": "approval.requested",
-   "data": {
-    "id": "a7",
-    "tier": "grow",
-    "kind": "compose",
-    "title": "Hand back a bike in one step",
-    "detail": "One step instead of several, made from things the shop's back office already does.",
-    "technical": "Synapse Custom mode composes the shop's back office's own functions into one tool:\nGiven a job_id, text the job's customer by SMS that their bike is ready to collect (a friendly message naming the bike and the work done, linked to the job so it shows in the notifications box), then mark that job's status as ready, and return the customer's name, the bike, the message sent and the new status; refuse with an error if the job is already ready or collected.",
-    "diff": null,
-    "voice_ok": false
-   },
-   "id": 129,
-   "ts": 1795577942.1543195
-  },
-  {
-   "type": "approval.resolved",
-   "data": {
-    "id": "a7",
-    "approved": true
-   },
-   "id": 129,
-   "ts": 1795577942.1543195
-  },
-  {
-   "type": "synapse.run",
-   "data": {
-    "system": "shop",
-    "args": [
-     "build",
-     "--custom",
-     "-q",
-     "Given a job_id, text the job's customer by SMS that their bike is ready to collect (a friendly message naming the bike and the work done, linked to the job so it shows in the notifications box), then mark that job's status as ready, and return the customer's name, the bike, the message sent and the new status; refuse with an error if the job is already ready or collected."
-    ]
-   },
-   "id": 130,
-   "ts": 1795577943.0329409
-  },
-  {
-   "type": "synapse.composed",
-   "data": {
-    "system": "shop",
-    "tool": "notify_job_ready_and_update_status",
-    "seconds": 15.5
-   },
-   "id": 131,
-   "ts": 1795577957.6746855
-  },
-  {
-   "type": "growth.compose.done",
-   "data": {
-    "system": "shop",
-    "tool": "notify_job_ready_and_update_status",
-    "server": "shop-k1",
-    "name": "Hand back a bike in one step",
-    "seconds": 15.5
-   },
-   "id": 132,
-   "ts": 1795577957.6756845
-  },
-  {
-   "type": "tool.result",
-   "data": {
-    "turn": 6,
-    "id": "toolu_013yxU5d9bgHXbr8Qjmf6rpk",
-    "ok": true,
-    "preview": "[{\"type\": \"text\", \"text\": \"Composed notify_job_ready_and_update_status (tool mcp__shop-k1__notify_job_ready_and_update_status): Hand back a bike in one step. Say in a few plain words that it's one step now, and stop; you'll continue with it automatically.\"}]"
-   },
-   "id": 133,
-   "ts": 1795577957.6832123
-  },
-  {
-   "type": "say",
-   "data": {
-    "turn": 6,
-    "text": "Handing back a bike is a single step now.",
-    "final": false
-   },
-   "id": 134,
-   "ts": 1795577958.6366303
-  },
-  {
-   "type": "turn.result",
-   "data": {
-    "turn": 6,
-    "ok": true,
-    "ms": 20672,
-    "turns": 2,
-    "cost": 0.28788240000000004
-   },
-   "id": 135,
-   "ts": 1795577958.6486773
-  },
-  {
-   "type": "say",
-   "data": {
-    "turn": 6,
-    "text": "Handing back a bike is a single step now.",
-    "final": true
-   },
-   "id": 136,
-   "ts": 1795577958.6496766
-  },
-  {
-   "type": "system.reloaded",
-   "data": {
-    "system": "shop-k1"
-   },
-   "id": 137,
-   "ts": 1795577961.381653
-  },
-  {
-   "type": "say",
-   "data": {
-    "turn": 6,
-    "text": "I'll text Tom Whitfield that his Brompton is ready and mark the job ready, shall I?",
-    "final": false
-   },
-   "id": 138,
-   "ts": 1795577964.0838103
-  },
-  {
-   "type": "tool.call",
-   "data": {
-    "turn": 6,
-    "id": "toolu_01F5HXYGdUgwRHKbpEBkLXKy",
-    "system": "shop-k1",
-    "tool": "notify_job_ready_and_update_status",
-    "input": {
-     "job_id": 4481
-    }
-   },
-   "id": 139,
-   "ts": 1795577964.6344018
-  },
-  {
-   "type": "approval.requested",
-   "data": {
-    "id": "a8",
-    "tier": "write",
-    "kind": "call",
-    "title": "Hand back a bike in one step: job 4481",
-    "detail": "I'll text Tom Whitfield that his Brompton is ready and mark the job ready, shall I?",
-    "technical": "notify_job_ready_and_update_status (a skill composed for the shop's back office)\n{\n \"job_id\": 4481\n}",
-    "diff": null,
-    "voice_ok": true
-   },
-   "id": 140,
-   "ts": 1795577964.6484177
-  },
-  {
-   "type": "approval.resolved",
-   "data": {
-    "id": "a8",
-    "approved": true
-   },
-   "id": 140,
-   "ts": 1795577964.6484177
-  },
-  {
-   "type": "tool.result",
-   "data": {
-    "turn": 6,
-    "id": "toolu_01F5HXYGdUgwRHKbpEBkLXKy",
-    "ok": true,
-    "preview": "[{\"type\": \"text\", \"text\": \"{\\n  \\\"ok\\\": true,\\n  \\\"customer_name\\\": \\\"Tom Whitfield\\\",\\n  \\\"bike\\\": \\\"Brompton C Line\\\",\\n  \\\"message_sent\\\": \\\"Hi! Great news - your Brompton C Line is ready to collect. We've completed the Full service. See you soon!\\\",\\n  \\\"new_status\\\": \\\"ready\\\"\\n}\"}]"
-   },
-   "id": 141,
-   "ts": 1795577964.684281
-  },
-  {
-   "type": "say",
-   "data": {
-    "turn": 6,
-    "text": "Tom's been texted that his Brompton's full service is done and it's ready to collect, and the job's now marked ready. Next time, just give me the job number and I'll hand a bike back in one go, which should help with the other eleven today.",
-    "final": false
-   },
-   "id": 142,
-   "ts": 1795577966.3582768
-  },
-  {
-   "type": "turn.result",
-   "data": {
-    "turn": 6,
-    "ok": true,
-    "ms": 3750,
-    "turns": 2,
-    "cost": 0.306806
-   },
-   "id": 143,
-   "ts": 1795577966.3804302
-  },
-  {
-   "type": "say",
-   "data": {
-    "turn": 6,
-    "text": "Tom's been texted that his Brompton's full service is done and it's ready to collect, and the job's now marked ready. Next time, just give me the job number and I'll hand a bike back in one go, which should help with the other eleven today.",
-    "final": true
-   },
-   "id": 144,
-   "ts": 1795577966.3820035
-  },
-  {
-   "type": "turn.end",
-   "data": {
-    "turn": 6
-   },
-   "id": 145,
-   "ts": 1795577966.3820035
+   "id": 194,
+   "ts": 1795645796.843542
   }
  ]
 }

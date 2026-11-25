@@ -30,6 +30,7 @@ class Pending:
     tier: str
     diff: str | None = None
     technical: str = ""
+    facts: list[list[str]] | None = None          # [label, text] rows a card shows under its title ("Cost", ...)
     future: asyncio.Future = field(default_factory=lambda: asyncio.get_running_loop().create_future())
 
 
@@ -39,17 +40,17 @@ class Approvals:
         self._ids = itertools.count(1)
 
     async def request(self, *, tier: str, kind: str, title: str, detail: str = "", technical: str = "",
-                      diff: str | None = None, timeout: float = 1800) -> bool:
+                      diff: str | None = None, facts: list[list[str]] | None = None, timeout: float = 1800) -> bool:
         pid = f"a{next(self._ids)}"
         if tier in settings.auto_approve:
             # full card content, so a recorded run can be replayed with real cards (ui/mock.js)
             bus.emit("approval.auto", id=pid, tier=tier, kind=kind, title=title, detail=detail, technical=technical,
-                     diff=diff, voice_ok=tier in VOICE_OK)
+                     diff=diff, facts=facts, voice_ok=tier in VOICE_OK)
             return True
-        p = Pending(pid, kind, title, detail, tier, diff, technical)
+        p = Pending(pid, kind, title, detail, tier, diff, technical, facts)
         self.pending[pid] = p
         bus.emit("approval.requested", id=pid, tier=tier, kind=kind, title=title, detail=detail, technical=technical,
-                 diff=diff, voice_ok=tier in VOICE_OK)
+                 diff=diff, facts=facts, voice_ok=tier in VOICE_OK)
         try:
             ok = await asyncio.wait_for(p.future, timeout)
         except TimeoutError:
@@ -74,7 +75,7 @@ class Approvals:
 
     def summary(self) -> list[dict]:
         return [{"id": p.id, "tier": p.tier, "kind": p.kind, "title": p.title, "detail": p.detail,
-                 "technical": p.technical, "diff": p.diff, "voice_ok": p.tier in VOICE_OK}
+                 "technical": p.technical, "diff": p.diff, "facts": p.facts, "voice_ok": p.tier in VOICE_OK}
                 for p in self.pending.values()]
 
 

@@ -123,6 +123,8 @@ class Worker(WorkerState):
                         if self._servers_key == old_key:
                             await client.reconnect_mcp_server(name)
                         bus.emit("system.reloaded", system=name)
+                    if not self.grown:                            # a system connected: he has said what he took on
+                        break
                     prompt = continuation(self.grown)
                 nudge = self.habit_nudge()                        # a repeated chain: offer to compose it
                 if nudge:

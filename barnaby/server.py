@@ -117,6 +117,16 @@ async def voice_ice(request: Request):
     return JSONResponse(r.json(), status_code=r.status_code)
 
 
+@app.middleware("http")
+async def revalidate_ui(request: Request, call_next):
+    """The display's files are checked with the server on every load (a 304 when unchanged), so an updated app.js
+    or skin is never shown stale from the browser's cache."""
+    response = await call_next(request)
+    if request.url.path == "/" or request.url.path.startswith("/ui/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 if UI.exists():
     app.mount("/ui", StaticFiles(directory=UI), name="ui")
 

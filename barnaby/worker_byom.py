@@ -155,6 +155,8 @@ class ByomWorker(WorkerState):
                     await self._sync_servers(restart=self.reload)
                     for name in self.reload:
                         bus.emit("system.reloaded", system=name)
+                    if not self.grown:                            # a system connected: he has said what he took on
+                        break
                     prompt = continuation(self.grown)
                 nudge = self.habit_nudge()                        # a repeated chain: offer to compose it
                 if nudge:

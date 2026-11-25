@@ -131,11 +131,79 @@ _QUANTITY = ("quantity", "qty", "count")
 _WITH = ("supplier", "vendor")
 _TO = ("mechanic", "assignee", "to", "status")
 _QUOTED = ("message", "text", "note", "body")
+_NAMES = ("name", "title", "full_name", "label")
+_PRICES = ("unit_cost", "unit_price", "price", "cost")
+
+# What the person has just seen: the results of this session's recent calls, newest last, as (tool, parsed result).
+# A card names what an id points at from them ("Brake pads (Shimano resin, pair)", not "part 1"): Barnaby has just
+# looked it up, so it's the thing the person is deciding about. Nothing seen, and the card says "part 1" as before.
+SEEN: list[tuple[str, Any]] = []
+
+
+def note_seen(tool: str, content: Any) -> None:
+    SEEN.append((tool, content))
+    del SEEN[:-12]
+
+
+def _records(x: Any, depth: int = 0):
+    """Every dict in a call's result, however it came back (MCP text blocks holding JSON, wrappers, lists)."""
+    if depth > 6:
+        return
+    if isinstance(x, str):
+        s = x.strip()
+        if s[:1] in ("{", "["):
+            try:
+                yield from _records(json.loads(s), depth + 1)
+            except ValueError:
+                pass
+    elif isinstance(x, dict):
+        yield x
+        for v in x.values():
+            yield from _records(v, depth + 1)
+    elif isinstance(x, list):
+        for v in x:
+            yield from _records(v, depth + 1)
+
+
+def known_as(word: str, ident: Any) -> dict[str, Any] | None:
+    """The newest record seen for `<word> <ident>`, as {"name": ..., "price": ...}: a record carrying
+    "<word>_id": ident and "<word>" (or "<word>_name"), or one with "id": ident from a call about <word>s."""
+    def same(a: Any) -> bool:                 # 1 == "1": ids come back as numbers or strings
+        return a is not None and not isinstance(a, bool) and str(a) == str(ident)
+
+    for tool, content in reversed(SEEN):
+        about = word.replace(" ", "_") in tool.lower()
+        for r in _records(content):
+            name = None
+            if same(r.get(f"{word}_id")):
+                name = r.get(word) or r.get(f"{word}_name")
+            elif about and same(r.get("id")):
+                name = next((r[k] for k in _NAMES if isinstance(r.get(k), str) and r[k].strip()), None)
+            if isinstance(name, str) and name.strip():
+                price = next((r[k] for k in _PRICES if isinstance(r.get(k), (int, float)) and r[k] > 0), None)
+                return {"name": name.strip(), "price": price}
+    return None
+
+
+def _money(v: float) -> str:
+    return f"{v:,.2f}"
+
+
+def plain_cost(args: dict[str, Any]) -> str:
+    """What an order comes to, when the thing ordered has a price on record: "6.50 each, 65.00 in all"."""
+    qty = next((args[k] for k in _QUANTITY if isinstance(args.get(k), (int, float))), None)
+    for k, v in args.items():
+        if k.endswith("_id") and qty:
+            rec = known_as(k.removesuffix("_id").replace("_", " "), v)
+            if rec and rec["price"]:
+                return f"{_money(rec['price'])} each, {_money(rec['price'] * qty)} in all"
+    return ""
 
 
 def plain_args(args: dict[str, Any]) -> str:
     """A call's key arguments as a person would say them:
-    {"part_id": 1, "quantity": 10, "supplier": "Madison"} -> "10 × part 1 with Madison";
+    {"part_id": 1, "quantity": 10, "supplier": "Madison"} -> "10 × part 1 with Madison", or, once Barnaby has
+    looked the part up, "10 × Brake pads (Shimano resin, pair) with Madison";
     {"job_id": 4471, "mechanic": "Priya"} -> "job 4471 to Priya"."""
     args = {k: v for k, v in (args or {}).items() if v not in (None, "") and not isinstance(v, (dict, list))}
     qty = next((args.pop(k) for k in _QUANTITY if k in args), None)
@@ -153,6 +221,9 @@ def plain_args(args: dict[str, Any]) -> str:
         else:                                 # "part 1", "estimate hours 2"; words speak for themselves: "Full service"
             word = k.removesuffix("_id").replace("_", " ")
             item = val if isinstance(v, str) and not k.endswith("_id") else f"{word} {val}"
+            rec = known_as(word, v) if k.endswith("_id") else None
+            if rec:                           # ...and a record seen names it: "Brake pads (Shimano resin, pair)"
+                item = _plain_value(rec["name"]) if word not in ("job", "invoice", "order") else f"{item} ({_plain_value(rec['name'])})"
             out.append(f"{_plain_value(qty)} × {item}" if k == counted and qty is not None else item)
     said = ""
     for item in out:                          # "with …" and "to …" follow what they qualify; the rest take commas
@@ -212,9 +283,11 @@ async def gate(tool_name: str, tool_input: dict) -> str | None:
         return None
     if tier == "denied":
         return f"{ep.key} is never allowed."
+    cost = plain_cost(tool_input or {})
     ok = await approvals.request(tier="write", kind="call", title=call_title(plain_action(ep.description) or ep.key,
                                                                              tool_input),
-                                 detail=asked(), technical=_technical(f"{ep.key} (tool {ep.tool})", tool_input))
+                                 detail=asked(), technical=_technical(f"{ep.key} (tool {ep.tool})", tool_input),
+                                 facts=[["Cost", cost]] if cost else None)
     return None if ok else DECLINED
 
 
@@ -226,9 +299,11 @@ class WorkerState:
     def __init__(self):
         self.lock = asyncio.Lock()
         self.reload: set[str] = set()         # servers whose MCP process must be restarted after this round
-        self.grown: list[str] = []            # what was unlocked/built/composed this round (for the follow-up prompt)
+        self.grown: list[str] = []            # what was unlocked/built/composed this round (for the follow-up prompt;
+                                              # a connect reloads without one: his reply already said what he took on)
         self.calls: list[tuple[str, str]] = []  # (system, tool) of every system call this session, for habits
         self.offered: set[tuple[str, str]] = set()  # (system, chain) habits Barnaby has already offered to compose
+        self.tools: dict[str, str] = {}       # call id -> tool name, until its result comes back
         self.turn = 0
         self.busy = False
 
@@ -236,10 +311,14 @@ class WorkerState:
         parts = name.split("__")
         bus.emit("tool.call", turn=turn, id=call_id, system=parts[1] if len(parts) == 3 else "",
                  tool=parts[-1], input=tool_input)
+        self.tools[call_id] = parts[-1]
         if len(parts) == 3 and parts[1] in _registry().systems:
             self.calls = (self.calls + [(parts[1], parts[2])])[-300:]
 
     def note_result(self, turn: int, call_id: str, ok: bool, content: Any) -> None:
+        tool = self.tools.pop(call_id, "")
+        if ok:
+            note_seen(tool, content)              # so the next card can name what it's about
         content = content if isinstance(content, str) else json.dumps(content, default=str)
         bus.emit("tool.result", turn=turn, id=call_id, ok=ok, preview=content[:600])
 
@@ -391,9 +470,7 @@ async def connect(w: WorkerState, args: dict[str, Any]) -> str:
     res = await _registry().connect(s)
     if not res.get("ok"):
         return f"Couldn't take it on: {res.get('error')}"
-    w.reload.add(s.name)
-    w.grown.append(f"{s.title} ({len(res['exposed'])} ways to look things up, of the {res['discovered']} things "
-                   "it can do)")
+    w.reload.add(s.name)        # its tools attach for what comes next; nothing grew mid-request, so no carry-on
     return (f"Connected {s.title}. Its code can do {res['discovered']} things; to start you may use the "
             f"{len(res['exposed'])} that only look things up, and you'll ask before taking on any of the rest. In "
             "one or two plain sentences, tell the person you've taken it on and what you can look into for them now "

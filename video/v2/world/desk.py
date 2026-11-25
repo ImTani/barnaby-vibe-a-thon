@@ -9,17 +9,27 @@ Run from the repo root (Git Bash):
         --python video/v2/world/desk.py -- [options]
 
 Options (after the `--`):
-    --shots a,b,...    which stills to render (default: the four in DEFAULT_SHOTS; also board_night, shelf_monday)
+    --shots a,b,...    which stills to render (default: DEFAULT_SHOTS; extras: board_night, shelf_monday, bell_night,
+                       screen_night, close_night, drawer_monday)
     --scale N          resolution percentage of 1920x1080 (default 100; use 40 for quick looks)
     --samples N        Eevee render samples (default 64)
-    --screen PATH      PNG to show on the monitor (default: screen_placeholder.png, generated if missing)
+    --screen PATH      one PNG for the monitor in every preset (overrides the per-preset screens below)
+    --screen-night / --screen-monday / --screen-tuesday / --screen-close PATH
+                       per-preset screens (defaults: SCREENS; 16:10 fills the panel, 16:9 is letterboxed)
+    --screen-fit M     auto (default: letterbox anything not 16:10), letterbox, crop (fill, centred) or stretch
+    --lcd plain        the old flat emissive screen (no LCD treatment, no reflection room)
     --regen-screen     rebuild screen_placeholder.png
+    --regen-photo      re-render the 2009 photo (out/photo_2009.png) from its mini-set
     --save-blend       also save out/desk.blend (for animation work)
     --no-render        build only
 
-Collections: SET (the room, desk, PC, corkboard, shelf), WORKSHOP (through the doorway), THEO (night-only props),
-MARTIN (Monday-only props), NIGHT and MONDAY (each preset's lights), CAMS. apply_preset() swaps them.
-Handwriting: Segoe Print is Theo's hand (the one sticky note, the box), Ink Free is Martin's (calendar, labels, job card).
+Collections: SET (the room, desk, PC, corkboard, shelf), WORKSHOP (through the doorway), THEO (Thursday night only),
+MARTIN (Monday only), MARTIN_KIT (Monday and Tuesday), PRIYA (Tuesday only), CLOSE (the goodnight shot only),
+NOTE (the sticky note: Thursday and Monday), NIGHT and MONDAY (each preset's lights), REFLECT (the room's fourth
+wall, seen only in the glossy screen), CAMS. apply_preset() swaps them. Presets: night, monday, tuesday, close.
+Dates and times: CONTINUITY.md (and CLOCK below). Handwriting: Segoe Print is Theo's (the sticky note, the box, the
+key tag), Ink Free is Martin's (calendar, labels, job cards, binders), Mistral is the barista's (Priya's cup),
+Kristen ITC is a child's (the thank-you drawing).
 """
 import argparse
 import math
@@ -32,24 +42,49 @@ from math import cos, pi, radians, sin
 import bmesh
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Quaternion, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 PLACEHOLDER = os.path.join(HERE, "screen_placeholder.png")
+FRAMES = os.path.normpath(os.path.join(HERE, "..", "look", "frames"))
+SCREEN_DIR = os.path.join(HERE, "screens")                  # made by make_screens.py (Tuesday patch, asleep)
+PHOTO_2009 = os.path.join(OUT, "photo_2009.png")            # rendered from the mini-set on first run
 FONT_DIR = r"C:\Windows\Fonts"
 
-# shot name -> (camera, lighting preset, output file)
+# shot name -> (camera, lighting preset, output file, exposure offset)
 SHOTS = {
     "wide_night": ("CAM_wide", "night", "01_wide_night.png", 0.45),
     "medium_night": ("CAM_medium", "night", "02_medium_night.png", 0.0),
     "keys_night": ("CAM_keys", "night", "03_keys_night.png", 0.0),
     "medium_monday": ("CAM_medium_monday", "monday", "04_medium_monday.png", 0.0),
-    # optional detail stills (not in the default set): the corkboard and the brake-pads drawer
+    "medium_tuesday": ("CAM_medium_tuesday", "tuesday", "05_medium_tuesday.png", 0.0),
+    # detail stills
     "board_night": ("CAM_board", "night", "x_board_night.png", 0.2),
     "shelf_monday": ("CAM_shelf", "monday", "x_shelf_monday.png", 0.0),
+    "bell_night": ("CAM_bell", "night", "x_bell.png", 0.3),
+    "screen_night": ("CAM_screen", "night", "x_screen_night.png", 0.0),
+    "drawer_monday": ("CAM_drawer", "monday", "x_drawer_monday.png", 0.2),
+    "close_night": ("CAM_medium", "close", "x_close_night.png", 0.0),
+    "close_half": ("CAM_close_half", "close", "x_close_half_shop.png", 0.0, (960, 1080)),
+    "cables_top": ("CAM_cables_top", "monday", "x_cables_top.png", 0.0),
+    "cables_under": ("CAM_cables_under", "monday", "x_cables_under.png", 1.2),
 }
-DEFAULT_SHOTS = "wide_night,medium_night,keys_night,medium_monday"
+DEFAULT_SHOTS = "wide_night,medium_night,keys_night,medium_monday,medium_tuesday"
+
+# what the monitor shows in each preset (the shop PC look-dev is canon; see CONTINUITY.md)
+SCREENS = {
+    "night": os.path.join(FRAMES, "shop-pc-03-tabs.png"),                 # Thu 19 Nov, 21:47, nine tabs
+    "monday": os.path.join(FRAMES, "shop-pc-12-desktop-16x10.png"),       # Mon 23 Nov, 08:52, Back Office
+    "tuesday": os.path.join(SCREEN_DIR, "shop-tuesday.png"),              # Tue 24 Nov, 08:34, Priya's two jobs
+    "close": os.path.join(SCREEN_DIR, "shop-asleep.png"),                 # asleep; Barnaby's bell in the corner
+}
+SCREEN_BRIGHT = {"night": 0.88, "monday": 1.3, "tuesday": 1.3, "close": 1.0}   # backlight against the room
+REFLECT_LEVEL = {"night": 0.06, "monday": 0.45, "tuesday": 0.5, "close": 0.05}  # the fourth wall's light level
+SCREEN_PATHS = {}
+SCREEN_FIT = ["auto"]
+# the wall clock per preset (hh, mm)
+CLOCK = {"night": (21, 47), "monday": (8, 52), "tuesday": (8, 34), "close": (18, 40)}
 
 # ---------------------------------------------------------------- room layout (metres; x right, y into room, z up)
 W, D, H, WT = 3.9, 2.8, 2.45, 0.14          # office width, depth to back wall, wall height, wall thickness
@@ -68,6 +103,11 @@ def parse_args():
     p.add_argument("--scale", type=int, default=100)
     p.add_argument("--samples", type=int, default=64)
     p.add_argument("--screen", default=None)
+    for k in SCREENS:
+        p.add_argument(f"--screen-{k}", default=None)
+    p.add_argument("--screen-fit", default="auto", choices=("auto", "letterbox", "crop", "stretch"))
+    p.add_argument("--lcd", default="film", choices=("film", "plain"))
+    p.add_argument("--regen-photo", action="store_true")
     p.add_argument("--regen-screen", action="store_true")
     p.add_argument("--save-blend", action="store_true")
     p.add_argument("--no-render", action="store_true")
@@ -662,6 +702,96 @@ def aim(ob, target):
     ob.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
 
 
+# ---------------------------------------------------------------- cables: every one starts and ends somewhere
+PORTS = {}
+
+
+def port(name, loc, direction, parent):
+    """A socket on a device: an empty whose +Z is the way a plug's cable leaves it (in the parent's space)."""
+    e = grp("port_" + name, loc, parent=parent)
+    e.rotation_mode = "QUATERNION"
+    e.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(Vector(direction).normalized())
+    e.empty_display_size = 0.01
+    PORTS[name] = e
+    return e
+
+
+def port_frame(name):
+    bpy.context.view_layer.update()
+    mw = PORTS[name].matrix_world
+    return mw.translation.copy(), (mw.to_3x3() @ Vector((0, 0, 1))).normalized()
+
+
+def connector(name, kind, at, d, M, coll=None, spin=0.0):
+    """A plug seated at `at` with its cable leaving along unit vector `d` (spun `spin` degrees about it).
+    Returns where the cable begins."""
+    at, d = Vector(at), Vector(d).normalized()
+    g = grp(name, at, coll=coll)
+    g.rotation_mode = "QUATERNION"
+    g.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(d) @ Quaternion((0, 0, 1), radians(spin))
+    blk, grey = M["plastic_blk"], mat("plug_grey", "#4a4c50", 0.45)
+    if kind == "usb":
+        box(name + "_metal", (0.012, 0.0045, 0.012), (0, 0, -0.004), M["steel"], bev=0.0005, parent=g, coll=coll)
+        box(name + "_body", (0.016, 0.0085, 0.022), (0, 0, 0.011), blk, bev=0.002, parent=g, coll=coll)
+        cyl(name + "_relief", 0.004, 0.012, (0, 0, 0.026), blk, r2=0.0028, n=10, parent=g, coll=coll)
+        L = 0.032
+    elif kind == "ps2":
+        cyl(name + "_body", 0.0068, 0.02, (0, 0, 0.01), mat("ps2_purple", "#6b4c8f", 0.4), n=14, bev=0.0015, parent=g,
+            coll=coll)
+        cyl(name + "_relief", 0.0045, 0.01, (0, 0, 0.025), blk, r2=0.003, n=10, parent=g, coll=coll)
+        L = 0.03
+    elif kind == "jack":
+        col = {"green": "#5aa55a", "pink": "#d98aa8", "blue": "#5b86c9"}.get(name.split("_")[-1], "#5aa55a")
+        cyl(name + "_tip", 0.0018, 0.008, (0, 0, -0.004), M["chrome"], n=8, parent=g, coll=coll)
+        cyl(name + "_body", 0.0038, 0.018, (0, 0, 0.009), mat("jack_" + col, col, 0.45), n=12, bev=0.001, parent=g,
+            coll=coll)
+        cyl(name + "_relief", 0.0026, 0.008, (0, 0, 0.022), blk, r2=0.0018, n=8, parent=g, coll=coll)
+        L = 0.026
+    elif kind == "vga":
+        box(name + "_body", (0.033, 0.012, 0.016), (0, 0, 0.008), mat("vga_blue", "#3a5aa8", 0.4), bev=0.002, parent=g,
+            coll=coll)
+        for s in (-1, 1):
+            cyl(f"{name}_screw{s}", 0.0035, 0.012, (s * 0.0205, 0, 0.012), M["steel_dk"], n=10, bev=0.0008, parent=g,
+                coll=coll)
+        cyl(name + "_hood", 0.0075, 0.02, (0, 0, 0.026), blk, r2=0.0045, n=12, parent=g, coll=coll)
+        L = 0.036
+    elif kind == "iec":
+        box(name + "_body", (0.026, 0.02, 0.034), (0, 0, 0.017), blk, bev=0.003, parent=g, coll=coll)
+        cyl(name + "_relief", 0.006, 0.016, (0, 0, 0.04), blk, r2=0.004, n=10, parent=g, coll=coll)
+        L = 0.048
+    elif kind == "uk":                                        # UK mains plug: the cable leaves from its side
+        box(name + "_body", (0.051, 0.045, 0.024), (0, 0, 0.012), mat("plug_white", "#ece8de", 0.4), bev=0.003,
+            parent=g, coll=coll)
+        box(name + "_fuse", (0.012, 0.025, 0.0008), (0.012, 0.0, 0.0244), mat("plug_fuse", "#d7d1c3", 0.5), bev=0,
+            parent=g, coll=coll)
+        cyl(name + "_relief", 0.0055, 0.014, (0, -0.0275, 0.012), mat("plug_white", "#ece8de", 0.4), rot=(90, 0, 0),
+            n=10, parent=g, coll=coll)
+        bpy.context.view_layer.update()
+        return g.matrix_world @ Vector((0, -0.034, 0.012))
+    elif kind == "relief":                                    # a hard-wired cable through a rubber bush
+        cyl(name + "_bush", 0.0042, 0.008, (0, 0, 0.004), blk, r2=0.003, n=10, parent=g, coll=coll)
+        L = 0.008
+    else:
+        raise ValueError(kind)
+    return at + d * L
+
+
+def cable(name, pts, r, m, coll=None, res=10):
+    """A cable through control points (world space). Clamped NURBS: it starts and ends exactly on the end points
+    and leaves along the first and last segments, so put the second point straight out of the plug."""
+    return curve(name, [tuple(p) for p in pts], r, m, res=res, bres=2, coll=coll)
+
+
+def run(name, plug_kind, port_name, waypoints, r, M, m=None, out=0.02, coll=None, end=None):
+    """Plug into a port and lay the cable through world waypoints. Returns the cable."""
+    at, d = port_frame(port_name)
+    start = connector(name + "_plug", plug_kind, at, d, M, coll=coll)
+    pts = [start, start + d * out] + [Vector(p) for p in waypoints]
+    if end is not None:
+        pts += end
+    return cable(name, pts, r, m or M["plastic_blk"], coll=coll)
+
+
 # ================================================================ the screen PNG
 def make_placeholder(path, w=1440, h=900):
     """A mid-blue 2009-style desktop with a glass taskbar, generic icons and a dial gadget. No logos."""
@@ -740,27 +870,254 @@ def make_placeholder(path, w=1440, h=900):
 
 
 SCREEN = {}
+PANEL_ASPECT = 0.408 / 0.255          # the 19in 16:10 panel's active area
+PANEL_NATIVE = (1440, 900)            # its native resolution (2009): the pixel grid in close-ups
 
 
-def screen_material(path):
-    img = bpy.data.images.load(path, check_existing=True)
-    m = bpy.data.materials.new("screen")
+def _math(nt, op, a, b=None, clamp=False):
+    n = nt.nodes.new("ShaderNodeMath")
+    n.operation = op
+    n.use_clamp = clamp
+    for i, v in enumerate((a, b)):
+        if v is None:
+            continue
+        if isinstance(v, (int, float)):
+            n.inputs[i].default_value = v
+        else:
+            nt.links.new(v, n.inputs[i])
+    return n.outputs[0]
+
+
+def halation_image(img, name, down=6, passes=3, radius=3):
+    """A small, blurred copy of the screen image: the light that scatters inside the panel's glass and the film's
+    halation. Sampled with linear filtering, so it is a big soft blur for free."""
+    w, h = img.size
+    px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)[..., :3]
+    px = np.where(px <= 0.04045, px / 12.92, ((px + 0.055) / 1.055) ** 2.4)   # stored sRGB -> linear light
+    SCREEN["mean"] = px.reshape(-1, 3).mean(axis=0)
+    hh, ww = h // down, w // down
+    small = px[:hh * down, :ww * down].reshape(hh, down, ww, down, 3).mean(axis=(1, 3))
+    for _ in range(passes):                                   # three box blurs ~ a gaussian
+        for ax in (0, 1):
+            c = np.cumsum(np.pad(small, [(radius + 1, radius) if a == ax else (0, 0) for a in range(2)] + [(0, 0)],
+                                 mode="edge"), axis=ax)
+            hi = [slice(None)] * 3
+            lo = [slice(None)] * 3
+            hi[ax] = slice(2 * radius + 1, None)
+            lo[ax] = slice(None, -2 * radius - 1)
+            small = (c[tuple(hi)] - c[tuple(lo)]) / (2 * radius + 1)
+    out = bpy.data.images.get(name) or bpy.data.images.new(name, ww, hh, alpha=False, float_buffer=True)
+    if tuple(out.size) != (ww, hh):
+        out.scale(ww, hh)
+    rgba_ = np.concatenate([small, np.ones((hh, ww, 1), np.float32)], axis=2)
+    out.pixels.foreach_set(rgba_.ravel())
+    return out
+
+
+def lcd_material(name="screen", plain=False):
+    """The 2009 glossy LCD. Emission = the screen image (fitted to the 16:10 panel: letterboxed, cropped or
+    stretched) + a soft halation veil + the panel's black level with a little backlight bleed at the edges, times a
+    subpixel grid that only fades in when a camera is close enough to resolve it. The surface on top is glossy glass,
+    so the room (and its reflection-only fourth wall) shows in the dark parts of the picture."""
+    m = bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
     b = principled(m)
     b.inputs["Base Color"].default_value = rgba("#050506")
     b.inputs["Roughness"].default_value = 0.06
     b.inputs["Specular IOR Level"].default_value = 0.55
-    b.inputs["Coat Weight"].default_value = 0.4
-    b.inputs["Coat Roughness"].default_value = 0.03
+    b.inputs["Coat Weight"].default_value = 0.4 if plain else 0.75
+    b.inputs["Coat Roughness"].default_value = 0.03 if plain else 0.015
+    uvn = nt.nodes.new("ShaderNodeUVMap")
+    mp = nt.nodes.new("ShaderNodeMapping")
+    mp.vector_type = "POINT"
+    nt.links.new(uvn.outputs["UV"], mp.inputs["Vector"])
     tx = nt.nodes.new("ShaderNodeTexImage")
-    tx.image = img
     tx.interpolation = "Cubic"
-    tx.extension = "EXTEND"
-    nt.links.new(tx.outputs["Color"], b.inputs["Emission Color"])
-    b.inputs["Emission Strength"].default_value = 1.0
-    SCREEN.update(img=img, bsdf=b, tex=tx)
+    tx.extension = "EXTEND" if plain else "CLIP"
+    nt.links.new(mp.outputs["Vector"], tx.inputs["Vector"])
+    bright = nt.nodes.new("ShaderNodeValue")
+    bright.outputs[0].default_value = 1.0
+    nt.links.new(bright.outputs[0], b.inputs["Emission Strength"])
+    SCREEN.update(mat=m, bsdf=b, tex=tx, mapping=mp, bright=bright, plain=plain, img=None)
+    if plain:
+        nt.links.new(tx.outputs["Color"], b.inputs["Emission Color"])
+        return m
+    # halation veil (same fit), mixed under the sharp image
+    hx = nt.nodes.new("ShaderNodeTexImage")
+    hx.interpolation = "Linear"
+    hx.extension = "CLIP"
+    nt.links.new(mp.outputs["Vector"], hx.inputs["Vector"])
+    veil = nt.nodes.new("ShaderNodeMix")
+    veil.data_type = "RGBA"
+    veil.blend_type = "ADD"
+    sock(veil.inputs, "Factor_Float").default_value = 0.09
+    nt.links.new(tx.outputs["Color"], sock(veil.inputs, "A_Color"))
+    nt.links.new(hx.outputs["Color"], sock(veil.inputs, "B_Color"))
+    col = sock(veil.outputs, "Result_Color")
+    # black level and backlight bleed (the panel glows faintly where the picture is black, more at the edges)
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(uvn.outputs["UV"], sep.inputs[0])
+    dx = _math(nt, "MINIMUM", sep.outputs["X"], _math(nt, "SUBTRACT", 1.0, sep.outputs["X"]))
+    dy = _math(nt, "MINIMUM", sep.outputs["Y"], _math(nt, "SUBTRACT", 1.0, sep.outputs["Y"]))
+    edge = _math(nt, "MINIMUM", _math(nt, "MULTIPLY", dx, 1.6), dy)
+    bleed = _math(nt, "ADD", 1.0, _math(nt, "MULTIPLY", _math(nt, "POWER", _math(nt, "SUBTRACT", 1.0, _math(
+        nt, "MULTIPLY", edge, 9.0, clamp=True)), 3.0), 2.2))
+    blk = nt.nodes.new("ShaderNodeMix")
+    blk.data_type = "RGBA"
+    blk.blend_type = "ADD"
+    nt.links.new(_math(nt, "MULTIPLY", bleed, 0.0035), sock(blk.inputs, "Factor_Float"))
+    nt.links.new(col, sock(blk.inputs, "A_Color"))
+    sock(blk.inputs, "B_Color").default_value = rgba("#c9d4e6")
+    col = sock(blk.outputs, "Result_Color")
+    # subpixel grid at the panel's native resolution: R, G, B stripes with the black matrix between them
+    grid = nt.nodes.new("ShaderNodeValue")
+    grid.outputs[0].default_value = 0.0
+    fx = _math(nt, "FRACT", _math(nt, "MULTIPLY", sep.outputs["X"], PANEL_NATIVE[0]))
+    fy = _math(nt, "FRACT", _math(nt, "MULTIPLY", sep.outputs["Y"], PANEL_NATIVE[1]))
+    sub = _math(nt, "MULTIPLY", fx, 3.0)
+    gapx = _math(nt, "GREATER_THAN", _math(nt, "FRACT", sub), 0.14)
+    gapy = _math(nt, "GREATER_THAN", fy, 0.1)
+    gap = _math(nt, "MULTIPLY", _math(nt, "MULTIPLY", gapx, gapy), 3.0 / (0.86 * 0.9))
+    r_ = _math(nt, "LESS_THAN", sub, 1.0)
+    b_ = _math(nt, "GREATER_THAN", sub, 2.0)
+    g_ = _math(nt, "SUBTRACT", _math(nt, "SUBTRACT", 1.0, r_), b_)
+    cc = nt.nodes.new("ShaderNodeCombineColor")
+    for i, ch in enumerate((r_, g_, b_)):
+        nt.links.new(_math(nt, "MULTIPLY", ch, gap), cc.inputs[i])
+    gm = nt.nodes.new("ShaderNodeMix")
+    gm.data_type = "RGBA"
+    nt.links.new(grid.outputs[0], sock(gm.inputs, "Factor_Float"))
+    sock(gm.inputs, "A_Color").default_value = (1, 1, 1, 1)
+    nt.links.new(cc.outputs[0], sock(gm.inputs, "B_Color"))
+    mul = nt.nodes.new("ShaderNodeMix")
+    mul.data_type = "RGBA"
+    mul.blend_type = "MULTIPLY"
+    sock(mul.inputs, "Factor_Float").default_value = 1.0
+    nt.links.new(col, sock(mul.inputs, "A_Color"))
+    nt.links.new(sock(gm.outputs, "Result_Color"), sock(mul.inputs, "B_Color"))
+    nt.links.new(sock(mul.outputs, "Result_Color"), b.inputs["Emission Color"])
+    SCREEN.update(halo=hx, grid=grid)
     return m
+
+
+def set_screen(path, fit="auto"):
+    """Show an image on the panel. 16:10 fills it; anything else is letterboxed or pillarboxed (fit=auto), the way a
+    2009 LCD with aspect scaling shows a non-native picture; fit=crop fills and crops the centre; stretch stretches."""
+    if SCREEN.get("path") == (path, fit):
+        return
+    img = bpy.data.images.load(path, check_existing=True)
+    SCREEN["tex"].image = img
+    w, h = img.size
+    a = w / h
+    sx = sy = 1.0
+    mode = fit
+    if fit == "auto":
+        mode = "stretch" if abs(a - PANEL_ASPECT) < 0.01 else "letterbox"
+    if mode == "letterbox":
+        if a > PANEL_ASPECT:
+            sy = a / PANEL_ASPECT                             # bars top and bottom
+        else:
+            sx = PANEL_ASPECT / a                             # bars left and right
+    elif mode == "crop":
+        if a > PANEL_ASPECT:
+            sx = PANEL_ASPECT / a
+        else:
+            sy = a / PANEL_ASPECT
+    mp = SCREEN["mapping"]
+    mp.inputs["Scale"].default_value = (sx, sy, 1.0)
+    mp.inputs["Location"].default_value = (0.5 * (1 - sx), 0.5 * (1 - sy), 0.0)
+    if "halo" in SCREEN:
+        SCREEN["halo"].image = halation_image(img, "halation_" + os.path.basename(path))
+    SCREEN["path"] = (path, fit)
+    print(f"screen: {os.path.basename(path)} {w}x{h} ({mode})")
+
+
+def grid_for_camera(cam, scale_pct):
+    """How strongly to show the subpixel grid for this camera: only when one LCD pixel covers a few film pixels."""
+    if "grid" not in SCREEN:
+        return
+    bpy.context.view_layer.update()
+    scr = bpy.data.objects["screen"]
+    d = (cam.matrix_world.translation - scr.matrix_world.translation).length
+    res_x = 1920 * scale_pct / 100
+    footprint = d * cam.data.sensor_width / (cam.data.lens * res_x)   # metres of panel per render pixel
+    cell_px = (0.408 / PANEL_NATIVE[0]) / footprint
+    g = max(0.0, min(1.0, (cell_px - 1.5) / 2.5))
+    SCREEN["grid"].outputs[0].default_value = g * 0.85
+    print(f"  LCD pixel = {cell_px:.2f} film px -> grid {g:.2f}")
+
+
+REFLECT_EMIT = []
+
+
+def refl_mat(name, color, strength=1.0):
+    """Self-lit material for the reflection-only room (it is only ever seen in the glossy screen, so it is shaded by
+    hand: a little emission, scaled per preset)."""
+    if name in MATS:
+        return MATS[name]
+    m = mat(name, color, 0.9, emit=color, estr=strength)
+    REFLECT_EMIT.append((principled(m), strength))
+    return m
+
+
+def build_reflect_room(M):
+    """The office's fourth wall, behind the camera: never seen by it, only in the monitor's glossy glass (via the
+    screen's planar probe). Plaster over green panelling like the other walls, a glazed door through to the shop
+    (the frosted glass carries the shop floor's light), coats on hooks, the ceiling."""
+    use("REFLECT")
+    y = -0.06
+    wall = refl_mat("refl_wall", "#d3c3a3")
+    panel = refl_mat("refl_panel", "#5d7466")
+    trim = refl_mat("refl_trim", "#e4d9c1")
+    obs = [boxmm("refl_wall", (-WT, y - 0.05, 0), (W, y, H), wall, bev=0),
+           boxmm("refl_dado", (-WT, y, 0), (W, y + 0.012, 0.98), panel, bev=0),
+           boxmm("refl_rail", (-WT, y, 0.965), (W, y + 0.032, 1.01), trim, bev=0.004),
+           boxmm("refl_skirt", (-WT, y, 0), (W, y + 0.03, 0.1), trim, bev=0.004),
+           boxmm("refl_ceiling", (-WT, y - 0.05, H), (W, D, H + 0.03), refl_mat("refl_ceiling", "#e6dcc6", 0.8), bev=0)]
+    dx0, dx1 = 0.1, 0.9
+    for nm, a, b in [("refl_door_L", (dx0 - 0.07, y, 0), (dx0, y + 0.03, 2.12)),
+                     ("refl_door_R", (dx1, y, 0), (dx1 + 0.07, y + 0.03, 2.12)),
+                     ("refl_door_T", (dx0 - 0.07, y, 2.05), (dx1 + 0.07, y + 0.03, 2.14))]:
+        obs.append(boxmm(nm, a, b, trim, bev=0.004))
+    door = refl_mat("refl_door", "#e9e0cc", 0.9)
+    for nm, a, b in [("refl_door_bot", (dx0, y + 0.012, 0), (dx1, y + 0.05, 0.42)),
+                     ("refl_door_stile_L", (dx0, y + 0.012, 0.42), (dx0 + 0.09, y + 0.05, 2.05)),
+                     ("refl_door_stile_R", (dx1 - 0.09, y + 0.012, 0.42), (dx1, y + 0.05, 2.05)),
+                     ("refl_door_rail", (dx0, y + 0.012, 1.9), (dx1, y + 0.05, 2.05))]:
+        obs.append(boxmm(nm, a, b, door, bev=0.006))
+    obs.append(boxmm("refl_door_glass", (dx0 + 0.09, y + 0.02, 0.42), (dx1 - 0.09, y + 0.03, 1.9),
+                     refl_mat("refl_glass", "#cfdbe6", 2.2), bev=0))
+    for k, x in enumerate((0.24, 0.5, 0.76)):                 # glazing bars
+        obs.append(boxmm(f"refl_bar{k}", (x - 0.008, y + 0.03, 0.42), (x + 0.008, y + 0.04, 1.9), door, bev=0))
+    obs.append(cyl("refl_handle", 0.012, 0.06, (dx1 - 0.05, y + 0.07, 1.0), refl_mat("refl_brass", "#a98546", 0.9),
+                   rot=(90, 0, 0), n=10))
+    obs.append(boxmm("refl_hooks", (1.25, y, 1.68), (1.95, y + 0.02, 1.76), trim, bev=0.004))
+    coat = refl_mat("refl_coat", "#3e4a36", 0.7)
+    obs.append(sphere("refl_coat1", 0.22, (1.42, y + 0.12, 1.35), coat, ico=2, scale=(0.75, 0.45, 1.6)))
+    obs.append(sphere("refl_coat2", 0.2, (1.78, y + 0.11, 1.4), refl_mat("refl_jacket", "#1f3a5c", 0.7), ico=2,
+                      scale=(0.7, 0.4, 1.4)))
+    for ob in obs:
+        ob.visible_camera = False
+        ob.visible_shadow = False
+    return obs
+
+
+def screen_probe(head, ow, oh, y):
+    """A planar light probe on the screen glass: the glossy panel and bezel reflect the room, including what is
+    behind the camera (the reflection-only fourth wall)."""
+    pd = bpy.data.lightprobes.new("screen_probe", "PLANE")
+    pd.influence_distance = 0.012
+    try:
+        pd.clip_start = 0.004
+    except AttributeError:
+        pass
+    po = bpy.data.objects.new("screen_probe", pd)
+    link(po, head, "SET")
+    po.location = (0, y, 0)
+    po.rotation_euler = (radians(90), 0, 0)
+    po.scale = (ow / 2 + 0.004, oh / 2 + 0.004, 1.0)
+    return po
 
 
 # ================================================================ the room
@@ -1056,6 +1413,11 @@ def build_workshop(M):
     wl = lathe("worklamp_shade", [(0.0, 0.05), (0.03, 0.05), (0.07, -0.04), (0.065, -0.042), (0.027, 0.04), (0.0, 0.04)],
                n=14, loc=(3.1, y1 - 0.98, 1.62), m=[M["steel_dk"]])
     aim(wl, (2.95, 4.5, 0.9))
+    box("ws_socket", (0.086, 0.01, 0.086), (3.42, y1 - 0.005, 0.62), mat("plug_white", "#ece8de", 0.4), bev=0.002)
+    st = connector("worklamp_plug", "uk", (3.40, y1 - 0.01, 0.618), (0, -1, 0), M)
+    cable("worklamp_lead", [(3.1, y1 - 0.96, 1.64), (3.16, y1 - 0.84, 1.42), (3.22, y1 - 0.7, 1.15),
+                            (3.27, y1 - 0.6, 0.97), (3.3, y1 - 0.56, 0.9), (3.33, y1 - 0.1, 0.84),
+                            (3.4, y1 - 0.03, 0.55), st + Vector((0, 0, -0.02)), st], 0.003, M["plastic_blk"])
 
     # the bike on the repair stand (side-on to the doorway) and one waiting against the wall
     stand = grp("repair_stand", (2.84, 4.92, 0))
@@ -1075,37 +1437,110 @@ def build_workshop(M):
     for k in range(3):
         boxmm(f"counter_panel{k}", (cx0 + 0.05 + k * 0.3, cy0 + 0.012, 0.15), (cx0 + 0.3 + k * 0.3, cy0 + 0.02, 0.8),
               M["counter_paint"], bev=0.006)
-    bell = grp("service_bell", (3.12, 3.62, 0.96))
-    lathe("bell_base", [(0.0, 0.0), (0.046, 0.0), (0.048, 0.006), (0.046, 0.016), (0.0, 0.016)], n=24,
-          m=M["oak"], parent=bell)
-    lathe("bell_dome", [(0.0, 0.058), (0.012, 0.0565), (0.024, 0.052), (0.033, 0.043), (0.039, 0.031),
-                        (0.041, 0.018), (0.0, 0.018)], n=24, m=M["brass"], parent=bell)
-    cyl("bell_stem", 0.004, 0.02, (0, 0, 0.065), M["brass"], n=8, parent=bell)
-    sphere("bell_knob", 0.0075, (0, 0, 0.078), M["brass"], seg=10, rings=6, parent=bell)
-    tc = grp("bell_card", (3.25, 3.6, 0.96), (0, 0, -12))
-    for s in (1, -1):
-        p = boxmm(f"card_side{s}", (-0.05, -0.0008, 0), (0.05, 0.0008, 0.07), M["paper"], bev=0, parent=tc)
-        p.location = (0, s * 0.012, 0.0)
-        p.rotation_euler = _rot((s * 10, 0, 0))
-        text(f"card_text{s}", "RING FOR\nSERVICE", "georgiab.ttf", 0.013, (0, -0.0012 if s > 0 else 0.0012, 0.035),
-             M["ink"], rot=(90, 0, 0 if s > 0 else 180), parent=p, line=0.9)
+    build_service_bell(M, (3.12, 3.62, 0.96), 0)
+    tc = grp("bell_card", (3.255, 3.6, 0.96), (0, 0, -14))
+    card = mat("bell_card", "#f3ecd9", 0.65, spec=0.3)
+    gold = mat("bell_card_gold", "#a8823c", 0.4)
+    for s in (1, -1):                                         # a folded tent card, printed on both outer faces
+        p = grp(f"card_hinge{s}", (0, s * 0.0125, 0.0), (s * 10, 0, 0), parent=tc)   # each side leans from its foot
+        boxmm(f"card_side{s}", (-0.05, -0.0007, 0), (0.05, 0.0007, 0.072), card, bev=0, parent=p)
+        y, rz = (0.0009, 180) if s > 0 else (-0.0009, 0)
+        text(f"card_text{s}", "RING FOR\nSERVICE", "georgiab.ttf", 0.0125, (0, y, 0.038), M["ink"], rot=(90, 0, rz),
+             parent=p, line=0.92)
+        for k, (w, h) in enumerate(((0.092, 0.062), (0.087, 0.057))):
+            for nm, (a0, b0, a1, b1) in (("t", (-w / 2, h / 2 + 0.035, w / 2, h / 2 + 0.0358)),
+                                         ("b", (-w / 2, -h / 2 + 0.035, w / 2, -h / 2 + 0.0358)),
+                                         ("l", (-w / 2, -h / 2 + 0.035, -w / 2 + 0.0008, h / 2 + 0.0358)),
+                                         ("r", (w / 2 - 0.0008, -h / 2 + 0.035, w / 2, h / 2 + 0.0358))):
+                boxmm(f"card_rule{s}{k}{nm}", (a0, y - 0.00005, b0), (a1, y + 0.00005, b1), gold, bev=0, parent=p)
+
+
+def build_service_bell(M, loc, yaw, coll=None, name="bell"):
+    """The shop's brass counter bell (Barnaby's emblem): a black enamelled cast-iron base, weighted, lined in brass, on
+    a felt pad; a polished brass dome on its post; the plunger through the crown with a mushroom knob."""
+    g = grp("service_bell", loc, (0, 0, yaw), coll=coll)
+    enamel = mat("bell_enamel", "#141414", 0.22, spec=0.6, coat=0.6)
+    lathe(name + "_base", [(0.0, 0.002), (0.05, 0.002), (0.052, 0.005), (0.052, 0.009), (0.0485, 0.0125),
+                           (0.044, 0.0142), (0.03, 0.0158), (0.012, 0.0172), (0.0, 0.0175)], n=40, m=enamel, parent=g)
+    cyl(name + "_felt", 0.049, 0.002, (0, 0, 0.0), mat("bell_felt", "#2c3b2c", 0.95), n=32, base=True, parent=g)
+    torus(name + "_line", 0.0505, 0.0009, (0, 0, 0.0092), M["brass"], nR=40, nr=5, parent=g)
+    cyl(name + "_post", 0.006, 0.008, (0, 0, 0.0165), M["brass_old"], n=12, base=True, parent=g)
+    outer = [(0.0438 * sin(a), 0.0225 + 0.042 * cos(a)) for a in (radians(t) for t in range(0, 91, 6))]
+    inner = [(r * 0.94, 0.0225 + (z - 0.0225) * 0.92) for r, z in outer[::-1]]   # rim back up to the crown
+    lathe(name + "_dome", outer + [(0.0425, 0.0221)] + inner[1:], n=48, m=M["brass"], parent=g, angle=70)
+    torus(name + "_bead", 0.0436, 0.0011, (0, 0, 0.0238), M["brass"], nR=40, nr=5, parent=g)
+    cyl(name + "_collar", 0.0058, 0.0035, (0, 0, 0.064), M["brass_old"], n=16, base=True, bev=0.0008, parent=g)
+    cyl(name + "_plunger", 0.0026, 0.016, (0, 0, 0.0665), M["chrome"], n=10, base=True, parent=g)
+    lathe(name + "_knob", [(0.0, 0.0805), (0.004, 0.0806), (0.0085, 0.0822), (0.0098, 0.0848), (0.0088, 0.0872),
+                           (0.005, 0.0886), (0.0, 0.089)], n=24, m=M["brass"], parent=g)
+    return g
 
 
 # ================================================================ the desk and the PC
+DESK_BACK = D - 0.032          # the desk stands against the skirting, so its top stops short of the wall: cable gap
+
+
 def build_desk(M):
     use("SET")
-    boxmm("desk_top", (0.22, 2.06, DZ - 0.045), (2.2, D - 0.005, DZ), M["oak"], bev=0.012, seg=3)
+    boxmm("desk_top", (0.22, 2.06, DZ - 0.045), (2.2, DESK_BACK, DZ), M["oak"], bev=0.012, seg=3)
     boxmm("desk_leg_L", (0.245, 2.1, 0), (0.29, D - 0.04, DZ - 0.045), M["oak"], bev=0.008)
     px0, px1 = 1.76, 2.17
     boxmm("desk_ped", (px0, 2.1, 0.02), (px1, D - 0.04, DZ - 0.045), M["oak"], bev=0.008)
     boxmm("desk_back", (0.29, D - 0.06, 0.32), (px0, D - 0.04, DZ - 0.045), M["oak"], bev=0.004)
     for i, (z0, z1) in enumerate([(0.48, 0.68), (0.27, 0.46), (0.05, 0.25)]):
-        dy = -0.022 if i == 1 else 0.0                       # drawer 2 (the backup drawer) left ajar
-        boxmm(f"desk_drawer{i}", (px0 + 0.014, 2.083 + dy, z0), (px1 - 0.014, 2.1 + dy, z1), M["oak_lt"], bev=0.005)
-        cyl(f"desk_pull{i}", 0.006, 0.11, ((px0 + px1) / 2, 2.066 + dy, z1 - 0.045), M["brass_old"], rot=(0, 90, 0), n=8)
+        dy = -0.2 if i == 1 else 0.0                        # drawer 2 (the backup drawer, README item 2) left open
+        g = grp(f"desk_drawer_g{i}", (0, dy, 0))
+        boxmm(f"desk_drawer{i}", (px0 + 0.014, 2.083, z0), (px1 - 0.014, 2.1, z1), M["oak_lt"], bev=0.005, parent=g)
+        cyl(f"desk_pull{i}", 0.006, 0.11, ((px0 + px1) / 2, 2.066, z1 - 0.045), M["brass_old"], rot=(0, 90, 0), n=8,
+            parent=g)
         for sx in (-0.05, 0.05):
-            tube(f"desk_pullpost{i}{sx}", ((px0 + px1) / 2 + sx, 2.066 + dy, z1 - 0.045),
-                 ((px0 + px1) / 2 + sx, 2.084 + dy, z1 - 0.045), 0.004, M["brass_old"], n=6)
+            tube(f"desk_pullpost{i}{sx}", ((px0 + px1) / 2 + sx, 2.066, z1 - 0.045),
+                 ((px0 + px1) / 2 + sx, 2.084, z1 - 0.045), 0.004, M["brass_old"], n=6, parent=g)
+        if i == 1:
+            build_drawer_box(M, g, px0 + 0.02, px1 - 0.02, z0 + 0.012, z1 - 0.025)
+    # the pedestal's top rail and the dark slot the open drawer came out of
+    boxmm("desk_ped_slot", (px0 + 0.016, 2.095, 0.272), (px1 - 0.016, 2.1, 0.458), M["hole"], bev=0)
+
+
+def build_drawer_box(M, g, x0, x1, z0, z1):
+    """Drawer 2's box and what's in it: the backup USB stick on its paper tag (README item 2), CD-R sleeves, a
+    stapler, a box of staples, rubber bands. Only the front 20 cm are out of the pedestal."""
+    y0, y1, t = 2.1, 2.62, 0.012
+    for nm, a, b in [("dr2_side_L", (x0, y0, z0), (x0 + t, y1, z1)), ("dr2_side_R", (x1 - t, y0, z0), (x1, y1, z1)),
+                     ("dr2_back", (x0, y1 - t, z0), (x1, y1, z1)), ("dr2_floor", (x0, y0, z0), (x1, y1, z0 + 0.008))]:
+        boxmm(nm, a, b, M["oak_lt"], bev=0.002, parent=g)
+    zf = z0 + 0.008
+    # the USB stick: black body, blue cap, a lanyard loop and Theo's paper tag
+    u = grp("usb_stick", (x0 + 0.2, y0 + 0.105, zf + 0.004), (0, 0, 24), parent=g)
+    box("usb_body", (0.058, 0.019, 0.009), (0, 0, 0.0045), M["plastic_blk"], bev=0.003, parent=u)
+    box("usb_cap", (0.024, 0.0205, 0.0098), (0.039, 0, 0.0049), mat("usb_blue", "#2f63b8", 0.3, coat=0.4), bev=0.003,
+        parent=u)
+    box("usb_led", (0.004, 0.003, 0.0008), (0.012, 0, 0.0092), mat("usb_led", "#3a4a3a", 0.3), bev=0, parent=u)
+    torus("usb_loop", 0.006, 0.0012, (-0.034, 0, 0.0045), M["chrome"], rot=(90, 0, 0), nR=12, nr=5, parent=u)
+    curve("usb_string", [(-0.038, 0, 0.004), (-0.05, 0.004, 0.001), (-0.062, 0.002, 0.0008), (-0.07, -0.006, 0.0008)],
+          0.0006, M["paper_back"], parent=u)
+    tg = grp("usb_tag", (-0.088, -0.012, 0.0009), (0, 0, -20), parent=u)
+    rect("usb_tag_card", -0.02, -0.011, 0.02, 0.011, 0, M["manila"], tg)
+    disc("usb_tag_hole", 0.016, 0, 0.0018, 0.0002, M["oak_lt"], tg, n=10)
+    text("usb_tag_text", "BACKUP\n(Fridays!)", "segoeprb.ttf", 0.0062, (-0.002, 0.0, 0.0003), M["marker"], parent=tg,
+         line=0.85, fit=0.03)
+    # CD-R sleeves (paper envelopes with a window), a stapler, staples, rubber bands
+    for k, (dx, dy, rz) in enumerate(((0.03, 0.135, 4), (0.04, 0.14, -7), (0.035, 0.142, 15))):
+        s = grp(f"cd_sleeve{k}", (x0 + dx + 0.06, y0 + dy, zf + 0.0012 * k), (0, 0, rz), parent=g)
+        box(f"cd_sleeve{k}_env", (0.125, 0.125, 0.0012), (0, 0, 0.0006), M["paper"], bev=0, parent=s)
+        disc(f"cd_sleeve{k}_win", 0, 0, 0.04, 0.0013, mat("sleeve_win", "#d9e0e3", 0.2, spec=0.6), s, n=24)
+        disc(f"cd_sleeve{k}_disc", 0, 0, 0.0075, 0.00135, M["cd_top"], s, n=16)
+    text("cd_sleeve_label", "backup 09/2026", "segoepr.ttf", 0.0075, (x0 + 0.095, y0 + 0.175, zf + 0.0046), M["marker"],
+         rot=(0, 0, 11), parent=g)
+    st = grp("stapler", (x1 - 0.06, y0 + 0.07, zf), (0, 0, -70), parent=g)
+    box("stapler_base", (0.13, 0.03, 0.012), (0, 0, 0.006), M["plastic_blk"], bev=0.004, parent=st)
+    box("stapler_top", (0.12, 0.026, 0.02), (0.004, 0, 0.022), mat("stapler_red", "#9b2f27", 0.35, coat=0.3),
+        bev=0.006, parent=st)
+    box("staples", (0.045, 0.028, 0.018), (x1 - 0.12, y0 + 0.035, zf + 0.009), mat("staple_box", "#c9a54a", 0.6),
+        bev=0.002, parent=g)
+    for k in range(3):
+        torus(f"rubber_band{k}", 0.018 + 0.002 * k, 0.0012, (x0 + 0.05 + 0.012 * k, y0 + 0.04 - 0.008 * k, zf + 0.0012),
+              mat("rubber_band", "#b88a4e", 0.6), nR=16, nr=4, scale=(1.0, 0.7, 0.4), parent=g)
 
 
 def build_chair(M):
@@ -1130,7 +1565,7 @@ def build_chair(M):
 def build_tower(M):
     use("SET")
     w, d, h = 0.19, 0.45, 0.42
-    g = grp("tower", (0.37, 2.535, DZ))
+    g = grp("tower", (0.37, 2.5, DZ))
     box("tower_case", (w, d, h), (0, 0, h / 2 + 0.008), M["pc"], bev=0.007, parent=g)
     for sx in (-1, 1):
         for sy in (-1, 1):
@@ -1146,6 +1581,47 @@ def build_tower(M):
     box("tower_hdd_led", (0.006, 0.002, 0.003), (0.035, fy - 0.003, h - 0.198), M["led_amber"], bev=0, parent=g)
     for i in range(2):
         box(f"tower_usb{i}", (0.014, 0.003, 0.006), (-0.014 + i * 0.028, fy - 0.002, h - 0.225), M["hole"], bev=0, parent=g)
+    # front audio: headphones (green) and mic (pink)
+    for i, (x, c) in enumerate(((-0.012, "#5aa55a"), (0.012, "#d98aa8"))):
+        torus(f"tower_jack_ring{i}", 0.0042, 0.0011, (x, fy - 0.003, h - 0.252), mat(f"jackring{i}", c, 0.4),
+              rot=(90, 0, 0), nR=14, nr=5, parent=g)
+        cyl(f"tower_jack{i}", 0.0028, 0.003, (x, fy - 0.0015, h - 0.252), M["hole"], rot=(90, 0, 0), n=10, parent=g)
+    port("hp", (-0.012, fy - 0.004, h - 0.252), (0, -1, 0), g)
+    # the back: PSU on top (fan, IEC socket, rocker), the I/O shield, seven slot covers with the graphics card's VGA
+    ry = d / 2 + 0.0008
+    box("psu_plate", (w - 0.012, 0.002, 0.086), (0, ry, h - 0.052), M["steel_dk"], bev=0.001, parent=g)
+    torus("psu_fan", 0.034, 0.002, (0.035, ry + 0.001, h - 0.052), M["steel"], rot=(90, 0, 0), nR=24, nr=4, parent=g)
+    torus("psu_fan2", 0.022, 0.0016, (0.035, ry + 0.001, h - 0.052), M["steel"], rot=(90, 0, 0), nR=20, nr=4, parent=g)
+    for a in (45, 135):
+        box(f"psu_fan_bar{a}", (0.07, 0.002, 0.003), (0.035, ry + 0.0012, h - 0.052), M["steel"], rot=(0, a, 0), bev=0,
+            parent=g)
+    box("psu_iec", (0.028, 0.004, 0.024), (-0.05, ry + 0.001, h - 0.06), M["plastic_blk"], bev=0.001, parent=g)
+    port("psu", (-0.05, ry + 0.003, h - 0.06), (0, 1, 0), g)
+    box("psu_rocker", (0.012, 0.005, 0.016), (-0.05, ry + 0.002, h - 0.028), M["plastic_blk"], bev=0.001, parent=g)
+    box("io_shield", (0.044, 0.0015, 0.165), (0.062, ry, h - 0.2), M["steel"], bev=0.0005, parent=g)
+    io = [("ps2_kb", 0.288, "ps2"), ("usb_a", 0.268, "usb"), ("usb_b", 0.256, "usb"), ("usb_c", 0.239, "usb"),
+          ("usb_d", 0.227, "usb"), ("lan", 0.207, "lan"), ("aud_blue", 0.183, "jack"), ("aud_green", 0.17, "jack"),
+          ("aud_pink", 0.157, "jack")]
+    for nm, zz, k in io:
+        if k == "ps2":
+            cyl("io_ps2", 0.0065, 0.002, (0.062, ry + 0.001, zz), mat("ps2_purple", "#6b4c8f", 0.4), rot=(90, 0, 0),
+                n=14, parent=g)
+        elif k == "usb":
+            box(f"io_{nm}", (0.014, 0.002, 0.006), (0.062, ry + 0.001, zz), M["hole"], bev=0, parent=g)
+        elif k == "lan":
+            box("io_lan", (0.016, 0.002, 0.014), (0.062, ry + 0.001, zz), M["hole"], bev=0, parent=g)
+        else:
+            c = {"blue": "#5b86c9", "green": "#5aa55a", "pink": "#d98aa8"}[nm.split("_")[1]]
+            torus(f"io_{nm}", 0.0042, 0.0011, (0.062, ry + 0.001, zz), mat("jackring_" + nm, c, 0.4), rot=(90, 0, 0),
+                  nR=12, nr=4, parent=g)
+        port(nm, (0.062, ry + 0.002, zz), (0, 1, 0), g)
+    box("rear_fan_grille", (0.09, 0.0015, 0.09), (-0.035, ry, h - 0.19), M["hole"], bev=0, parent=g)
+    for k in range(7):
+        zz = 0.035 + k * 0.015
+        box(f"slot_cover{k}", (0.125, 0.002, 0.012), (0.0, ry + 0.0005, zz), M["steel"], bev=0.0005, parent=g)
+    box("gpu_vga", (0.03, 0.003, 0.01), (0.03, ry + 0.002, 0.125), mat("vga_blue", "#3a5aa8", 0.4), bev=0.001, parent=g)
+    box("gpu_dvi", (0.034, 0.003, 0.01), (-0.025, ry + 0.002, 0.125), M["pin_white"], bev=0.001, parent=g)
+    port("vga", (0.03, ry + 0.004, 0.125), (0, 1, 0), g)
     for i in range(10):
         box(f"tower_vent{i}", (0.13, 0.003, 0.0045), (0, fy - 0.001, 0.045 + i * 0.012), M["hole"], bev=0, parent=g)
     # worn stickers, no brand marks: a spec sticker, an "energy" sticker, a service-tag barcode
@@ -1177,6 +1653,11 @@ def build_monitor(M, screen_m):
         box(f"bezel_side{s}", (bs, dep, ah + 0.002), (s * (aw / 2 + bs / 2), yz, 0), M["gloss"], bev=0.006, parent=head)
     box("mon_backplate", (ow - 0.01, 0.012, ah + bt + bb - 0.01), (0, -0.002, -0.006), M["gloss"], bev=0.004, parent=head)
     box("mon_hump", (0.34, 0.04, 0.22), (0, 0.022, -0.01), M["pc"], bev=0.018, seg=3, parent=head)
+    # connectors under the hump, facing down: VGA (left of the neck) and mains (right)
+    box("mon_vga_port", (0.034, 0.012, 0.002), (-0.075, 0.024, -0.1205), M["hole"], bev=0, parent=head)
+    box("mon_pwr_port", (0.026, 0.018, 0.002), (0.095, 0.024, -0.1205), M["hole"], bev=0, parent=head)
+    port("mon_vga", (-0.075, 0.024, -0.122), (0, 0, -1), head)
+    port("mon_pwr", (0.095, 0.024, -0.122), (0, 0, -1), head)
     # the emissive screen (UV-mapped plane facing -y)
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new("UVMap")
@@ -1189,6 +1670,8 @@ def build_monitor(M, screen_m):
         f.normal_flip()
     scr = finish("screen", bm, screen_m, head, (0, yz - dep / 2 + 0.004, 0), smooth=False)
     no_shadow(scr)
+    if not SCREEN.get("plain"):
+        screen_probe(head, ow, ah + bt + bb, yz - dep / 2 + 0.004)
     # chin details: power LED and a row of buttons (no logo)
     fy = yz - dep / 2 - 0.0012
     disc("mon_led", 0, 0, 0.0018, 0, M["led_blue"], head, n=10, loc=(aw / 2 - 0.007, fy - 0.0005, -ah / 2 - bb / 2),
@@ -1199,108 +1682,190 @@ def build_monitor(M, screen_m):
     return head
 
 
+# UK ISO 105-key layout: (row offset in u, [(col, width, height, id, legend), ...]). Legends: "A" single; ("!", "1")
+# shifted over unshifted; ("w", "Shift") a word, bottom-left; ("c", "Page\nUp") small words, centred; ("arrow", "←");
+# ("num", "7", "Home") a numpad digit with its second function; ("icon", "win" | "menu").
+UK_ISO = [
+    (0.0, [(0, 1, 1, "Esc", ("c", "Esc"))] +
+     [(2 + i, 1, 1, f"F{i + 1}", ("c", f"F{i + 1}")) for i in range(4)] +
+     [(6.5 + i, 1, 1, f"F{i + 5}", ("c", f"F{i + 5}")) for i in range(4)] +
+     [(11 + i, 1, 1, f"F{i + 9}", ("c", f"F{i + 9}")) for i in range(4)] +
+     [(15.25, 1, 1, "PrtSc", ("c", "Print\nScreen")), (16.25, 1, 1, "ScrLk", ("c", "Scroll\nLock")),
+      (17.25, 1, 1, "Pause", ("c", "Pause\nBreak"))]),
+    (1.5, [(0, 1, 1, "Grave", ("¬", "`"))] +
+     [(1 + i, 1, 1, "D" + d, (s, d)) for i, (s, d) in enumerate(zip('!"£$%^&*()', "1234567890"))] +
+     [(11, 1, 1, "Minus", ("_", "-")), (12, 1, 1, "Equals", ("+", "=")), (13, 2, 1, "Back", ("arrow", "←")),
+      (15.25, 1, 1, "Ins", ("c", "Insert")), (16.25, 1, 1, "Home", ("c", "Home")),
+      (17.25, 1, 1, "PgUp", ("c", "Page\nUp")),
+      (18.5, 1, 1, "NumLk", ("c", "Num\nLock")), (19.5, 1, 1, "NDiv", "/"), (20.5, 1, 1, "NMul", "*"),
+      (21.5, 1, 1, "NSub", "-")]),
+    (2.5, [(0, 1.5, 1, "Tab", ("w", "Tab"))] +
+     [(1.5 + i, 1, 1, c, c) for i, c in enumerate("QWERTYUIOP")] +
+     [(11.5, 1, 1, "LBr", ("{", "[")), (12.5, 1, 1, "RBr", ("}", "]")), (13.5, 1.5, 2, "Enter", ("w", "Enter")),
+      (15.25, 1, 1, "Del", ("c", "Delete")), (16.25, 1, 1, "End", ("c", "End")),
+      (17.25, 1, 1, "PgDn", ("c", "Page\nDown")),
+      (18.5, 1, 1, "N7", ("num", "7", "Home")), (19.5, 1, 1, "N8", ("num", "8", "↑")),
+      (20.5, 1, 1, "N9", ("num", "9", "Pg Up")), (21.5, 1, 2, "NAdd", "+")]),
+    (3.5, [(0, 1.75, 1, "Caps", ("w", "Caps Lock"))] +
+     [(1.75 + i, 1, 1, c, c) for i, c in enumerate("ASDFGHJKL")] +
+     [(10.75, 1, 1, "Semi", (":", ";")), (11.75, 1, 1, "Quote", ("@", "'")), (12.75, 1, 1, "Hash", ("~", "#")),
+      (18.5, 1, 1, "N4", ("num", "4", "←")), (19.5, 1, 1, "N5", "5"), (20.5, 1, 1, "N6", ("num", "6", "→"))]),
+    (4.5, [(0, 1.25, 1, "LShift", ("w", "Shift")), (1.25, 1, 1, "Backslash", ("|", "\\"))] +
+     [(2.25 + i, 1, 1, c, c) for i, c in enumerate("ZXCVBNM")] +
+     [(9.25, 1, 1, "Comma", ("<", ",")), (10.25, 1, 1, "Period", (">", ".")), (11.25, 1, 1, "Slash", ("?", "/")),
+      (12.25, 2.75, 1, "RShift", ("w", "Shift")), (16.25, 1, 1, "Up", ("arrow", "↑")),
+      (18.5, 1, 1, "N1", ("num", "1", "End")), (19.5, 1, 1, "N2", ("num", "2", "↓")),
+      (20.5, 1, 1, "N3", ("num", "3", "Pg Dn")), (21.5, 1, 2, "NEnter", ("c", "Enter"))]),
+    (5.5, [(0, 1.25, 1, "LCtrl", ("w", "Ctrl")), (1.25, 1.25, 1, "LWin", ("icon", "win")),
+           (2.5, 1.25, 1, "LAlt", ("w", "Alt")), (3.75, 6.25, 1, "Space", None),
+           (10, 1.25, 1, "AltGr", ("w", "Alt Gr")), (11.25, 1.25, 1, "RWin", ("icon", "win")),
+           (12.5, 1.25, 1, "Menu", ("icon", "menu")), (13.75, 1.25, 1, "RCtrl", ("w", "Ctrl")),
+           (15.25, 1, 1, "Left", ("arrow", "←")), (16.25, 1, 1, "Down", ("arrow", "↓")),
+           (17.25, 1, 1, "Right", ("arrow", "→")),
+           (18.5, 2, 1, "N0", ("num", "0", "Ins")), (20.5, 1, 1, "NDot", ("num", ".", "Del"))]),
+]
+WORN_KEYS = ({"Enter", "Space", "Back", "NEnter", "LShift", "LCtrl"} | {"D" + d for d in "1234567890"} |
+             {f"N{d}" for d in "0123456789"} | {"NDot"} | set("EASRTONIL"))
+
+
 def build_keyboard(M):
-    """A full-size 2009 keyboard: tapered caps, worn shiny keys, legends fading where the fingers go."""
+    """A full-size 2009 UK keyboard (ISO, 105 keys): L-shaped Enter, £ on 3, " on 2, @ by ;, nav cluster, arrows,
+    numpad. Tapered caps; the keys Martin and Theo hit most are shiny and their legends half worn away."""
     use("SET")
     g = grp("keyboard", (1.0, 2.21, DZ), (3, 0, 0))
     box("kb_base", (0.465, 0.172, 0.022), (0, 0, 0.011), M["pc"], bev=0.007, seg=2, parent=g)
     box("kb_well", (0.445, 0.128, 0.004), (0, 0.004, 0.0215), M["pc_dk"], bev=0.002, parent=g)
+    port("kb_out", (0, 0.088, 0.011), (0, 1, 0), g)
     u = 0.019
-    x0, ytop = -0.2185, 0.069
-    rows = [
-        (0.0, [("Esc", 1), (None, 1)] + [(f"F{i}", 1) for i in range(1, 5)] + [(None, .5)] +
-         [(f"F{i}", 1) for i in range(5, 9)] + [(None, .5)] + [(f"F{i}", 1) for i in range(9, 13)],
-         [("PrtSc", 1), ("ScrLk", 1), ("Pause", 1)], []),
-        (1.5, [(c, 1) for c in "`1234567890-="] + [("Back", 2)], [("Ins", 1), ("Home", 1), ("PgUp", 1)],
-         [("Num", 1), ("N/", 1), ("N*", 1), ("N-", 1)]),
-        (2.5, [("Tab", 1.5)] + [(c, 1) for c in "QWERTYUIOP[]"] + [("\\", 1.5)], [("Del", 1), ("End", 1), ("PgDn", 1)],
-         [("N7", 1), ("N8", 1), ("N9", 1), ("N+", 1, 2)]),
-        (3.5, [("Caps", 1.75)] + [(c, 1) for c in "ASDFGHJKL;'"] + [("Enter", 2.25)], [], [("N4", 1), ("N5", 1), ("N6", 1)]),
-        (4.5, [("LShift", 2.25)] + [(c, 1) for c in "ZXCVBNM,./"] + [("RShift", 2.75)], [(None, 1), ("Up", 1)],
-         [("N1", 1), ("N2", 1), ("N3", 1), ("NEnt", 1, 2)]),
-        (5.5, [("LCtrl", 1.25), ("LWin", 1.25), ("LAlt", 1.25), ("Space", 6.25), ("RAlt", 1.25), ("RWin", 1.25),
-               ("Menu", 1.25), ("RCtrl", 1.25)], [("Left", 1), ("Down", 1), ("Right", 1)], [("N0", 2), ("N.", 1)]),
-    ]
-    worn = set("EASNRTOIL") | {"Space", "Enter", "Back", "LShift", "LCtrl", "NEnt", "N.", "Del"} | {f"N{i}" for i in range(10)}
+    x0, ytop = -22.5 * u / 2, 0.069
+    zb, zt, ins, gap = 0.0212, 0.0305, 0.0019, 0.0009
     bm = bmesh.new()
     legends = []
-    for ry, main, nav, num in rows:
-        for start, keys in ((0.0, main), (15.5, nav), (19.0, num)):
-            cx = start
-            for k in keys:
-                lab, wu = k[0], k[1]
-                hu = k[2] if len(k) > 2 else 1
-                if lab is not None:
-                    kx = x0 + (cx + wu / 2) * u
-                    ky = ytop - (ry + hu / 2) * u
-                    w2, h2 = wu * u / 2 - 0.0009, hu * u / 2 - 0.0009
-                    ins = 0.0019
-                    zb, zt = 0.0212, 0.0305
-                    vs = [bm.verts.new(p) for p in (
-                        (kx - w2, ky - h2, zb), (kx + w2, ky - h2, zb), (kx + w2, ky + h2, zb), (kx - w2, ky + h2, zb),
-                        (kx - w2 + ins, ky - h2 + ins, zt), (kx + w2 - ins, ky - h2 + ins, zt),
-                        (kx + w2 - ins, ky + h2 - ins, zt), (kx - w2 + ins, ky + h2 - ins, zt))]
-                    mi = 1 if lab in worn else 0
-                    for idx in ((4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)):
-                        bm.faces.new([vs[i] for i in idx]).material_index = mi
-                    show = lab.lstrip("N") if lab.startswith("N") and len(lab) == 2 else lab
-                    if len(show) == 1 or (show.startswith("F") and len(show) <= 3) or show == "Esc":
-                        legends.append((show, kx, ky, lab in worn))
-                cx += wu
+
+    def cap(outline, mi):
+        """Tapered keycap from an axis-aligned outline (bottom) and its inset (top); outline points carry the
+        inset direction (ix, iy). Listed clockwise from the top-left; built counter-clockwise (normals out)."""
+        outline = outline[::-1]
+        lo = [bm.verts.new((x, y, zb)) for x, y, _, _ in outline]
+        hi = [bm.verts.new((x + ix * ins, y + iy * ins, zt)) for x, y, ix, iy in outline]
+        n = len(outline)
+        bm.faces.new(hi).material_index = mi
+        for k in range(n):
+            bm.faces.new((lo[k], lo[(k + 1) % n], hi[(k + 1) % n], hi[k])).material_index = mi
+
+    for ry, keys in UK_ISO:
+        for col, wu, hu, kid, leg in keys:
+            mi = 1 if kid in WORN_KEYS else 0
+            xa, xb = x0 + col * u + gap, x0 + (col + wu) * u - gap
+            ya, yb = ytop - ry * u - gap, ytop - (ry + hu) * u + gap          # ya top edge, yb bottom edge
+            if kid == "Enter":                                                 # ISO: 1.5u on top, 1.25u below
+                xm = x0 + (col + 0.25) * u + gap
+                ymid = ytop - (ry + 1) * u - gap
+                cap([(xa, ya, 1, -1), (xb, ya, -1, -1), (xb, yb, -1, 1), (xm, yb, 1, 1), (xm, ymid, 1, 1),
+                     (xa, ymid, 1, 1)], mi)
+                yb = ymid + 2 * gap                                            # legends go on the top part
+            else:
+                cap([(xa, ya, 1, -1), (xb, ya, -1, -1), (xb, yb, -1, 1), (xa, yb, 1, 1)], mi)
+            if leg is not None:
+                legends.append((kid, leg, (xa + xb) / 2, (ya + yb) / 2, xa + ins, yb + ins, xb - ins, ya - ins,
+                                kid in WORN_KEYS))
     keys_m = [M["pc_dk"], mat("key_worn", "#2a2a2c", 0.2, spec=0.65)]
     caps = finish("kb_caps", bm, keys_m, g, angle=30)
     bevel(caps, 0.0011, 1, 30)
-    leg_m, leg_w = mat("legend", "#a9abaf", 0.5), mat("legend_worn", "#57595d", 0.4)
-    for i, (s, kx, ky, w) in enumerate(legends):
-        text(f"kb_leg{i}", s, "verdana.ttf", 0.0044 if len(s) == 1 else 0.0032, (kx, ky, 0.0307),
-             leg_w if w else leg_m, parent=g)
-    for i, (nm, lm) in enumerate([("num", M["led_green"]), ("caps", M["led_off"]), ("scroll", M["led_off"])]):
-        box(f"kb_led_{nm}", (0.004, 0.003, 0.001), (x0 + (19.6 + i * 1.1) * u, ytop - 0.5 * u, 0.0222), lm, bev=0, parent=g)
+    leg_m, leg_w = mat("legend", "#a9abaf", 0.5), mat("legend_worn", "#5c5e62", 0.4)
+    z = zt + 0.0002
+    for kid, leg, cx, cy, l, b, r, t, worn in legends:
+        lm = leg_w if worn else leg_m
+        nm = f"kb_leg_{kid}"
+        if isinstance(leg, str):
+            text(nm, leg, "verdana.ttf", 0.0048 if leg.isalpha() else 0.0044, (cx, cy, z), lm, parent=g)
+        elif leg[0] == "c":
+            two = "\n" in leg[1]
+            text(nm, leg[1], "verdana.ttf", 0.0021 if two else (0.0029 if len(leg[1]) <= 3 else 0.0023),
+                 (cx, cy, z), lm, parent=g, line=0.95, fit=r - l - 0.001)
+        elif leg[0] == "w":
+            text(nm, leg[1], "verdana.ttf", 0.0024, (l + 0.0012, b + 0.0016, z), lm, ax="LEFT", ay="BOTTOM", parent=g,
+                 fit=r - l - 0.002)
+            sym = {"Enter": "↵", "Tab": "⇥", "LShift": "⇧", "RShift": "⇧"}.get(kid)
+            if sym:
+                at = (r - 0.0035, t - 0.0045, z) if kid == "Enter" else (l + 0.0035, t - 0.0045, z)
+                text(nm + "_sym", sym, "seguisym.ttf", 0.0048, at, lm, parent=g)
+        elif leg[0] == "arrow":
+            text(nm, leg[1], "tahoma.ttf", 0.0052, (cx, cy, z), lm, parent=g)
+        elif leg[0] == "num":
+            text(nm, leg[1], "verdana.ttf", 0.0042, (cx, cy + 0.0018, z), lm, parent=g)
+            text(nm + "_2", leg[2], "tahoma.ttf" if len(leg[2]) == 1 else "verdana.ttf",
+                 0.0034 if len(leg[2]) == 1 else 0.0019, (cx, cy - 0.0036, z), lm, parent=g)
+        elif leg[0] == "icon":
+            ig = grp(nm, (cx, cy, z), parent=g)
+            if leg[1] == "win":                                                # a plain window outline, no logo
+                bars = ((-0.0026, 0.0018, 0.0026, 0.0024), (-0.0026, -0.0024, 0.0026, -0.0018),
+                        (-0.0026, -0.0024, -0.002, 0.0024), (0.002, -0.0024, 0.0026, 0.0024),
+                        (-0.0026, 0.0009, 0.0026, 0.0013))
+            else:                                                              # menu: a page with lines
+                bars = ((-0.0022, 0.0026, 0.0022, 0.0031), (-0.0022, -0.0031, 0.0022, -0.0026),
+                        (-0.0022, -0.0031, -0.0017, 0.0031), (0.0017, -0.0031, 0.0022, 0.0031),
+                        (-0.0011, 0.0012, 0.0011, 0.0016), (-0.0011, -0.0002, 0.0011, 0.0002),
+                        (-0.0011, -0.0016, 0.0011, -0.0012))
+            for k, (a0, b0, a1, b1) in enumerate(bars):
+                rect(f"{nm}_{k}", a0, b0, a1, b1, 0, lm, ig)
+        else:                                                                  # shifted over unshifted
+            text(nm + "_s", leg[0], "verdana.ttf", 0.0036, (cx, cy + 0.0026, z), lm, parent=g)
+            text(nm, leg[1], "verdana.ttf", 0.0036, (cx, cy - 0.0026, z), lm, parent=g)
+    # lock lights above the numpad, each with its little label
+    for i, (nm, lm, lab) in enumerate([("num", M["led_green"], "Num"), ("caps", M["led_off"], "Caps"),
+                                        ("scroll", M["led_off"], "Scroll")]):
+        x = x0 + (19.0 + i * 1.0) * u
+        box(f"kb_led_{nm}", (0.004, 0.003, 0.001), (x, ytop - 0.35 * u, 0.0222), lm, bev=0, parent=g)
+        text(f"kb_led_lab_{nm}", lab, "verdana.ttf", 0.0016, (x, ytop - 0.72 * u, 0.0222), leg_m, parent=g)
     return g
 
 
-def build_keyring(M, kb):
-    """Theo's keys, left on the keyboard for Martin: shop door, back gate, padlock; a little chainring fob."""
+def key_shape(name, parent, loc, yaw, length, m, M, bow_r=0.0115, tilt=(0, 0, 0)):
+    """A flat cylinder-lock key: a round bow with a hole, a grooved blade with cuts."""
+    k = grp(name, loc, (tilt[0], tilt[1], yaw), parent=parent)
+    annulus(name + "_bow", circ_pts(0, 0, bow_r, n=20), circ_pts(-bow_r * 0.5, 0, 0.0032, n=20), m=m, parent=k,
+            thick=0.0024, bev=0.0004)
+    L = length
+    blade = [(bow_r * 0.7, -0.0052), (bow_r + L, -0.0045), (bow_r + L + 0.004, -0.001), (bow_r + L + 0.0025, 0.0016)]
+    x = bow_r + L - 0.0025
+    up = True
+    while x > bow_r + 0.008:
+        blade.append((x, 0.0046 if up else 0.0016))
+        x -= 0.0038
+        up = not up
+    blade += [(bow_r + 0.005, 0.0048), (bow_r + 0.002, 0.0065), (bow_r * 0.7, 0.0065)]
+    prism(name + "_blade", blade, 0.0022, loc=(0, 0, -0.0011), m=m, parent=k, bev=0.0004)
+    box(name + "_groove", (L * 0.8, 0.0009, 0.0004), (bow_r + L * 0.55, 0.0003, 0.0011), M["steel_dk"], bev=0, parent=k)
+    return k
+
+
+def build_backoffice_key(M, kb):
+    """Thursday night: Theo slides ONE key off his own ring (he keeps the ring and its chainring fob) and leaves it on
+    the keyboard for Martin: a brass key on a small split ring with a round, metal-rimmed paper tag, BACK OFFICE in
+    Theo's hand."""
     use("THEO")
-    g = grp("keyring", (0.035, 0.03, 0.0318), (0, 0, -8), parent=kb)
-    torus("ring", 0.0135, 0.0014, (0, 0, 0.0016), M["chrome"], rot=(8, -6, 0), nR=28, nr=6, parent=g)
-
-    def key(name, loc, yaw, length, m, bow_r=0.0115, tilt=(0, 0, 0), cover=None):
-        k = grp(name, loc, (tilt[0], tilt[1], yaw), parent=g)
-        annulus(name + "_bow", circ_pts(0, 0, bow_r, n=18), circ_pts(-bow_r * 0.5, 0, 0.0032, n=18), m=cover or m,
-                parent=k, thick=0.0045 if cover else 0.0024, bev=0.0008 if cover else 0.0)
-        L = length
-        blade = [(bow_r * 0.7, -0.0052), (bow_r + L, -0.0045), (bow_r + L + 0.004, -0.001), (bow_r + L + 0.0025, 0.0016)]
-        x = bow_r + L - 0.0025
-        up = True
-        while x > bow_r + 0.008:
-            blade.append((x, 0.0046 if up else 0.0016))
-            x -= 0.0038
-            up = not up
-        blade += [(bow_r + 0.005, 0.0048), (bow_r + 0.002, 0.0065), (bow_r * 0.7, 0.0065)]
-        prism(name + "_blade", blade, 0.0022, loc=(0, 0, -0.0011), m=m, parent=k, bev=0.0004)
-        box(name + "_groove", (L * 0.8, 0.0009, 0.0004), (bow_r + L * 0.55, 0.0003, 0.0011), M["steel_dk"], bev=0, parent=k)
-        return k
-
-    for nm, phi, yaw, L, m, br, tl, dz, cov in (
-            ("key_shop", -6, -2, 0.04, M["brass"], 0.014, (0, 3, 0), 0.0, None),
-            ("key_gate", 38, 46, 0.034, M["steel"], 0.0135, (5, 0, 0), 0.0008, M["pin_red"]),
-            ("key_padlock", -58, -52, 0.022, M["brass_old"], 0.0095, (0, -6, 0), 0.0004, M["pin_blue"])):
-        rp = Vector((0.0135 * cos(radians(phi)), 0.0135 * sin(radians(phi)), 0))
-        loc = rp + 0.5 * br * Vector((cos(radians(yaw)), sin(radians(yaw)), 0))
-        key(nm, (loc.x, loc.y, dz), yaw, L, m, bow_r=br, tilt=tl, cover=cov)
-    # the fob: a little chainring, bright steel
-    teeth = 14
-    pts = []
-    for k in range(teeth):
-        a = 2 * pi * k / teeth
-        for da, rr in ((-0.1, 0.0145), (-0.045, 0.0172), (0.045, 0.0172), (0.1, 0.0145)):
-            pts.append((rr * cos(a + da), rr * sin(a + da)))
-    inner = [(0.0065 * x / math.hypot(x, y), 0.0065 * y / math.hypot(x, y)) for x, y in pts]
-    fob = grp("fob", (-0.034, -0.004, 0.0003), (0, 3, 15), parent=g)
-    fob.scale = (1.25, 1.25, 1.25)
-    annulus("fob_ring", pts, inner, m=M["brass"], parent=fob, thick=0.0026, bev=0.0005)
-    torus("fob_link", 0.0045, 0.001, (-0.0155, -0.002, 0.0012), M["chrome"], rot=(75, 0, 15), nR=14, nr=5, parent=g)
+    g = grp("backoffice_key", (0.052, 0.016, 0.0309), (0, 0, -12), parent=kb)
+    rr = 0.0098
+    pts = [(rr * cos(t), rr * sin(t), 0.0011 + 0.0012 * t / (4 * pi))
+           for t in (4 * pi * i / 47 for i in range(48))]
+    curve("split_ring", pts, 0.0006, M["chrome"], parent=g, res=3, bres=1)
+    # the tag: white card in a thin steel rim, its eyelet riding on the ring
+    tg = grp("key_tag", (-0.0255, -0.0035, 0.0002), (0, 0, 6), parent=g)
+    disc("tag_card", 0, 0, 0.0142, 0.0004, mat("tag_card", "#f4efe2", 0.7, spec=0.3), tg, n=40)
+    disc("tag_back", 0, 0, 0.0142, 0.0001, M["paper_back"], tg, n=40)
+    torus("tag_rim", 0.0145, 0.0008, (0, 0, 0.0004), M["steel"], nR=40, nr=6, parent=tg).scale = (1, 1, 0.7)
+    torus("tag_eyelet", 0.0022, 0.0006, (0.0159, 0.0, 0.0004), M["steel"], nR=12, nr=4, parent=tg)
+    text("tag_text", "BACK\nOFFICE", "segoeprb.ttf", 0.0082, (-0.0005, 0.0008, 0.00045), M["marker"], parent=tg,
+         line=0.78, fit=0.0235, rot=(0, 0, 4), extrude=0.00005)
+    curve("tag_underline", [(-0.009, -0.0068, 0.00046), (0.0, -0.0074, 0.00046), (0.009, -0.0066, 0.00046)], 0.00028,
+          M["marker"], parent=tg, res=4, bres=1)
+    # the key: bow hole on the ring, lying flat on the keys, a bright brass cylinder key
+    a = radians(-28)
+    hole = Vector((rr * cos(a), rr * sin(a), 0.0))
+    bow_r = 0.0118
+    key_shape("key_backoffice", g, hole + 0.5 * bow_r * Vector((cos(a), sin(a), 0)) + Vector((0, 0, 0.0013)),
+              math.degrees(a), 0.036, M["brass"], M, bow_r=bow_r, tilt=(0, 3, 0))
     return g
 
 
@@ -1322,12 +1887,7 @@ def build_mouse(M):
     box("mouse_split", (0.0012, 0.04, 0.004), (0, 0.03, 0.021), M["hole"], bev=0, parent=m)
     cyl("mouse_wheel", 0.0055, 0.004, (0, 0.03, 0.022), M["rubber"], rot=(0, 90, 0), n=12, parent=m)
     disc("mouse_glow", 0, 0, 0.012, 0.0004, mat("mouse_red", "#ff2a1a", 0.5, emit="#ff2a1a", estr=2.0), m, n=10)
-    curve("mouse_cable", [(1.41, 2.29, DZ + 0.015), (1.40, 2.36, DZ + 0.004), (1.33, 2.44, DZ + 0.003),
-                          (1.24, 2.62, DZ + 0.003), (1.2, D - 0.02, DZ - 0.02), (1.2, D - 0.02, DZ - 0.3)],
-          0.0018, M["plastic_blk"])
-    curve("kb_cable", [(1.0, 2.3, DZ + 0.012), (0.97, 2.37, DZ + 0.003), (0.9, 2.43, DZ + 0.003),
-                       (0.86, 2.66, DZ + 0.003), (0.82, D - 0.02, DZ - 0.05), (0.82, D - 0.02, DZ - 0.3)],
-          0.0022, M["plastic_blk"])
+    port("mouse", (0, 0.057, 0.012), (0, 1, 0.15), m)
     return body
 
 
@@ -1343,15 +1903,23 @@ def build_speakers(M):
         if s == "R":
             cyl("spk_vol", 0.009, 0.012, (0.0, -0.05, 0.022), M["steel_dk"], rot=(90, 0, 0), n=14, parent=g)
             disc("spk_led", 0, 0, 0.0018, 0, M["led_green"], g, n=8, loc=(0.026, -0.0455, 0.022), rot=(90, 0, 0))
+            # the powered speaker: its satellite lead goes in at the back, and two leads go to the PC (audio, USB power)
+            box("spk_R_in", (0.012, 0.002, 0.008), (0.022, 0.0455, 0.03), M["hole"], bev=0, parent=g)
+            port("spk_in", (0.022, 0.047, 0.03), (0, 1, 0), g)
+            port("spk_audio", (-0.012, 0.046, 0.026), (0, 1, 0), g)
+            port("spk_usb", (-0.026, 0.046, 0.026), (0, 1, 0), g)
+        else:
+            port("spk_out", (0.0, 0.046, 0.03), (0, 1, 0), g)
 
 
 def build_lamp(M):
     """Mustard anglepoise between the tower and the monitor, head over the keyboard."""
     use("SET")
-    base = Vector((0.605, 2.68, DZ))
+    base = Vector((0.605, 2.655, DZ))
     lathe("lamp_base", [(0.0, 0.0), (0.075, 0.0), (0.078, 0.008), (0.07, 0.026), (0.03, 0.034), (0.0, 0.036)], n=24,
           loc=base, m=M["mustard"])
     cyl("lamp_switch", 0.008, 0.008, base + Vector((0.035, -0.035, 0.026)), M["plastic_blk"], n=10, base=True)
+    pe = port("lamp", base + Vector((0.0, 0.074, 0.01)), (0, 1, 0), None)
     j1 = base + Vector((0, 0, 0.05))
     el = Vector((0.585, 2.6, 1.23))
     hd = Vector((0.66, 2.36, 1.075))
@@ -1374,6 +1942,119 @@ def build_lamp(M):
     no_shadow(bulb)
     cyl("lamp_cap", 0.014, 0.03, (0, 0, 0.095), M["mustard"], n=12, parent=head)
     return head
+
+
+def bush_end(name, port_name, M, coll=None, out=0.02):
+    """The device end of a hard-wired lead: a rubber bush on the port; returns the last two cable points."""
+    at, d = port_frame(port_name)
+    p = connector(name + "_bush", "relief", at, d, M, coll=coll)
+    return [p + d * out, p]
+
+
+def build_cables(M):
+    """Every lead on the desk ends in something. Data and audio run along the back of the desk, behind the monitor,
+    to the tower's rear I/O; mains leads drop down the gap between the desk and the wall (the desk stands against the
+    skirting) to a four-way strip on the floor, which plugs into a double socket on the wall under the desk."""
+    use("SET")
+    blk = M["plastic_blk"]
+    lane_z = DZ + 0.0026
+    BACK = DESK_BACK
+    gap_y = (BACK + D - 0.012) / 2                            # the 2 cm slot between desk and panelling
+
+    def lane(y, xs):
+        return [(x, y, lane_z) for x in xs]
+
+    def tower_rise(x_port, z_port, y_lane, x_lane):
+        """From a rear port: bend down over the desk's back edge and settle into the cable lane."""
+        return [(x_port + 0.004, BACK + 0.002, z_port - 0.03), (x_port + 0.02, BACK - 0.004, DZ + 0.05),
+                (x_lane - 0.03, y_lane + 0.003, DZ + 0.008)]
+
+    # tower-end plugs and their runs (built from the tower outwards)
+    def tower_run(name, kind, port_name, r, y_lane, path, end, m=blk):
+        at, d = port_frame(port_name)
+        st = connector(name + "_plug", kind, at, d, M)
+        pts = [st, st + d * 0.006] + tower_rise(at.x, at.z, y_lane, 0.5) + lane(y_lane, (0.5,)) + path + end
+        return cable(name, pts, r, m)
+
+    # keyboard: from the purple PS/2 socket along the back, round the left of the monitor base, into its back
+    tower_run("kb_cable", "ps2", "ps2_kb", 0.0022, 2.746,
+              lane(2.746, (0.66, 0.8)) + [(0.85, 2.68, lane_z), (0.86, 2.58, lane_z), (0.87, 2.47, lane_z),
+                                          (0.95, 2.4, lane_z), (1.0, 2.33, lane_z)],
+              bush_end("kb_lead", "kb_out", M))
+    # mouse: off the back of the pad, left of the right speaker, along the back, into a USB port
+    tower_run("mouse_cable", "usb", "usb_a", 0.0018, 2.742,
+              lane(2.742, (0.7, 1.0, 1.17)) + [(1.23, 2.66, lane_z), (1.25, 2.53, lane_z), (1.29, 2.43, lane_z),
+                                               (1.39, 2.37, DZ + 0.0055), (1.42, 2.335, DZ + 0.0055)],
+              bush_end("mouse_lead", "mouse", M, out=0.015))
+    # powered speaker (right): audio into the green jack, USB for power
+    for nm, kind, prt, src, yl in (("spk_audio_cable", "jack", "aud_green", "spk_audio", 2.754),
+                                   ("spk_usb_cable", "usb", "usb_b", "spk_usb", 2.758)):
+        tower_run(nm, kind, prt, 0.0016, yl,
+                  lane(yl, (0.75, 1.0, 1.24)) + [(1.31, yl - 0.04, lane_z), (1.325, 2.62, lane_z),
+                                                 (1.33, 2.575, DZ + 0.01)],
+                  bush_end(nm + "_lead", src, M, out=0.015))
+    # satellite (left) to the powered speaker: round the lamp base, along the back, into its input jack
+    at, d = port_frame("spk_in")
+    st = connector("spk_link_plug", "jack", at, d, M)
+    cable("spk_link", [st, st + d * 0.012, (1.37, 2.6, lane_z), (1.34, 2.68, lane_z), (1.28, 2.762, lane_z)] +
+          lane(2.762, (1.0, 0.8)) + [(0.735, 2.74, lane_z), (0.71, 2.64, lane_z), (0.69, 2.57, lane_z),
+                                     (0.66, 2.556, DZ + 0.02)] + bush_end("spk_link_lead", "spk_out", M, out=0.012),
+          0.0015, blk)
+    # monitor: VGA down behind the neck, over the back of the base, along to the graphics card (ferrite bead)
+    at, d = port_frame("mon_vga")
+    st = connector("vga_mon_plug", "vga", at, d, M)
+    cyl("vga_ferrite", 0.0072, 0.03, st + d * 0.03, blk, n=12, bev=0.002).rotation_euler = d.to_track_quat("Z", "Y").to_euler()
+    at2, d2 = port_frame("vga")
+    st2 = connector("vga_pc_plug", "vga", at2, d2, M)
+    cable("vga_cable", [st, st + d * 0.05, st + d * 0.075 + Vector((0, 0.03, 0)), (at.x, 2.615, DZ + 0.018),
+                        (at.x - 0.01, 2.67, lane_z), (at.x - 0.04, 2.75, lane_z)] +
+          lane(2.75, (0.75, 0.55))[::1] + tower_rise(at2.x, at2.z, 2.75, 0.5)[::-1] + [st2 + d2 * 0.006, st2],
+          0.0034, blk)
+    # mains: monitor, lamp and tower leads go down the gap behind the desk to the strip on the floor
+    strip_x0, strip_x1, sy, sz = 0.4, 0.84, 2.705, 0.042
+    boxmm("strip_body", (strip_x0, sy - 0.032, 0.0), (strip_x1, sy + 0.032, sz), mat("strip_white", "#e9e5da", 0.45),
+          bev=0.008, seg=2)
+    sock_x = [0.465, 0.565, 0.665, 0.765]
+    for i, x in enumerate(sock_x):
+        box(f"strip_socket{i}", (0.056, 0.05, 0.001), (x, sy, sz + 0.0004), mat("strip_face", "#dedad0", 0.5), bev=0)
+        for k, (dx, dy, w, h) in enumerate(((0.0, 0.011, 0.004, 0.008), (-0.011, -0.008, 0.008, 0.004),
+                                            (0.011, -0.008, 0.008, 0.004))):
+            box(f"strip_slot{i}{k}", (w, h, 0.001), (x + dx, sy + dy, sz + 0.001), M["hole"], bev=0)
+    box("strip_switch", (0.014, 0.022, 0.006), (0.818, sy, sz + 0.003), mat("strip_red", "#d1402c", 0.3, emit="#ff4a2a",
+                                                                          estr=1.5), bev=0.002)
+    drops = {"tower": (0.33, sock_x[0]), "lamp": (0.6, sock_x[1]), "monitor": (1.08, sock_x[2])}
+
+    def mains(name, top_pts, xd, xs):
+        st = connector(name + "_uk", "uk", (xs, sy, sz), (0, 0, 1), M, spin=180)
+        down = [(xd, gap_y, DZ - 0.04), (xd, gap_y, 0.3), (xd + 0.01, gap_y, 0.16), (xd + 0.01, BACK - 0.012, 0.115),
+                (xd, BACK - 0.02, 0.03), ((xd + xs) / 2, sy + 0.05, 0.008), (xs, sy + 0.048, 0.03)]
+        return cable(name, top_pts + down + [st + Vector((0, 0.01, 0.0)), st], 0.0031, blk)
+
+    at, d = port_frame("psu")
+    st = connector("psu_plug", "iec", at, d, M)
+    mains("tower_power", [st, st + d * 0.004, (at.x, gap_y, at.z - 0.03), (at.x, gap_y, DZ + 0.1)], *drops["tower"])
+    at, d = port_frame("mon_pwr")
+    st = connector("mon_pwr_plug", "iec", at, d, M)
+    mains("monitor_power", [st, st + d * 0.02, (at.x, 2.6, DZ + 0.03), (at.x, 2.65, lane_z), (1.09, 2.74, lane_z),
+                            (1.085, BACK + 0.004, DZ - 0.01)], *drops["monitor"])
+    lamp_end = bush_end("lamp_lead", "lamp", M, out=0.01)[::-1]
+    mains("lamp_power", lamp_end + [(0.6, BACK - 0.008, lane_z), (0.6, BACK + 0.006, DZ - 0.012)], *drops["lamp"])
+    # the strip's own lead to the double socket on the wall under the desk
+    wx, wz, wy = 0.36, 0.25, D - 0.012
+    box("wall_socket", (0.146, 0.009, 0.086), (wx, wy - 0.0045, wz), mat("plug_white", "#ece8de", 0.4), bev=0.002)
+    for k, sx in enumerate((-0.036, 0.036)):
+        box(f"wall_rocker{k}", (0.012, 0.004, 0.009), (wx + sx + 0.022, wy - 0.01, wz + 0.028), M["pin_white"],
+            bev=0.001)
+        if k:
+            for j, (dx, dz, w, h) in enumerate(((0.0, 0.011, 0.004, 0.008), (-0.011, -0.008, 0.008, 0.004),
+                                                (0.011, -0.008, 0.008, 0.004))):
+                box(f"wall_slot{j}", (w, 0.001, h), (wx + sx + dx, wy - 0.0095, wz + dz - 0.004), M["hole"], bev=0)
+    st = connector("strip_wall_uk", "uk", (wx - 0.036, wy - 0.009, wz - 0.004), (0, -1, 0), M)
+    lead_in = Vector((strip_x0 - 0.004, sy, 0.02))
+    cable("strip_lead", [st, st + Vector((0, 0, -0.012)), (wx - 0.036, wy - 0.03, 0.12), (wx - 0.03, BACK - 0.03, 0.03),
+                         (strip_x0 - 0.04, sy + 0.02, 0.006), lead_in - Vector((0.02, 0, 0.012)), lead_in],
+          0.0035, blk)
+    cyl("strip_lead_relief", 0.0055, 0.016, lead_in + Vector((0.006, 0, 0)), blk, rot=(0, 90, 0), n=10)
 
 
 def paper_sheet(name, w, h, m, parent, curl=0.0, z=0.0):
@@ -1401,139 +2082,325 @@ def pushpin(name, parent, x, y, m):
                  (0.0052, 0.013), (0.0, 0.0135)], n=14, loc=(x, y, 0.0005), m=m, parent=parent)
 
 
-def build_calendar(M, parent):
-    """Supplier calendar, November 2026 (Monday-first). Friday 27 circled in Martin's hand."""
-    w, h = 0.22, 0.36
-    paper_sheet("cal_paper", w, h, M["paper"], parent, curl=0.006)
-    top = grp("cal_print", (0, -h / 2, 0.0), parent=parent)       # print space: origin at sheet centre
-    zz = 0.00055
-
-    def zc(y):
-        return zz + 0.006 * ((h / 2 - y) / h) ** 2               # follow the sheet's curl
-
-    # illustration: a lane through low hills, a rider, a pale sun
-    il = [("#d9ddd0", [(-0.1, 0.035), (0.1, 0.035), (0.1, 0.17), (-0.1, 0.17)]),
-          ("#efd9a2", circ_pts(0.05, 0.135, 0.016, n=16)),
-          ("#9eb294", [(-0.1, 0.085), (-0.06, 0.112), (-0.02, 0.097), (0.03, 0.12), (0.07, 0.102), (0.1, 0.114), (0.1, 0.035), (-0.1, 0.035)]),
-          ("#71906b", [(-0.1, 0.064), (-0.04, 0.088), (0.02, 0.072), (0.1, 0.09), (0.1, 0.035), (-0.1, 0.035)]),
-          ("#8d877b", [(-0.034, 0.035), (0.046, 0.035), (0.013, 0.083), (0.006, 0.083)])]
-    for i, (c, pts) in enumerate(il):
-        flat(f"cal_il{i}", pts, zc(0.1) + i * 0.00004, mat(f"cal_il{i}", c, 0.7), top)
-    rider = mat("cal_rider", "#2f3a40", 0.6)
-    for k, cx in enumerate((-0.068, -0.036)):
-        annulus(f"cal_wheel{k}", circ_pts(cx, 0.052, 0.0105, n=16), circ_pts(cx, 0.052, 0.0085, n=16),
-                zc(0.05) + 0.0003, rider, top)
-    flat("cal_frame", [(-0.068, 0.052), (-0.05, 0.068), (-0.036, 0.052), (-0.052, 0.052), (-0.05, 0.066), (-0.066, 0.053)],
-         zc(0.05) + 0.0003, rider, top)
-    flat("cal_body", [(-0.055, 0.07), (-0.045, 0.088), (-0.036, 0.09), (-0.033, 0.084), (-0.044, 0.068)],
-         zc(0.05) + 0.0003, rider, top)
-    disc("cal_head", -0.034, 0.095, 0.0045, zc(0.05) + 0.0003, rider, top, n=10)
-    text("cal_month", "NOVEMBER", "verdanab.ttf", 0.017, (-0.1, 0.012, zc(0.0)), M["ink"], ax="LEFT", parent=top)
-    text("cal_year", "2026", "verdana.ttf", 0.017, (0.1, 0.012, zc(0.0)), M["red_ink"], ax="RIGHT", parent=top)
-    cw, chh, gx0, gy0 = 0.2 / 7, 0.0235, -0.1, -0.012
-    for c, dname in enumerate("MTWTFSS"):
-        text(f"cal_wd{c}", dname, "verdanab.ttf", 0.0065, (gx0 + (c + 0.5) * cw, gy0 + 0.004, zc(gy0)),
-             M["red_ink"] if c == 6 else M["print_grey"], parent=top)
-    grey = mat("cal_grid", "#b9b4aa", 0.8)
-    for r in range(7):
-        yy = gy0 - r * chh
-        rect(f"cal_hl{r}", gx0, yy - 0.0002, gx0 + 0.2, yy + 0.0002, zc(yy) + 0.0001, grey, top)
-    for c in range(8):
-        xx = gx0 + c * cw
-        rect(f"cal_vl{c}", xx - 0.0002, gy0 - 6 * chh, xx + 0.0002, gy0, zc(gy0 - 0.07) + 0.0001, grey, top)
-    for d in range(1, 31):
-        idx = d + 5
-        r, c = divmod(idx, 7)
-        x = gx0 + c * cw + 0.0025
-        y = gy0 - r * chh - 0.0058
-        text(f"cal_d{d}", str(d), "verdana.ttf", 0.0074, (x, y, zc(y) + 0.0002),
-             M["red_ink"] if c == 6 else M["ink"], ax="LEFT", parent=top)
-    text("cal_supplier", "WHEELWRIGHT CYCLE SUPPLY  ·  trade parts since 1979  ·  01632 960 412", "verdana.ttf",
-         0.0042, (0, -0.168, zc(-0.168)), M["print_grey"], parent=top, fit=0.196)
-    # Martin's marks: Friday 27 circled (twice round, like a real pen), Mon/Tue crossed off, the note in row 6
-    cx, cy = gx0 + 4.5 * cw, gy0 - 4.5 * chh
-    pts = []
-    for i in range(30):
-        t = 2 * pi * 1.15 * i / 29 + 1.9
-        rr = 1.0 + 0.06 * sin(3 * t) + 0.03 * i / 29
-        pts.append((cx + 0.0165 * rr * cos(t), cy + 0.0128 * rr * sin(t), zc(cy) + 0.0006))
-    curve("cal_circle", pts, 0.00065, M["red_ink"], parent=top, res=3, bres=1)
-    for d in (23, 24):
-        r, c = divmod(d + 5, 7)
-        x, y = gx0 + (c + 0.5) * cw, gy0 - (r + 0.5) * chh
-        for a in (38, -38):
-            box(f"cal_x{d}{a}", (0.026, 0.0011, 0.0002), (x, y, zc(y) + 0.0005), M["red_ink"], rot=(0, 0, a), bev=0,
-                parent=top)
-    yy = gy0 - 5.5 * chh
-    text("cal_note", "THEO'S LAST DAY :(", "Inkfree.ttf", 0.0135, (gx0 + 4.0 * cw, yy - 0.0015, zc(yy) + 0.0005),
-         M["red_ink"], parent=top, fit=0.165, rot=(0, 0, 3), extrude=0.00008)
-    curve("cal_arrow", [(cx + 0.005, yy + 0.0075, zc(yy) + 0.0006), (cx + 0.0085, yy + 0.012, zc(yy) + 0.0006),
-                        (cx + 0.006, cy - 0.0135, zc(cy) + 0.0006)], 0.0005, M["red_ink"], parent=top, res=4, bres=1)
-    for a in (-35, 35):
-        box(f"cal_arrowhead{a}", (0.0045, 0.0009, 0.0002), (cx + 0.006 + 0.0016 * (1 if a > 0 else -1), cy - 0.0155,
-                                                            zc(cy) + 0.0006), M["red_ink"], rot=(0, 0, 90 + a), bev=0, parent=top)
-    pushpin("cal_pin", parent, 0, -0.008, M["pin_red"])
+# ================================================================ the 2009 photo: a mini-set, rendered to a print
+def _limb(name, a, b, r, m, parent, r2=None, n=10):
+    t = tube(name, a, b, r, m, n=n, parent=parent, r2=r2)
+    sphere(name + "_j", r * 1.02, a, m, seg=10, rings=6, parent=parent)
+    return t
 
 
-def build_photo(M, parent):
-    """2009 print: teenage Theo (red hoodie, shaggy fringe) holding up a CD-R, Martin's arm round him, shopfront."""
-    w, h = 0.152, 0.102
-    paper_sheet("photo_paper", w, h, mat("photo_white", "#f3f1ea", 0.3, coat=0.3), parent, curl=0.0)
-    p = grp("photo_print", (0, -h / 2, 0.00055), parent=parent)
-    gl = {}
+def _face(name, g, head_z, r, M, skin, brow, smile_w=0.03):
+    eye = mat("ph_eye", "#2a221d", 0.4)
+    for s in (-1, 1):
+        sphere(f"{name}_eye{s}", r * 0.11, (s * r * 0.36, -r * 0.9, head_z + r * 0.12), eye, seg=8, rings=5, parent=g)
+        box(f"{name}_brow{s}", (r * 0.32, r * 0.06, r * 0.07), (s * r * 0.37, -r * 0.93, head_z + r * 0.34), brow,
+            rot=(0, -s * 6, 0), bev=r * 0.02, parent=g)
+        sphere(f"{name}_ear{s}", r * 0.2, (s * r * 0.98, 0, head_z + 0.0), skin, seg=8, rings=6, parent=g,
+               scale=(0.5, 1.0, 1.25))
+    cyl(f"{name}_nose", r * 0.12, r * 0.28, (0, -r * 1.0, head_z - r * 0.05), skin, r2=r * 0.05, rot=(90, 0, 0), n=8,
+        parent=g)
+    curve(f"{name}_smile", [(-smile_w, -r * 0.93, head_z - r * 0.38), (0, -r * 0.97, head_z - r * 0.48),
+                            (smile_w, -r * 0.93, head_z - r * 0.38)], r * 0.035, mat("ph_mouth", "#7a3a2e", 0.5),
+          parent=g, res=6, bres=1)
 
-    def pm(c):
-        if c not in gl:
-            gl[c] = mat("ph_" + c.lstrip("#"), c, 0.3, coat=0.4)
-        return gl[c]
 
-    z = [0.0]
+def photo_figures(M):
+    """Theo, 14, red hoodie and shaggy 2009 fringe, holding up the CD-R; Martin, 44, flat cap, moustache, work apron,
+    his arm round Theo's shoulders. Simple, low-poly, the same miniature style as the desk."""
+    skin_t, skin_m = mat("ph_skin_t", "#e3b28f", 0.55), mat("ph_skin_m", "#d29c78", 0.55)
+    hoodie, jeans = mat("ph_hoodie", "#b0473b", 0.85), mat("ph_jeans", "#4b6288", 0.8)
+    hair_t = mat("ph_hair_t", "#3b2a20", 0.7)
+    # ---- Theo (to the left in the photo)
+    t = grp("theo14", (-0.27, -1.0, 0.0), (0, 0, 8))
+    for s in (-1, 1):
+        box(f"t_shoe{s}", (0.1, 0.25, 0.075), (s * 0.09, -0.03, 0.0375), mat("ph_canvas", "#d9d5cc", 0.7), bev=0.03,
+            parent=t)
+        box(f"t_sole{s}", (0.104, 0.254, 0.02), (s * 0.09, -0.03, 0.01), mat("ph_sole", "#efede6", 0.6), bev=0.008,
+            parent=t)
+        _limb(f"t_leg{s}", (s * 0.088, 0.0, 0.08), (s * 0.095, 0.0, 0.8), 0.062, jeans, t, r2=0.07)
+    box("t_torso", (0.37, 0.22, 0.54), (0, 0, 1.06), hoodie, bev=0.07, seg=3, parent=t)
+    box("t_pocket", (0.22, 0.02, 0.12), (0, -0.108, 0.9), mat("ph_hoodie_dk", "#97392f", 0.85), bev=0.02, parent=t)
+    sphere("t_hood", 0.15, (0, 0.08, 1.31), hoodie, seg=14, rings=8, parent=t, scale=(1.1, 0.75, 0.55))
+    for s in (-1, 1):
+        tube(f"t_string{s}", (s * 0.035, -0.115, 1.3), (s * 0.04, -0.12, 1.16), 0.006, mat("ph_string", "#ece6da", 0.6),
+             n=6, parent=t)
+    cyl("t_neck", 0.048, 0.1, (0, 0, 1.36), skin_t, n=12, parent=t)
+    hz = 1.49
+    sphere("t_head", 0.105, (0, 0, hz), skin_t, seg=18, rings=12, parent=t, scale=(1.0, 0.98, 1.12))
+    _face("t", t, hz, 0.105, M, skin_t, hair_t, 0.028)
+    sphere("t_hair_cap", 0.116, (0, 0.012, hz + 0.03), hair_t, seg=16, rings=10, parent=t, scale=(1.02, 1.02, 0.95))
+    for k, (x, z, ry, rz, L) in enumerate(((-0.01, 0.085, 72, -18, 0.12), (0.04, 0.078, 62, -26, 0.12),
+                                          (0.075, 0.055, 55, -38, 0.09), (-0.055, 0.08, 82, 10, 0.07))):
+        cyl(f"t_fringe{k}", 0.028, L, (x, -0.09, hz + z), hair_t, r2=0.004, rot=(10, ry, rz), n=8, parent=t)
+    for k in range(5):                                       # shaggy back and sides
+        a = radians(-70 + 35 * k)
+        cyl(f"t_tuft{k}", 0.035, 0.09, (0.1 * sin(a), 0.07 * cos(a) + 0.03, hz - 0.03), hair_t, r2=0.005,
+            rot=(160 - 20 * cos(a), 0, math.degrees(a)), n=7, parent=t)
+    # arms up, both hands holding the CD-R out to the camera
+    cdc = Vector((0.0, -0.36, 1.2))
+    for s in (-1, 1):
+        sh, el = Vector((s * 0.2, 0.0, 1.26)), Vector((s * 0.2, -0.16, 1.02))
+        hand = cdc + Vector((s * 0.066, 0.01, -0.01))
+        _limb(f"t_upper{s}", sh, el, 0.055, hoodie, t)
+        _limb(f"t_fore{s}", el, hand + Vector((s * 0.01, 0.03, -0.02)), 0.05, hoodie, t, r2=0.045)
+        sphere(f"t_hand{s}", 0.038, hand, skin_t, seg=10, rings=7, parent=t, scale=(0.75, 1.0, 1.0))
+    cdg = grp("t_cd", cdc, (88, 0, -8), parent=t)
+    cyl("cd_body", 0.06, 0.0012, (0, 0, 0), mat("ph_cdr", "#c9cfd4", 0.22, metal=0.6), n=40, parent=cdg)
+    cyl("cd_label", 0.0585, 0.0004, (0, 0, 0.0008), mat("ph_cdr_top", "#e2e3df", 0.35), n=40, parent=cdg)
+    cyl("cd_hub", 0.018, 0.0006, (0, 0, 0.0011), mat("ph_cdr_hub", "#b9c0c4", 0.3, metal=0.4), n=24, parent=cdg)
+    cyl("cd_hole", 0.0075, 0.0008, (0, 0, 0.0013), mat("ph_cdr_hole", "#1a1a1a", 0.5), n=16, parent=cdg)
+    text("cd_text", "SHOP SYSTEM", "segoeprb.ttf", 0.0135, (0, 0.032, 0.0013), M["marker"], parent=cdg, fit=0.08)
+    text("cd_text2", "v1  :)", "segoeprb.ttf", 0.014, (0.002, -0.034, 0.0013), M["marker"], parent=cdg)
+    # ---- Martin (to the right), his right arm round Theo
+    m = grp("martin44", (0.24, -0.95, 0.0), (0, 0, -6))
+    shirt, trous = mat("ph_shirt", "#4a6288", 0.8), mat("ph_trousers", "#2c3038", 0.85)
+    apron = mat("ph_apron", "#7c5636", 0.9)
+    for s in (-1, 1):
+        box(f"m_boot{s}", (0.115, 0.29, 0.1), (s * 0.1, -0.03, 0.05), mat("ph_boot", "#4a3324", 0.5), bev=0.035,
+            parent=m)
+        _limb(f"m_leg{s}", (s * 0.1, 0.0, 0.09), (s * 0.105, 0.0, 0.88), 0.074, trous, m, r2=0.08)
+    box("m_torso", (0.47, 0.27, 0.62), (0, 0, 1.2), shirt, bev=0.085, seg=3, parent=m)
+    prism("m_apron", [(-0.2, 0.0), (0.2, 0.0), (0.18, 0.86), (0.13, 0.95), (-0.13, 0.95), (-0.18, 0.86)], 0.012,
+          loc=(0, -0.142, 0.52), rot=(90, 0, 0), m=apron, bev=0.004, parent=m)
+    box("m_apron_pocket", (0.22, 0.012, 0.1), (0, -0.152, 0.86), mat("ph_apron_dk", "#6a4a2e", 0.9), bev=0.01, parent=m)
+    tube("m_pencil", (0.06, -0.156, 0.91), (0.072, -0.158, 0.99), 0.006, M["pencil"], n=6, parent=m)
+    for s in (-1, 1):
+        tube(f"m_strap{s}", (s * 0.12, -0.15, 1.46), (s * 0.08, -0.04, 1.52), 0.012, apron, n=6, parent=m)
+    cyl("m_neck", 0.056, 0.1, (0, 0, 1.53), skin_m, n=12, parent=m)
+    hz = 1.665
+    sphere("m_head", 0.115, (0, 0, hz), skin_m, seg=18, rings=12, parent=m, scale=(1.0, 0.98, 1.1))
+    _face("m", m, hz, 0.115, M, skin_m, mat("ph_brow_m", "#6b5a4c", 0.7), 0.026)
+    sphere("m_tache", 0.04, (0, -0.105, hz - 0.035), mat("ph_tache", "#6b5a4c", 0.8), seg=10, rings=6, parent=m,
+           scale=(1.3, 0.45, 0.42))
+    cap = mat("ph_cap", "#5a554e", 0.9)
+    sphere("m_cap", 0.125, (0, 0.0, hz + 0.055), cap, seg=16, rings=10, parent=m, scale=(1.02, 1.08, 0.5))
+    box("m_peak", (0.2, 0.1, 0.018), (0, -0.115, hz + 0.05), cap, rot=(-10, 0, 0), bev=0.008, parent=m)
+    # his right arm (nearest Theo) round Theo's shoulders, the hand on Theo's far shoulder
+    sh = Vector((-0.24, 0.0, 1.43))
+    el = Vector((-0.42, 0.06, 1.38))
+    th_far = Vector((-0.66, -0.02, 1.31))                    # the top of Theo's far shoulder, in Martin's space
+    _limb("m_upper_r", sh, el, 0.064, shirt, m)
+    _limb("m_fore_r", el, th_far + Vector((0.05, 0.03, 0.03)), 0.05, shirt, m, r2=0.046)
+    sphere("m_hand_r", 0.043, th_far + Vector((0.0, -0.02, 0.0)), skin_m, seg=10, rings=7, parent=m,
+           scale=(0.9, 1.2, 0.55))
+    # his left arm down, thumb in the apron pocket
+    sh2, el2 = Vector((0.25, 0.0, 1.43)), Vector((0.3, -0.04, 1.12))
+    _limb("m_upper_l", sh2, el2, 0.064, shirt, m)
+    _limb("m_fore_l", el2, Vector((0.12, -0.17, 0.9)), 0.052, skin_m, m, r2=0.046)
+    sphere("m_hand_l", 0.045, (0.11, -0.17, 0.9), skin_m, seg=10, rings=7, parent=m)
 
-    def shape(nm, pts, c):
-        z[0] += 0.00004
-        return flat("ph_" + nm, pts, z[0], pm(c), p)
 
-    X0, X1, Y0, Y1 = -0.0715, 0.0715, -0.0465, 0.0465
-    shape("sky", [(X0, 0.028), (X1, 0.028), (X1, Y1), (X0, Y1)], "#b7c4cc")
-    shape("facade", [(X0, -0.03), (X1, -0.03), (X1, 0.032), (X0, 0.032)], "#cdbd96")
-    shape("fascia", [(X0, 0.012), (X1, 0.012), (X1, 0.027), (X0, 0.027)], "#2f4d3c")
-    shape("win", [(X0 + 0.004, -0.028), (0.022, -0.028), (0.022, 0.009), (X0 + 0.004, 0.009)], "#2f4d3c")
-    shape("glass", [(X0 + 0.007, -0.025), (0.019, -0.025), (0.019, 0.006), (X0 + 0.007, 0.006)], "#7d939d")
-    shape("glint", [(X0 + 0.02, -0.025), (X0 + 0.032, -0.025), (X0 + 0.05, 0.006), (X0 + 0.038, 0.006)], "#a7bac2")
-    shape("door", [(0.032, -0.03), (0.058, -0.03), (0.058, 0.01), (0.032, 0.01)], "#2f4d3c")
-    shape("doorglass", [(0.036, -0.008), (0.054, -0.008), (0.054, 0.006), (0.036, 0.006)], "#6c818b")
-    shape("pavement", [(X0, Y0), (X1, Y0), (X1, -0.03), (X0, -0.03)], "#8f8b83")
-    # Martin, 44 in 2009: flat cap, work apron
-    shape("m_legs", [(0.008, -0.044), (0.0255, -0.044), (0.024, -0.016), (0.0095, -0.016)], "#2b2f38")
-    shape("m_torso", [(0.0065, -0.017), (0.027, -0.017), (0.0285, 0.0045), (0.005, 0.0045)], "#3c4f72")
-    shape("m_apron", [(0.009, -0.024), (0.0245, -0.024), (0.0235, 0.002), (0.01, 0.002)], "#7a5536")
-    shape("m_arm_r", [(0.027, 0.004), (0.031, 0.002), (0.03, -0.016), (0.0265, -0.016)], "#3c4f72")
-    shape("m_head", circ_pts(0.0168, 0.0095, 0.0047, n=14), "#d9a785")
-    shape("m_cap", [(0.0118, 0.011), (0.0222, 0.011), (0.0232, 0.0128), (0.0205, 0.0155), (0.013, 0.0155)], "#4a4642")
-    shape("m_tache", [(0.0148, 0.0078), (0.0188, 0.0078), (0.0185, 0.0071), (0.0151, 0.0071)], "#6b5a4c")
-    # Theo, 14: shaggy fringe, red hoodie, jeans
-    shape("t_legs", [(-0.016, -0.044), (-0.004, -0.044), (-0.0045, -0.024), (-0.0155, -0.024)], "#4d6487")
-    shape("t_torso", [(-0.0185, -0.025), (-0.0015, -0.025), (-0.001, -0.0035), (-0.019, -0.0035)], "#a8443a")
-    shape("t_head", circ_pts(-0.01, 0.0015, 0.0041, n=14), "#e0b08f")
-    shape("t_hair", [(-0.0148, 0.0012), (-0.0145, 0.005), (-0.0115, 0.0068), (-0.0065, 0.0066), (-0.0048, 0.004),
-                     (-0.0052, 0.0016), (-0.0075, 0.0034), (-0.0105, 0.0026), (-0.0128, 0.0036)], "#3b2a20")
-    shape("m_arm_l", [(0.0065, 0.003), (-0.003, 0.0005), (-0.0045, -0.003), (0.0065, -0.0005)], "#3c4f72")
-    shape("t_arm", [(-0.0185, -0.006), (-0.0215, -0.016), (-0.018, -0.0175), (-0.0155, -0.009)], "#a8443a")
-    # the CD-R, held up to the camera, oversized
-    cdx, cdy = -0.0215, -0.0145
-    shape("cd", circ_pts(cdx, cdy, 0.0095, n=24), "#d8dcde")
-    shape("cd_sheen", [(cdx - 0.006, cdy - 0.0072), (cdx - 0.002, cdy - 0.0092), (cdx + 0.008, cdy + 0.003),
-                       (cdx + 0.006, cdy + 0.0065)], "#e7e3ef")
-    shape("cd_hole", circ_pts(cdx, cdy, 0.0016, n=12), "#9aa0a3")
-    shape("t_hand", circ_pts(cdx + 0.0005, cdy - 0.0095, 0.0022, n=10), "#e0b08f")
-    for i, (x, y) in enumerate(((-0.0115, 0.0013), (-0.0085, 0.0013), (0.0152, 0.0098), (0.0185, 0.0098))):
-        disc(f"ph_eye{i}", x, y, 0.00042, z[0] + 0.00004, pm("#2a221d"), p, n=6)
-    z[0] += 0.0001
-    text("ph_cd_text", "SHOP SYSTEM\nv1", "segoeprb.ttf", 0.0022, (cdx, cdy + 0.0032, z[0]), M["marker"], parent=p,
-         line=0.85, fit=0.0125, rot=(0, 0, 8))
-    text("ph_sign", "SPOKES & SPROCKETS", "georgiab.ttf", 0.0068, (0, 0.0195, z[0]), pm("#e9dfc4"), parent=p, fit=0.112)
-    text("ph_date", "'09  6 14", "consolab.ttf", 0.0042, (0.066, -0.0425, z[0]), pm("#ff8a24"), ax="RIGHT", parent=p)
-    pushpin("photo_pin", parent, -0.058, -0.006, M["pin_blue"])
+def photo_shopfront(M):
+    """The shop in 2009: green fascia with gilt letters, the window with a bike in it, the door, the pavement."""
+    green = mat("ph_green", "#2f4d3c", 0.45, coat=0.3)
+    cream = mat("ph_cream", "#e6dcc3", 0.5)
+    gilt = mat("ph_gilt", "#d4ad5c", 0.25, metal=1.0)
+    boxmm("ph_pavement", (-4, -6, -0.05), (4, 0.0, 0.0), brick("ph_slabs", "#a7a39b", "#9b978f", "#7d7a74", scale=1.3,
+                                                                      row=0.5, width=0.5), bev=0)
+    boxmm("ph_kerb", (-4, -6.0, -0.05), (4, -5.8, 0.02), M["concrete"], bev=0.01)
+    boxmm("ph_bricks", (-5, 0.0, 3.12), (5, 0.4, 6.0), M["outside_brick"], bev=0)
+    boxmm("ph_bricks_L", (-5, 0.0, 0.0), (-2.66, 0.4, 3.12), M["outside_brick"], bev=0)
+    boxmm("ph_bricks_R", (2.41, 0.0, 0.0), (5, 0.4, 3.12), M["outside_brick"], bev=0)
+    boxmm("ph_back", (-2.66, 0.4, 0.0), (2.41, 0.5, 3.12), mat("ph_inside", "#3a2c22", 0.9), bev=0)
+    boxmm("ph_riser", (-2.3, -0.12, 0.0), (0.6, -0.02, 0.5), green, bev=0.01)
+    boxmm("ph_sill", (-2.32, -0.16, 0.5), (0.62, -0.02, 0.56), cream, bev=0.01)
+    for nm, a, b in [("ph_win_L", (-2.34, -0.1, 0.56), (-2.26, -0.03, 2.5)), ("ph_win_R", (0.56, -0.1, 0.56),
+                                                                             (0.64, -0.03, 2.5)),
+                     ("ph_win_T", (-2.34, -0.1, 2.44), (0.64, -0.03, 2.52)), ("ph_transom", (-2.3, -0.1, 2.1),
+                                                                             (0.6, -0.03, 2.16)),
+                     ("ph_mullion", (-0.89, -0.1, 0.56), (-0.83, -0.03, 2.1))]:
+        boxmm(nm, a, b, cream, bev=0.008)
+    boxmm("ph_glass", (-2.3, -0.06, 0.56), (0.6, -0.055, 2.44), mat("ph_glass", "#28343a", 0.04, spec=0.8, alpha=0.22),
+          bev=0)
+    boxmm("ph_display", (-2.3, -0.02, 0.5), (0.6, 0.4, 0.56), M["oak_lt"], bev=0)
+    bike("ph_bike", (-1.45, 0.2, 0.56), 0, mat("ph_bike", "#3e7c74", 0.3, coat=0.5), M)
+    text("ph_win_text", "CYCLE REPAIRS  ·  SALES", "georgiab.ttf", 0.13, (-0.85, -0.062, 2.3), gilt, rot=(90, 0, 0),
+         fit=2.6)
+    og = grp("ph_open", (0.05, -0.08, 1.6), (90, 0, 0))
+    box("ph_open_card", (0.32, 0.12, 0.006), (0, 0, 0), M["pin_white"], bev=0.004, parent=og)
+    text("ph_open_t", "OPEN", "verdanab.ttf", 0.075, (0, 0, 0.0035), M["red_ink"], parent=og)
+    for nm, a, b in (("ph_reveal_L", (0.64, -0.06, 0.0), (0.7, 0.1, 2.5)), ("ph_reveal_R", (1.8, -0.06, 0.0),
+                                                                            (1.86, 0.1, 2.5)),
+                     ("ph_reveal_T", (0.64, -0.06, 2.2), (1.86, 0.1, 2.52))):
+        boxmm(nm, a, b, cream, bev=0.006)
+    boxmm("ph_door", (0.76, 0.05, 0.02), (1.74, 0.1, 2.2), green, bev=0.012)
+    boxmm("ph_door_glass", (0.86, 0.04, 1.05), (1.64, 0.05, 2.08), mat("ph_glass", "#28343a", 0.04), bev=0)
+    boxmm("ph_door_panel", (0.88, 0.04, 0.15), (1.62, 0.05, 0.9), green, bev=0.01)
+    boxmm("ph_letterbox", (1.1, 0.035, 0.95), (1.4, 0.045, 0.99), gilt, bev=0.004)
+    cyl("ph_knob", 0.03, 0.05, (0.86, 0.02, 1.0), gilt, rot=(90, 0, 0), n=14)
+    boxmm("ph_step", (0.64, -0.3, 0.0), (1.86, 0.06, 0.08), M["concrete"], bev=0.01)
+    for nm, x in (("ph_pil_L", -2.55), ("ph_pil_M", 0.6), ("ph_pil_R", 1.86)):
+        w = 0.2 if nm != "ph_pil_M" else 0.04
+        boxmm(nm, (x, -0.14, 0.0), (x + w, 0.0, 2.55), cream, bev=0.012)
+    boxmm("ph_pil_R2", (2.06, -0.14, 0.0), (2.32, 0.0, 2.55), cream, bev=0.012)
+    boxmm("ph_fascia", (-2.6, -0.18, 2.52), (2.35, 0.0, 3.02), green, bev=0.015)
+    boxmm("ph_cornice", (-2.66, -0.24, 3.02), (2.41, 0.0, 3.12), cream, bev=0.02)
+    boxmm("ph_fascia_line", (-2.52, -0.185, 2.58), (2.27, -0.18, 2.6), gilt, bev=0)
+    boxmm("ph_fascia_line2", (-2.52, -0.185, 2.94), (2.27, -0.18, 2.96), gilt, bev=0)
+    text("ph_fascia_text", "SPOKES & SPROCKETS", "georgiab.ttf", 0.26, (-0.12, -0.186, 2.77), gilt, rot=(90, 0, 0),
+         fit=4.3, extrude=0.006)
+    for x in (-2.62, 2.33):
+        boxmm(f"ph_console{x}", (x - 0.06, -0.24, 2.5), (x + 0.06, 0.0, 3.04), cream, bev=0.015)
+    boxmm("ph_upper_win", (-1.6, -0.05, 3.6), (-0.4, 0.0, 4.6), mat("ph_glass_up", "#5c6f78", 0.1, spec=0.8), bev=0)
+
+
+def draw_date_stamp(px, w, h, s="'09 6 14", col=(1.0, 0.52, 0.12)):
+    """Burn an orange seven-segment date stamp into the bottom-right corner (rows run bottom-up)."""
+    seg = {"0": "abcdef", "1": "bc", "2": "abged", "3": "abgcd", "4": "fgbc", "5": "afgcd", "6": "afgedc",
+           "7": "abc", "8": "abcdefg", "9": "abcdfg"}
+    dh = int(h * 0.045)
+    dw, t = int(dh * 0.55), max(2, int(dh * 0.13))
+    x = w - int(w * 0.04) - len(s) * int(dw * 1.45)
+    y0 = int(h * 0.05)
+    glow = np.zeros((h, w), np.float32)
+    for ch in s:
+        if ch == "'":
+            glow[y0 + dh - t * 3:y0 + dh, x + dw // 2:x + dw // 2 + t] = 1
+        elif ch in seg:
+            S = seg[ch]
+            boxes = {"a": (x, y0 + dh - t, x + dw, y0 + dh), "d": (x, y0, x + dw, y0 + t),
+                     "g": (x, y0 + dh // 2 - t // 2, x + dw, y0 + dh // 2 + t - t // 2),
+                     "f": (x, y0 + dh // 2, x + t, y0 + dh), "b": (x + dw - t, y0 + dh // 2, x + dw, y0 + dh),
+                     "e": (x, y0, x + t, y0 + dh // 2), "c": (x + dw - t, y0, x + dw, y0 + dh // 2)}
+            for k in S:
+                a0, b0, a1, b1 = boxes[k]
+                glow[b0:b1, a0 + 1:a1 - 1] = 1
+        x += int(dw * 1.45)
+    soft = glow.copy()                                       # a little bloom around the digits
+    for _ in range(6):
+        soft = (soft + np.roll(soft, 1, 0) + np.roll(soft, -1, 0) + np.roll(soft, 1, 1) + np.roll(soft, -1, 1)) / 5
+    a = np.clip(glow * 0.9 + soft * 0.8, 0, 1)[..., None]
+    px[..., :3] = px[..., :3] * (1 - a) + np.array(col) * a
+
+
+def render_photo_2009(M, path, res=(1500, 1000), samples=48):
+    """Build the 2009 shopfront in its own scene, render it, then make it a print: warmer, faded, grainy, with the
+    camera's orange date stamp (Sunday 14 June 2009)."""
+    sc = bpy.data.scenes.new("PHOTO2009")
+    col = bpy.data.collections.new("PHOTO")
+    sc.collection.children.link(col)
+    COLL["PHOTO"] = col
+    prev = CUR[0]
+    use("PHOTO")
+    photo_shopfront(M)
+    photo_figures(M)
+    apply_fits()
+    sun = bpy.data.objects.new("ph_sun", bpy.data.lights.new("ph_sun", "SUN"))
+    sun.data.energy, sun.data.color, sun.data.angle = 4.2, (1.0, 0.93, 0.8), radians(2.5)
+    sun.rotation_euler = (radians(50), 0, radians(-35))
+    col.objects.link(sun)
+    fill = bpy.data.objects.new("ph_fill", bpy.data.lights.new("ph_fill", "AREA"))
+    fill.data.energy, fill.data.size, fill.data.color = 900.0, 4.0, (0.85, 0.9, 1.0)
+    fill.location = (0.5, -6.0, 2.5)
+    col.objects.link(fill)
+    aim(fill, (0, -1, 1.2))
+    shop = bpy.data.objects.new("ph_shoplight", bpy.data.lights.new("ph_shoplight", "AREA"))
+    shop.data.energy, shop.data.size, shop.data.size_y, shop.data.color = 260.0, 2.6, 0.3, (1.0, 0.85, 0.62)
+    shop.location = (-0.85, 0.15, 2.05)
+    col.objects.link(shop)
+    aim(shop, (-0.85, 0.2, 0.5))
+    cd = bpy.data.cameras.new("ph_cam")
+    cd.lens, cd.sensor_width = 33, 36
+    cam = bpy.data.objects.new("ph_cam", cd)
+    cam.location = (0.1, -5.2, 1.35)
+    col.objects.link(cam)
+    aim(cam, (-0.02, 0, 1.5))
+    sc.camera = cam
+    w = bpy.data.worlds.new("ph_world")
+    w.use_nodes = True
+    w.node_tree.nodes["Background"].inputs[0].default_value = rgba("#a9c3dd")
+    w.node_tree.nodes["Background"].inputs[1].default_value = 0.9
+    sc.world = w
+    sc.render.engine = "BLENDER_EEVEE"
+    sc.render.resolution_x, sc.render.resolution_y = res
+    sc.render.resolution_percentage = 100
+    sc.eevee.taa_render_samples = samples
+    sc.eevee.use_shadows = True
+    try:
+        sc.view_settings.view_transform = "AgX"
+        sc.view_settings.look = "AgX - Base Contrast"
+    except TypeError:
+        pass
+    sc.render.filepath = path
+    sc.render.image_settings.file_format = "PNG"
+    bpy.ops.render.render(write_still=True, scene=sc.name)
+    # the print finish
+    im = bpy.data.images.load(path, check_existing=False)
+    pw, ph = im.size
+    px = np.array(im.pixels[:], dtype=np.float32).reshape(ph, pw, 4)
+    rgb = px[..., :3]
+    lum = rgb @ np.array([0.3, 0.59, 0.11], np.float32)
+    rgb = np.clip((rgb - 0.5) * 1.12 + 0.5, 0, 1)            # minilab punch
+    rgb = rgb * 0.92 + lum[..., None] * 0.08                 # a touch of fade in the colours
+    rgb = rgb * np.array([1.05, 1.0, 0.88]) + np.array([0.02, 0.012, 0.0])  # warm print
+    rgb = 0.035 + rgb * 0.94                                 # lifted blacks
+    yy, xx = np.mgrid[0:ph, 0:pw].astype(np.float32)
+    vig = 1 - 0.22 * (((xx / pw - 0.5) * 1.7) ** 2 + ((yy / ph - 0.5) * 1.7) ** 2)
+    rgb *= vig[..., None]
+    rgb += np.random.default_rng(2009).normal(0, 0.012, rgb.shape).astype(np.float32)
+    px[..., :3] = np.clip(rgb, 0, 1)
+    draw_date_stamp(px, pw, ph)
+    im.pixels.foreach_set(px.ravel())
+    im.filepath_raw = path
+    im.file_format = "PNG"
+    im.save()
+    bpy.data.images.remove(im)
+    # tidy away the mini-set
+    for ob in list(col.objects):
+        bpy.data.objects.remove(ob, do_unlink=True)
+    bpy.data.collections.remove(col)
+    del COLL["PHOTO"]
+    bpy.data.scenes.remove(sc)
+    use(prev)
+
+
+def ensure_photo(M, regen=False):
+    if regen or not os.path.exists(PHOTO_2009):
+        t = time.time()
+        render_photo_2009(M, PHOTO_2009)
+        print(f"rendered the 2009 photo in {time.time() - t:.1f}s -> {PHOTO_2009}")
+    return PHOTO_2009
+
+
+def build_photo_frame(M, loc, yaw, coll=None, name="photo_frame"):
+    """Theo's 2009 photo, a 6x4in print in a walnut frame with an easel back, standing on a desk."""
+    g = grp(name, loc, (0, 0, yaw), coll=coll)
+    lean = grp(name + "_lean", (0, 0, 0), (-12, 0, 0), parent=g, coll=coll)   # leans back on its strut
+    pw, ph_ = 0.152, 0.102
+    fw, t, dep = 0.016, 0.0, 0.014
+    ow, oh = pw + 2 * fw - 0.006, ph_ + 2 * fw - 0.006
+    walnut = wood("walnut", "#5a3a26", "#3f281a", 0.38, grain=9.0, coat=0.4)
+    zc = oh / 2
+    for nm, size, at in (("top", (ow, dep, fw), (0, 0, oh - fw / 2)), ("bot", (ow, dep, fw), (0, 0, fw / 2)),
+                         ("L", (fw, dep, oh - 2 * fw + 0.002), (-ow / 2 + fw / 2, 0, zc)),
+                         ("R", (fw, dep, oh - 2 * fw + 0.002), (ow / 2 - fw / 2, 0, zc))):
+        box(f"{name}_{nm}", size, at, walnut, bev=0.004, seg=2, parent=lean, coll=coll)
+    img = bpy.data.images.load(ensure_photo(M), check_existing=True)
+    pm = bpy.data.materials.new(name + "_print")
+    pm.use_nodes = True
+    b = principled(pm)
+    tx = pm.node_tree.nodes.new("ShaderNodeTexImage")
+    tx.image = img
+    pm.node_tree.links.new(tx.outputs["Color"], b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = 0.32
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    vs = [bm.verts.new(p) for p in ((-pw / 2, 0, -ph_ / 2), (pw / 2, 0, -ph_ / 2), (pw / 2, 0, ph_ / 2),
+                                    (-pw / 2, 0, ph_ / 2))]
+    f = bm.faces.new(vs)
+    for lp, tt in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+        lp[uv].uv = tt
+    f.normal_update()
+    if f.normal.y > 0:
+        f.normal_flip()
+    finish(name + "_photo", bm, pm, lean, (0, 0.001, zc), smooth=False, coll=coll)
+    box(name + "_glass", (ow - 2 * fw + 0.004, 0.0015, oh - 2 * fw + 0.004), (0, -0.003, zc), M["glass"], bev=0,
+        parent=lean, coll=coll).visible_shadow = False
+    box(name + "_back", (ow - 0.01, 0.003, oh - 0.01), (0, dep / 2 - 0.001, zc), M["kraft"], bev=0.001, parent=lean,
+        coll=coll)
+    strut = grp(name + "_strut_h", (0, dep / 2 + 0.001, oh * 0.72), (32, 0, 0), parent=lean, coll=coll)
+    box(name + "_strut", (0.03, 0.003, oh * 0.86), (0, 0.0015, -oh * 0.43), M["kraft"], bev=0.001, parent=strut, coll=coll)
+    return g
 
 
 def build_readme(M, parent):
@@ -1567,23 +2434,289 @@ def build_readme(M, parent):
     pushpin("readme_pin", parent, 0, -0.008, M["pin_yellow"])
 
 
+def curled_sheet(name, w, h, m, parent, curl=0.0, flat_to=0.93, rows=10):
+    """A sheet hanging from its top-centre down -Y, flat to `flat_to` of its height and lifting `curl` at the bottom
+    edge. Returns zc(y): the surface height at print-space y (origin at the sheet centre), exactly as meshed."""
+    fr = [flat_to * i / rows for i in range(rows + 1)] + [flat_to + (1 - flat_to) * i / 4 for i in range(1, 5)]
+    zf = [curl * max(0.0, (f - flat_to) / (1 - flat_to)) ** 2 for f in fr]
+    bm = bmesh.new()
+    vs = [[bm.verts.new((-w / 2 + w * i / 3, -h * f, z)) for i in range(4)] for f, z in zip(fr, zf)]
+    for j in range(len(fr) - 1):
+        for i in range(3):
+            bm.faces.new((vs[j][i], vs[j + 1][i], vs[j + 1][i + 1], vs[j][i + 1]))
+    for f in bm.faces:
+        f.normal_update()
+        if f.normal.z < 0:
+            f.normal_flip()
+    ob = finish(name, bm, m, parent, smooth=True)
+    sd = ob.modifiers.new("Solid", "SOLIDIFY")
+    sd.thickness = 0.0005
+    sd.offset = -1
+
+    def zc(y):
+        f = min(1.0, max(0.0, (h / 2 - y) / h))
+        for k in range(len(fr) - 1):
+            if fr[k] <= f <= fr[k + 1]:
+                t = (f - fr[k]) / (fr[k + 1] - fr[k])
+                return 0.00055 + zf[k] * (1 - t) + zf[k + 1] * t
+        return 0.00055
+    return zc
+
+
+def build_calendar(M, parent):
+    """Wheelwright's supplier calendar, November 2026 (Monday-first; the 1st is a Sunday, so six week rows). Martin's
+    red pen: Mon 16, Tue 17 and Wed 18 crossed off (Thursday the 19th is tonight) and Friday 20 circled,
+    "THEO'S LAST DAY :(". Martin doesn't cross days off, so Monday's calendar looks the same."""
+    w, h = 0.22, 0.36
+    zc = curled_sheet("cal_paper", w, h, M["paper"], parent, curl=0.007, flat_to=0.93)
+    top = grp("cal_print", (0, -h / 2, 0.0), parent=parent)       # print space: origin at sheet centre
+    # illustration: a lane through low hills, a rider, a pale sun
+    il = [("#d9ddd0", [(-0.1, 0.035), (0.1, 0.035), (0.1, 0.17), (-0.1, 0.17)]),
+          ("#efd9a2", circ_pts(0.05, 0.135, 0.016, n=16)),
+          ("#9eb294", [(-0.1, 0.085), (-0.06, 0.112), (-0.02, 0.097), (0.03, 0.12), (0.07, 0.102), (0.1, 0.114),
+                       (0.1, 0.035), (-0.1, 0.035)]),
+          ("#71906b", [(-0.1, 0.064), (-0.04, 0.088), (0.02, 0.072), (0.1, 0.09), (0.1, 0.035), (-0.1, 0.035)]),
+          ("#8d877b", [(-0.034, 0.035), (0.046, 0.035), (0.013, 0.083), (0.006, 0.083)])]
+    for i, (c, pts) in enumerate(il):
+        flat(f"cal_il{i}", pts, zc(0.1) + i * 0.00004, mat(f"cal_il{i}", c, 0.7), top)
+    rider = mat("cal_rider", "#2f3a40", 0.6)
+    zr = zc(0.05) + 0.0003
+    for k, cx in enumerate((-0.068, -0.036)):
+        annulus(f"cal_wheel{k}", circ_pts(cx, 0.052, 0.0105, n=16), circ_pts(cx, 0.052, 0.0085, n=16), zr, rider, top)
+    flat("cal_frame", [(-0.068, 0.052), (-0.05, 0.068), (-0.036, 0.052), (-0.052, 0.052), (-0.05, 0.066),
+                       (-0.066, 0.053)], zr, rider, top)
+    flat("cal_body", [(-0.055, 0.07), (-0.045, 0.088), (-0.036, 0.09), (-0.033, 0.084), (-0.044, 0.068)], zr, rider, top)
+    disc("cal_head", -0.034, 0.095, 0.0045, zr, rider, top, n=10)
+    text("cal_month", "NOVEMBER", "verdanab.ttf", 0.017, (-0.1, 0.012, zc(0.0)), M["ink"], ax="LEFT", parent=top)
+    text("cal_year", "2026", "verdana.ttf", 0.017, (0.1, 0.012, zc(0.0)), M["red_ink"], ax="RIGHT", parent=top)
+    cw, chh, gx0, gy0 = 0.2 / 7, 0.0235, -0.1, -0.012
+    for c, dname in enumerate("MTWTFSS"):
+        text(f"cal_wd{c}", dname, "verdanab.ttf", 0.0065, (gx0 + (c + 0.5) * cw, gy0 + 0.004, zc(gy0)),
+             M["red_ink"] if c == 6 else M["print_grey"], parent=top)
+    grey = mat("cal_grid", "#b9b4aa", 0.8)
+    rows = 6
+    zg = zc(gy0) + 0.0001                                    # the grid is on the flat part of the sheet
+    for r in range(rows + 1):
+        yy = gy0 - r * chh
+        rect(f"cal_hl{r}", gx0, yy - 0.0002, gx0 + 0.2, yy + 0.0002, zg, grey, top)
+    for c in range(8):
+        xx = gx0 + c * cw
+        rect(f"cal_vl{c}", xx - 0.0002, gy0 - rows * chh, xx + 0.0002, gy0, zg, grey, top)
+    for d in range(1, 31):
+        r, c = divmod(d + 5, 7)
+        x = gx0 + c * cw + 0.0025
+        y = gy0 - r * chh - 0.0058
+        text(f"cal_d{d}", str(d), "verdana.ttf", 0.0074, (x, y, zg + 0.0001), M["red_ink"] if c == 6 else M["ink"],
+             ax="LEFT", parent=top)
+    text("cal_supplier", "WHEELWRIGHT CYCLE SUPPLY  ·  trade parts since 1979  ·  01632 960 412", "verdana.ttf",
+         0.0042, (0, -0.166, zc(-0.166)), M["print_grey"], parent=top, fit=0.196)
+    # Martin's marks: Friday 20 circled (twice round, like a real pen), Mon-Wed crossed off, the note below
+    zp = zg + 0.0005
+    cx, cy = gx0 + 4.5 * cw, gy0 - 3.5 * chh
+    pts = []
+    for i in range(30):
+        t = 2 * pi * 1.15 * i / 29 + 1.9
+        rr = 1.0 + 0.06 * sin(3 * t) + 0.03 * i / 29
+        pts.append((cx + 0.0165 * rr * cos(t), cy + 0.0128 * rr * sin(t), zp))
+    curve("cal_circle", pts, 0.00065, M["red_ink"], parent=top, res=3, bres=1)
+    for d in (16, 17, 18):
+        r, c = divmod(d + 5, 7)
+        x, y = gx0 + (c + 0.5) * cw, gy0 - (r + 0.5) * chh
+        for a in (38, -38):
+            box(f"cal_x{d}{a}", (0.026, 0.0011, 0.0002), (x, y, zp), M["red_ink"], rot=(0, 0, a + (d % 3) * 3), bev=0,
+                parent=top)
+    yy = gy0 - 5.5 * chh
+    text("cal_note", "THEO'S LAST DAY :(", "Inkfree.ttf", 0.0135, (gx0 + 4.0 * cw, yy - 0.0015, zp), M["red_ink"],
+         parent=top, fit=0.165, rot=(0, 0, 3), extrude=0.00008)
+    curve("cal_arrow", [(cx + 0.012, yy + 0.0075, zp), (cx + 0.019, gy0 - 4.5 * chh, zp),
+                        (cx + 0.012, cy - 0.0128, zp)], 0.0005, M["red_ink"], parent=top, res=6, bres=1)
+    for a in (-30, 40):
+        box(f"cal_arrowhead{a}", (0.0045, 0.0009, 0.0002), (cx + 0.012 + 0.0014 * (1 if a > 0 else -1), cy - 0.0145, zp),
+            M["red_ink"], rot=(0, 0, 90 + a), bev=0, parent=top)
+    pushpin("cal_pin", parent, 0, -0.008, M["pin_red"])
+
+
+def pinned(name, x, z, rx=88.0, ry=0.0, yf=None):
+    return grp(name, (x, yf if yf is not None else D - 0.0185, z), (rx, ry, 0))
+
+
+def build_flyer(M, parent):
+    """The Sunday club run: an A5 flyer on pale green paper with tear-off phone tabs, two already taken."""
+    w, h = 0.148, 0.21
+    zc = curled_sheet("flyer_paper", w, h, mat("flyer_green", "#dfe6c6", 0.8, spec=0.3), parent, curl=0.004,
+                      flat_to=0.86)
+    p = grp("flyer_print", (0, -h / 2, 0), parent=parent)
+    z = zc(0.0) + 0.0001
+    ink = mat("flyer_ink", "#24402f", 0.6)
+    text("fl_t1", "SUNDAY", "verdanab.ttf", 0.019, (0, 0.082, z), ink, parent=p, fit=0.13)
+    text("fl_t2", "CLUB RUN", "verdanab.ttf", 0.019, (0, 0.06, z), ink, parent=p, fit=0.13)
+    # a road over two hills
+    flat("fl_hill1", [(-0.062, 0.002), (-0.03, 0.03), (0.0, 0.012), (0.035, 0.038), (0.062, 0.016), (0.062, 0.002)],
+         z, mat("fl_hill", "#9db58a", 0.8), p)
+    curve("fl_road", [(-0.06, 0.004, z + 0.0001), (-0.02, 0.02, z + 0.0001), (0.01, 0.01, z + 0.0001),
+                      (0.04, 0.028, z + 0.0001)], 0.0012, mat("fl_road", "#f4f0dd", 0.7), parent=p, res=6, bres=1,
+          flatz=0.2)
+    lines = [("Every Sunday, 8am", "verdanab.ttf", 0.0068), ("from the shop", "verdana.ttf", 0.0062),
+             ("40 miles · café stop", "verdana.ttf", 0.0058), ("all welcome · lights in winter", "verdana.ttf", 0.005)]
+    for i, (t, f, sz) in enumerate(lines):
+        text(f"fl_l{i}", t, f, sz, (0, -0.012 - i * 0.0115, z), ink, parent=p, fit=0.13)
+    text("fl_club", "Spokes & Sprockets CC", "georgiai.ttf", 0.0058, (0, -0.062, z), ink, parent=p)
+    # tear-off tabs: eight tabs, the 3rd and 6th taken
+    for k in range(8):
+        x = -w / 2 + (k + 0.5) * w / 8
+        if k in (2, 5):
+            continue
+        tg = grp(f"fl_tab{k}", (x, -0.087, zc(-0.087) - 0.00055), (0, 0, 0), parent=p)
+        text(f"fl_tab_t{k}", "club run\n01632 960 412", "verdana.ttf", 0.0026, (0, 0, 0.0002), ink, parent=tg,
+             rot=(0, 0, 90), line=0.9)
+    for k in range(9):
+        x = -w / 2 + k * w / 8
+        rect(f"fl_cut{k}", x - 0.0002, -0.105, x + 0.0002, -0.07, zc(-0.087) + 0.0001, mat("fl_cut", "#9aa38c", 0.8), p)
+    for k in (2, 5):                                        # torn-off tabs show the cork behind
+        x = -w / 2 + (k + 0.5) * w / 8
+        rect(f"fl_gone{k}", x - w / 16 + 0.0004, -0.105, x + w / 16 - 0.0004, -0.0705, zc(-0.087) + 0.00012, M["cork"], p)
+    pushpin("flyer_pin", parent, 0, -0.008, M["pin_green"])
+
+
+CRAYON = {}
+
+
+def crayon(c):
+    if c not in CRAYON:
+        CRAYON[c] = mat("crayon_" + c.lstrip("#"), c, 0.65)
+    return CRAYON[c]
+
+
+def scrawl(name, pts, c, parent, z, r=0.0011, rng=None):
+    """A wobbly crayon stroke."""
+    rng = rng or random.Random(len(pts) * 7 + int(abs(pts[0][0]) * 1e4))
+    wob = [(x + rng.uniform(-0.0007, 0.0007), y + rng.uniform(-0.0007, 0.0007), z) for x, y in pts]
+    return curve(name, wob, r, crayon(c), parent=parent, res=5, bres=1, flatz=0.25)
+
+
+def build_thankyou(M, parent):
+    """A thank-you drawing from a customer's daughter: her bike, her, the sun, in crayon; "THANK YOU" in rainbow
+    letters and "love Mia (age 6)"."""
+    w, h = 0.19, 0.135
+    zc = curled_sheet("ty_paper", w, h, mat("cartridge", "#f6f2e6", 0.85, spec=0.25), parent, curl=0.003, flat_to=0.88)
+    p = grp("ty_print", (0, -h / 2, 0), parent=parent)
+    z = zc(0.0) + 0.0002
+    rng = random.Random(6)
+    rainbow = ("#d6453a", "#e88a2a", "#d9b22a", "#4f9a4a", "#3c78c8", "#7b52b0", "#d6453a", "#e88a2a")
+    for k, (ch, c) in enumerate(zip("THANK YOU", rainbow[:5] + ("",) + rainbow[5:])):
+        if ch != " ":
+            text(f"ty_l{k}", ch, "ITCKRIST.TTF", 0.0155, (-0.078 + k * 0.0162, 0.046 + rng.uniform(-0.002, 0.002), z),
+                 crayon(c), parent=p, rot=(0, 0, rng.uniform(-8, 8)))
+    text("ty_sub", "for fixing my bike", "ITCKRIST.TTF", 0.0072, (0.005, 0.03, z), crayon("#3c78c8"), parent=p)
+    text("ty_sign", "love Mia (age 6)", "ITCKRIST.TTF", 0.0066, (0.045, -0.054, z), crayon("#7b52b0"), parent=p,
+         rot=(0, 0, 4))
+    # the bike: two wheels, a pink frame, a basket
+    for k, cx in enumerate((-0.045, 0.005)):
+        pts = [(cx + 0.0175 * cos(2 * pi * i / 18), -0.03 + 0.0175 * sin(2 * pi * i / 18)) for i in range(19)]
+        scrawl(f"ty_wheel{k}", pts, "#2a2a2a", p, z, rng=rng)
+        for s in range(4):
+            a = pi * s / 4
+            scrawl(f"ty_spoke{k}{s}", [(cx - 0.016 * cos(a), -0.03 - 0.016 * sin(a)), (cx + 0.016 * cos(a),
+                                                                                   -0.03 + 0.016 * sin(a))],
+                   "#8a8a8a", p, z - 0.00005, r=0.0005, rng=rng)
+    scrawl("ty_frame", [(-0.045, -0.03), (-0.025, -0.005), (0.0, -0.006), (0.005, -0.03), (-0.02, -0.03),
+                        (-0.025, -0.005)], "#e0609a", p, z, r=0.0013, rng=rng)
+    scrawl("ty_bars", [(0.0, -0.006), (0.002, 0.006), (0.009, 0.007)], "#2a2a2a", p, z, rng=rng)
+    scrawl("ty_basket", [(0.004, 0.004), (0.016, 0.004), (0.014, -0.006), (0.006, -0.006), (0.004, 0.004)], "#b07a3a",
+           p, z, rng=rng)
+    # Mia on top: a head, a big smile, plaits
+    hp = [(-0.022 + 0.008 * cos(2 * pi * i / 14), 0.016 + 0.0085 * sin(2 * pi * i / 14)) for i in range(15)]
+    scrawl("ty_head", hp, "#b5704a", p, z, rng=rng)
+    scrawl("ty_smile", [(-0.026, 0.014), (-0.022, 0.011), (-0.018, 0.014)], "#d6453a", p, z + 0.00005, r=0.0007, rng=rng)
+    for k, ex in enumerate((-0.025, -0.019)):
+        disc(f"ty_eye{k}", ex, 0.018, 0.0009, z + 0.00005, crayon("#2a2a2a"), p, n=8)
+    scrawl("ty_body", [(-0.022, 0.008), (-0.022, -0.004), (-0.02, -0.01)], "#4f9a4a", p, z, r=0.0016, rng=rng)
+    scrawl("ty_arm", [(-0.022, 0.003), (-0.01, 0.006), (0.002, 0.006)], "#b5704a", p, z, r=0.0008, rng=rng)
+    for k, s in enumerate((-1, 1)):
+        scrawl(f"ty_plait{k}", [(-0.022 + s * 0.008, 0.02), (-0.022 + s * 0.012, 0.01), (-0.022 + s * 0.011, 0.004)],
+               "#3a2418", p, z, r=0.0009, rng=rng)
+    # the sun and the grass
+    sp = [(0.078 + 0.008 * cos(2 * pi * i / 14), 0.05 + 0.008 * sin(2 * pi * i / 14)) for i in range(15)]
+    scrawl("ty_sun", sp, "#e4c234", p, z, r=0.0014, rng=rng)
+    for k in range(8):
+        a = 2 * pi * k / 8
+        scrawl(f"ty_ray{k}", [(0.078 + 0.011 * cos(a), 0.05 + 0.011 * sin(a)), (0.078 + 0.016 * cos(a),
+                                                                                0.05 + 0.016 * sin(a))],
+               "#e88a2a", p, z, r=0.0008, rng=rng)
+    gr = [(-0.09 + i * 0.006, -0.05 + (0.004 if i % 2 else 0.0)) for i in range(31)]
+    scrawl("ty_grass", gr, "#4f9a4a", p, z, r=0.0009, rng=rng)
+    pushpin("ty_pin", parent, 0, -0.006, M["pin_yellow"])
+
+
+def build_pricelist(M, parent):
+    """Wheelwright's trade price list, folded in four (the creases show), half the lines highlighted by Martin."""
+    w, h = 0.2, 0.142
+    zc = curled_sheet("pl_paper", w, h, M["paper"], parent, curl=0.003, flat_to=0.9)
+    p = grp("pl_print", (0, -h / 2, 0), parent=parent)
+    z = zc(0.0) + 0.0001
+    crease = mat("pl_crease", "#d9d2c3", 0.8)
+    rect("pl_crease_v", -0.0003, -h / 2, 0.0003, h / 2, z - 0.00005, crease, p)
+    rect("pl_crease_h", -w / 2, -0.0003, w / 2, 0.0003, z - 0.00005, crease, p)
+    text("pl_head", "WHEELWRIGHT CYCLE SUPPLY", "verdanab.ttf", 0.0075, (-0.09, 0.058, z), M["ink"], ax="LEFT",
+         parent=p, fit=0.15)
+    text("pl_sub", "Trade price list  ·  autumn/winter 2026  ·  prices ex VAT", "verdana.ttf", 0.0038,
+         (-0.09, 0.049, z), M["print_grey"], ax="LEFT", parent=p, fit=0.17)
+    rect("pl_rule", -0.09, 0.0435, 0.09, 0.0442, z, M["ink"], p)
+    rows = [("BP-SH-RES", "Disc pads, resin, pair", "3.10"), ("CAB-SH-GEAR", "Gear cable set", "4.60"),
+            ("TUB-700-25", "Inner tube 700x25c", "2.05"), ("CHN-KMC-X11", "Chain 11sp", "11.40"),
+            ("CAS-11-32", "Cassette 11-32", "19.80"), ("TAPE-BAR-BLK", "Bar tape, black", "6.90"),
+            ("BB-SH-HT2", "Bottom bracket HT2", "12.70"), ("SPK-DT-292", "Spoke 292mm (each)", "0.38"),
+            ("FLD-DOT51", "Brake fluid DOT 5.1", "3.95"), ("HDS-FSA-118", "Headset 1-1/8in", "15.20")]
+    hl = mat("pl_highlight", "#f2e46a", 0.7)
+    for i, (code, part, price) in enumerate(rows):
+        y = 0.034 - i * 0.0072
+        if i in (0, 2, 7):
+            rect(f"pl_hl{i}", -0.091, y - 0.0028, 0.091, y + 0.0036, z - 0.00003, hl, p)
+        text(f"pl_c{i}", code, "consola.ttf", 0.0042, (-0.09, y, z), M["ink"], ax="LEFT", parent=p)
+        text(f"pl_p{i}", part, "verdana.ttf", 0.0041, (-0.042, y, z), M["ink"], ax="LEFT", parent=p, fit=0.09)
+        text(f"pl_v{i}", "£" + price, "verdana.ttf", 0.0041, (0.09, y, z), M["ink"], ax="RIGHT", parent=p)
+    text("pl_foot", "orders before 2pm: next day  ·  trade only", "verdana.ttf", 0.0034, (0, -0.062, z),
+         M["print_grey"], parent=p)
+    pushpin("pl_pin_L", parent, -0.08, -0.008, M["pin_blue"])
+    pushpin("pl_pin_R", parent, 0.08, -0.009, M["pin_white"])
+
+
+def build_bizcard(M, parent, name, lines, accent):
+    w, h = 0.085, 0.055
+    box(name + "_card", (w, h, 0.0006), (0, -h / 2, 0.0003), mat(name + "_stock", "#f7f4ec", 0.6), bev=0, parent=parent)
+    rect(name + "_bar", -w / 2, -0.008, w / 2, -0.0, 0.00062, mat(name + "_accent", accent, 0.5), parent)
+    for i, (t, f, sz) in enumerate(lines):
+        text(f"{name}_t{i}", t, f, sz, (-w / 2 + 0.006, -0.018 - i * 0.0085, 0.00065), M["ink"], ax="LEFT",
+             parent=parent, fit=w - 0.012)
+
+
 def build_corkboard(M):
+    """The shop's corkboard: the stars are the calendar and Theo's README. Around them, a shop's life: the Sunday club
+    run flyer, a thank-you drawing from a customer's daughter, Wheelwright's trade price list, two business cards.
+    No sticky notes. (The 2009 photo is not here: it stands in a frame on Theo's side of the desk.)"""
     use("SET")
     x0, x1, z0, z1 = 1.45, 2.25, 0.98, 1.62
-    for nm, a, b in [("cork_fr_T", (x0, D - 0.026, z1 - 0.028), (x1, D, z1)), ("cork_fr_B", (x0, D - 0.026, z0), (x1, D, z0 + 0.028)),
-                     ("cork_fr_L", (x0, D - 0.026, z0), (x0 + 0.028, D, z1)), ("cork_fr_R", (x1 - 0.028, D - 0.026, z0), (x1, D, z1))]:
+    for nm, a, b in [("cork_fr_T", (x0, D - 0.026, z1 - 0.028), (x1, D, z1)),
+                     ("cork_fr_B", (x0, D - 0.026, z0), (x1, D, z0 + 0.028)),
+                     ("cork_fr_L", (x0, D - 0.026, z0), (x0 + 0.028, D, z1)),
+                     ("cork_fr_R", (x1 - 0.028, D - 0.026, z0), (x1, D, z1))]:
         boxmm(nm, a, b, M["oak_lt"], bev=0.006)
     boxmm("cork", (x0 + 0.02, D - 0.018, z0 + 0.02), (x1 - 0.02, D, z1 - 0.02), M["cork"], bev=0)
-    yf = D - 0.0185
-    cal = grp("calendar", (1.6, yf, 1.585), (88, 1.5, 0))
-    build_calendar(M, cal)
-    ph = grp("photo", (1.875, yf, 1.565), (88.5, -5, 0))
-    build_photo(M, ph)
-    rd = grp("readme", (2.085, yf, 1.505), (88, 3, 0))
-    build_readme(M, rd)
-    spare = grp("spare_pins", (0, yf, 0), (90, 0, 0))
-    for i, (x, z, c) in enumerate(((1.79, 1.07, "green"), (1.81, 1.065, "red"), (1.505, 1.03, "white"))):
-        pushpin(f"spare_pin{i}", spare, x, z, M["pin_" + c])
+    build_calendar(M, pinned("calendar", 1.6, 1.585, 88, 1.5))
+    build_readme(M, pinned("readme", 2.085, 1.505, 88, 3))
+    build_flyer(M, pinned("flyer", 1.845, 1.592, 88.5, -2.5, yf=D - 0.0187))
+    build_thankyou(M, pinned("thankyou", 1.842, 1.372, 88.6, 3.5, yf=D - 0.0189))
+    build_pricelist(M, pinned("pricelist", 2.09, 1.192, 89.0, -1.5, yf=D - 0.0186))
+    for nm, x, z, rz, lines, acc in (
+            ("biz_madison", 1.545, 1.17, -4, [("Steve Ward", "verdanab.ttf", 0.0052),
+                                              ("Area sales, trade accounts", "verdana.ttf", 0.0036),
+                                              ("Madison  ·  07700 900 316", "verdana.ttf", 0.0036)], "#c23b2e"),
+            ("biz_signs", 1.632, 1.108, 5, [("NORTHGATE SIGNS", "georgiab.ttf", 0.0048),
+                                            ("signwriting & gilding since 1971", "georgiai.ttf", 0.0034),
+                                            ("01632 960 288", "georgia.ttf", 0.0036)], "#2f4d3c")):
+        g = pinned(nm, x, z, 89.0, rz, yf=D - 0.0186)
+        build_bizcard(M, g, nm, lines, acc)
+        pushpin(nm + "_pin", g, 0, -0.006, M["pin_red"] if "mad" in nm else M["pin_white"])
     # the wall clock above the board (hands set per preset)
     clk = grp("clock", (1.85, D - 0.03, 1.88), (90, 0, 0))
     lathe("clock_rim", [(0.0, -0.03), (0.125, -0.03), (0.13, -0.02), (0.13, 0.0), (0.122, 0.008), (0.112, 0.0),
@@ -1603,31 +2736,196 @@ def build_corkboard(M):
     return hands
 
 
-def drawer_contents(name, parent, kind, w, d, M):
+def scatter(name, parent, n, w, d, zmax, make, m, seed):
+    """Loose small parts in a drawer: `make(bm, rng)` adds one part at the origin, it gets dropped at random."""
+    rng = random.Random(seed)
     bm = bmesh.new()
-    n = {"bolts": 26, "nipples": 40, "balls": 30, "valves": 14, "ends": 34, "ferrules": 30, "plugs": 12,
-         "links": 16, "misc": 14, "cables": 0}[kind]
     for _ in range(n):
-        x, y = RNG.uniform(-w / 2 + 0.006, w / 2 - 0.006), RNG.uniform(-d / 2 + 0.006, d / 2 - 0.006)
-        zz = RNG.uniform(0.002, 0.026)
-        if kind == "balls":
-            g = bmesh.ops.create_icosphere(bm, subdivisions=1, radius=0.0035)
-        else:
-            L = {"bolts": 0.016, "valves": 0.03, "plugs": 0.012}.get(kind, 0.008)
-            g = bmesh.ops.create_cone(bm, cap_ends=True, segments=6, radius1=0.0024 if kind != "plugs" else 0.007,
-                                      radius2=0.0024 if kind != "plugs" else 0.007, depth=L)
-        rot = Vector((RNG.random(), RNG.random(), RNG.random())).normalized()
-        q = Vector((0, 0, 1)).rotation_difference(rot)
-        for v in g["verts"]:
-            v.co = q @ v.co + Vector((x, y, zz))
-    m = {"bolts": M["steel"], "nipples": M["brass"], "balls": M["chrome"], "valves": M["brass_old"], "ends": M["steel"],
-         "ferrules": M["plastic_blk"], "plugs": M["pin_red"], "links": M["steel_dk"], "misc": M["brass_old"]}[kind]
-    return finish(name, bm, m, parent, angle=60)
+        before = set(bm.verts)
+        make(bm, rng)
+        new = [v for v in bm.verts if v not in before]
+        q = Vector((rng.uniform(-1, 1), rng.uniform(-1, 1), rng.uniform(-0.3, 0.3))).normalized()
+        q = Vector((0, 0, 1)).rotation_difference(q)
+        off = Vector((rng.uniform(-w / 2 + 0.008, w / 2 - 0.008), rng.uniform(-d / 2 + 0.008, d / 2 - 0.008),
+                      rng.uniform(0.004, zmax)))
+        for v in new:
+            v.co = q @ v.co + off
+    return finish(name, bm, m, parent, angle=50)
+
+
+def _cylpart(bm, r, L, z0=0.0, seg=6):
+    g = bmesh.ops.create_cone(bm, cap_ends=True, segments=seg, radius1=r, radius2=r, depth=L)
+    bmesh.ops.translate(bm, vec=(0, 0, z0 + L / 2), verts=g["verts"])
+
+
+def part_bolt(bm, rng):                                       # M5 x 16, hex head
+    _cylpart(bm, 0.0025, 0.016, 0.0, 8)
+    _cylpart(bm, 0.0042, 0.0035, 0.016, 6)
+
+
+def part_nipple(bm, rng):                                     # spoke nipple: 12 mm, flared head
+    _cylpart(bm, 0.0018, 0.012, 0.0, 6)
+    _cylpart(bm, 0.0027, 0.002, 0.012, 8)
+
+
+def part_ball(bm, rng):
+    bmesh.ops.create_icosphere(bm, subdivisions=1, radius=0.0032)
+
+
+def part_core(bm, rng):                                       # Schrader valve core, 10 mm
+    _cylpart(bm, 0.0015, 0.008, 0.0, 6)
+    _cylpart(bm, 0.0022, 0.002, 0.008, 6)
+    _cylpart(bm, 0.0005, 0.004, 0.01, 4)
+
+
+def part_cap(bm, rng):                                        # valve dust cap
+    _cylpart(bm, 0.0036, 0.009, 0.0, 10)
+
+
+def pads_in_bag(M, parent, loc, rot):
+    """ONE pair of resin disc pads, as they come: two pads face to face with their spring clip, in a small zip bag
+    with a printed header card. The last pair (Anika needs two)."""
+    g = grp("pads_bag", loc, rot, parent=parent)
+    bag = mat("zipbag", "#e9eef0", 0.12, spec=0.6, alpha=0.28)
+    box("bag_film", (0.072, 0.098, 0.009), (0, 0, 0.0045), bag, bev=0.003, parent=g).visible_shadow = False
+    box("bag_header", (0.072, 0.024, 0.0012), (0, 0.037, 0.0098), M["paper"], bev=0, parent=g)
+    box("bag_zip", (0.07, 0.0025, 0.0014), (0, 0.022, 0.0098), mat("zip_red", "#c23b2e", 0.4), bev=0, parent=g)
+    text("bag_t1", "RESIN DISC PADS", "verdanab.ttf", 0.0042, (0, 0.04, 0.0106), M["ink"], parent=g, fit=0.064)
+    text("bag_t2", "1 PAIR  ·  with spring  ·  BP-SH-RES", "verdana.ttf", 0.0026, (0, 0.033, 0.0106), M["print_grey"],
+         parent=g, fit=0.064)
+    plate_o = [(-0.0185, -0.011), (0.0185, -0.011), (0.021, -0.004), (0.02, 0.006), (0.012, 0.011), (0.004, 0.012),
+               (0.003, 0.019), (-0.003, 0.019), (-0.004, 0.012), (-0.012, 0.011), (-0.02, 0.006), (-0.021, -0.004)]
+    comp_o = [(-0.017, -0.0095), (0.017, -0.0095), (0.0192, -0.003), (0.018, 0.0055), (0.011, 0.0092),
+              (-0.011, 0.0092), (-0.018, 0.0055), (-0.0192, -0.003)]
+    for i, (dz, flip) in enumerate(((0.0012, False), (0.0088, True))):
+        pg = grp(f"pad{i}", (0.0, -0.012, dz), (180 if flip else 0, 0, 0), parent=g)
+        prism(f"pad{i}_plate", plate_o, 0.0018, m=M["steel"], parent=pg, bev=0.0004)
+        prism(f"pad{i}_comp", comp_o, 0.0028, loc=(0, 0, 0.0018 if not flip else -0.0028), m=M["pad_compound"],
+              parent=pg, bev=0.0005)
+        disc(f"pad{i}_hole", 0, 0.0155, 0.0013, 0.0019 if not flip else -0.0001, M["hole"], pg, n=10)
+    # the spring clip: a sprung steel "W" between the pads, its two tabs showing above them
+    for s in (-1, 1):
+        box(f"pad_spring{s}", (0.03, 0.0012, 0.006), (0, -0.012 + s * 0.0085, 0.0058), M["chrome"],
+            rot=(s * 12, 0, 0), bev=0.0003, parent=g)
+    box("pad_spring_tab", (0.006, 0.006, 0.006), (0, 0.006, 0.0058), M["chrome"], bev=0.0005, parent=g)
+    return g
+
+
+def product_box(name, size, loc, parent, body, band=None, label=None, M=None, rot=(0, 0, 0), font_sz=0.0055,
+                label_m=None):
+    """Retail packaging: a printed carton with a colour band and its product line on the front (no brand marks)."""
+    b = box(name, size, loc, body, rot=rot, bev=0.0015, parent=parent)
+    w, d, h = size
+    if band is not None:
+        box(name + "_band", (w + 0.0004, d + 0.0004, h * 0.28), (0, 0, h * 0.18), band, bev=0, parent=b)
+    if label:
+        text(name + "_t", label, "verdanab.ttf", font_sz, (0, -d / 2 - 0.0004, -h * 0.12), label_m or M["ink"],
+             rot=(90, 0, 0), parent=b, fit=w - 0.008, line=0.95)
+    return b
+
+
+def drawer_kit(kind, g, w, d, M):
+    """What's in each drawer, at real scale, matching its label (and Theo's parts list)."""
+    t = 0.0025
+    if kind == "bolts":
+        scatter("dr_bolts", g, 26, w, d, 0.014, part_bolt, M["steel"], 1)
+    elif kind == "nipples":
+        scatter("dr_nipples", g, 60, w, d, 0.012, part_nipple, M["brass"], 2)
+    elif kind == "balls":
+        scatter("dr_balls", g, 60, w, d, 0.006, part_ball, M["chrome"], 3)
+    elif kind == "cores":
+        scatter("dr_cores", g, 30, w, d, 0.008, part_core, M["brass"], 4)
+        scatter("dr_caps", g, 18, w, d, 0.01, part_cap, M["plastic_blk"], 5)
+    elif kind == "pads":                                      # drawer 1
+        pads_in_bag(M, g, (0.008, -0.045, t), (0, 0, -8))
+    elif kind == "cables":                                    # drawer 2: gear cable sets
+        for k in range(3):
+            pk = grp(f"cable_set{k}", (-0.02 + 0.012 * k, 0.01 - 0.008 * k, t + 0.0015 + k * 0.004), (0, 0, 6 - 7 * k),
+                     parent=g)
+            box(f"cable_set{k}_card", (0.085, 0.15, 0.0015), (0, 0, 0), mat("cable_card", "#d9dde0", 0.6), bev=0,
+                parent=pk)
+            box(f"cable_set{k}_band", (0.085, 0.03, 0.0017), (0, 0.055, 0), mat("cable_band", "#2f5fa8", 0.5), bev=0,
+                parent=pk)
+            text(f"cable_set{k}_t", "GEAR CABLE SET", "verdanab.ttf", 0.005, (0, 0.055, 0.001), M["pin_white"],
+                 parent=pk, fit=0.07)
+            torus(f"cable_set{k}_coil", 0.03, 0.0022, (0, -0.012, 0.002), M["plastic_blk"], nR=24, nr=5, parent=pk,
+                  scale=(1, 1, 0.5))
+            torus(f"cable_set{k}_wire", 0.024, 0.0007, (0, -0.012, 0.0025), M["chrome"], nR=24, nr=4, parent=pk)
+    elif kind == "tape":                                      # drawer 3: bar tape
+        for k in range(3):
+            product_box(f"tape_box{k}", (0.1, 0.048, 0.045), (-0.02, 0.05 - k * 0.05, t + 0.0225), g,
+                        mat("tape_box", "#1d1d1f", 0.5), mat("tape_band", "#d6d2c8", 0.5), "BAR TAPE · BLACK", M,
+                        font_sz=0.0048, label_m=M["pin_white"])
+        cyl("tape_roll", 0.022, 0.03, (0.052, -0.04, t + 0.022), mat("bar_tape", "#151515", 0.7), rot=(0, 90, 15), n=18,
+            parent=g)
+    elif kind == "chains":                                    # drawer 4: chain KMC X11 and cassette 11-32
+        product_box("cassette_box", (0.135, 0.135, 0.046), (-0.07, 0.01, t + 0.023), g, M["pin_white"],
+                    mat("cas_band", "#b3392c", 0.5), "CASSETTE 11-32  ·  11 SPEED", M, font_sz=0.0052)
+        for k in range(2):
+            product_box(f"chain_box{k}", (0.092, 0.06, 0.028), (0.075, 0.04 - k * 0.064, t + 0.014), g,
+                        mat("chain_box", "#3a3d42", 0.5), mat("chain_band", "#e0b53a", 0.5), "CHAIN  ·  X11", M,
+                        font_sz=0.0052, label_m=M["pin_white"])
+    elif kind == "bells":                                     # drawer 5: counter-sale bells
+        for k, (x, y) in enumerate(((-0.05, 0.03), (0.0, 0.035), (0.05, 0.025), (-0.03, -0.035), (0.035, -0.03))):
+            bg = grp(f"cbell{k}", (x, y, t), (0, 0, 40 * k), parent=g)
+            lathe(f"cbell{k}_dome", [(0.0, 0.016), (0.012, 0.0145), (0.021, 0.009), (0.025, 0.003), (0.0255, 0.0),
+                                     (0.0, 0.0)], n=20, m=M["chrome"], parent=bg)
+            box(f"cbell{k}_lever", (0.018, 0.005, 0.003), (0.022, 0, 0.004), M["steel_dk"], bev=0.001, parent=bg)
+            torus(f"cbell{k}_clamp", 0.012, 0.002, (0, 0.0, -0.002), M["steel_dk"], rot=(90, 0, 0), nR=12, nr=4,
+                  parent=bg, scale=(1, 1, 0.6))
+    elif kind == "tubes":                                     # drawer 6: inner tubes 700x25c and spokes 292 mm
+        for k, (x, zz) in enumerate(((-0.09, 0.0), (0.0, 0.0), (0.09, 0.0), (-0.045, 0.045))):
+            product_box(f"tube_box{k}", (0.078, 0.11, 0.045), (x, 0.035, t + 0.0225 + zz), g,
+                        mat("tube_box", "#eef0f2", 0.5), mat("tube_band", "#2f5fa8", 0.5), "INNER TUBE\n700x25C", M,
+                        font_sz=0.0046)
+        sp = grp("spoke_bundle", (0.0, -0.06, t + 0.004), (0, 0, 2), parent=g)
+        for k in range(14):
+            yy, zz = (k % 5) * 0.0024 - 0.005, (k // 5) * 0.0022
+            tube(f"spoke{k}", (-0.146, yy, zz), (0.146, yy, zz), 0.001, M["chrome"], n=4, parent=sp)
+            torus(f"spoke{k}_j", 0.003, 0.001, (0.146, yy, zz + 0.003), M["chrome"], rot=(90, 0, 0), nR=6, nr=3,
+                  arc=(-90, 90), parent=sp)
+        for x in (-0.08, 0.08):
+            torus(f"spoke_band{x}", 0.0075, 0.0015, (x, -0.0005, 0.003), mat("rubber_band", "#b88a4e", 0.6),
+                  rot=(0, 90, 0), nR=12, nr=4, parent=sp, scale=(1, 1.1, 0.9))
+        box("spoke_tag", (0.03, 0.002, 0.016), (0.11, -0.0085, 0.006), M["manila"], rot=(-15, 0, 0), bev=0, parent=sp)
+        text("spoke_tag_t", "292", "Inkfree.ttf", 0.008, (0.11, -0.0098, 0.006), M["marker"], rot=(75, 0, 0), parent=sp)
+    elif kind == "bb":                                        # drawer 7: bottom brackets HT2
+        for k in range(2):
+            product_box(f"bb_box{k}", (0.075, 0.075, 0.06), (-0.04 + 0.08 * k, 0.03, t + 0.03), g,
+                        mat("bb_box", "#5f7183", 0.5), mat("bb_band", "#e9e5da", 0.5), "BB  ·  HT2", M,
+                        font_sz=0.0052, label_m=M["pin_white"])
+        for s in (-1, 1):
+            cyl(f"bb_cup{s}", 0.022, 0.012, (s * 0.03, -0.05, t + 0.022), M["steel_dk"], rot=(0, 90, 0), n=16, bev=0.002,
+                parent=g)
+        cyl("bb_sleeve", 0.016, 0.05, (0.0, -0.05, t + 0.022), M["plastic_blk"], rot=(0, 90, 0), n=14, parent=g)
+
+
+def _drawer(g, w, d, h, label, kind, M, lab_m, number=None):
+    """A clear organiser drawer (frosted plastic, a coloured lip and pull, a card label in Martin's hand)."""
+    t = 0.0025
+    frost = mat("clear_front", "#e3eaee", 0.1, spec=0.6, alpha=0.13)
+    box("dr_front", (w, t, h), (0, -d / 2, h / 2), frost, bev=0.002, parent=g).visible_shadow = False
+    box("dr_lip", (w, t * 1.6, 0.012), (0, -d / 2, h - 0.006), M["drawer_body"], bev=0.0015, parent=g)
+    box("dr_back", (w, t, h * 0.8), (0, d / 2, h * 0.4), M["clear"], bev=0.001, parent=g)
+    box("dr_floor", (w, d, t), (0, 0, t / 2), M["clear"], bev=0.001, parent=g)
+    for s in (-1, 1):
+        box(f"dr_side{s}", (t, d, h * 0.8), (s * w / 2, 0, h * 0.4), M["clear"], bev=0.001, parent=g)
+    box("dr_pull", (min(w * 0.35, 0.06), 0.008, 0.005), (0, -d / 2 - 0.004, h * 0.18), M["drawer_body"], bev=0.002,
+        parent=g)
+    lw = min(w * 0.86, 0.14)
+    box("dr_label", (lw, 0.001, 0.0135), (0, -d / 2 - 0.0026, h - 0.0075), lab_m, bev=0, parent=g)
+    txt = f"{number}  {label}" if number else label
+    text("dr_label_text", txt, "Inkfree.ttf", 0.0108, (0, -d / 2 - 0.0033, h - 0.0078), M["marker"], rot=(90, 0, 0),
+         parent=g, fit=lw - 0.008)
+    drawer_kit(kind, g, w - 2 * t, d - 2 * t, M)
 
 
 def build_shelf(M):
-    """Wall shelf over the left of the desk: a parts cabinet with clear drawers, the brake pads drawer pulled out
-    with ONE pair left, ring binders, stock boxes."""
+    """Shelf A over the left of the desk (the parts list: "headset: shelf A"). The parts cabinet keeps the counter
+    stock in drawers numbered to match Theo's parts list (1 pads, 2 cables, 3 bar tape, 4 chains and cassettes,
+    5 bells, 6 tubes and spokes, 7 bottom brackets) plus four small unnumbered drawers; drawer 1 is pulled out with
+    ONE pair of pads in it. Beside it, office storage: the 2009-14 invoices in an archive box, manuals in a shoebox
+    on top, the window's Christmas lights up on the cabinet, then the binders and the headset box."""
     use("SET")
     sx0, sx1, sz = 0.22, 1.42, 1.5
     boxmm("shelf", (sx0, D - 0.25, sz), (sx1, D, sz + 0.028), M["oak_lt"], bev=0.006)
@@ -1636,96 +2934,96 @@ def build_shelf(M):
         boxmm(f"shelf_brk_v{bx}", (bx - 0.01, D - 0.012, sz - 0.17), (bx + 0.01, D, sz), M["steel_dk"], bev=0.002)
         tube(f"shelf_brk_d{bx}", (bx, D - 0.008, sz - 0.15), (bx, D - 0.17, sz - 0.008), 0.005, M["steel_dk"], n=6)
     top = sz + 0.028
-    # parts cabinet: 3 rows x 4 small drawers, 1 row x 2 big drawers; clear plastic, contents visible
-    cab = grp("parts_cabinet", (0.5, D - 0.1, top))
-    cw, cdp, chh = 0.46, 0.17, 0.33
-    box("cab_top", (cw, cdp, 0.012), (0, 0, chh - 0.006), M["drawer_body"], bev=0.004, parent=cab)
-    box("cab_bot", (cw, cdp, 0.012), (0, 0, 0.006), M["drawer_body"], bev=0.004, parent=cab)
+    lab_m = mat("label", "#f4f0e4", 0.7)
+    # shelf A's own label, on its front edge
+    box("shelfA_label", (0.034, 0.001, 0.018), (1.36, D - 0.2505, sz + 0.014), lab_m, bev=0)
+    text("shelfA_text", "SHELF A", "segoeprb.ttf", 0.0075, (1.36, D - 0.2512, sz + 0.0135), M["marker"], rot=(90, 0, 0),
+         fit=0.03)
+    # ---- the parts cabinet
+    cab = grp("parts_cabinet", (0.5, D - 0.12, top))
+    cw, cdp, chh, fr = 0.52, 0.22, 0.362, 0.012
+    box("cab_top", (cw, cdp, fr), (0, 0, chh - fr / 2), M["drawer_body"], bev=0.004, parent=cab)
+    box("cab_bot", (cw, cdp, fr), (0, 0, fr / 2), M["drawer_body"], bev=0.004, parent=cab)
     box("cab_back", (cw, 0.008, chh), (0, cdp / 2 - 0.004, chh / 2), M["drawer_body"], bev=0.002, parent=cab)
     for s in (-1, 1):
-        box(f"cab_side{s}", (0.012, cdp, chh), (s * (cw / 2 - 0.006), 0, chh / 2), M["drawer_body"], bev=0.004, parent=cab)
-    zdiv = 0.012 + 0.11 + 0.002
-    box("cab_div_big", (cw - 0.02, cdp, 0.004), (0, 0, zdiv), M["drawer_body"], bev=0.001, parent=cab)
-    box("cab_div_bigv", (0.004, cdp, 0.11), (0, 0, 0.012 + 0.055), M["drawer_body"], bev=0.001, parent=cab)
-    for r in (1, 2):
-        box(f"cab_div_h{r}", (cw - 0.02, cdp, 0.003), (0, 0, zdiv + 0.002 + r * 0.067 - 0.0015), M["drawer_body"],
-            bev=0.001, parent=cab)
-    for c in (1, 2, 3):
-        box(f"cab_div_v{c}", (0.003, cdp, chh - zdiv - 0.012), (-cw / 2 + 0.012 + c * (cw - 0.024) / 4, 0,
-            (zdiv + chh - 0.012) / 2), M["drawer_body"], bev=0.001, parent=cab)
-    small = [("M5 BOLTS", "bolts"), ("SPOKE NIPS", "nipples"), ("BEARINGS", "balls"), ("VALVES", "valves"),
-             ("CABLE ENDS", "ends"), ("FERRULES", "ferrules"), ("BAR PLUGS", "plugs"), ("CHAIN LINKS", "links"),
-             ("BOTTLE BOLTS", "bolts"), ("SPOKE NIPS 2", "nipples"), ("BITS", "misc"), ("MISC", "misc")]
-    big = [("BRAKE PADS", "pads"), ("CABLES", "cables")]
-    dw_s, dh_s, dw_b, dh_b = (cw - 0.024) / 4, 0.064, (cw - 0.024) / 2, 0.11
-    lab_m = mat("label", "#f4f0e4", 0.7)
-    for r in range(3):
-        for c in range(4):
-            lab, kind = small[r * 4 + c]
-            x = -cw / 2 + 0.012 + (c + 0.5) * dw_s
-            zb = 0.012 + dh_b + 0.004 + r * (dh_s + 0.003)
-            dg = grp(f"drawer_{lab}", (x, -0.008, zb), parent=cab)
-            _drawer(dg, dw_s - 0.004, cdp - 0.02, dh_s - 0.004, lab, kind, M, lab_m)
-    for c in range(2):
-        lab, kind = big[c]
-        x = -cw / 2 + 0.012 + (c + 0.5) * dw_b
-        pull = -0.095 if lab == "BRAKE PADS" else -0.008
-        dg = grp(f"drawer_{lab}", (x, pull, 0.014), parent=cab)
-        _drawer(dg, dw_b - 0.004, cdp - 0.02, dh_b - 0.004, lab, kind, M, lab_m)
-    # stock boxes and ring binders
-    for i, (x, wdt, hgt, c) in enumerate(((0.79, 0.11, 0.09, "card"), (0.8, 0.1, 0.07, "card"), (0.91, 0.12, 0.13, "card"))):
-        z0 = top if i != 1 else top + 0.09
-        bx = box(f"stock_box{i}", (wdt, 0.18, hgt), (x if i != 1 else 0.795, D - 0.11, z0 + hgt / 2), M[c], bev=0.004,
-                 rot=(0, 0, RNG.uniform(-4, 4)))
-        lbl = ["TUBES 700C", "TUBES 26\"", "GRIPS"][i]
-        text(f"stock_label{i}", lbl, "verdanab.ttf", 0.0095, (0, -0.0905, 0), M["marker"], rot=(90, 0, 0), parent=bx,
-             fit=wdt - 0.02)
-    bcols = [("binder_navy", "INVOICES\n2009–"), ("binder_red", "SUPPLIERS\n& LOGINS"), ("binder_green", "VAT"),
-             ("binder_black", "MANUALS")]
+        box(f"cab_side{s}", (fr, cdp, chh), (s * (cw / 2 - fr / 2), 0, chh / 2), M["drawer_body"], bev=0.004, parent=cab)
+    iw = cw - 2 * fr
+    rows = [  # (height, [(width share, label, kind, number), ...]) from the top down
+        (0.055, [(1, "M5 BOLTS", "bolts", None), (1, "SPOKE NIPPLES", "nipples", None), (1, "BEARINGS", "balls", None),
+                 (1, "VALVE CORES", "cores", None)]),
+        (0.085, [(1, "BRAKE PADS", "pads", 1), (1, "CABLES", "cables", 2), (1, "BAR TAPE", "tape", 3)]),
+        (0.085, [(1.55, "CHAINS / CASSETTES", "chains", 4), (1, "BELLS", "bells", 5)]),
+        (0.1, [(1.65, "TUBES / SPOKES", "tubes", 6), (1, "BB", "bb", 7)]),
+    ]
+    z = chh - fr
+    for r, (h, cells) in enumerate(rows):
+        z -= h
+        if r:
+            box(f"cab_shelf{r}", (iw, cdp, 0.004), (0, 0, z + h + 0.002), M["drawer_body"], bev=0.001, parent=cab)
+        tot = sum(c[0] for c in cells)
+        x = -iw / 2
+        for k, (share, lab, kind, num) in enumerate(cells):
+            wd = iw * share / tot
+            if k:
+                box(f"cab_div{r}{k}", (0.003, cdp, h), (x, 0, z + h / 2), M["drawer_body"], bev=0.0005, parent=cab)
+            pull = -0.1 if num == 1 else -0.008
+            dg = grp(f"drawer_{lab}", (x + wd / 2, pull, z + 0.002), parent=cab)
+            _drawer(dg, wd - 0.005, cdp - 0.02, h - 0.006, lab, kind, M, lab_m, num)
+            x += wd
+        z -= 0.004
+    # the Christmas lights, up on top of the cabinet
+    xl = grp("xmas_box", (0.47, D - 0.12, top + chh), (0, 0, 3))
+    box("xmas_body", (0.3, 0.19, 0.12), (0, 0, 0.06), M["card"], bev=0.004, parent=xl)
+    box("xmas_tape", (0.05, 0.1925, 0.122), (0.0, 0, 0.061), M["tape"], bev=0, parent=xl)
+    box("xmas_seam", (0.3, 0.002, 0.0015), (0, 0.0, 0.1206), M["kraft"], bev=0, parent=xl)
+    box("xmas_label", (0.17, 0.001, 0.05), (-0.05, -0.0956, 0.06), lab_m, bev=0, parent=xl)
+    text("xmas_text", "XMAS LIGHTS\n(window)", "Inkfree.ttf", 0.017, (-0.05, -0.0962, 0.062), M["marker"],
+         rot=(90, 0, 0), parent=xl, line=0.85, fit=0.155)
+    curve("xmas_wire", [(0.13, -0.09, 0.121), (0.14, -0.1, 0.11), (0.135, -0.1, 0.09), (0.125, -0.097, 0.07)], 0.0012,
+          mat("xmas_green", "#2c4a2a", 0.5), parent=xl)
+    sphere("xmas_bulb", 0.004, (0.125, -0.098, 0.066), mat("xmas_bulb", "#e8c060", 0.2), seg=8, rings=5, parent=xl,
+           scale=(1, 1, 1.5))
+    # the archive box (heavy, at the bottom) and the shoebox of manuals on it
+    ab = grp("archive_box", (0.905, D - 0.125, top), (0, 0, -1.5))
+    aw, ad, ah = 0.24, 0.225, 0.17
+    kraft_c = noisy("kraft_c", "#b18a5a", "#a27e50", 0.85, scale=30.0, bump=0.03)
+    box("archive_body", (aw, ad, ah - 0.02), (0, 0, (ah - 0.02) / 2), kraft_c, bev=0.003, parent=ab)
+    box("archive_lid", (aw + 0.006, ad + 0.006, 0.035), (0, 0, ah - 0.0175), kraft_c, bev=0.003, parent=ab)
+    box("archive_handle", (0.06, 0.002, 0.022), (0, -ad / 2 - 0.0005, ah - 0.06), M["hole"], bev=0.006, parent=ab)
+    box("archive_label", (0.15, 0.001, 0.06), (0, -ad / 2 - 0.0008, 0.055), lab_m, bev=0, parent=ab)
+    for k in range(3):
+        box(f"archive_rule{k}", (0.13, 0.0008, 0.0006), (0, -ad / 2 - 0.0014, 0.038 + k * 0.012), M["print_grey"], bev=0,
+            parent=ab)
+    text("archive_print", "CONTENTS", "verdanab.ttf", 0.005, (-0.068, -ad / 2 - 0.0014, 0.078), M["print_grey"],
+         ax="LEFT", rot=(90, 0, 0), parent=ab)
+    text("archive_text", "INVOICES\n2009–2014", "Inkfree.ttf", 0.0165, (0.01, -ad / 2 - 0.0016, 0.052), M["marker"],
+         rot=(90, 0, 0), parent=ab, line=0.85, fit=0.13)
+    sb = grp("shoebox", (0.9, D - 0.13, top + ah), (0, 0, 2.5))
+    sw, sd, sh = 0.23, 0.165, 0.1
+    shoe_c = mat("shoebox", "#8a6a4e", 0.7)
+    box("shoe_body", (sw - 0.004, sd - 0.004, sh - 0.02), (0, 0, (sh - 0.02) / 2), shoe_c, bev=0.002, parent=sb)
+    box("shoe_lid", (sw, sd, 0.03), (0, 0, sh - 0.015), mat("shoebox_lid", "#e8e2d2", 0.6), bev=0.002, parent=sb)
+    box("shoe_endlabel", (0.001, 0.05, 0.025), (sw / 2 - 0.001, 0.03, 0.04), M["pin_white"], bev=0, parent=sb)
+    box("shoe_tape", (0.16, 0.0008, 0.028), (0, -sd / 2 - 0.0002, sh - 0.016), M["tape"], bev=0, parent=sb)
+    text("shoe_text", "MANUALS & WARRANTIES", "Inkfree.ttf", 0.0135, (0, -sd / 2 - 0.0008, sh - 0.017), M["marker"],
+         rot=(90, 0, 0), parent=sb, fit=0.15)
+    # the binders, labelled in Martin's hand (the README: supplier logins are in the red one)
+    bcols = [("binder_navy", "INVOICES\n2015–"), ("binder_red", "SUPPLIERS"), ("binder_green", "VAT"),
+             ("binder_black", "WARRANTIES")]
     for i, (mn, lbl) in enumerate(bcols):
-        lean = -14 if i == 3 else 0
-        x = 1.025 + i * 0.07 + (0.03 if i == 3 else 0)
-        b = grp(f"binder{i}", (x, D - 0.135, top), (0, lean, 0))
-        box(f"binder{i}_body", (0.062, 0.26, 0.315), (0, 0, 0.1575), M[mn], bev=0.006, parent=b)
-        box(f"binder{i}_label", (0.044, 0.0012, 0.075), (0, -0.1305, 0.225), lab_m, bev=0, parent=b)
-        text(f"binder{i}_text", lbl, "Inkfree.ttf", 0.0105, (0, -0.1315, 0.23), M["marker"], rot=(90, 0, 0), parent=b,
-             fit=0.04, line=0.9)
-        torus(f"binder{i}_hole", 0.0085, 0.0022, (0, -0.1305, 0.09), M["hole"], rot=(90, 0, 0), nR=14, nr=5, parent=b)
-
-
-def _drawer(g, w, d, h, label, kind, M, lab_m):
-    t = 0.0025
-    box("dr_front", (w, t, h), (0, -d / 2, h / 2), mat("clear_front", "#e6eef3", 0.05, spec=0.7, alpha=0.08), bev=0.002,
-        parent=g)
-    box("dr_lip", (w, t * 1.6, 0.012), (0, -d / 2, h - 0.006), M["drawer_body"], bev=0.0015, parent=g)
-    box("dr_back", (w, t, h * 0.8), (0, d / 2, h * 0.4), M["clear"], bev=0.001, parent=g)
-    box("dr_floor", (w, d, t), (0, 0, t / 2), M["clear"], bev=0.001, parent=g)
-    for s in (-1, 1):
-        box(f"dr_side{s}", (t, d, h * 0.8), (s * w / 2, 0, h * 0.4), M["clear"], bev=0.001, parent=g)
-    box("dr_pull", (w * 0.35, 0.008, 0.005), (0, -d / 2 - 0.004, h * 0.18), M["drawer_body"], bev=0.002, parent=g)
-    lw = min(w * 0.8, 0.09)
-    box("dr_label", (lw, 0.001, 0.0135), (0, -d / 2 - 0.0026, h - 0.0075), lab_m, bev=0, parent=g)
-    text("dr_label_text", label.replace(" 2", ""), "Inkfree.ttf", 0.0108, (0, -d / 2 - 0.0033, h - 0.0078), M["marker"],
-         rot=(90, 0, 0), parent=g, fit=lw - 0.008)
-    if kind == "pads":
-        # the last pair of disc pads, stood up just behind the clear front, friction side out: an empty drawer
-        # with one pair in it reads from anywhere in front of the shelf
-        for i, (x, rz, rx) in enumerate(((-0.028, 5, 78), (0.026, -7, 82))):
-            pg = grp(f"pad{i}", (x, -d / 2 + 0.016, t + 0.0125), (rx, 0, rz), parent=g)
-            outline = [(-0.021, -0.012), (0.021, -0.012), (0.024, 0.0), (0.019, 0.011), (0.006, 0.015), (0.004, 0.021),
-                       (-0.004, 0.021), (-0.006, 0.015), (-0.019, 0.011), (-0.024, 0.0)]
-            prism("pad_plate", outline, 0.0022, m=M["steel_dk"], parent=pg, bev=0.0005)
-            inner = [(-0.019, -0.0105), (0.019, -0.0105), (0.0215, 0.0), (0.017, 0.0095), (-0.017, 0.0095), (-0.0215, 0.0)]
-            prism("pad_comp", inner, 0.004, loc=(0, 0, 0.0022), m=M["pad_compound"], parent=pg, bev=0.0006)
-            disc("pad_hole", 0, 0.0175, 0.0012, 0.0023, M["hole"], pg, n=8)
-    elif kind == "cables":
-        for i in range(9):
-            torus(f"cable{i}", RNG.uniform(0.03, 0.04), 0.0018,
-                  (RNG.uniform(-w / 4, w / 4), RNG.uniform(-d / 5, d / 5), 0.01 + i * 0.0085),
-                  M["plastic_blk"] if i % 3 else M["steel"], rot=(RNG.uniform(-12, 12), RNG.uniform(-12, 12), 0),
-                  nR=20, nr=5, parent=g)
-    else:
-        drawer_contents("dr_stuff", g, kind, w, d, M)
+        x = 1.068 + i * 0.066
+        b = grp(f"binder{i}", (x, D - 0.135, top), (0, 0, (-1.5, 1, -0.5, 2)[i]))
+        box(f"binder{i}_body", (0.06, 0.26, 0.315), (0, 0, 0.1575), M[mn], bev=0.006, parent=b)
+        box(f"binder{i}_pocket", (0.048, 0.0014, 0.11), (0, -0.1306, 0.17), mat("binder_pocket", "#dfe3e6", 0.15,
+                                                                                spec=0.6), bev=0.001, parent=b)
+        box(f"binder{i}_label", (0.044, 0.0012, 0.1), (0, -0.1304, 0.17), lab_m, bev=0, parent=b)
+        text(f"binder{i}_text", lbl, "Inkfree.ttf", 0.0115, (0, -0.1316, 0.17), M["marker"], rot=(90, -90, 0), parent=b,
+             fit=0.09, line=0.9)
+        torus(f"binder{i}_hole", 0.0085, 0.0022, (0, -0.1305, 0.06), M["hole"], rot=(90, 0, 0), nR=14, nr=5, parent=b)
+    # the spare headset, in its box, on shelf A (parts list: "Headset FSA 1-1/8in: shelf A")
+    product_box("headset_box", (0.075, 0.075, 0.062), (1.375, D - 0.07, top + 0.031), None,
+                mat("headset_box", "#26282c", 0.5), mat("headset_band", "#c9a54a", 0.4), "HEADSET\n1-1/8\"", M,
+                rot=(0, 0, -6), font_sz=0.0072, label_m=M["pin_white"])
 
 
 # ================================================================ desk-top props
@@ -1784,24 +3082,56 @@ def build_desk_props(M):
     return mug
 
 
+def build_headphones(M, hp, name="hp"):
+    """Theo's headphones (teal pads), standing on their cups; they go to Lisbon with him."""
+    pad_m = mat("hp_pad", "#2f6f6a", 0.85)
+    for s in (-1, 1):
+        cup = grp(f"{name}_cup{s}", (s * 0.072, 0, 0.044), (0, 90 * s, 0), parent=hp)
+        cyl(f"{name}_shell{s}", 0.044, 0.03, (0, 0, -0.012), M["plastic_blk"], n=20, bev=0.01, seg=2, parent=cup)
+        torus(f"{name}_pad{s}", 0.032, 0.012, (0, 0, 0.008), pad_m, nR=20, nr=8, parent=cup)
+        cyl(f"{name}_cap{s}", 0.022, 0.004, (0, 0, -0.028), M["steel_dk"], n=16, parent=cup)
+        tube(f"{name}_yoke{s}", (s * 0.09, 0, 0.07), (s * 0.084, 0, 0.115), 0.004, M["steel"], n=6, parent=hp)
+    arc = [(0.086 * cos(radians(a)), 0.0, 0.082 + 0.085 * sin(radians(a))) for a in range(0, 181, 15)]
+    curve(f"{name}_band", arc, 0.0085, M["plastic_blk"], parent=hp, res=6).scale = (1.0, 2.2, 1.0)
+    return hp
+
+
+def build_plant(M, parent, name="plant"):
+    """Theo's desk plant, a little snake plant in a terracotta pot. Seeded so it's the same plant in Lisbon."""
+    rr = random.Random(2009)
+    lathe(name + "_pot", [(0.0, 0.0), (0.045, 0.0), (0.058, 0.11), (0.062, 0.11), (0.062, 0.125), (0.0, 0.125)], n=14,
+          m=M["terracotta"], parent=parent)
+    cyl(name + "_soil", 0.056, 0.004, (0, 0, 0.122), mat("soil", "#3a2a1f", 0.95), n=14, parent=parent)
+    for k in range(9):
+        a = 2 * pi * k / 9 + rr.uniform(-0.2, 0.2)
+        L = rr.uniform(0.13, 0.2)
+        lean = rr.uniform(18, 38)
+        leaf = flat(f"{name}_leaf{k}", [(0, -0.012), (L * 0.6, -0.018), (L, 0), (L * 0.6, 0.018), (0, 0.012)], 0,
+                    M["plant"] if k % 2 else M["plant_dk"], parent)
+        leaf.location = (0, 0, 0.12)
+        leaf.rotation_euler = (0.0, radians(-(90 - lean)), a)
+        sd = leaf.modifiers.new("Solid", "SOLIDIFY")
+        sd.thickness = 0.002
+    return parent
+
+
 def build_theo(M, kb, mug):
     """Theo's last week: his keys on the keyboard, the box for Lisbon, his headphones, cold coffee."""
-    build_keyring(M, kb)
+    build_backoffice_key(M, kb)
     use("THEO")
     cyl("coffee", 0.0362, 0.002, (0, 0, 0.026), M["coffee"], n=24, parent=mug)
     # headphones on the desk, left of the keyboard
-    hp = grp("headphones", (0.57, 2.2, DZ), (0, 0, 18))
-    pad_m = mat("hp_pad", "#2f6f6a", 0.85)
-    for s in (-1, 1):
-        cup = grp(f"hp_cup{s}", (s * 0.072, 0, 0.044), (0, 90 * s, 0), parent=hp)
-        cyl(f"hp_shell{s}", 0.044, 0.03, (0, 0, -0.012), M["plastic_blk"], n=20, bev=0.01, seg=2, parent=cup)
-        torus(f"hp_pad{s}", 0.032, 0.012, (0, 0, 0.008), pad_m, nR=20, nr=8, parent=cup)
-        cyl(f"hp_cap{s}", 0.022, 0.004, (0, 0, -0.028), M["steel_dk"], n=16, parent=cup)
-        tube(f"hp_yoke{s}", (s * 0.09, 0, 0.07), (s * 0.084, 0, 0.115), 0.004, M["steel"], n=6, parent=hp)
-    arc = [(0.086 * cos(radians(a)), 0.0, 0.082 + 0.085 * sin(radians(a))) for a in range(0, 181, 15)]
-    curve("hp_band", arc, 0.0085, M["plastic_blk"], parent=hp, res=6).scale = (1.0, 2.2, 1.0)
-    curve("hp_cable", [(-0.1, 0.0, 0.02), (-0.14, -0.03, 0.003), (-0.12, -0.1, 0.003), (-0.02, -0.12, 0.003),
-                       (0.06, -0.085, 0.003)], 0.0018, M["plastic_blk"], parent=hp)
+    hp = build_headphones(M, grp("headphones", (0.57, 2.2, DZ), (0, 0, 18)))
+    port("hp_cup", (-0.112, 0.0, 0.03), (-0.4, -0.25, -0.88), hp)
+    # the lead runs to the tower's front headphone jack
+    at, d = port_frame("hp")
+    st = connector("hp_jack_plug", "jack", at, d, M)
+    cable("hp_cable", [st, st + d * 0.012, at + d * 0.05 + Vector((0.0, 0, -0.05)), (0.375, 2.2, DZ + 0.02),
+                       (0.4, 2.16, DZ + 0.0018), (0.45, 2.13, DZ + 0.0018), (0.5, 2.15, DZ + 0.0018)] +
+          bush_end("hp_lead", "hp_cup", M, out=0.03),
+          0.0016, M["plastic_blk"])
+    # the 2009 photo, framed, on his side of the desk (it goes to Lisbon with him)
+    build_photo_frame(M, (1.585, 2.47, DZ), -14)
     # the moving box, half packed, on the floor by the desk
     bxg = grp("moving_box", (2.3, 1.74, 0), (0, 0, 9))
     bw, bd, bh = 0.5, 0.38, 0.36
@@ -1829,46 +3159,129 @@ def build_theo(M, kb, mug):
     curve("box_underline", [(-0.15, -bd / 2 - 0.0016, 0.07), (0.0, -bd / 2 - 0.0016, 0.064), (0.16, -bd / 2 - 0.0016, 0.072)],
           0.0022, M["marker"], parent=bxg, res=6, bres=1)
     # contents: his desk plant (it goes to Lisbon), a poster tube, a rolled hoodie with a sleeve over the side
-    pl = grp("plant", (0.1, 0.06, bh - 0.12), parent=bxg)
-    lathe("plant_pot", [(0.0, 0.0), (0.045, 0.0), (0.058, 0.11), (0.062, 0.11), (0.062, 0.125), (0.0, 0.125)], n=14,
-          m=M["terracotta"], parent=pl)
-    cyl("plant_soil", 0.056, 0.004, (0, 0, 0.122), mat("soil", "#3a2a1f", 0.95), n=14, parent=pl)
-    for k in range(9):
-        a = 2 * pi * k / 9 + RNG.uniform(-0.2, 0.2)
-        L = RNG.uniform(0.13, 0.2)
-        lean = RNG.uniform(18, 38)
-        leaf = flat(f"leaf{k}", [(0, -0.012), (L * 0.6, -0.018), (L, 0), (L * 0.6, 0.018), (0, 0.012)], 0,
-                    M["plant"] if k % 2 else M["plant_dk"], pl)
-        leaf.location = (0, 0, 0.12)
-        leaf.rotation_euler = (0.0, radians(-(90 - lean)), a)
-        sd = leaf.modifiers.new("Solid", "SOLIDIFY")
-        sd.thickness = 0.002
+    build_plant(M, grp("plant", (0.1, 0.06, bh - 0.12), parent=bxg))
     tube("poster_tube", (-0.17, 0.08, 0.05), (-0.08, 0.02, bh + 0.25), 0.035, M["kraft"], n=12, parent=bxg)
     sphere("hoodie_lump", 0.13, (-0.07, -0.05, bh - 0.06), M["hoodie"], ico=2, parent=bxg, scale=(1.3, 0.95, 0.55))
     curve("hoodie_sleeve", [(-0.12, -0.08, bh - 0.02), (-0.2, -0.12, bh + 0.02), (-0.252, -0.12, bh - 0.005),
                             (-0.262, -0.12, bh - 0.12), (-0.258, -0.1, bh - 0.2)], 0.032, M["hoodie"], parent=bxg, res=6)
 
 
+def _minimum(nt, a, b):
+    m = nt.nodes.new("ShaderNodeMath")
+    m.operation = "MINIMUM"
+    nt.links.new(a.outputs[0], m.inputs[0])
+    nt.links.new(b.outputs[0], m.inputs[1])
+    return m
+
+
+def rag_material():
+    """A red cotton shop towel: a fine weave, a darker hem, black grease worked into it in patches."""
+    if "shop_rag" in MATS:
+        return MATS["shop_rag"]
+    m = mat("shop_rag", "#8f2f28", 0.92)
+    nt, b = m.node_tree, principled(m)
+    uv = nt.nodes.new("ShaderNodeUVMap")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    nt.links.new(uv.outputs["UV"], sep.inputs[0])
+    # hem: within 3% of any edge of the cloth (UV is the flat cloth before it was crumpled)
+    edge = None
+    for comp, inv in (("X", False), ("X", True), ("Y", False), ("Y", True)):
+        mth = nt.nodes.new("ShaderNodeMath")
+        if inv:
+            mth.operation = "SUBTRACT"
+            mth.inputs[0].default_value = 1.0
+            nt.links.new(sep.outputs[comp], mth.inputs[1])
+        else:
+            mth.operation = "ADD"
+            nt.links.new(sep.outputs[comp], mth.inputs[0])
+            mth.inputs[1].default_value = 0.0
+        edge = mth if edge is None else _minimum(nt, edge, mth)
+    hem = nt.nodes.new("ShaderNodeMath")
+    hem.operation = "LESS_THAN"
+    nt.links.new(edge.outputs[0], hem.inputs[0])
+    hem.inputs[1].default_value = 0.03
+    cloth = _mix(nt, hem.outputs[0], "#8f2f28", "#6a221d")
+    wave = nt.nodes.new("ShaderNodeTexWave")                  # the weave
+    wave.inputs["Scale"].default_value = 160.0
+    wave.inputs["Distortion"].default_value = 1.5
+    nt.links.new(uv.outputs["UV"], wave.inputs["Vector"])
+    nz = nt.nodes.new("ShaderNodeTexNoise")                   # grease: low-frequency blotches, sharpened
+    nz.inputs["Scale"].default_value = 3.2
+    nz.inputs["Detail"].default_value = 5.0
+    nz.inputs["Roughness"].default_value = 0.62
+    nt.links.new(uv.outputs["UV"], nz.inputs["Vector"])
+    mr = nt.nodes.new("ShaderNodeMapRange")
+    mr.inputs["From Min"].default_value = 0.5
+    mr.inputs["From Max"].default_value = 0.62
+    nt.links.new(nz.outputs["Fac"], mr.inputs["Value"])
+    mx = nt.nodes.new("ShaderNodeMix")
+    mx.data_type = "RGBA"
+    nt.links.new(mr.outputs["Result"], sock(mx.inputs, "Factor_Float"))
+    nt.links.new(cloth, sock(mx.inputs, "A_Color"))
+    sock(mx.inputs, "B_Color").default_value = rgba("#2b201b")
+    nt.links.new(sock(mx.outputs, "Result_Color"), b.inputs["Base Color"])
+    rough = nt.nodes.new("ShaderNodeMapRange")
+    rough.inputs["To Min"].default_value = 0.95
+    rough.inputs["To Max"].default_value = 0.55
+    nt.links.new(mr.outputs["Result"], rough.inputs["Value"])
+    nt.links.new(rough.outputs["Result"], b.inputs["Roughness"])
+    _bump(nt, b, wave.outputs["Fac"], 0.12, 0.0006)
+    return m
+
+
+def build_rag(M, loc, yaw):
+    """Martin's workshop rag, dropped on the desk: a 30 cm red cotton square, bunched and folded, one corner turned
+    over, the cloth drawn in where it buckles."""
+    n = 28
+    S = 0.3
+    rr = random.Random(61)
+    folds = [(rr.uniform(0, pi), rr.uniform(-0.08, 0.08), rr.uniform(0.006, 0.016), rr.uniform(0.008, 0.02))
+             for _ in range(5)]
+    bunch = Vector((0.03, -0.02))
+    bm = bmesh.new()
+    uvl = bm.loops.layers.uv.new("UVMap")
+    grid = []
+    for j in range(n):
+        row = []
+        for i in range(n):
+            u, v = i / (n - 1), j / (n - 1)
+            p = Vector(((u - 0.5) * S, (v - 0.5) * S))
+            h = 0.0
+            for a, off, amp, wid in folds:
+                dd = p.x * cos(a) + p.y * sin(a) - off
+                h += amp * math.exp(-(dd / wid) ** 2)
+            r = (p - bunch).length
+            h += 0.022 * math.exp(-(r / 0.06) ** 2)
+            h += 0.002 * sin(p.x * 90 + p.y * 40) * cos(p.y * 70)
+            pull = 0.35 * math.exp(-(r / 0.11) ** 2)            # the cloth gathers toward the bunch
+            q = p + (bunch - p) * pull
+            if u + v > 1.62:                                    # one corner turned over
+                d = (u + v - 1.62) / 2
+                q = Vector((q.x - d * S, q.y - d * S))
+                h = 0.004 + 0.3 * h + 0.003 * d
+            row.append((bm.verts.new((q.x, q.y, max(0.0, h))), (u, v)))
+        grid.append(row)
+    for j in range(n - 1):
+        for i in range(n - 1):
+            vs = (grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i])
+            f = bm.faces.new([a for a, _ in vs])
+            for lp, (_, t) in zip(f.loops, vs):
+                lp[uvl].uv = t
+    rag = finish("rag", bm, rag_material(), None, loc, (0, 0, yaw), smooth=True, angle=80)
+    sd = rag.modifiers.new("Solid", "SOLIDIFY")
+    sd.thickness = 0.0022
+    sd.offset = 1
+    return rag
+
+
 def build_martin(M, mug):
     """Monday: Martin's reading glasses on a cord, his rag, a paper job card, a pencil, tea in Theo's mug."""
     use("MARTIN")
     cyl("tea", 0.0362, 0.002, (0, 0, 0.079), M["tea"], n=24, parent=mug)
-    # job card, Monday's first job: Anika's brakes
-    jc = grp("job_card", (0.58, 2.2, DZ + 0.0006), (0, 0, 10))
-    box("jc_card", (0.1, 0.15, 0.0008), (0, 0, 0), M["manila"], bev=0, parent=jc)
-    zt = 0.0006
-    text("jc_head", "SPOKES & SPROCKETS", "verdanab.ttf", 0.0062, (0, 0.062, zt), M["ink"], parent=jc, fit=0.088)
-    text("jc_head2", "JOB CARD", "verdana.ttf", 0.0055, (0, 0.053, zt), M["print_grey"], parent=jc)
-    text("jc_no", "No. 0417", "consola.ttf", 0.005, (0.042, 0.043, zt), M["red_ink"], ax="RIGHT", parent=jc)
-    fields = [("Name", "Anika", 0.03), ("Bike", "grey hybrid", 0.012), ("Work", "brake pads F+R", -0.006),
-              ("", "(2 pairs)", -0.02), ("Due", "Tues", -0.038)]
-    for i, (lab, val, y) in enumerate(fields):
-        if lab:
-            text(f"jc_lab{i}", lab + ":", "verdana.ttf", 0.0048, (-0.044, y, zt), M["print_grey"], ax="LEFT", parent=jc)
-        rect(f"jc_line{i}", -0.026, y - 0.0025, 0.044, y - 0.0022, zt, M["print_grey"], jc)
-        text(f"jc_val{i}", val, "Inkfree.ttf", 0.0082, (-0.023, y + 0.0004, zt + 0.0001), M["blue_ink"], ax="LEFT",
-             parent=jc, fit=0.066)
-    text("jc_foot", "est. 1987", "georgia.ttf", 0.0045, (0, -0.066, zt), M["print_grey"], parent=jc)
+    # job card, Monday's first job: Anika's brakes (job 4478 on the screens; she needs two pairs of pads)
+    job_card(M, "job_card", (0.58, 2.2, DZ + 0.0006), 10, 4478,
+             [("Name", "Anika Banerjee"), ("Bike", "Trek FX 3"), ("Work", "brake bleed + pads"), ("", "F + R (2 pairs)"),
+              ("Due", "Tue 24/11")])
     # reading glasses on a cord, resting on the card
     gl = grp("glasses", (0.6, 2.26, DZ + 0.019), (0, 0, -14))
     fr = grp("glasses_front", (0, 0, 0.0), (62, 0, 0), parent=gl)
@@ -1887,21 +3300,9 @@ def build_martin(M, mug):
     curve("gl_cord", [(-0.054, 0.001, 0.002), (-0.075, -0.02, -0.012), (-0.07, -0.07, -0.0145), (0.0, -0.095, -0.0145),
                       (0.075, -0.065, -0.0145), (0.088, -0.012, -0.012), (0.054, 0.001, 0.002)], 0.0009, M["cord"],
           parent=gl, res=8)
-    # the greasy rag, a crumpled low-poly cloth
-    bm = bmesh.new()
-    n = 9
-    rr = random.Random(61)
-    vs = [[bm.verts.new(((i / (n - 1) - 0.5) * 0.26, (j / (n - 1) - 0.5) * 0.22,
-                          max(0.0, 0.028 * sin(i * 1.3 + j * 0.7) * cos(j * 0.9) + rr.uniform(0, 0.018)) *
-                          (1 - abs(i / (n - 1) - 0.5) * 1.2)))
-           for i in range(n)] for j in range(n)]
-    for j in range(n - 1):
-        for i in range(n - 1):
-            bm.faces.new((vs[j][i], vs[j][i + 1], vs[j + 1][i + 1], vs[j + 1][i]))
-    rag = finish("rag", bm, M["rag"], None, (1.66, 2.165, DZ + 0.002), (0, 0, 18), smooth=False)
-    sd = rag.modifiers.new("Solid", "SOLIDIFY")
-    sd.thickness = 0.003
-    # pencil behind the keyboard
+    build_rag(M, (1.66, 2.165, DZ + 0.0015), 18)
+    # pencil behind the keyboard (still there on Tuesday)
+    use("MARTIN_KIT")
     pc = grp("pencil", (1.07, 2.335, DZ + 0.0045), (0, 90, 8))
     cyl("pencil_body", 0.0045, 0.16, (0, 0, 0), M["pencil"], n=6, parent=pc)
     cyl("pencil_tip", 0.0045, 0.018, (0, 0, -0.089), M["pencil_wood"], r2=0.0012, n=6, parent=pc).rotation_euler = _rot((180, 0, 0))
@@ -1909,9 +3310,230 @@ def build_martin(M, mug):
     cyl("pencil_eraser", 0.0044, 0.008, (0, 0, 0.092), M["eraser"], n=10, parent=pc)
 
 
+def job_card(M, name, loc, yaw, no, fields, mech=None, parent=None, tilt=(0, 0)):
+    """A Spokes & Sprockets paper job card, filled in by Martin at the counter (Ink Free is his hand). `mech` =
+    (crossed-out name, new name) adds the mechanic line with a correction."""
+    jc = grp(name, loc, (tilt[0], tilt[1], yaw), parent=parent)
+    box(name + "_card", (0.1, 0.15, 0.0008), (0, 0, 0), M["manila"], bev=0, parent=jc)
+    zt = 0.0006
+    text(name + "_head", "SPOKES & SPROCKETS", "verdanab.ttf", 0.0062, (0, 0.062, zt), M["ink"], parent=jc, fit=0.088)
+    text(name + "_head2", "JOB CARD", "verdana.ttf", 0.0055, (0, 0.053, zt), M["print_grey"], parent=jc)
+    text(name + "_no", f"No. {no}", "consola.ttf", 0.005, (0.042, 0.043, zt), M["red_ink"], ax="RIGHT", parent=jc)
+    ys = (0.03, 0.014, -0.002, -0.016, -0.032, -0.048)
+    for i, ((lab, val), y) in enumerate(zip(fields, ys)):
+        if lab:
+            text(f"{name}_lab{i}", lab + ":", "verdana.ttf", 0.0046, (-0.044, y, zt), M["print_grey"], ax="LEFT",
+                 parent=jc)
+        rect(f"{name}_line{i}", -0.024, y - 0.0025, 0.044, y - 0.0022, zt, M["print_grey"], jc)
+        text(f"{name}_val{i}", val, "Inkfree.ttf", 0.008, (-0.022, y + 0.0004, zt + 0.0001), M["blue_ink"], ax="LEFT",
+             parent=jc, fit=0.064)
+    if mech:
+        y = -0.062
+        text(name + "_mlab", "Mech:", "verdana.ttf", 0.0046, (-0.044, y, zt), M["print_grey"], ax="LEFT", parent=jc)
+        text(name + "_mold", mech[0], "Inkfree.ttf", 0.008, (-0.022, y + 0.0004, zt + 0.0001), M["blue_ink"],
+             ax="LEFT", parent=jc)
+        box(name + "_strike", (0.016, 0.0009, 0.0002), (-0.0145, y + 0.0018, zt + 0.0002), M["blue_ink"],
+            rot=(0, 0, 8), bev=0, parent=jc)
+        text(name + "_mnew", mech[1], "Inkfree.ttf", 0.0088, (0.0, y + 0.0006, zt + 0.0001), M["blue_ink"],
+             ax="LEFT", parent=jc, rot=(0, 0, 4))
+    else:
+        text(name + "_foot", "est. 1987", "georgia.ttf", 0.0045, (0, -0.066, zt), M["print_grey"], parent=jc)
+    return jc
+
+
+def build_helmet(M, parent, loc, rot):
+    """Priya's road helmet: a matt shell with vents (cut through to the grey foam), a rear retention dial, black
+    webbing straps and buckle; hung by its straps over the corner of the chair back."""
+    g = grp("helmet", loc, rot, parent=parent)
+    shell_m = mat("helmet_shell", "#c95b36", 0.42, coat=0.35)
+    foam = mat("helmet_foam", "#8f9296", 0.85)
+    bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=28, v_segments=16, radius=1.0)
+    for v in bm.verts:
+        x, y, z = v.co
+        z = max(z, -0.05)
+        tail = 1.0 + 0.18 * max(0.0, y)                      # longer at the back, a little tail
+        v.co = Vector((x * 0.1, y * 0.135 * tail, z * 0.105))
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if all(v.co.z < -0.004 for v in f.verts)], context="FACES")
+    shell = finish("helmet_shell", bm, [shell_m, foam], g, angle=50)
+    sd = shell.modifiers.new("Solid", "SOLIDIFY")
+    sd.thickness = 0.018
+    sd.material_offset = 1
+    cutters = []
+    for k, (x, y0, y1, z) in enumerate(((0.0, -0.07, 0.075, 0.12), (-0.038, -0.065, 0.07, 0.11),
+                                        (0.038, -0.065, 0.07, 0.11), (-0.07, -0.035, 0.05, 0.085),
+                                        (0.07, -0.035, 0.05, 0.085))):
+        c = tube(f"helmet_vent{k}", (x, y0, z), (x * 1.04, y1, z - 0.01), 0.011, foam, n=8, parent=g)
+        c.scale = (1.0, 1.0, 1.0)
+        c.hide_render = True
+        cutters.append(c)
+    for c in cutters:
+        bo = shell.modifiers.new("Vent", "BOOLEAN")
+        bo.operation = "DIFFERENCE"
+        bo.object = c
+        bo.solver = "EXACT"
+        try:
+            bo.material_mode = "TRANSFER"
+        except (AttributeError, TypeError):
+            pass
+    torus("helmet_rim", 1.0, 0.07, (0, 0, -0.003), mat("helmet_trim", "#2a2b2e", 0.5), nR=40, nr=6, parent=g,
+          scale=(0.1, 0.142, 0.1))
+    box("helmet_dial", (0.034, 0.012, 0.018), (0, 0.15, 0.0), M["plastic_blk"], bev=0.005, parent=g)
+    box("helmet_reflector", (0.03, 0.002, 0.008), (0, 0.157, 0.018), mat("reflector", "#d9d9d9", 0.25, metal=0.5),
+        bev=0.001, parent=g)
+    web = mat("webbing", "#1b1b1d", 0.8)
+    for s in (-1, 1):
+        curve(f"helmet_strap{s}", [(s * 0.095, -0.02, 0.005), (s * 0.085, 0.0, -0.06), (s * 0.03, 0.02, -0.11),
+                                   (0.0, 0.03, -0.13)], 0.004, web, parent=g, res=6, bres=1).scale = (1, 1, 1)
+    box("helmet_buckle", (0.022, 0.008, 0.016), (0, 0.03, -0.135), M["plastic_blk"], bev=0.003, parent=g)
+    return g
+
+
+def build_coffee_cup(M, loc, yaw, name="coffee_cup", label="PRIYA", font_file="MISTRAL.TTF"):
+    """A takeaway coffee: white paper cup, a plain kraft sleeve, a white sip lid, the barista's marker on the cup."""
+    g = grp(name, loc, (0, 0, yaw))
+    r0, r1, h = 0.029, 0.044, 0.132
+    cupm = mat("paper_cup", "#f3f0e9", 0.55, spec=0.35)
+    lathe(name + "_body", [(0.0, 0.0), (r0, 0.0), (r0 + 0.0008, 0.003), (r1, h), (r1 + 0.0015, h + 0.002),
+                           (r1 - 0.002, h + 0.001), (0.0, h - 0.004)], n=32, m=cupm, parent=g)
+    zs0, zs1 = 0.035, 0.088
+    rs0, rs1 = r0 + (r1 - r0) * zs0 / h + 0.0012, r0 + (r1 - r0) * zs1 / h + 0.0012
+    lathe(name + "_sleeve", [(rs0 - 0.0012, zs0), (rs0, zs0), (rs1, zs1), (rs1 - 0.0012, zs1)], n=32,
+          m=noisy("sleeve_kraft", "#a8814f", "#97723f", 0.85, scale=60.0, bump=0.15), parent=g)
+    lid = mat("cup_lid", "#f6f4ef", 0.3, spec=0.5)
+    lathe(name + "_lid", [(0.0, h + 0.012), (0.03, h + 0.012), (0.036, h + 0.0145), (0.043, h + 0.0135),
+                          (0.0465, h + 0.006), (0.0462, h + 0.0005), (0.0445, h + 0.0002), (0.0, h + 0.002)], n=32,
+          m=lid, parent=g)
+    box(name + "_sip", (0.012, 0.004, 0.001), (0, -0.038, h + 0.0136), M["hole"], rot=(0, 0, 0), bev=0.0015,
+        parent=g)
+    # the name, in the barista's marker, wrapped round the cup above the sleeve (facing -y)
+    t = text(name + "_src", label, font_file, 0.031, (0, 0, 0), M["marker"], extrude=0.0002)
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    me = bpy.data.meshes.new_from_object(t.evaluated_get(dg))
+    bpy.data.objects.remove(t, do_unlink=True)
+    zc = 0.111
+    for v in me.vertices:
+        x, y, _ = v.co
+        z = zc + y * 0.95 + x * 0.12                         # written on the slant
+        rr = r0 + (r1 - r0) * z / h + 0.0004
+        th = x / rr + radians(8)
+        v.co = Vector((rr * sin(th), -rr * cos(th), z))
+    me.materials.clear()
+    me.materials.append(M["marker"])
+    link(bpy.data.objects.new(name + "_name", me), g)
+    return g
+
+
+def build_toolroll(M, loc, yaw):
+    """Priya's toolroll, unrolled: waxed olive canvas, leather ties, one sewn pocket per tool and every tool in its
+    pocket, clean. Tyre levers, a spoke key, cable cutters, hex keys, a chain tool, a lockring tool, a screwdriver,
+    a pick."""
+    g = grp("toolroll", loc, (0, 0, yaw))
+    L, Wd = 0.46, 0.23
+    canvas = noisy("waxed_canvas", "#55613f", "#4a5537", 0.55, scale=220.0, bump=0.08)
+    pocket = noisy("waxed_canvas_lt", "#66734c", "#5a6643", 0.6, scale=220.0, bump=0.08)
+    stitch = mat("stitch", "#c9c2a6", 0.7)
+    leather = mat("leather", "#7a4a2a", 0.5, coat=0.2)
+    box("roll_base", (L, Wd, 0.003), (0, 0, 0.0015), canvas, bev=0.0012, parent=g)
+    cyl("roll_curl", 0.012, Wd - 0.004, (-L / 2 - 0.006, 0, 0.012), canvas, rot=(90, 0, 0), n=14, parent=g)
+    box("roll_pocket", (L - 0.02, 0.105, 0.003), (0, -Wd / 2 + 0.06, 0.0042), pocket, bev=0.001, parent=g)
+    box("roll_flap", (L - 0.01, 0.06, 0.0025), (0, Wd / 2 - 0.028, 0.0038), pocket, bev=0.001, parent=g)
+    for k in range(10):
+        x = -L / 2 + 0.02 + k * (L - 0.04) / 9
+        box(f"roll_seam{k}", (0.0012, 0.105, 0.0004), (x, -Wd / 2 + 0.06, 0.006), stitch, bev=0, parent=g)
+    box("roll_hem", (L - 0.02, 0.0012, 0.0004), (0, -Wd / 2 + 0.112, 0.006), stitch, bev=0, parent=g)
+    for s in (-1, 1):                                         # leather ties lying out to the side
+        curve(f"roll_tie{s}", [(L / 2 - 0.01, s * 0.05, 0.004), (L / 2 + 0.05, s * 0.06, 0.003),
+                               (L / 2 + 0.11, s * 0.05 + 0.01, 0.003)], 0.0035, leather, parent=g, res=6,
+              bres=1).scale = (1, 1, 0.35)
+    slot = (L - 0.04) / 9
+    zt = 0.0062
+
+    def at(k):
+        return -L / 2 + 0.02 + (k + 0.5) * slot
+
+    blue = mat("lever_blue", "#2f5fa8", 0.35, coat=0.3)
+    for k in range(3):                                        # tyre levers, a set of three
+        box(f"tyre_lever{k}", (0.017, 0.11, 0.005), (at(0) - 0.006 + 0.006 * k, -0.04, zt + 0.0055 * k), blue,
+            bev=0.004, parent=g)
+    disc("spoke_key", at(1), 0.01, 0.017, zt, mat("spoke_key_red", "#b3392c", 0.35, coat=0.3), g, n=20)
+    cyl("spoke_key_body", 0.017, 0.006, (at(1), 0.01, zt), mat("spoke_key_red", "#b3392c", 0.35), n=20, parent=g)
+    red = mat("grip_red", "#a8322a", 0.5)
+    for s in (-1, 1):                                         # cable cutters
+        box(f"cutter_handle{s}", (0.011, 0.1, 0.007), (at(2) + s * 0.0065, -0.05, zt + 0.003), red, rot=(0, 0, -s * 3),
+            bev=0.003, parent=g)
+    box("cutter_jaw", (0.02, 0.035, 0.008), (at(2), 0.025, zt + 0.004), M["steel_dk"], bev=0.003, parent=g)
+    for k, (Lk, r) in enumerate(((0.1, 0.0032), (0.088, 0.0026), (0.076, 0.002), (0.064, 0.0016))):   # hex keys
+        x = at(3) - 0.008 + k * 0.0055
+        cyl(f"hex{k}_long", r, Lk, (x, -0.06 + Lk / 2, zt + r), M["steel_dk"], rot=(90, 0, 0), n=6, parent=g)
+        cyl(f"hex{k}_short", r, 0.028, (x + 0.014, -0.06 + Lk, zt + r), M["steel_dk"], rot=(0, 90, 0), n=6, parent=g)
+    box("chain_tool", (0.024, 0.05, 0.016), (at(4), 0.0, zt + 0.008), M["plastic_blk"], bev=0.004, parent=g)
+    cyl("chain_tool_screw", 0.003, 0.07, (at(4), -0.04, zt + 0.008), M["steel"], rot=(90, 0, 0), n=8, parent=g)
+    cyl("chain_tool_handle", 0.004, 0.04, (at(4), -0.075, zt + 0.008), M["steel"], rot=(0, 90, 0), n=8, parent=g)
+    cyl("lockring_tool", 0.013, 0.03, (at(5), 0.02, zt + 0.013), M["steel_dk"], rot=(90, 0, 0), n=12, parent=g)
+    for k in range(12):
+        a = 2 * pi * k / 12
+        box(f"lockring_spline{k}", (0.003, 0.004, 0.003), (at(5) + 0.013 * cos(a), 0.037, zt + 0.013 + 0.013 * sin(a)),
+            M["steel_dk"], bev=0, parent=g)
+    cyl("driver_handle", 0.011, 0.075, (at(6), 0.01, zt + 0.011), mat("driver_yellow", "#e0b53a", 0.35, coat=0.3),
+        rot=(90, 0, 0), n=10, bev=0.003, parent=g)
+    cyl("driver_shaft", 0.0028, 0.08, (at(6), -0.065, zt + 0.011), M["chrome"], rot=(90, 0, 0), n=8, parent=g)
+    cyl("pick_handle", 0.0065, 0.06, (at(7), 0.02, zt + 0.0065), M["plastic_blk"], rot=(90, 0, 0), n=8, parent=g)
+    cyl("pick_shaft", 0.0014, 0.07, (at(7), -0.045, zt + 0.0065), M["chrome"], rot=(90, 0, 0), n=6, parent=g)
+    box("pedal_spanner", (0.02, 0.15, 0.004), (at(8), -0.02, zt + 0.002), M["steel"], bev=0.002, parent=g)
+    return g
+
+
+def build_priya(M, mug):
+    """Tuesday morning, Priya's first day: her helmet hooked on the chair, her takeaway coffee (PRIYA in the barista's
+    marker), her toolroll unrolled and checked, the two wheel-build job cards Martin moved to her (Dev crossed out).
+    Theo's things are gone; Martin's mug (his tea from earlier, half drunk) and his pencil stay. No sticky notes."""
+    use("PRIYA")
+    cyl("tea_half", 0.0362, 0.002, (0, 0, 0.052), M["tea"], n=24, parent=mug)
+    build_coffee_cup(M, (1.585, 2.345, DZ), -12)
+    build_toolroll(M, (0.535, 2.158, DZ), -3)
+    kb = bpy.data.objects["keyboard"]                         # Martin left her the two cards on the keyboard
+    job_card(M, "job_4471", (-0.13, 0.005, 0.0312), 9, 4471,
+             [("Name", "Rachel Okafor"), ("Bike", "Genesis Croix de Fer"), ("Work", "wheel build, front"),
+              ("", "32 hole · 6 hrs"), ("Due", "Tue 24/11")], mech=("Dev", "Priya"), parent=kb)
+    job_card(M, "job_4472", (-0.06, -0.012, 0.0322), -6, 4472,
+             [("Name", "Magnus Lindqvist"), ("Bike", "Bianchi Infinito"), ("Work", "wheel build, rear"),
+              ("", "32 hole · 5.5 hrs"), ("Due", "Wed 25/11")], mech=("Dev", "Priya"), parent=kb)
+    chair = bpy.data.objects["chair"]
+    build_helmet(M, chair, (0.11, -0.318, 0.94), (78, 0, 8))
+    web = mat("webbing", "#1b1b1d", 0.8)
+    for k, dx in enumerate((-0.03, 0.03)):                   # the straps, looped over the top of the chair back
+        curve(f"helmet_hang{k}", [(0.12 + dx, -0.33, 0.97), (0.12 + dx, -0.322, 1.08), (0.12 + dx * 0.6, -0.29, 1.125),
+                                  (0.12 + dx * 0.4, -0.25, 1.12), (0.12 + dx * 0.3, -0.232, 1.07)], 0.0042, web,
+              parent=chair, res=6, bres=1)
+
+
+def build_close(M, kb):
+    """The goodnight shot (scene 9): Martin's reading glasses folded on the keyboard, nothing else of the day left."""
+    use("CLOSE")
+    g = grp("glasses_folded", (-0.12, 0.0, 0.0312), (0, 0, 8), parent=kb)
+    for s in (-1, 1):
+        pts = []
+        for i in range(16):
+            a = 2 * pi * i / 16
+            ca, sa = cos(a), sin(a)
+            pts.append((s * 0.031 + 0.026 * math.copysign(abs(ca) ** 0.6, ca),
+                        0.019 * math.copysign(abs(sa) ** 0.7, sa), 0.012))
+        curve(f"glf_rim{s}", pts, 0.0024, M["tortoise"], parent=g, cyclic=True, res=3, bres=1)
+        flat(f"glf_lens{s}", [(p[0], p[1]) for p in pts], 0.012, M["lens"], g)
+        tube(f"glf_temple{s}", (s * 0.056, 0.004, 0.009), (-s * 0.03, 0.006 + 0.002 * s, 0.004 + 0.003 * (s + 1)),
+             0.0013, M["tortoise"], n=6, parent=g)
+    curve("glf_bridge", [(-0.007, 0.006, 0.012), (0.0, 0.01, 0.013), (0.007, 0.006, 0.012)], 0.0014, M["tortoise"],
+          parent=g)
+    curve("glf_cord", [(-0.056, 0.0, 0.009), (-0.08, -0.03, 0.002), (-0.05, -0.06, 0.001), (0.02, -0.065, 0.001),
+                       (0.07, -0.04, 0.002), (0.056, 0.0, 0.009)], 0.0009, M["cord"], parent=g, res=8)
+
+
 def build_note(M, head):
-    """The one sticky note on the whole set: Theo's, on the bezel."""
-    use("SET")
+    """The one sticky note in the whole film: Theo's, on the bezel. Gone on Tuesday (Martin peeled it off once the
+    report was built)."""
+    use("NOTE")
     g = grp("sticky_note", (0.122, -0.0312, -0.168), (90, -4, 0), parent=head)
     s = 0.076
     bm = bmesh.new()
@@ -1993,6 +3615,8 @@ def build_lights(M, lamp_head, mon_head):
     light("L_worklamp", "SPOT", (3.1, 5.0, 1.6), 90.0, (1.0, 0.8, 0.58), "NIGHT", target=(2.95, 4.5, 0.9), spot=80,
           blend=0.6, radius=0.05)
     light("L_bell_kiss", "POINT", (3.0, 3.35, 1.35), 2.0, (1.0, 0.82, 0.6), "NIGHT", radius=0.1)
+    light("L_bell_rim", "AREA", (3.3, 3.9, 1.22), 5.0, (1.0, 0.86, 0.66), "NIGHT", target=(3.12, 3.62, 1.0),
+          size=0.35, size_y=0.08)
     # --- monday: cool daylight through the window, sky fill, workshop strip light
     sun = light("L_sun", "SUN", (-2, 1.5, 3), 22.0, (1.0, 0.97, 0.93), "MONDAY")
     sun.data.angle = radians(3)
@@ -2001,6 +3625,10 @@ def build_lights(M, lamp_head, mon_head):
           target=(1.4, 2.3, 0.9), size=0.95, size_y=1.0)
     light("L_strip", "AREA", (3.1, 5.9, 2.12), 140.0, (0.93, 0.97, 1.0), "MONDAY", target=(3.0, 3.6, 0.6), size=1.15, size_y=0.12)
     light("L_screen_day", "AREA", c + n * 0.01, 2.0, (0.62, 0.76, 1.0), "MONDAY", target=c + n, size=0.4, size_y=0.25)
+    light("L_drawer_bounce", "AREA", (2.0, 1.55, 0.62), 4.0, (1.0, 0.9, 0.8), "MONDAY", target=(1.96, 2.03, 0.29),
+          size=0.4, size_y=0.3)
+    light("L_drawer_bounce_n", "AREA", (2.0, 1.55, 0.62), 1.5, (1.0, 0.8, 0.6), "NIGHT", target=(1.96, 2.03, 0.29),
+          size=0.4, size_y=0.3)
     light("L_room_fill", "AREA", (1.6, 0.7, 2.4), 40.0, (0.8, 0.88, 1.0), "MONDAY", target=(1.3, 2.3, 0.6), size=2.2, size_y=1.6)
 
 
@@ -2026,16 +3654,30 @@ def build_cameras():
     camera("CAM_medium", (1.44, 0.86, 1.5), (1.12, 2.5, 1.1), 30, 2.4, (1.02, 2.34, 0.9))
     camera("CAM_keys", (1.25, 1.92, 1.1), (1.08, 2.34, 0.8), 45, 10.0, (1.06, 2.3, 0.8))
     camera("CAM_medium_monday", (1.44, 0.86, 1.5), (1.12, 2.5, 1.1), 30, 2.4, (1.02, 2.34, 0.9))
+    camera("CAM_medium_tuesday", (1.5, 0.4, 1.33), (1.3, 2.5, 0.97), 27, 2.8, (1.3, 2.3, 0.85))
     camera("CAM_board", (1.84, 1.98, 1.42), (1.84, 2.8, 1.4), 36, 2.8, (1.84, 2.78, 1.4))
-    camera("CAM_shelf", (0.66, 1.95, 1.86), (0.44, 2.62, 1.6), 45, 2.8, (0.4, 2.6, 1.57))
+    camera("CAM_shelf", (0.74, 1.92, 2.08), (0.5, 2.6, 1.68), 36, 4.0, (0.36, 2.5, 1.77))
+    camera("CAM_bell", (2.86, 3.31, 1.1), (3.17, 3.63, 0.997), 60, 6.3, (3.13, 3.615, 1.0))
+    camera("CAM_screen", (1.16, 2.2, 1.075), (1.1, 2.51, 1.03), 40, 4.0, (1.1, 2.51, 1.03))
+    camera("CAM_close_half", (1.18, 1.3, 1.34), (0.98, 2.52, 0.97), 30, 2.8, (1.0, 2.25, 0.82))
+    camera("CAM_drawer", (2.04, 1.7, 1.1), (1.96, 1.98, 0.3), 32, 5.6, (1.96, 1.98, 0.3))
+    camera("CAM_cables_top", (1.42, 2.66, 0.9), (0.5, 2.73, 0.77), 20, 16.0, (0.8, 2.73, 0.77))
+    camera("CAM_cables_under", (0.75, 1.55, 0.32), (0.62, 2.74, 0.14), 22, 16.0, (0.62, 2.7, 0.1))
+
+
+CHAIR_POSE = {"night": ((1.66, 1.55, 0.0), 58), "monday": ((1.66, 1.55, 0.0), 58),
+              "tuesday": ((1.72, 1.68, 0.0), 18), "close": ((1.58, 1.62, 0.0), 40)}
 
 
 def apply_preset(name, M, hands):
-    night = name == "night"
-    COLL["NIGHT"].hide_render = not night
-    COLL["MONDAY"].hide_render = night
-    COLL["THEO"].hide_render = not night
-    COLL["MARTIN"].hide_render = night
+    """night = Thursday 19 Nov, 21:47 (Theo's last week); monday = 23 Nov, 08:52 (Martin); tuesday = 24 Nov, 08:34
+    (Priya's first morning); close = the goodnight shot, 18:40, the PC asleep. See CONTINUITY.md."""
+    night = name in ("night", "close")
+    vis = {"NIGHT": night, "MONDAY": not night, "THEO": name == "night", "MARTIN": name == "monday",
+           "MARTIN_KIT": name in ("monday", "tuesday"), "PRIYA": name == "tuesday", "CLOSE": name == "close",
+           "NOTE": name in ("night", "monday")}
+    for k, v in vis.items():
+        COLL[k].hide_render = not v
     sc = bpy.context.scene
     bg = sc.world.node_tree.nodes["Background"]
     if night:
@@ -2044,17 +3686,46 @@ def apply_preset(name, M, hands):
     else:
         bg.inputs[0].default_value = rgba("#b4c2d2")
         bg.inputs[1].default_value = 0.5
-    principled(M["bulb"]).inputs["Emission Strength"].default_value = 20.0 if night else 0.0
+    lamp_on = name == "night"
+    principled(M["bulb"]).inputs["Emission Strength"].default_value = 20.0 if lamp_on else 0.0
+    LIGHTS["L_lamp"].data.energy = 40.0 if lamp_on else 0.0
+    LIGHTS["L_box_kick"].data.energy = 7.0 if name == "night" else 0.0
+    LIGHTS["L_worklamp"].data.energy = 90.0 if name == "night" else 30.0
+    LIGHTS["L_pegboard"].data.energy = 28.0 if name == "night" else 12.0
+    LIGHTS["L_floor_spill"].data.energy = 9.0 if lamp_on else 2.5
+    LIGHTS["L_bounce"].data.energy = 7.0 if lamp_on else 2.0
     principled(M["tube"]).inputs["Emission Strength"].default_value = 0.0 if night else 9.0
     sky = principled(M["outside_sky"])
     sky.inputs["Emission Color"].default_value = rgba("#0c1424") if night else rgba("#dfe8ef")
     sky.inputs["Emission Strength"].default_value = 1.0 if night else 3.0
     principled(M["outside_win"]).inputs["Emission Strength"].default_value = 3.0 if night else 0.0
     principled(M["outside_brick"]).inputs["Base Color"].default_value = rgba("#6c4537")
-    SCREEN["bsdf"].inputs["Emission Strength"].default_value = 1.0 if night else 1.25
-    sc.view_settings.exposure = 0.3 if night else 0.0
-    # clock: 23:41 on the night, 08:52 on Monday
-    hh, mm = (23, 41) if night else (8, 52)
+    # daylight: Monday's cool morning; Tuesday's sun earlier, lower and warmer, raking across the desk
+    sun = LIGHTS["L_sun"]
+    d = Vector((0.72, 0.5, -0.3)) if name == "tuesday" else Vector((0.65, 0.55, -0.52))
+    sun.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
+    sun.data.energy = 30.0 if name == "tuesday" else 22.0
+    sun.data.color = (1.0, 0.86, 0.68) if name == "tuesday" else (1.0, 0.97, 0.93)
+    LIGHTS["L_window_day"].data.color = (0.86, 0.88, 0.95) if name == "tuesday" else (0.72, 0.84, 1.0)
+    LIGHTS["L_room_fill"].data.energy = 24.0 if name == "tuesday" else 40.0
+    bpy.data.objects["mug"].location = (1.4, 2.385, DZ) if name == "tuesday" else (1.74, 2.36, DZ)
+    loc, rz = CHAIR_POSE[name]
+    ch = bpy.data.objects["chair"]
+    ch.location = loc
+    ch.rotation_euler = (0, 0, radians(rz))
+    set_screen(SCREEN_PATHS[name], SCREEN_FIT[0])
+    SCREEN["bright"].outputs[0].default_value = SCREEN_BRIGHT[name]
+    mean = SCREEN.get("mean")
+    if mean is not None:                                      # the screen lights the desk with its own picture
+        lum = float(mean @ np.array([0.2126, 0.7152, 0.0722]))
+        tint = tuple(float(c) for c in (mean / max(mean.max(), 1e-6)) * 0.75 + 0.25)
+        for nm, base in (("L_screen", 5.0), ("L_screen_day", 2.0)):
+            LIGHTS[nm].data.energy = base * SCREEN_BRIGHT[name] * max(lum, 0.01) / 0.16
+            LIGHTS[nm].data.color = tint
+    for bs, st in REFLECT_EMIT:
+        bs.inputs["Emission Strength"].default_value = st * REFLECT_LEVEL[name]
+    sc.view_settings.exposure = {"night": 0.3, "monday": 0.0, "tuesday": 0.05, "close": 0.75}[name]
+    hh, mm = CLOCK[name]
     hands["hour"].rotation_euler = (0, 0, -2 * pi * ((hh % 12) + mm / 60) / 12)
     hands["minute"].rotation_euler = (0, 0, -2 * pi * mm / 60)
 
@@ -2077,6 +3748,10 @@ def setup_render(args):
     ee.fast_gi_distance = 0.6
     ee.use_shadows = True
     ee.shadow_ray_count = 2
+    try:
+        ee.shadow_pool_size = "1024"                          # the screen's planar probe renders the set twice
+    except TypeError:
+        pass
     ee.shadow_step_count = 8
     try:
         sc.view_settings.view_transform = "AgX"
@@ -2140,7 +3815,8 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     for ob in list(bpy.data.objects):
         bpy.data.objects.remove(ob, do_unlink=True)
-    for name in ("SET", "WORKSHOP", "THEO", "MARTIN", "NIGHT", "MONDAY", "CAMS"):
+    for name in ("SET", "WORKSHOP", "THEO", "MARTIN", "MARTIN_KIT", "PRIYA", "CLOSE", "NOTE", "NIGHT", "MONDAY",
+                 "REFLECT", "CAMS"):
         c = bpy.data.collections.new(name)
         bpy.context.scene.collection.children.link(c)
         COLL[name] = c
@@ -2149,9 +3825,16 @@ def main():
         print("wrote", PLACEHOLDER)
     setup_render(args)
     M = build_materials()
-    screen_m = screen_material(os.path.abspath(args.screen) if args.screen else PLACEHOLDER)
+    ensure_photo(M, args.regen_photo)
+    for k, default in SCREENS.items():
+        p = args.screen or getattr(args, "screen_" + k) or default
+        SCREEN_PATHS[k] = os.path.abspath(p) if os.path.exists(p) else PLACEHOLDER
+    SCREEN_FIT[0] = args.screen_fit
+    screen_m = lcd_material(plain=args.lcd == "plain")
 
     build_room(M)
+    if args.lcd != "plain":
+        build_reflect_room(M)
     build_outside(M)
     build_workshop(M)
     build_desk(M)
@@ -2162,11 +3845,14 @@ def main():
     build_mouse(M)
     build_speakers(M)
     lamp_head = build_lamp(M)
+    build_cables(M)
     hands = build_corkboard(M)
     build_shelf(M)
     mug = build_desk_props(M)
     build_theo(M, kb, mug)
     build_martin(M, mug)
+    build_priya(M, mug)
+    build_close(M, kb)
     build_note(M, mon_head)
     apply_fits()
     build_lights(M, lamp_head, mon_head)
@@ -2180,10 +3866,13 @@ def main():
         return
     sc = bpy.context.scene
     for shot in [s.strip() for s in args.shots.split(",") if s.strip()]:
-        cam, preset, fname, ev = SHOTS[shot]
+        cam, preset, fname, ev = SHOTS[shot][:4]
+        res = SHOTS[shot][4] if len(SHOTS[shot]) > 4 else (1920, 1080)
+        sc.render.resolution_x, sc.render.resolution_y = res
         apply_preset(preset, M, hands)
         sc.view_settings.exposure += ev
         sc.camera = bpy.data.objects[cam]
+        grid_for_camera(sc.camera, args.scale)
         sc.render.filepath = os.path.join(OUT, fname)
         t1 = time.time()
         bpy.ops.render.render(write_still=True)

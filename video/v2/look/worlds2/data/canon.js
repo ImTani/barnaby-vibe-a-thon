@@ -38,6 +38,9 @@
   ];
   S.build.when = 'Mon 23 Nov'; S.build.time = '16:16'; S.build.asked = '16:08'; S.build.moved = '16:21';
   S.build.after = 'Dev’s carrying thirty-one hours against his twenty. Priya starts tomorrow. Shall I give her the two wheel builds?';
+  /* The report's result at 16:16, after scene 5's hand-backs (the seed: Aoife's 4476 is Dev's; Sofia's, Kwame's and Jana's
+     bikes are ready, so they no longer count for Ravi). [name, booked hours, weekly capacity]; story.js had Ravi 22. */
+  S.build.result = [['Dev', 31, 20], ['Ravi', 10.5, 30], ['Priya', 0, 30]];
   S.priyaTuesday.time = '08:34';
   S.lisbon = { when: 'Tue 24 Nov 2026', time: '09:41', from: '09:39', to: '09:43', note: 'Theo’s second day at the studio (desk 14)',
     quorum: 13, comfyui: 28, staged: true, preset: 'quorum' };

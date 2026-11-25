@@ -3,15 +3,17 @@
   .venv/Scripts/python scripts/demo_check.py [--until N] [--no-reset]
 
 Resets the demo world, connects Theo's repo through Synapse, then drives the story's beats as typed requests
-in one conversation, auto-approving the gates (as if Martin clicked), and verifies each outcome against the
-shop's own API and git history. Runs on the local Claude Code login (no API key needed).
+in one conversation, in the film's order, auto-approving the gates (as if Martin clicked), and verifies each outcome
+against the shop's own API and git history. Runs on the local Claude Code login (no API key needed).
 
   1 Arrival   connect: Synapse discovers 23 endpoints, 6 read-only tools exposed
   2 Ask       "which repairs are due tomorrow, short on parts?"  -> answer names the brake-pad shortfall
   3 Unlock    "order ten pairs of those pads"                     -> POST /api/purchase-orders unlocked, PO placed
-  4 Build     "who's overloaded this week?"                       -> new report endpoint written, tested, merged, used
-  5 Act       "move Dev's two wheel builds to Priya"              -> both jobs reassigned in the 2009 system
-  6 Compose   "hand back job 4481, and make it one step"          -> Synapse Custom composes a skill; Barnaby uses it
+  4 Compose   scene 5: Sofia's, Kwame's and Jana's bikes handed back (texted, marked ready), then Tom's 4481
+              "and make it one step"                              -> Synapse Custom composes a skill; Barnaby uses it
+  5 Build     "who's overloaded this week?"                       -> new report endpoint written, tested, merged, used;
+                                                                     after the hand-backs it reads Dev's 31 h
+  6 Act       "move Dev's two wheel builds to Priya"              -> both jobs reassigned in the 2009 system
   Speech      everything Barnaby said, across the run             -> none of the machine's words (toolkit.JARGON)
 """
 from __future__ import annotations
@@ -99,51 +101,59 @@ async def main() -> int:
     if a.until < 4:
         return report()
 
+    # scene 5, Monday afternoon: Martin hands back finished bikes. Barnaby texts each customer and marks it ready (the
+    # keys for texting and marking ready are asked for on the first), three times the long way, then Tom's in one step.
+    t0 = time.perf_counter()
+    for ask in ["Barnaby, Sofia's bike's done, job 4475. Text her it's ready to collect and mark it ready.",
+                "Kwame's bike's done too, job 4490. Text him it's ready to collect and mark it ready.",
+                "And Jana's, job 4488. Text her it's ready to collect and mark it ready."]:
+        await worker.ask(ask)
+    from barnaby import synapse
+    from barnaby.events import bus
+    tom = "Tom's bike is done, job 4481. Hand it back: text him it's ready and mark it ready."
+    if synapse.has_key():
+        mark = bus.history()[-1].id if bus.history() else 0
+        said = await worker.ask(tom + " And make handing back a bike a single step, would you? I do it a dozen times a day.")
+        shop = registry.get("shop")
+        used = [e.data.get("tool") for e in bus.history() if e.id > mark and e.type == "tool.call"
+                and str(e.data.get("system", "")).startswith("shop-k")]
+        check("4 Compose: Synapse Custom composed a skill", bool(shop.skills), ", ".join(k["tool"] for k in shop.skills))
+        check("4 Compose: Barnaby used the new skill", bool(used), ", ".join(used))
+    else:
+        said = await worker.ask(tom)
+        check("4 Compose: skipped (no SYNAPSE_API_KEY in .env)", True)
+    back = {i: httpx.get(f"{shop_url}/api/jobs/{i}").json().get("job", {}).get("status") for i in (4475, 4490, 4488, 4481)}
+    day = (ROOT / ".demo" / "today").read_text().strip()     # texts sent this run (the seeded ones are all older)
+    texted = {n["customer"].split()[0] for n in httpx.get(f"{shop_url}/api/notifications/recent").json() if n["sent_at"] >= day}
+    check("4 Compose: all four bikes handed back are marked ready", set(back.values()) == {"ready"}, str(back))
+    check("4 Compose: Sofia, Kwame, Jana and Tom were texted", {"Sofia", "Kwame", "Jana", "Tom"} <= texted,
+          f"{time.perf_counter() - t0:.1f}s: {said[:140]}")
+    if a.until < 5:
+        return report()
+
     t0 = time.perf_counter()
     said = await worker.ask("Who's overloaded this week?")
     shop = registry.get("shop")
     log = subprocess.run(["git", "log", "-1", "--format=%an: %s"], cwd=shop.repo, capture_output=True, text=True).stdout.strip()
     new = [k for k in shop.exposed if k.startswith("GET /api/reports/")]
-    check("4 Build: Barnaby's commit landed in Theo's repo", log.startswith("Barnaby:"), log)
-    check("4 Build: new report endpoint exposed as a tool", bool(new), ", ".join(new))
-    check("4 Build: answer says Dev is overloaded", "dev" in said.lower(), f"{time.perf_counter() - t0:.1f}s: {said[:160]}")
+    check("5 Build: Barnaby's commit landed in Theo's repo", log.startswith("Barnaby:"), log)
+    check("5 Build: new report endpoint exposed as a tool", bool(new), ", ".join(new))
+    check("5 Build: answer says Dev is overloaded", "dev" in said.lower(), f"{time.perf_counter() - t0:.1f}s: {said[:160]}")
     if new:
         path = new[0].split(" ", 1)[1]
         path = path.replace("{week}", "today").replace("{week_of}", "today").replace("{day}", "today").replace("{date}", "today")
         try:
             body = httpx.get(shop_url + path, timeout=5).json()
-            check("4 Build: report reads exactly 31 h for Dev (README definition)", "31" in str(body) and "31.5" not in str(body), str(body)[:160])
+            check("5 Build: report reads exactly 31 h for Dev after the hand-backs (README definition)", "31" in str(body) and "31.5" not in str(body), str(body)[:160])
         except Exception as e:  # noqa: BLE001
-            check("4 Build: report callable", False, str(e))
-    if a.until < 5:
+            check("5 Build: report callable", False, str(e))
+    if a.until < 6:
         return report()
 
     t0 = time.perf_counter()
     said = await worker.ask("Move Dev's two wheel builds to Priya, please.")
     jobs = {j["job_id"]: j for j in httpx.get(f"{shop_url}/api/jobs/open").json()}
-    check("5 Act: both wheel builds now with Priya", jobs[4471]["mechanic"] == "Priya" and jobs[4472]["mechanic"] == "Priya",
-          f"{time.perf_counter() - t0:.1f}s: {said[:140]}")
-    if a.until < 6:
-        return report()
-
-    from barnaby import synapse
-    if not synapse.has_key():
-        check("6 Compose: skipped (no SYNAPSE_API_KEY in .env)", True)
-        return report()
-    from barnaby.events import bus
-    mark = bus.history()[-1].id if bus.history() else 0
-    t0 = time.perf_counter()
-    said = await worker.ask("Tom's bike is done, job 4481. Hand it back: text him it's ready and mark it ready. "
-                            "And make handing back a bike a single step, would you? I do it a dozen times a day.")
-    shop = registry.get("shop")
-    job = httpx.get(f"{shop_url}/api/jobs/4481").json().get("job", {})
-    sent = httpx.get(f"{shop_url}/api/notifications/recent").json()
-    used = [e.data.get("tool") for e in bus.history() if e.id > mark and e.type == "tool.call"
-            and str(e.data.get("system", "")).startswith("shop-k")]
-    check("6 Compose: Synapse Custom composed a skill", bool(shop.skills), ", ".join(k["tool"] for k in shop.skills))
-    check("6 Compose: Barnaby used the new skill", bool(used), ", ".join(used))
-    check("6 Compose: job 4481 marked ready", job.get("status") == "ready", str(job.get("status")))
-    check("6 Compose: Tom was texted", "Tom" in str(sent)[:2000] or "4481" in str(sent)[:2000],
+    check("6 Act: both wheel builds now with Priya", jobs[4471]["mechanic"] == "Priya" and jobs[4472]["mechanic"] == "Priya",
           f"{time.perf_counter() - t0:.1f}s: {said[:140]}")
     return report()
 

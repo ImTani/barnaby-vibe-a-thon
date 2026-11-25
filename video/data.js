@@ -255,7 +255,7 @@ window.DATA = {
    ],
    "said": [
     "I've written a proper workload report for the shop, so this week's numbers will be exact and it'll be there next time too.",
-    "Dev's the only one overloaded this week. He has thirty-one hours of jobs against his twenty, so he's eleven hours over. Ravi has eight hours spare, and Priya has nothing booked at all, so she could take all of Dev's extra work and still have time left. Shall I move some of his jobs over to her?"
+    "Dev's the only one overloaded this week. He has thirty-one hours of jobs against his twenty, so he's eleven hours over. Ravi has nineteen and a half hours spare, and Priya has nothing booked at all, so she could take all of Dev's extra work and still have time left. Shall I move some of his jobs over to her?"
    ]
   },
   {

@@ -36,6 +36,8 @@ CUSTOMERS = [
     ("Greta Lindholm", "07700 900126", "greta.l@example.co.uk", "2019-09-19", 395),
     ("Patrick Doyle", "07700 900127", "patrick.doyle@example.co.uk", "2005-03-03", 1100),
     ("Mei Chen", "07700 900128", "mei.chen@example.co.uk", "2020-06-01", 460),
+    # walk-in today: a tyre fitting while she waited, nothing else booked
+    ("Hannah Price", "07700 900129", "hannah.price@example.co.uk", "2018-03-10", 0),
 ]
 
 BIKES = {  # customer name -> (make, model, colour)
@@ -50,6 +52,7 @@ BIKES = {  # customer name -> (make, model, colour)
     "Zara Ali": ("Pinnacle", "Lithium", "blue"), "Sean Brennan": ("Dawes", "Galaxy", "maroon"),
     "Gareth Hughes": ("Orbea", "Orca", "black"), "Marisol Delgado": ("Cube", "Attain", "grey"),
     "Niamh Fitzgerald": ("Marin", "Muirwoods", "green"), "Chidi Okonkwo": ("Merida", "Scultura", "red"),
+    "Hannah Price": ("Ridgeback", "Speed", "silver"),
 }
 
 MECHANICS = [("Dev", 20, "2015-04-01"), ("Ravi", 30, "2019-09-02"), ("Priya", 30, None)]  # Priya starts "today"
@@ -72,7 +75,7 @@ PARTS = [
 
 # job id, customer, mechanic, work, hours, status, due (days from today), [(part sku, qty)]
 JOBS = [
-    # Dev: 31.0 hours booked this week against a 20 hour week
+    # Dev: 34.0 hours booked this week against a 20 hour week (31.0 once Tom's Brompton is ready)
     (4471, "Rachel Okafor", "Dev", "Wheel build (front, 32 hole)", 6.0, "booked", 1, [("SPK-DT-292", 32), ("RIM-DT-R460", 1)]),
     (4472, "Magnus Lindqvist", "Dev", "Wheel build (rear, 32 hole)", 5.5, "booked", 2, [("SPK-DT-292", 32), ("RIM-DT-R460", 1)]),
     (4478, "Anika Banerjee", "Dev", "Brake bleed + new pads", 1.5, "booked", 1, [("BP-SH-RES", 2), ("FLD-DOT51", 1)]),
@@ -82,9 +85,9 @@ JOBS = [
     (4484, "Claire Moreau", "Dev", "E-bike diagnostics (motor cutting out)", 3.5, "booked", 3, []),
     (4485, "Thanh Nguyen", "Dev", "Headset replacement", 1.0, "booked", 1, [("HDS-FSA-118", 1)]),
     (4487, "Luca Rossi", "Dev", "Gear tune, new cables + bar tape", 3.0, "booked", 4, [("CAB-SH-GEAR", 1), ("TAPE-BAR-BLK", 1)]),
-    # Ravi: 22.0 hours against 30
+    (4476, "Aoife O'Brien", "Dev", "Full service", 3.0, "booked", 2, []),
+    # Ravi: 19.0 hours against 30
     (4475, "Sofia Ferreira", "Ravi", "Full service", 3.0, "booked", 1, []),
-    (4476, "Aoife O'Brien", "Ravi", "Full service", 3.0, "booked", 2, []),
     (4479, "Karim Haddad", "Ravi", "Tubeless setup", 1.5, "in progress", 0, []),
     (4480, "Yuki Tanaka", "Ravi", "Headset swap", 2.0, "booked", 4, [("HDS-FSA-118", 1)]),
     (4488, "Jana Novak", "Ravi", "Suspension fork service", 4.0, "booked", 3, []),
@@ -99,13 +102,13 @@ JOBS = [
     (4468, "Chidi Okonkwo", "Dev", "Wheel true", 0.5, "ready", 0, []),
 ]
 
-HISTORY = [  # collected jobs: customer, work, days ago, amount, paid
+HISTORY = [  # collected jobs: customer, work, days ago, amount, paid[, time paid (default 16:30)]
     ("Douglas Fairbairn", "Full service", 540, 49.99, 1), ("Helen Marsh", "New tyres", 430, 104.00, 1),
     ("Ibrahim Yusuf", "Puncture repair", 700, 12.00, 1), ("Greta Lindholm", "Brake service", 395, 35.00, 1),
     ("Patrick Doyle", "Full service", 1100, 39.99, 1), ("Mei Chen", "Gear tune", 460, 25.00, 1),
     ("Tom Whitfield", "Puncture repair", 30, 12.00, 1), ("Rachel Okafor", "Full service", 200, 49.99, 1),
     ("Gareth Hughes", "Wheel true", 90, 18.00, 0), ("Luca Rossi", "Bar tape", 60, 28.00, 0),
-    ("Karim Haddad", "Brake pads", 0, 19.00, 1), ("Sofia Ferreira", "Tyre fitting", 0, 64.00, 1),
+    ("Karim Haddad", "Brake pads", 0, 19.00, 1, "11:40"), ("Hannah Price", "Tyre fitting", 0, 64.00, 1, "14:50"),
     ("Aoife O'Brien", "Full service", 120, 49.99, 0),
 ]
 
@@ -142,13 +145,13 @@ def seed():
         for sku, qty in parts:
             con.execute("INSERT INTO job_parts (job_id, part_id, qty) VALUES (?,?,?)", (job_id, part_ids[sku], qty))
     next_id = 4300
-    for cust, work, ago, amount, paid in HISTORY:
+    for cust, work, ago, amount, paid, *at in HISTORY:
         next_id += 1
         con.execute("INSERT INTO jobs (id, customer_id, bike_id, mechanic_id, work, estimate_hours, status, due_date, created) "
                     "VALUES (?,?,?,?,?,?,?,?,?)",
                     (next_id, cust_ids[cust], bike_ids.get(cust), mech_ids["Ravi"], work, 1.0, "collected", d(-ago), d(-ago - 2)))
         con.execute("INSERT INTO invoices (job_id, amount, paid, created) VALUES (?,?,?,?)",
-                    (next_id, amount, paid, d(-ago) + " 16:30:00"))
+                    (next_id, amount, paid, d(-ago) + f" {at[0] if at else '16:30'}:00"))
     for part, qty, supplier, ago in [("CHN-KMC-X11", 10, "Madison", 21), ("TYR-GP5K-28", 8, "Continental UK", 14)]:
         con.execute("INSERT INTO purchase_orders (part_id, quantity, supplier, status, created) VALUES (?,?,?,?,?)",
                     (part_ids[part], qty, supplier, "received", d(-ago) + " 10:15:00"))

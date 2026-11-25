@@ -14,6 +14,7 @@
   const MAX_GAP = 1600, MIN_GAP = 140;
 
   let run = null, i = 0, playing = true, timer = null, waitingFor = null;
+  const clicked = new Set();                     // approvals you answered here: the recorded answer is then skipped
   const state = { busy: false, systems: [], approvals: [] };
 
   // fake API so app.js works unchanged
@@ -55,6 +56,7 @@
   function resolveApproval(id, approved) {
     if (!waitingFor || waitingFor !== id) return;
     waitingFor = null;
+    clicked.add(id);
     B.onEvent({ type: 'approval.resolved', data: { id, approved } });
     if (playing) schedule(250);
   }
@@ -62,6 +64,7 @@
   function step() {
     if (!run || i >= run.events.length) { playing = false; return; }
     const ev = run.events[i++];
+    if (ev.type === 'approval.resolved' && clicked.has(ev.data.id)) return schedule(MIN_GAP);   // already answered by your click
     apply(ev);
     if (ev.type === 'approval.requested') {
       waitingFor = ev.data.id;
@@ -81,7 +84,7 @@
     document.getElementById('trace').textContent = '';
     document.getElementById('cards').textContent = '';
     state.systems = JSON.parse(JSON.stringify(run.state_before.systems));
-    i = 0; waitingFor = null;
+    i = 0; waitingFor = null; clicked.clear();
     builtName = '';
     while (i < run.events.length) {
       const ev = run.events[i];

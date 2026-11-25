@@ -13,7 +13,7 @@
    the default, and ?skin=classic still opens the old look (style.css). ?skin=app3 is round 3, modelled on the Claude
    and Codex desktop apps; ?theme=dark|light (or the switch in app3, remembered) picks its light or dark. */
 (function () {
-  var DEFAULT = '';
+  var DEFAULT = 'app3';   // approved by the director (round 3); ?skin=classic opens the old look
   var t = /[?&]theme=(light|dark)\b/.exec(location.search), theme = t ? t[1] : null;
   try { theme = theme || localStorage.getItem('barnaby-theme'); } catch (e) {}
   if (theme) document.documentElement.setAttribute('data-theme', theme);

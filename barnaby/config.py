@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT / ".env")
 
-STATE = ROOT / ".demo" / "barnaby"                 # Barnaby's own state: registry, generated servers, logs
+STATE = Path(os.environ.get("BARNABY_STATE") or ROOT / ".demo" / "barnaby")   # registry, generated servers, logs
+                                                    # (tests point BARNABY_STATE at a temp dir)
 SERVERS = STATE / "servers"                         # generated MCP servers live here, never in the target repo
 SYNAPSE_HOME = ROOT / ".cache" / "synapse-home"     # Synapse writes ~/.synapse; we point its home here
 SYNAPSE_JS = ROOT / "node_modules" / "@2ndbrainlabs-ai" / "synapse-cli"

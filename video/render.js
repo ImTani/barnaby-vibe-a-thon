@@ -5,6 +5,7 @@
  *   node render.js test <t> [t ...]        stills at times -> stills/test_<t>.jpg
  *   node render.js sheet <t0> <t1> [n=8]   n stills across [t0,t1] tiled -> stills/sheet_<t0>_<t1>.jpg
  *   node render.js encode                  encode existing frames/ -> out/barnaby-silent.mp4 (+ out/barnaby.mp4)
+ *   node render.js mux                     re-mux audio/soundtrack.wav onto out/barnaby-silent.mp4 (after new voice takes)
  *   node render.js verify <t> [t ...]      determinism check: renders each t, then all again in reverse order, compares
  *   flags: --workers=8 --fps=30 --quality=92 --no-encode
  * Page errors (scene exceptions) are printed; test/sheet exit code 2 if any occurred.
@@ -132,6 +133,10 @@ async function stills(times, name, stamp) {
     await k.b.close(); process.exitCode = bad ? 3 : 0;
   } else if (mode === 'encode') {
     encode(0, Math.round(DUR * FPS));
+  } else if (mode === 'mux') {                    // new soundtrack, same picture: seconds, no re-encode
+    const out = dir('out'), wav = path.join(ROOT, 'audio', 'soundtrack.wav'), final = path.join(out, 'barnaby.mp4');
+    ffmpeg(['-i', path.join(out, 'barnaby-silent.mp4'), '-i', wav, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', final]);
+    console.log('wrote', final);
   } else if (mode === 'range') {
     const a = +pos[1], b = +pos[2]; const f0 = Math.round(a * FPS), f1 = Math.round(b * FPS);
     await renderFrames(f0, f1);

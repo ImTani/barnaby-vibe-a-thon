@@ -33,22 +33,23 @@ body.loading .scene,body.loading .shot{display:block!important;visibility:hidden
 .t-martin{font-family:"MFig","Gill Sans MT","Gill Sans","Segoe UI",sans-serif}
 /* titles and the end card (TITLES.md) */
 .t-titles{display:flex;flex-direction:column;align-items:center;padding-top:150px}
-.t-titles .lock{display:flex;align-items:flex-end;gap:26px;font:600 112px/1 "Sitka Subheading","Sitka Text",Constantia,Georgia,serif;color:#EEEAE1;letter-spacing:-.012em;margin-left:-12px}
+.t-titles .lock{text-shadow:0 2px 18px rgba(8,7,6,.6);display:flex;align-items:flex-end;gap:26px;font:600 112px/1 "Sitka Subheading","Sitka Text",Constantia,Georgia,serif;color:#EEEAE1;letter-spacing:-.012em;margin-left:-12px}
 .t-titles .lock .m{display:block;width:92px;height:92px;margin-bottom:14px}
-.t-titles .line{font:400 46px/1.25 "Sitka Text",Constantia,Georgia,serif;color:rgba(238,234,225,.92);letter-spacing:.003em;margin-top:44px}
+.t-titles .line{font:400 46px/1.25 "Sitka Text",Constantia,Georgia,serif;color:rgba(238,234,225,.94);letter-spacing:.003em;margin-top:44px;text-shadow:0 1px 14px rgba(8,7,6,.7)}
 .t-titles .coda{color:#D3A14A;margin-top:10px}
-.t-card{background:#1F1E1C;color:#EEEAE1;font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif}
-.t-card .head{position:absolute;left:192px;right:192px;top:176px;display:flex;flex-direction:column;align-items:center}
-.t-card .head .m{display:block;width:92px;height:92px}
-.t-card .head .w{font:600 88px/1 "Sitka Subheading","Sitka Text",Constantia,Georgia,serif;letter-spacing:-.012em;margin-top:22px}
-.t-card .head .what{font:400 34px/1.3 "Sitka Text",Constantia,Georgia,serif;color:#C2BBAE;margin-top:26px;text-wrap:balance;text-align:center}
-.t-card .grow{position:absolute;left:192px;right:192px;top:528px;display:grid;grid-template-columns:repeat(4,1fr);column-gap:48px;border-top:1px solid #36342F;padding-top:40px}
+.t-card{background:#1F1E1C;color:#EEEAE1;font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  display:flex;flex-direction:column;justify-content:center;padding:0 192px}
+.t-card .head{display:flex;flex-direction:column;align-items:center}
+.t-card .head .m{display:block;width:88px;height:88px}
+.t-card .head .w{font:600 88px/1 "Sitka Subheading","Sitka Text",Constantia,Georgia,serif;letter-spacing:-.012em;margin-top:24px}
+.t-card .head .what{font:400 34px/1.3 "Sitka Text",Constantia,Georgia,serif;color:#C2BBAE;margin-top:24px;text-wrap:balance;text-align:center}
+.t-card .grow{display:grid;grid-template-columns:repeat(4,1fr);column-gap:48px;border-top:1px solid #3B3934;margin-top:48px;padding-top:32px}
 .t-card .grow b{display:block;font:600 34px/1.1 "Sitka Subheading","Sitka Text",Constantia,Georgia,serif;color:#EEEAE1}
-.t-card .grow span{display:block;font:400 20px/1.45 "Segoe UI Variable Text","Segoe UI",sans-serif;color:#9A9488;margin-top:14px;max-width:300px;text-wrap:pretty}
-.t-card .cred{position:absolute;left:192px;right:192px;top:768px;display:flex;gap:28px;align-items:baseline;border-top:1px solid #36342F;padding-top:34px;font:400 21px/1.3 "Segoe UI Variable Text","Segoe UI",sans-serif;color:#C2BBAE}
+.t-card .grow span{display:block;font:400 21px/1.45 "Segoe UI Variable Text","Segoe UI",sans-serif;color:#B1AA9C;margin-top:12px;max-width:310px;text-wrap:pretty}
+.t-card .cred{display:flex;gap:28px;align-items:baseline;border-top:1px solid #3B3934;margin-top:48px;padding-top:32px;font:400 21px/1.3 "Segoe UI Variable Text","Segoe UI",sans-serif;color:#C2BBAE}
 .t-card .cred b{font-weight:600;color:#EEEAE1}
 .t-card .cred .repo{margin-left:auto;font:400 19px "Cascadia Mono","Cascadia Code",Consolas,monospace;color:#C2BBAE}
-.t-card .fine{position:absolute;left:192px;right:192px;top:924px;font:400 16px/1.45 "Segoe UI Variable Text","Segoe UI",sans-serif;color:#8A847A}
+.t-card .fine{margin-top:24px;font:400 16px/1.45 "Segoe UI Variable Text","Segoe UI",sans-serif;color:#A39C8F}
 #fontwarm{position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap}
 </style></head>
 <body class="loading">

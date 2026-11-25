@@ -5,7 +5,7 @@
  * black. Titles in Barnaby's own type and brass (ui/skins/app3.css), with his mark ringing once (its working animation). */
 (function () {
   const C = CUES.scenes[8], S = C.start, E = C.end, FI = .6;
-  let run, dimmer, rightOff, shade, title, mark, tag, old, card, cardParts;
+  let run, dimmer, rightOff, shade, title, mark, tag, old, card, cardParts, seam;
   const REPO = '';                                   // the public repo, once confirmed (no remote in this checkout)
   Scene({
     id: '9', start: S, end: E, fadeIn: 0,
@@ -21,13 +21,15 @@
           over: t => { dimmer.style.opacity = ASLEEP ? '0' : easeInOutSine(P(t, M('dim'), 1.6)).toFixed(3); } },
       ].concat(ASLEEP ? [{ src: ASLEEP, at: M('dim'), fi: 1.6, cam: hold(1010, 525, 1.06) }] : []).concat([
         // the last move: the two desks, closing gently as the bell rings and the titles come up
-        { src: 'world/close_two_desks.png', at: M('two_desks'), fi: .9, cam: [[M('two_desks'), 960, 540, 1.0], [E, 960, 560, 1.04]] },
+        { src: pick('world/s9_two_desks.png', 'world/close_two_desks.png'), at: M('two_desks'), fi: .9, cam: [[M('two_desks'), 960, 540, 1.0], [E, 960, 560, 1.04]],
+          build: l => { seam = el('div', {}, l);       // the join between the two desks: a thin, feathered dark gutter
+            css(seam, { left: '924px', top: '0px', width: '72px', height: '1080px', background: 'linear-gradient(90deg, rgba(8,7,6,0) 0px, rgba(8,7,6,.88) 30px, rgba(8,7,6,.88) 42px, rgba(8,7,6,0) 72px)' }); } },
       ]), E, { dissolves: true, scene: 9 });
       rightOff = el('div', { cls: 'ov' }, root);     // the new desk fades (right half, soft edge)
-      css(rightOff, { background: 'linear-gradient(90deg, rgba(0,0,0,0) 900px, #000 1020px)', display: 'none' });
+      css(rightOff, { background: 'linear-gradient(90deg, rgba(0,0,0,0) 940px, rgba(6,5,4,1) 1010px)', display: 'none' });
       // the titles over the two desks (TITLES.md): a scrim, the lockup, the line, its coda; one centred column
       shade = el('div', { cls: 'ov' }, root);
-      css(shade, { background: 'linear-gradient(180deg, rgba(12,11,10,.82) 0px, rgba(12,11,10,.64) 400px, rgba(12,11,10,0) 660px)', display: 'none' });
+      css(shade, { background: 'linear-gradient(180deg, rgba(10,9,8,.86) 0px, rgba(10,9,8,.74) 440px, rgba(10,9,8,0) 720px)', display: 'none' });
       const T = el('div', { cls: 'ov t-titles' }, root);
       T.innerHTML = `
         <div class="lock"><span class="m"></span><span class="w">Barnaby</span></div>
@@ -50,14 +52,18 @@
         <div class="cred"><span><b>Built on Synapse</b></span><span class="ev">2nd Brain Labs × Geek Room Vibe-a-thon</span>${REPO ? `<span class="repo">${REPO}</span>` : ''}</div>
         <div class="fine">Recreated from a real recorded run. Quorum and ComfyUI scenes are staged; endpoint counts come from real Synapse scans. Synthetic voices; Barnaby’s voice: ElevenLabs. Spokes &amp; Sprockets is a fictional shop.</div>`;
       const cm = card.querySelector('.m'); cm.innerHTML = markSVG('#D3A14A'); markAnim(cm, 0, -100);   // at rest: no ring arcs
-      cardParts = [card.querySelector('.head'), card.querySelector('.grow'), card.querySelector('.cred'), card.querySelector('.fine')];
+      // the build, in reading order: the mark and the name, the line, the four steps, the credit, the small print
+      const head = card.querySelector('.head');
+      cardParts = [[head.querySelector('.m'), 0], [head.querySelector('.w'), 0], [head.querySelector('.what'), .4]]
+        .concat([...card.querySelectorAll('.grow > div')].map((e, i) => [e, .85 + .12 * i]))
+        .concat([[card.querySelector('.grow'), -1], [card.querySelector('.cred'), 1.55], [card.querySelector('.fine'), 1.75]]);
       css(card, { display: 'none' });
     },
     render(t) {
       run.render(t);
       const nd = M('new_desk_fades'), EC = CUES.marks.end_card != null ? M('end_card') : M('credit') - .2, out = EC - .7;
       rightOff.style.display = t > nd ? 'block' : 'none';
-      rightOff.style.opacity = (.94 * easeInOutSine(P(t, nd, 1.4))).toFixed(3);
+      rightOff.style.opacity = (.66 * easeInOutSine(P(t, nd, 1.6))).toFixed(3);      // the new desk recedes, not gone
       // titles: in on the music (the lockup, then its line), the coda as the new desk fades; out together, calmly
       const tOut = 1 - easeInOutSine(P(t, out, .7));
       const rise = (e, a, d) => { const k = easeOutCubic(P(t, a, d)) * tOut; e.style.opacity = k.toFixed(4); e.style.transform = `translateY(${((1 - easeOutCubic(P(t, a, d))) * 8).toFixed(2)}px)`; return k; };
@@ -71,9 +77,12 @@
       markAnim(mark, t, M('bell_final') + .55);            // the mark rings once, just after the real bell
       // the end card: a dissolve in over the titles' exit, then its rows settle in turn
       const ck = easeInOutSine(P(t, EC - .1, .8));
-      card.style.display = ck > .001 ? 'block' : 'none';
+      card.style.display = ck > .001 ? 'flex' : 'none';
       card.style.opacity = ck.toFixed(4);
-      cardParts.forEach((e, i) => { const k = easeOutCubic(P(t, EC + [.0, .35, .6, .8][i], .7)); e.style.opacity = k.toFixed(4); e.style.transform = `translateY(${((1 - k) * 6).toFixed(2)}px)`; });
+      for (const [e, d] of cardParts) {
+        if (d < 0) { e.style.borderTopColor = `rgba(59,57,52,${easeOutCubic(P(t, EC + .85, .6)).toFixed(3)})`; continue; }   // its rule draws with the steps
+        const k = easeOutCubic(P(t, EC + d, .75)); e.style.opacity = k.toFixed(4); e.style.transform = `translateY(${((1 - k) * 10).toFixed(2)}px)`;
+      }
       Q.setBlack(easeInOutSine(P(t, M('fade_out'), M('end') - M('fade_out'))));
     },
   });

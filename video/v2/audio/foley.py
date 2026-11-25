@@ -227,9 +227,10 @@ def mouse(seed, weight=1.0, modern=False):
     """The old shop mouse: a plastic latch going down, a lighter click coming up ~90 ms later. Theo's modern mouse in
     Lisbon: the same gesture, smaller and crisper (higher, shorter, a lighter release)."""
     r = rng("mouse", seed, modern)
-    down = st(M("cassette"), r.uniform(-.6, .6) + (2.5 if modern else -1.0))
+    down = cut(M("cassette"), .046, None, a=.0005, r=.02)  # the latch alone (the sample's slide-in before it is cut)
+    down = st(down, r.uniform(-.6, .6) + (2.5 if modern else -1.0))
     if modern:
-        down = cut(down, 0, .05, r=.015)
+        down = cut(down, 0, .035, r=.012)
     up = cut(st(M("vinyl"), (6 if modern else 4) + r.uniform(-.5, .5)), 0, .03 if modern else .035, r=.012)
     y = mix_at([(down, 0, 1.0), (up, (.07 if modern else .085) + r.uniform(-.012, .012), (.22 if modern else .32) * weight)])
     y = filt(filt(y, "highpass", 600 if modern else 380), "lowpass", 11000 if modern else 9000)
@@ -329,7 +330,7 @@ def hdd(dur, seed):
     g = cut(M("tiny"), 0, .01, r=.005)
     parts, t = [], 0.0
     while t < dur:
-        parts.append((st(g, r.uniform(-3, 2)), t, r.uniform(.35, 1)))
+        parts.append((st(g, r.uniform(-3, 2)), t, r.uniform(.35, 1) if t > 0 else 1.0))   # the first seek is the hardest
         t += r.choice([.016, .024, .038, .06, .1, .19], p=[.25, .25, .2, .15, .1, .05])
     y = mix_at(parts)
     y = peq(filt(filt(y, "highpass", 400), "lowpass", 6500), 900, 5.0, 3.0)    # the drive cage rings a little
@@ -362,6 +363,7 @@ def typing(dur, seed, modern=False):
         t += gap
     y = mix_at(parts)
     y = filt(filt(y, "highpass", 300 if modern else 220), "lowpass", 7500 if modern else 9000)
+    y = peq(y, 500 if not modern else 380, -7.0, 1.5)   # the plastic samples ring at ~500 Hz: a key, not a bottle
     if not modern:
         y = peq(y, 2200, 2.5, 1.0)
     return peak1(y), 0.0
@@ -645,7 +647,7 @@ SOURCES = {
 
 # how each kind of cue is built and placed (SOUND.md is generated from this, SOURCES and the measurements)
 PROCESS = {
-    "tab": "old shop mouse: cassette latch -1 st (down) + vinyl click +4 st 85 ms later (up); HP 380 Hz, LP 9 kHz, "
+    "tab": "old shop mouse: the cassette's latch (from 46 ms) -1 st (down) + vinyl click +4 st 85 ms later (up); HP 380 Hz, LP 9 kHz, "
            "+3 dB at 2.6 kHz; fast peak compressor; a little width; office room 22 %; pan follows the tab a little",
     "tab_close": "as tab, a little lighter",
     "mouse_click": "the shop: as tab (the old shop mouse). Lisbon: Theo's modern mouse, +2.5 st, shorter, HP 600 Hz, "
@@ -667,8 +669,10 @@ PROCESS = {
            "resonance at 900 Hz (the drive cage); under the desk, left; office room 12 %",
     "reload": "a 0.55 s burst of the drive's seeks + the fan bed rising and falling over 1.8 s",
     "typing": "the old keyboard: plastic taps (two samples, +-1.5 st; the space bar -3 st and louder) with a soft wooden "
-              "upstroke +3 st 70-110 ms later; word gaps; HP 220 Hz, LP 9 kHz, +2.5 dB at 2.2 kHz; office room",
-    "keys_modern": "Theo's modern keyboard: the same taps -4 st, 50 ms long, LP 3.8 kHz, quicker, no upstroke; Lisbon room",
+              "upstroke +3 st 70-110 ms later; word gaps; HP 220 Hz, LP 9 kHz, -7 dB at 500 Hz (the samples' plastic ring), "
+              "+2.5 dB at 2.2 kHz; office room",
+    "keys_modern": "Theo's modern keyboard: the same taps -4 st, 50 ms long, LP 3.8 kHz, -7 dB at 380 Hz, quicker, no upstroke; "
+                   "Lisbon room",
     "step": "a soft hit -5 st LP 1.4 kHz + a cloth-mallet marimba note an octave down (E or A, alternate feet) LP 900 Hz; "
             "Barnaby's world room 30 %; alternate pan +-0.08",
     "drawer": "the wood scratch -7 st (a slow slide, LP 3.5 kHz, rising) and a dry wood knock -3 st as it stops; world room",
@@ -768,7 +772,7 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
             fx.put(y, t - o, .06 * g / .3, .45, "workshop", send=.8)
         elif typ == "hdd":
             y, o = hdd(float(s.get("dur", .5)), k)
-            fx.put(tame(y, -8), t - o, .035, -.3, "office", send=.12)
+            fx.put(tame(y, -8), t - o, .05, -.3, "office", send=.12)
         elif typ == "reload":                          # the old PC works: the drive chatters, the fan rises
             y, o = hdd(.55, k)
             fx.put(tame(y, -8), t - o, .1 * g / .25, -.3, "office", send=.12)
@@ -814,3 +818,35 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
         report.append((s, typ, "one-shot", t, t - o + onset(y)))
     sfx = fx.render()
     return sfx, filt(amb, "highpass", 40), report
+
+
+def reel(path: Path) -> list[tuple[float, str]]:
+    """Every one-shot design, dry and alone, one after another (for auditioning): .cache/audio/foley_reel.wav."""
+    items = [("mouse (old shop)", mouse(1)), ("mouse (Lisbon, modern)", mouse(1, modern=True)), ("key tap", key_tap(1)),
+             ("lamp switch", lamp(1)), ("key turn", key_turn(1)), ("keys jingle", keys_jingle(1)), ("clunk", clunk(1)),
+             ("compressor", compressor(1, 1.8)), ("freewheel", freewheel(1)), ("hard drive", hdd(1.6, 1)),
+             ("typing (old)", typing(4.2, 1)), ("typing (modern)", typing(1.0, 1, True)), ("steps", None),
+             ("drawer", drawer(1)), ("pops (six)", None), ("ding", ding(1)), ("time-lapse swell", timelapse(2.2, 1)),
+             ("bell", bell()), ("bell (soft)", bell(soft=True))]
+    out, marks, t = [], [], 0.5
+    for name, yo in items:
+        if name == "steps":
+            y = mix_at([(step(k, k)[0], .4 * k, .8) for k in range(4)])
+        elif name.startswith("pops"):
+            y = mix_at([(pop(1, k)[0], .075 * k, .8) for k in range(6)])
+        else:
+            y = yo[0]
+        marks.append((round(t, 2), name))
+        out.append((y, t, .7))
+        t += len(y) / SR + .8
+    x = mix_at(out)
+    sf.write(str(path), np.stack([x, x], 1), SR, subtype="PCM_16")
+    return marks
+
+
+if __name__ == "__main__":
+    dst = ROOT / ".cache" / "audio" / "foley_reel.wav"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    for t, name in reel(dst):
+        print(f"{t:7.2f}  {name}")
+    print("wrote", dst)

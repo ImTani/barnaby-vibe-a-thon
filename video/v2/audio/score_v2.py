@@ -18,7 +18,7 @@ stems sum to the soundtrack). The instrument renders are cached under .cache/aud
 - Sound effects and ambience follow cues.json -> sfx (foley.py; sources and processing in SOUND.md).
 - Voices from video/v2/audio/voice/manifest.json (video/audio/voices.py, which also takes recorded lines via --takes).
   Off-screen lines (Martin from the workshop, the two goodnights from the door) are pushed back: high-cut and more
-  room. Under speech the music ducks -8 dB with a further -3 dB presence dip around 2.5 kHz, the ambience -4 dB and
+  room. Under speech (60 ms look-ahead) the music ducks -8 dB (up to 4 dB more where it runs hot) with a further -3 dB presence dip around 2.5 kHz, the ambience -4 dB and
   the effects -2 dB.
 """
 from __future__ import annotations
@@ -448,6 +448,8 @@ def main() -> int:
     print("voices ...")
     voice = voices()
     venv = np.clip(envelope(voice, .08, .45) / .05, 0, 1).astype(np.float32)
+    look = int(.06 * SR)                                         # look-ahead: the duck is down by the first syllable
+    venv = np.concatenate([venv[look:], np.repeat(venv[-1:], look)])
     # under speech: -8 dB, and a further presence dip where the words live; where the music runs hotter than it usually
     # does under speech (the Lisbon strums), up to 4 dB more
     dip = foley.peq(music, 2500, -3.0, .8)

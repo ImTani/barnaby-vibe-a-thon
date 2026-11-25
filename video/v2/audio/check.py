@@ -63,7 +63,7 @@ def env_db(x, sr, hop=.002):
 
 
 def cue_onsets(fx, sr):
-    """For each one-shot cue: the first rise in the sfx stem within -30..+250 ms of the cue (12 dB over the 50 ms
+    """For each one-shot cue: the first rise in the sfx stem within -30..+250 ms of the cue (9 dB over the 50 ms
     before it, and above -60 dBFS); and the effect's peak and loudiest 400 ms (momentary loudness) in the next 0.6 s."""
     e, hop = env_db(fx, sr)
     meter = pyln.Meter(sr, block_size=.4)
@@ -79,7 +79,7 @@ def cue_onsets(fx, sr):
         found = None
         for i in range(i0, i1):
             base = np.median(e[max(0, i - 25): max(1, i - 2)])
-            if e[i] > max(base + 12, -60):
+            if e[i] > max(base + 9, -60):
                 found = i * hop
                 break
         seg = fx[int(t * sr): int((t + .6) * sr)]

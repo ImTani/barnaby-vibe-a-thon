@@ -67,6 +67,12 @@ P = {
     "cups":       "Loops/Texture/Tea Cups.wav",                           # mugs
     "birds":      "Loops/Texture/Forest Ambience.wav",                    # birds over the street
     "wind":       "Loops/Texture/Wind Air God.wav",                       # night air
+    "clatter":    "One Shots/Drums/Misc Percussion/Perc Metallic Clatter.aif",  # the shutter's slats
+    "squeak":     "One Shots/Drums/FX Hit/FX Squeak.aif",                 # the chair's spring
+    "rough":      "One Shots/Drums/Wood/Wood Rough Low.aif",              # wood creak, a door's body
+    "breath":     "One Shots/FX/Riser Taka Breath.wav",                   # a breath out (its tail)
+    "paper":      "Loops/Texture/Paper LDre.wav",                         # cloth-like rustle: the coat
+    "maracas":    "One Shots/Drums/Shaker/Shake Maracas Soft.aif",        # a sleeve's swish
 }
 
 
@@ -388,6 +394,78 @@ def drawer(seed):
     return peak1(y), 0.0
 
 
+def radio_off(seed):
+    """The workshop radio switched off: a small dry switch click (the radio bed stops on it)."""
+    y = mix_at([(cut(st(M("vinyl"), -2), 0, .05, r=.02), 0, 1.0), (cut(st(M("cassette"), -5), .046, None, r=.015), .006, .5)])
+    y = peak1(filt(filt(y, "highpass", 300), "lowpass", 6000))
+    return y, onset(y)
+
+
+def shutter(seed, dur=2.6):
+    """A roller shutter pulled down, off-screen: the slats rattling down the guides (the metallic clatter, slowed and
+    looped, pulsing as each slat rolls over), a rumble in the drum, and the bottom bar landing."""
+    n = int(dur * SR)
+    r = rng("shutter", seed)
+    c = st(M("clatter"), -5)
+    c = np.concatenate([c, c[::-1], c])[: n]
+    c = np.pad(c, (0, max(0, n - len(c))))
+    t = np.arange(n) / SR
+    rate = 9 + 5 * np.minimum(1, t / .6)                 # slats per second, the pull speeding up
+    pulse = .3 + .7 * np.abs(np.sin(np.pi * np.cumsum(rate) / SR)) ** 2
+    rum = filt(st(loop_to(S("machine"), int(n * 1.6), seed, xf=.3)[0], -8)[:n], "lowpass", 300)
+    rum = np.pad(rum, (0, max(0, n - len(rum))))
+    sl = filt(filt(c * pulse, "lowpass", 4500), "highpass", 250)
+    rms_ = lambda v: np.sqrt((v ** 2).mean()) + 1e-9
+    body = sl / rms_(sl) + .2 * rum / rms_(rum)          # by RMS: the slats lead, the drum only underneath
+    body = body * np.minimum(1, t / .04) * np.clip((dur - .1 - t) / .2, 0, 1)
+    land = cut(st(M("metal"), -4 + r.uniform(-.5, .5)), 0, .6, r=.3)
+    y = mix_at([(body.astype(np.float32), 0, .8), (filt(land, "lowpass", 3500), dur - .15, 1.0)])
+    y = peak1(filt(y, "highpass", 60))
+    return y, 0.0
+
+
+def chair(seed):
+    """An office chair taking someone's weight: the spring's squeak (low), the seat's creak, the cushion, then a small
+    breath out."""
+    sq = filt(st(M("squeak"), -7), "lowpass", 4000)
+    creak = filt(cut(st(M("rough"), -5), 0, .6, r=.25), "lowpass", 2500)
+    seat = filt(cut(st(M("hit_soft"), -8), 0, .2, r=.1), "lowpass", 500)
+    br = M("breath")
+    br = filt(filt(cut(br, 1.62, None, a=.05, r=.2), "lowpass", 2800), "highpass", 250)
+    y = mix_at([(seat, 0, .8), (creak, .02, .7), (sq, .09, .35), (br, .45, .22)])
+    y = peak1(filt(y, "highpass", 70))
+    return y, onset(y)
+
+
+def cup(seed):
+    """An espresso cup set down on its saucer: one clean ceramic clink (from the tea-cups recording) and a tiny settle."""
+    x = M("cups")
+    clink = cut(x, 2.865, 3.35, a=.0008, r=.15)
+    settle = cut(x, 3.935, 4.06, a=.0008, r=.05)
+    y = mix_at([(clink, 0, 1.0), (settle, .075, .18)])
+    y = peak1(filt(filt(y, "highpass", 350), "lowpass", 12000))
+    return y, onset(y)
+
+
+def coat(seed):
+    """A coat going on: the cloth's rustle (the paper texture, slowed and darkened) and two sleeve swishes."""
+    rus = filt(st(M("paper"), -4), "lowpass", 3000)
+    sw = filt(st(M("maracas"), -10), "lowpass", 2200)
+    y = mix_at([(sw, 0, .6), (rus, .1, 1.0), (sw, .55, .45)])
+    y = peak1(filt(y, "highpass", 180))
+    return y, onset(y, -30)
+
+
+def door(seed, size=1.0):
+    """A door closing: the latch (the lock recording's bolt) and the door's wooden body (a rough low wood hit, pitched
+    down by the door's size)."""
+    latch = filt(cut(M("lock"), .33, .62, a=.001, r=.12), "lowpass", 5000)
+    body = filt(cut(st(M("rough"), -7 - 3 * (size - 1)), 0, .5, r=.25), "lowpass", 1200)
+    y = mix_at([(body, 0, 1.0), (latch, .012, .45)])
+    y = peak1(filt(y, "highpass", 80))
+    return y, onset(y)
+
+
 PENTA = [0, 2, 4, 7, 9, 12, 14]                       # D major pentatonic, from D
 
 
@@ -620,6 +698,14 @@ SOURCES = {
     "lamp_click": [P["cassette"], P["vinyl"]],
     "key_turn": [P["lock"]],
     "keys_jingle": [P["jingle"], P["rattle"]],
+    "radio_off": [P["vinyl"], P["cassette"]],
+    "shutter": [P["clatter"], P["machine"], P["metal"]],
+    "chair": [P["hit_soft"], P["rough"], P["squeak"], P["breath"]],
+    "lamp_on": [P["cassette"], P["vinyl"]],
+    "cup": [P["cups"]],
+    "coat": [P["paper"], P["maracas"]],
+    "door_shop": [P["rough"], P["lock"]],
+    "door_lisbon": [P["rough"], P["lock"]],
     "clunk": [P["hit_hard"], P["metal"], P["pan"]],
     "compressor": [P["machine"], P["sink"]],
     "freewheel": [P["tiny"]],
@@ -675,6 +761,21 @@ PROCESS = {
                    "Lisbon room",
     "step": "a soft hit -5 st LP 1.4 kHz + a cloth-mallet marimba note an octave down (E or A, alternate feet) LP 900 Hz; "
             "Barnaby's world room 30 %; alternate pan +-0.08",
+    "radio_off": "a dry switch: vinyl click -2 st + the cassette latch -5 st, HP 300 Hz, LP 6 kHz; through the workshop "
+                 "door (workshop room 60 %, right); the radio bed stops on it",
+    "shutter": "the metallic clatter -5 st, looped (forward, reversed) to the cue's length and pulsed at 9-14 slats a second, "
+               "BP 250 Hz-4.5 kHz, a little rumble (machine loop -8 st LP 300 Hz), and the bottom bar landing (metal impact -4 st, LP 3.5 "
+               "kHz) at the end; off-screen: workshop room 85 %, right, low",
+    "chair": "the cushion (soft hit -8 st LP 500 Hz), the seat's creak (rough wood -5 st LP 2.5 kHz), the spring's squeak "
+             "-7 st LP 4 kHz, and a breath out 0.45 s later (the breath riser's tail, BP 250 Hz-2.8 kHz); office room 20 %",
+    "lamp_on": "as lamp_click (another take of the same switch)",
+    "cup": "one clink from the tea-cups recording (2.865-3.35 s) and a small settle (3.935 s) 75 ms later, HP 350 Hz; "
+           "Lisbon room 22 %",
+    "coat": "the paper rustle -4 st LP 3 kHz (cloth) between two sleeve swishes (soft maracas -10 st LP 2.2 kHz); "
+            "off-screen: workshop room 45 %, left, low",
+    "door_shop": "a door = its wooden body (rough low wood -7 st, LP 1.2 kHz) + the latch (the lock's bolt, LP 5 kHz); the "
+                 "back-office door, then 1.7 s later the shop door, bigger, darker (LP 2.5 kHz), further off (90 % room)",
+    "door_lisbon": "the same door, smaller, LP 3.5 kHz, off in Theo's flat (Lisbon room 70 %), right",
     "drawer": "the wood scratch -7 st (a slow slide, LP 3.5 kHz, rising) and a dry wood knock -3 st as it stops; world room",
     "pop": "a water drip tuned up the D major pentatonic, LP 4.2 kHz, HP 250 Hz; six rising pops 75 ms apart for 'six "
            "light up', two for 'two rows change'; world room 40 %",
@@ -712,8 +813,8 @@ def extra_cues(cues: dict) -> list[dict]:
     out = [{"t": round(t0 + k * (t1 - t0) / max(1, n - 1), 3), "type": "step", "gain": .13 if 0 < k < n - 1 else .1,
             "label": "Barnaby walks the workshop floor to drawer 1 (derived from marks.walk, marks.pads_callout)"}
            for k in range(n)]
-    out.append({"t": round(mk["shelf"] - .45, 3), "type": "drawer", "gain": .3,
-                "label": "drawer 1 of the parts cabinet slides open onto the shelf shot (derived from marks.shelf)"})
+    out.append({"t": round(mk["shelf"] + .3, 3), "type": "drawer", "gain": .3,
+                "label": "drawer 1 of the parts cabinet slides open in the shelf shot (derived from marks.shelf)"})
     out.append({"t": 0.0, "type": "office_night", "level": 1.0, "fade_in": 2.5, "until": mk["timelapse"] + 1.6,
                 "label": "the back office at night (derived: scenes 1-2)"})
     out.append({"t": mk["shop_night"], "type": "office_night", "level": .8, "fade_in": 1.2, "until": mk["end"],
@@ -730,6 +831,7 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
     report = []
     lisbon = (cues["marks"]["lisbon_wide"], cues["marks"]["shop_night"])
     items = sorted(cues["sfx"] + extra_cues(cues), key=lambda s: s["t"])
+    radio_off_t = min((float(s["t"]) for s in items if s["type"] == "radio_off"), default=None)
     pops = 0
     for k, s in enumerate(items):
         typ, t = s["type"], float(s["t"])
@@ -737,7 +839,9 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
         pan = float(s.get("pan", 0.0))
         if typ in BED_GAIN:
             until = float(s.get("until", n / SR))
-            fi, fo = float(s.get("fade_in", 1.0)), 1.6
+            fi, fo = float(s.get("fade_in", .6 if "leads the cut" in s.get("label", "") else 1.0)), 1.6
+            if typ == "radio" and radio_off_t and t < radio_off_t < until:
+                until, fo = radio_off_t + .02, .03    # switched off: it stops on the click
             m = int((until - t) * SR)
             y = bed(typ, m, k)
             tt = np.arange(m) / SR
@@ -794,6 +898,32 @@ def render(cues: dict, n: int, voice_env: np.ndarray | None = None):
             foot = int(round(t * 10))
             y, o = step(k, foot)
             fx.put(y, t - o, .075 * g / .16, .08 * (1 if foot % 2 else -1), "world", send=.3)
+        elif typ == "radio_off":
+            y, o = radio_off(k)
+            fx.put(y, t - o, .11 * g / .4, .45, "workshop", send=.6)
+        elif typ == "shutter":
+            y, o = shutter(k, float(s.get("dur", 2.6)))
+            fx.put(y, t - o, .09 * g / .45, .5, "workshop", send=.85, width=.0009)
+        elif typ == "chair":
+            y, o = chair(k)
+            fx.put(y, t - o, .095 * g / .4, -.15, "office", send=.2)
+        elif typ == "lamp_on":
+            y, o = lamp(k + 101)
+            fx.put(tame(y, -9), t - o, .15 * g / .55, -.35, "office")
+        elif typ == "cup":
+            y, o = cup(k)
+            fx.put(y, t - o, .13 * g / .35, .2, "lisbon", send=.22)
+        elif typ == "coat":
+            y, o = coat(k)
+            fx.put(y, t - o, .1 * g / .3, -.3, "workshop", send=.45)
+        elif typ == "door_shop":                       # the back-office door, then the shop door further off
+            y, o = door(k, 1.0)
+            fx.put(y, t - o, .13 * g / .35, -.3, "workshop", send=.5)
+            y2, _ = door(k + 1, 1.4)
+            fx.put(filt(y2, "lowpass", 2500), t - o + 1.7, .045 * g / .35, -.45, "workshop", send=.8)
+        elif typ == "door_lisbon":
+            y, o = door(k, .8)
+            fx.put(filt(y, "lowpass", 3500), t - o, .08 * g / .3, .35, "lisbon", send=.7)
         elif typ == "drawer":
             y, o = drawer(k)
             fx.put(y, t - o, .12 * g / .3, .15, "world", send=.3)

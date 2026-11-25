@@ -12,7 +12,8 @@ sum to the soundtrack), with sfx.wav also split into effects.wav and ambience.wa
 
 - Music: D major, 80 BPM (bar = 3 s), on a grid that puts a downbeat exactly on the tab change in scene 6
   (marks.tab_change: "the music builds, then releases on the click and the tab change"). Sections follow cues.json ->
-  music: silent through scene 1; enters after the bell (handover); walking pace for Monday; thins under "Who's got too
+  music: silent until the bell; enters after it (handover) and resolves before the key, rain only under the
+  lamp-off and the time-lapse; walking pace for Monday; thins under "Who's got too
   much on this week?"; builds from the code to the click; releases on the tab change; settles for Priya; brighter in
   Lisbon; resolves with the bell and the titles. The run prints each section's cue time against its bar line.
 - Sound effects and ambience follow cues.json -> sfx (foley.py; sources and processing in SOUND.md).
@@ -97,7 +98,8 @@ CH = {
 
 def plan() -> list[tuple[int, list[str], str]]:
     """(first bar, chords one per bar, style), from the music sections in cues.json."""
-    kH = bar_at(SEC["handover"])
+    kH = bar_at(MARK["bell_arrive"] + 1.0, early=0)    # the first full bar after the bell (the entry roll fills the gap)
+    kR = int(np.floor((MARK["key"] - 3.9 - GRID0) / BAR))   # the resolving bar: its roll has died away before the key
     kW = bar_at(SEC["work"])
     k5 = bar_at(CUES["scenes"][4]["start"])
     kQ = bar_at(SEC["before_build"])
@@ -106,24 +108,24 @@ def plan() -> list[tuple[int, list[str], str]]:
     kT = bar_at(SEC["tuesday"])
     kS = bar_at(SEC["lisbon"] + 1.5)                    # the street first, then the music
     kC = bar_at(SEC["close"])
-    # the build climbs bar by bar to the click; since the 3:38 lock it has 7 bars (the code mark moved later), so the
-    # Em/D passing bar goes and the climb keeps its top (see compose: the last two bars still run in sixteenths)
+    # the build climbs bar by bar from the code to the click: 8 bars (7 in the 3:38 cut, where the Em/D passing bar went
+    # and the climb kept its top: see compose, the last two bars run in sixteenths either way)
     build = {8: ["Bm", "Bm/A", "G", "G/F#", "Em7", "Em/D", "Asus4", "A"],
              7: ["Bm", "Bm/A", "G", "G/F#", "Em7", "Asus4", "A"]}
     assert kL - kB in build, f"the build must be 7 or 8 bars into the lift (bars {kB}..{kL})"
     cyc = lambda seq, n: [seq[i % len(seq)] for i in range(n)]
     return [
-        (kH, cyc(["D", "A/C#", "Bm7", "Gmaj7", "D/F#"], kW - 3 - kH), "pick_soft"),   # handover: sparse, warm
-        (kW - 3, ["Asus4"], "hold"),                                                  # rings under the key and the lamp
-        (kW - 1, ["D"], "breath"),                                                    # daylight: the time-lapse
-        (kW, cyc(["D", "G", "Bm", "A"], k5 - kW), "pick"),                            # Monday: walking pace
+        (kH, cyc(["D", "A/C#", "Bm7", "Gmaj7", "D/F#"], kR - kH - 1) + ["Asus4"], "pick_soft"),   # handover
+        (kR, ["D"], "resolve"),                                                       # resolves before the key; then
+        (kW, cyc(["D", "G", "Bm", "A"], k5 - kW), "pick"),                            # rain only until Monday's walk
         (k5, cyc(["D", "G", "Bm", "A"], kQ - k5), "pick_plus"),                       # the montage: a little more forward
         (kQ, cyc(["Bm", "G", "D", "A"], kB - kQ), "pick_soft"),                       # under the question: thinner
         (kB, build[kL - kB], "build"),                                                # the code -> the click
         (kL, cyc(["D", "A/C#", "Bm", "G"], kT - kL - 1), "strum"),                    # release: the tab change
         (kT - 1, cyc(["D", "A/C#", "Bm", "G"], kT - kL)[-1:], "ring"),                # one strum rings over the cut
         (kT, cyc(["D", "G", "Bm", "A"], kS - kT), "pick_soft"),                       # Priya: settles
-        (kS, cyc(["D", "A/C#", "Bm", "G"], kC - kS), "strum_full"),                   # Lisbon: brighter, fuller
+        (kS, cyc(["D", "A/C#", "Bm", "G"], kC - kS - 1), "strum_full"),               # Lisbon: brighter, fuller
+        (kC - 1, cyc(["D", "A/C#", "Bm", "G"], kC - kS)[-1:], "ring"),                # one strum rings into the night
     ]
 
 
@@ -221,8 +223,9 @@ class Score:
                 elif style == "hold":
                     self.roll(ch, 44, bar(k) + .1, 6.0, step=.1)
                     self.b(CH[ch][1], 48, bar(k), 4.0)
-                elif style == "breath":
-                    self.roll(ch, 42, bar(k) + .2, 3.6, step=.09)
+                elif style == "resolve":
+                    self.roll(ch, 44, bar(k) + .15, 3.0, step=.11)
+                    self.b(CH[ch][1], 48, bar(k) + .1, 2.8)
                 elif style == "pick":
                     self.bar_pick(k, ch)
                     self.bass_walk(k, ch, nxt)
@@ -237,8 +240,9 @@ class Score:
                     self.b(CH[ch][1], 62, bar(k), 3.4)
                 elif style in ("strum", "strum_full"):
                     self.bar_strum(k, ch, full=style == "strum_full")
-        # the close: a held Asus4 under the goodnights, G as we cut to Lisbon, A for the two desks; the bell; then
-        # the final Dadd9 with the title, a soft re-roll under "Even the old ones." and a last one with the credit
+        # the close: a held Asus4 under the goodnights, G as we cut to Lisbon, A for the two desks; the bell, and the
+        # final Dadd9 resolving on it (the bell is its 9th), a soft re-roll under "Even the old ones." and a last one with
+        # the credit
         kC = bar_at(SEC["close"])
         self.roll("Asus4", 42, bar(kC) + .1, 4.2, step=.1)
         self.b(CH["Asus4"][1], 50, bar(kC), 3.8)
@@ -246,7 +250,7 @@ class Score:
         self.b(CH["Gmaj7"][1], 48, MARK["lisbon_night"] + .1, 3.6)
         self.roll("Asus4", 40, MARK["two_desks"] + .05, 3.0, step=.08)
         self.b(CH["Asus4"][1], 50, MARK["two_desks"], 2.6)
-        fin = MARK["title"]
+        fin = MARK["bell_final"] + .25
         for i, n in enumerate(CH["Dadd9"][0]):
             self.g(n, 74 - 3 * i, fin + i * .11, 9.0, ms=2)
         self.b(38, 68, fin, 8.0)
@@ -379,9 +383,9 @@ def master(stems: dict[str, np.ndarray], target=-16.0, ceiling=-1.5) -> dict[str
     return {name: x * k for name, x in stems.items()}
 
 
-# the score steps back for the story's sounds: (cue time, dB, from, to) - the key turning, the click, the last bell
+# the score steps back for the story's sounds: (cue time, dB, before, after) - the key turning, "Fussy." and the click
 def spot_ducks() -> np.ndarray:
-    spots = [(MARK["unlock"], 5.0, .15, 1.0), (MARK["click_build"], 3.0, .1, .5), (MARK["bell_final"], 3.0, .1, .6)]
+    spots = [(MARK["unlock"], 5.0, .15, 1.0), (MARK["click_build"], 3.0, .5, .5)]    # the click lands on "Fussy."
     g = np.zeros(N)
     t = np.arange(N) / SR
     for tc, d, pre, post in spots:
@@ -392,11 +396,35 @@ def spot_ducks() -> np.ndarray:
     return cq.db(g)
 
 
+def styled(style: str, after: str | None = None) -> int:
+    """The first bar of the plan's first `style` part (after the first `after` part, if given)."""
+    p, seen = plan(), after is None
+    for first, chords, st in p:
+        if seen and st == style:
+            return first
+        seen = seen or st == after
+    raise KeyError(style)
+
+
+def music_gate() -> np.ndarray:
+    """Silence the score where the picture asks for it: nothing before the bell; after the handover resolves, nothing
+    under the key and the lamp-off (rain only) until Monday's walking music starts."""
+    t = np.arange(N) / SR
+    g = np.ones(N)
+    g[t < MARK["bell_arrive"]] = 0.0
+    a, b = MARK["key"] - .6, MARK["key"]
+    w0 = bar(styled("pick")) - .05
+    fade = (t >= a) & (t < b)
+    g[fade] = .5 + .5 * np.cos(np.pi * (t[fade] - a) / (b - a))
+    g[(t >= b) & (t < w0)] = 0.0
+    return g.astype(np.float32)
+
+
 def check_music_marks() -> None:
     """Each music section's cue time (cues.json -> music) against the bar line its part of the arrangement starts on."""
     starts = {"handover": SEC["handover"] + .35}                                   # the first roll
-    p = plan()
-    by = {"work": p[3][0], "before_build": p[5][0], "build": p[6][0], "lift": p[7][0], "tuesday": p[9][0], "lisbon": p[10][0]}
+    by = {"work": styled("pick"), "before_build": styled("pick_soft", "pick_plus"), "build": styled("build"),
+          "lift": styled("strum"), "tuesday": styled("pick_soft", "ring"), "lisbon": styled("strum_full")}
     print("music sections vs. the arrangement:")
     for m in CUES["music"]:
         sec = m["section"]
@@ -404,10 +432,14 @@ def check_music_marks() -> None:
             t = bar(by[sec])
             print(f"  {sec:13} cue {m['t']:7.2f}  bar line {t:7.2f}  ({t - m['t']:+5.2f} s)")
         elif sec == "handover":
-            print(f"  {sec:13} cue {m['t']:7.2f}  first roll {starts['handover']:7.2f}  ({starts['handover'] - m['t']:+5.2f} s)")
+            print(f"  {sec:13} cue {m['t']:7.2f}  first roll {starts['handover']:7.2f}  ({starts['handover'] - m['t']:+5.2f} s);"
+                  f" resolves at bar {bar(styled('resolve')):.2f}, silent from the key ({MARK['key']:.2f}) to "
+                  f"{bar(styled('pick')):.2f}")
         else:
-            print(f"  {sec:13} cue {m['t']:7.2f}  held chord at bar {bar(bar_at(SEC['close'])):7.2f}; final Dadd9 at title {MARK['title']:.2f}")
-    assert abs(bar(p[7][0]) - MARK["tab_change"]) < 1e-6, "the lift must land on the tab change"
+            print(f"  {sec:13} cue {m['t']:7.2f}  held chord at bar {bar(bar_at(SEC['close'])):7.2f}; the final Dadd9 "
+                  f"resolves on the last bell ({MARK['bell_final']:.2f} + 0.25)")
+    assert abs(bar(styled("strum")) - MARK["tab_change"]) < 1e-6, "the lift must land on the tab change"
+    assert bar(styled("resolve")) + .15 + 3.0 < MARK["key"] - .5, "the handover must resolve before the key"
 
 
 def main() -> int:
@@ -445,6 +477,7 @@ def main() -> int:
     send = cq.sos_filter(gtr + .15 * bass, "highpass", 220).astype(np.float32)
     wet = reverb(send) if not a.no_vst else cq.convolve(send, cq.make_ir(2.4, 4.0, "music", lp=8000))
     music = (dry + .32 * wet).astype(np.float32) * .8           # v2 is a dialogue film: the score sits lower than v1's
+    music = music * music_gate()                                  # no music before the bell, none under the lamp-off
 
     print("voices ...")
     voice = voices()

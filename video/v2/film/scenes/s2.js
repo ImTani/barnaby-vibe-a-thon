@@ -8,7 +8,7 @@
 (function () {
   const C = CUES.scenes[1], S = C.start, E = C.end, FI = .35;
   const TABS = ['shop', 'supplier', 'sms', 'xls', 'parts', 'invoices', 'email', 'bank', 'cal'];
-  let run;
+  let run, shop, X = null;
   const ct = () => M('close_tabs');
   const closeAt = i => ct() + .25 + i * .2;            // the i-th close (0..8), as the sound's tab_close cues
   const FOLD = .15;
@@ -24,9 +24,18 @@
     const st = { preset: 'tabs', secs: 31 + Math.floor(Math.max(0, t - ct())),
       ram: +lerp(.93, .36, easeInOutSine(clamp((t - closeAt(0)) / (closeAt(8) + .25 - closeAt(0))))).toFixed(4),
       cpu: +clamp(.09 + .18 * Math.exp(-6 * ((t - ct()) % .2)) * (n > 0 && t < closeAt(8) ? 1 : 0) + .04 * (1 - k), 0, .9).toFixed(4) };
-    if (n === 0) Object.assign(st, { browser: false, tabs: [], cursor: { x: 700 + 30 * easeOutCubic(P(t, closeAt(8), .8)), y: 330 + 20 * easeOutCubic(P(t, closeAt(8), .8)) } });
-    else Object.assign(st, { tabs: TABS.slice(0, n), active: TABS[n - 1], tabIn: +easeInOutSine(fold).toFixed(4),
-      cursor: { x: +(690 + wiggle(t, 21, 2.2, 3)).toFixed(2), y: +(318 + wiggle(t, 22, 1.8, 2)).toFixed(2) } });
+    // five go with Ctrl+W (with five or more tabs the old browser hides the close box); the last four, his cursor
+    // clicks each tab's close box as it comes up
+    let c = [690 + wiggle(t, 21, 2.2, 3), 318 + wiggle(t, 22, 1.8, 2)];
+    if (X && t > closeAt(4) - .3) {
+      const keys = [[closeAt(4) - .3, c[0], c[1]]];
+      for (let i = 5; i <= 8; i++) { const x = X[9 - i]; keys.push([closeAt(i) - FOLD - .03, x[0], x[1]], [closeAt(i) - FOLD + .02, x[0], x[1]]); }
+      keys.push([closeAt(8) + .9, X[1][0] + 60, X[1][1] + 140]);
+      c = path2(t, keys);
+    }
+    st.cursor = { x: +c[0].toFixed(2), y: +c[1].toFixed(2) };
+    if (n === 0) Object.assign(st, { browser: false, tabs: [] });
+    else Object.assign(st, { tabs: TABS.slice(0, n), active: TABS[n - 1], tabIn: +easeInOutSine(fold).toFixed(4) });
     return st;
   }
   Scene({
@@ -52,6 +61,17 @@
         { src: 'world/03_keys_night.png', at: M('key'), fi: .4, cam: [[M('key'), 760, 700, 1.1], [E, 640, 840, 1.35]],
           grade: t => `brightness(${lerp(1, .16, easeOutCubic(P(t, M('lamp_off'), .15))).toFixed(3)})` },
       ], E);
+      shop = run.list[3].s;
+    },
+    ready() {
+      // the close box on the active (last) tab with n = 1..4 tabs open (logical px)
+      const w = shop.win(), pc = w.pc, d = w.document;
+      X = [];
+      for (let n = 1; n <= 4; n++) {
+        pc.render(pc.preset('tabs', { tabs: TABS.slice(0, n), active: TABS[n - 1], cursor: null }));
+        const r = d.querySelector('.tab.on .tx').getBoundingClientRect();
+        X[n] = [(r.left + r.width * .45) / 1.5, (r.top + r.height * .5) / 1.5];
+      }
     },
     render(t) { run.render(t); },
   });

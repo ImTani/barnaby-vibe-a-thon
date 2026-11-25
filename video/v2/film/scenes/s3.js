@@ -45,6 +45,6 @@
       if (Math.abs(a - AT_DRAWER) > 1e-3) window.__errors.push('[s3] martin-key AT_DRAWER is ' + a);
       // the walk's start: the comp's marker, before he sets off, sits where the route starts
     },
-    render(t) { run.render(t); sw.render(t, S + .2, S + 2.6, .9); },
+    render(t) { run.render(t); if (!run.list[1].bl) sw.render(t, S + .2, S + 2.6, .9); },     // Blender's time-lapse bakes its own light
   });
 })();

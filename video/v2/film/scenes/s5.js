@@ -96,7 +96,7 @@
     },
     render(t) {
       run.render(t);
-      sw.render(t, S - FI, S + 2.6, .75);
+      if (!run.list[0].bl) sw.render(t, S - FI, S + 2.6, .75);                // unless a Blender shot bakes the light in
       fadeEl(note, t, M('engine_compose'), E + 1, .35, .2);
     },
   });

@@ -3,7 +3,7 @@
 > **Every system deserves a butler.** *(film kicker: "…even the old ones.")*
 > Product name is parked; "Barnaby" is the butler's name and the working product name.
 
-Status: **v0.5 — 2026-11-25 ~08:15 IST.** Core complete: Connect, Ask, Unlock, Build, Act and **Compose** all pass on a real run (`demo_check` 15/15). Docs written (README for judges, WRITEUP, MCP_SETUP). Film: framework + scene B done, scenes A, C–I in progress; score rendered through the VSTs (`video/audio/score.py`).
+Status: **v0.6 — 2026-11-25 evening IST.** Core complete and checked in the film's order (`demo_check` **16/16** on 25 Nov 18:30 IST, including "nothing Barnaby said used the machine's words"; 27 unit tests). The real app's round 3 (`?skin=app3`, modelled on the Claude and Codex desktop apps) is approved and the default; `?skin=classic` keeps the old look. Approvals are in plain language, with a `technical` field for whoever wants it; code changes take a click. A bring-your-own-model worker (Pydantic AI) shares `toolkit.py` with the Claude worker. Docs refreshed (README, WRITEUP, MCP_SETUP, WALKTHROUGH for the round-3 app). Film: v2 (`video/v2/`, script in `docs/script.html`) timed at 3:38, animatic approved; the final render (`video/v2/film/out/barnaby_v2.mp4`) and the sound effects are being finished. The original demo beats below are superseded by the v2 script.
 
 ### Progress log
 - **Phase 0 ✅** Repo-local env; Synapse pinned locally; smoke tests pass. Details in §7.
@@ -34,6 +34,11 @@ Status: **v0.5 — 2026-11-25 ~08:15 IST.** Core complete: Connect, Ask, Unlock,
 - **Voice (P0 started)**: `runtime/voice` (Pipecat).
   - No-key path: listening → worker → Barnaby's own "say" events spoken by Kokoro; spoken "yes" for write-tier cards.
   - The Haiku front desk slots in when the key arrives.
+- **Bring-your-own-model worker ✅** `barnaby/worker_byom.py` (Pydantic AI), picked by `BARNABY_WORKER_BACKEND=byom` in `barnaby/workers.py`; shares the prompt, the tier gate and the growth tools (`barnaby/toolkit.py`) with the Claude worker. 7 unit tests against a real stdio MCP server with a scripted model; not yet run on a live third-party model.
+- **Plain language ✅** Cards lead with the household's words; the endpoint, arguments and test line ride in the approval event's `technical` field. Build is explained (does, reads, changes, checks, undo) before approval and takes a click only. `demo_check` fails on jargon in anything Barnaby says.
+- **The app, round 3 ✅ (default)** One column, his work inline and collapsed in plain words with a live line, his words in an upright serif, brass as the one brand colour, a counter bell wearing a bow tie for a mark; side panel, "What he can do", "Connect a system". `DESIGN.md`, `PRODUCT.md`, `ui/skins/app3.css`.
+- **Demo shop in the film's order ✅** Hand-backs (scene 5) before the Build: the workload report reads Dev 31 h of 20, then 19.5 h after the reassignment; 29 customers. `demo_check` **16/16**.
+- **Film v2 (in production)** `video/v2/`: world bible, speech pacing, Blender diorama, look-dev, cue sheet (217.9 s), animatic, DawDreamer score; sound effects from Ableton's Core Library and the final render being finished.
 
 ---
 

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<!-- Same butler, three worlds: script scene 6, the moment the report lands (Mon 23 Nov, 15:05). Three 640x1080 panels,
+     one per person, each the recommended world's Build panel (frames/panels/<card>-build.png). Which card per person
+     comes from data/recommend.js (falls back to the dealt direction). One build, one result, three worlds. -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0d0d0e; }
+  .tri { display: grid; grid-template-columns: repeat(3, 640px); height: 1080px; }
+  .tri img { display: block; width: 640px; height: 1080px; }
+  .tri figure { margin: 0; position: relative; }
+  .tri figure + figure::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #0d0d0e; z-index: 2; }
+</style>
+</head>
+<body>
+<div class="tri" id="tri"></div>
+<script src="../data/hands.js"></script>
+<script src="../data/recommend.js"></script>
+<script>
+  const R = window.RECOMMEND || {}, H = window.HANDS;
+  const ids = ['theo', 'martin', 'priya'].map(p => (R[p] && R[p].card) || H[p].cards[0].id);
+  const tri = document.getElementById('tri');
+  let left = ids.length;
+  ids.forEach(id => {
+    const f = document.createElement('figure'), img = new Image();
+    img.alt = id; img.onload = img.onerror = () => { if (--left === 0) document.fonts.ready.then(() => { document.body.dataset.ready = '1'; }); };
+    img.src = `../frames/panels/${id}-build.png`;
+    f.appendChild(img); tri.appendChild(f);
+  });
+</script>
+</body>
+</html>

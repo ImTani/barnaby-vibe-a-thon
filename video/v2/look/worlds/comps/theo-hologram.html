@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Theo · the workshop hologram · handover</title>
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #05070A; }
+  svg { display: block; }
+  ::selection { background: #F0A458; color: #05070A; }
+</style></head>
+<body>
+<div id="stage"></div>
+<script src="../data/building.js"></script>
+<script src="../data/story.js"></script>
+<script src="lib/theo-shared.js"></script>
+<script src="lib/theo-hologram.js"></script>
+<script>
+(function () {
+  const T = THEO, H = HOLO, C = H.C, S = WORLDS.story.handover, W = 1920, Ht = 1080;
+  const svg = T.svgRoot(document.getElementById('stage'), W, Ht);
+  const P = T.projection({ cx: 930, cy: 540, s: 54, yaw: -0.36, pitch: 0.60 });
+  const o = {
+    window: { x: 150, y: 28, w: 1630, h: 640, mullionX: 965, transomY: 222 },
+    beyondLights: [[430, 395, 30, '#E39A45', .42], [1395, 360, 22, '#E39A45', .38], [1660, 440, 11, '#F2EBDD', .30], [720, 488, 8, '#F2EBDD', .26], [1090, 520, 6, '#E39A45', .3]],
+    deskY: 884, pool: [930, 930, 620, 80], lamp: { x: -96, y: 752 }, seed: 11, drops: 560, trails: 34,
+  };
+  H.room(svg, W, Ht, o);
+  // the wet glass doubles the model's light: a faint, smeared copy behind the panes, and beads near it catch amber
+  const clip = T.el('clipPath', { id: 'winclip' }, svg.querySelector('defs'));
+  T.el('rect', { x: o.window.x, y: o.window.y, width: o.window.w, height: o.window.h }, clip);
+  const refl = T.el('g', { 'clip-path': 'url(#winclip)' }, svg);
+  const rg = T.el('g', { opacity: .2, filter: 'url(#smear)', transform: 'translate(46,-120) scale(1,0.95)' }, refl);
+  H.model(rg, P, 'handover', {});
+  const near = (x, y) => ((x - 960) ** 2 / 640 ** 2 + (y - 380) ** 2 / 300 ** 2) < 1;
+  H.rain(svg, o, near);
+  H.frameAndDesk(svg, W, Ht, o);
+
+  // the model itself, and the scan plane passing the last room
+  H.model(svg, P, 'handover', {});
+  H.scan(svg, P, 19.62);
+
+  // lit bricks name themselves
+  const lit = WORLDS.state('handover').filter(a => a.state === 'lit');
+  const off = { jobs_due: [12, 26], open_jobs: [-96, -4], job_detail: [10, -8], mechanics: [-92, -6] };
+  for (const a of lit) {
+    const p = P(a.anchor[0] + .25, a.anchor[1] - .25, 1.1), d = off[a.tool] || [12, -8];
+    T.text(svg, p[0] + d[0], p[1] + d[1], a.tool, { fill: C.white, 'font-family': 'Cascadia Code', 'font-size': 13.5, opacity: .95 });
+  }
+
+  // routes print themselves around the model, room by room
+  H.callouts(svg, P, 'handover', [
+    { group: 'counter', x: 40, y: 214, side: 'left', w: 390 },
+    { group: 'till', x: 132, y: 704, side: 'left', w: 318 },
+    { group: 'office', x: 560, y: 172, side: 'right', to: [9.0, 1.4] },
+    { group: 'stockroom', x: 1420, y: 112, side: 'right' },
+    { group: 'backdoor', x: 1462, y: 660, side: 'right' },
+    { group: 'workshop', x: 560, y: 842, side: 'right', to: [9.4, 7.0] },
+  ], { fs: 15.5, lh: 22.5 });
+
+  // what Synapse did, printed where it happened: top left
+  const sy = T.el('g', { 'font-family': 'Cascadia Code' }, svg);
+  T.text(sy, 58, 70, `$ ${S.synapse.cmd}`, { fill: C.white, 'font-size': 17, 'font-weight': 600 });
+  T.text(sy, 58, 98, `${S.synapse.found} endpoints discovered · ${S.synapse.exposed} read-only exposed · ${S.synapse.denied} denied`, { fill: C.amber, 'font-size': 15 });
+  T.text(sy, 58, 122, `${S.synapse.repo} · ${S.when} ${S.time} · ${S.synapse.seconds.toFixed(2)} s`, { fill: C.amberLine, 'font-size': 14 });
+  // the scan plane's own readout, in its accent (the one place the accent is allowed besides the plane)
+  const sp = P(19.62, 9.7, -0.15);
+  T.text(svg, sp[0] + 14, sp[1] + 4, `last room read · the back door`, { fill: C.accent, 'font-family': 'Cascadia Code', 'font-size': 13 });
+
+  // what Theo said, and Barnaby's answer, set in the air low right
+  const say = T.el('g', {}, svg);
+  T.text(say, 1150, 862, 'THEO', { fill: C.amber, 'font-family': 'Bahnschrift', 'font-size': 14, 'font-weight': 600, 'letter-spacing': '0.14em' });
+  T.text(say, 1218, 862, '“Barnaby, this is the shop’s system. I wrote it when I was fourteen, so be kind.”', { fill: C.amberLine, 'font-family': 'Bahnschrift', 'font-size': 17, 'font-weight': 300 });
+  const lines = ['Twenty-three endpoints, sir.', 'I’ve taken the six that only read;', 'nobody’s given me any keys yet.'];
+  lines.forEach((l, i) => T.text(say, 1150, 922 + i * 46, l, { fill: C.white, 'font-family': 'Bahnschrift', 'font-size': 40, 'font-weight': 300, style: "font-variation-settings:'wght' 300" }));
+  // his bell, drawn: the one mark of who is speaking
+  const bell = T.el('g', { transform: 'translate(1104,900)', fill: 'none', stroke: C.white, 'stroke-width': 1.6 }, svg);
+  T.el('path', { d: 'M-16,14 A16,16 0 0 1 16,14 Z' }, bell); T.el('line', { x1: -21, y1: 14, x2: 21, y2: 14 }, bell); T.el('circle', { cx: 0, cy: -5, r: 2.2 }, bell);
+
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script>
+</body></html>

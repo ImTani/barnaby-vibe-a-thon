@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Martin · The sticker album · the key (Mon 08:55)</title>
+<style>
+  :root { --page: #C8372D; --dark: #A92B22; --wall: #7E1E17; --white: #FFFFFF; --ink: #1A1A1A; --yellow: #FFC82E; --cover: #2B1410; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--cover); color: var(--white);
+    font-family: 'Franklin Gothic Medium Cond', 'Franklin Gothic Medium', 'Arial Narrow', sans-serif; font-size: 19px; }
+  ::selection { background: var(--yellow); color: var(--ink); }
+  .page { position: absolute; top: 16px; height: 1048px; background: var(--page); }
+  .page.l { left: 18px; width: 942px; border-radius: 6px 0 0 6px; }
+  .page.r { left: 960px; width: 942px; border-radius: 0 6px 6px 0; }
+  #art { position: absolute; left: 0; top: 0; }
+  .title { position: absolute; left: 62px; top: 34px; }
+  .title h1 { margin: 0; font: 400 50px 'Franklin Gothic Heavy', 'Franklin Gothic Medium', sans-serif; letter-spacing: 0.005em; line-height: 1; }
+  .title p { margin: 6px 0 0; font: 400 25px 'Franklin Gothic Demi Cond', sans-serif; }
+  .meta { position: absolute; right: 62px; top: 36px; text-align: right; }
+  .meta .when { font: 400 30px 'Franklin Gothic Demi Cond', sans-serif; font-variant-numeric: tabular-nums; }
+  .meta .count { font-size: 23px; margin-top: 4px; }
+  .meta .count b { font-family: 'Franklin Gothic Heavy', sans-serif; font-weight: 400; }
+
+  .legend { position: absolute; left: 62px; top: 846px; width: 860px; display: grid; grid-template-columns: 1fr 1.05fr; gap: 0 34px; }
+  .legend .it { display: grid; grid-template-columns: 56px 1fr; align-items: center; gap: 10px; margin: 0 0 10px; font-size: 20px; line-height: 1.15; }
+  .legend .it b { font-family: 'Franklin Gothic Demi Cond', sans-serif; font-weight: 400; font-size: 21px; }
+  .legend .walk h3 { margin: 0 0 6px; font: 400 22px 'Franklin Gothic Demi Cond', sans-serif; }
+  .legend .walk .st { display: grid; grid-template-columns: 58px 1fr; font-size: 19.5px; line-height: 1.2; margin: 0 0 7px; }
+  .legend .walk time { font-family: 'Franklin Gothic Demi Cond', sans-serif; }
+  .legend .walk .short { font-family: 'Franklin Gothic Demi Cond', sans-serif; text-decoration: underline; text-decoration-color: var(--yellow); text-decoration-thickness: 3px; text-underline-offset: 3px; }
+
+  .ask { position: absolute; left: 990px; top: 840px; width: 880px; height: 200px; box-sizing: border-box; background: var(--white); color: var(--ink);
+    border-radius: 8px; padding: 14px 22px; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto 1fr; gap: 4px 20px; }
+  .ask h2 { margin: 0; font: 400 28px 'Franklin Gothic Demi Cond', sans-serif; color: var(--page); align-self: center; }
+  .ask .acts { grid-row: 1; grid-column: 2; display: flex; gap: 12px; }
+  .ask button { font: 400 24px 'Franklin Gothic Demi Cond', sans-serif; padding: 7px 24px; border: 3px solid var(--ink); background: var(--white); color: var(--ink); border-radius: 4px; cursor: pointer; }
+  .ask button.yes { background: var(--ink); color: var(--white); }
+  .ask button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+  .ask .said { grid-column: 1 / -1; margin: 0; font-size: 20.5px; }
+  .ask dl { grid-column: 1 / -1; margin: 4px 0 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 22px; font-size: 18px; line-height: 1.2; }
+  .ask dt { font: 400 19px 'Franklin Gothic Demi Cond', sans-serif; color: var(--page); }
+  .ask dd { margin: 0; }
+</style>
+</head>
+<body>
+<div class="page l"></div><div class="page r"></div>
+<svg id="art" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+<div class="title"><h1>Spokes &amp; Sprockets</h1><p>The shop, room by room: what Barnaby can do, and what needs your key</p></div>
+<div class="meta"><div class="when">Monday 23 November &middot; 08:55</div><div class="count" id="count"></div></div>
+<div class="legend" id="legend"></div>
+<div class="ask" id="ask"></div>
+
+<script src="../data/building.js"></script>
+<script src="../data/story.js"></script>
+<script src="lib/martin-plan.js"></script>
+<script src="lib/martin-album.js"></script>
+<script>
+(function () {
+  const W = WORLDS, S = W.story.martinKey, M = MPLAN, C = ALBUM.C, FONT = ALBUM.FONT;
+  const svg = document.getElementById('art');
+  /* the gutter: the spread folds at x=960 */
+  const gut = M.el('g', {}, svg);
+  [[952, 16, 0.10], [956, 8, 0.16], [958, 4, 0.22]].forEach(([x, w, op]) => M.el('rect', { x, y: 16, width: w, height: 1048, fill: '#3A0A06', opacity: op }, gut));
+  [[960, 10, 0.08]].forEach(([x, w, op]) => M.el('rect', { x, y: 16, width: w, height: 1048, fill: '#3A0A06', opacity: op }, gut));
+
+  const api = ALBUM.draw(svg, { moment: 'martinKey', orient: 'land', s: 74, ox: 222, oy: 150 });
+  const { P } = api, g = api.gTop;
+  const T = (x, y, str, a) => M.text(g, x, y, str, Object.assign({ 'font-family': FONT, fill: C.white }, a));
+
+  /* room headers, printed like team names */
+  const head = (x, y, str, a) => { const p = P(x, y); T(p[0], p[1], str, Object.assign({ 'font-size': 21, 'letter-spacing': '0.06em' }, a)); };
+  head(0.55, 0.55, 'THE COUNTER'); head(4.95, 0.55, 'THE TILL'); head(6.75, 3.42, 'BACK OFFICE');
+  head(12.42, 2.35, 'THE WORKSHOP', { 'font-size': 20, 'letter-spacing': '0.03em' }); head(15.35, 1.62, 'THE STOCKROOM'); head(16.95, 8.72, 'THE BACK DOOR');
+  { const p = P(-0.62, 4.5); T(p[0], p[1], 'MARKET PLACE', { 'font-size': 19, 'letter-spacing': '0.24em', 'text-anchor': 'middle', transform: `rotate(-90 ${p[0]} ${p[1]})` }); }
+  { const p = P(20.62, 4.5); T(p[0], p[1], 'BACK LANE · DELIVERIES', { 'font-size': 19, 'letter-spacing': '0.18em', 'text-anchor': 'middle', transform: `rotate(90 ${p[0]} ${p[1]})` }); }
+  for (const st of W.building.fixtures.filter(f => f.stand)) { const p = P(st.stand[0], st.stand[1] + 0.42); T(p[0], p[1] + 4, st.who, { 'font-size': 18, 'text-anchor': 'middle' }); }
+  { const p = P(0.6, 7.7); T(p[0], p[1], 'Bikes for sale', { 'font-size': 18 }); }
+
+  /* his walk this morning: a white trail behind the stickers */
+  const way = [[7.32, 7.2], [7.32, 6.2], [14.7, 6.2], [14.7, 1.85], [15.92, 1.85], [15.92, 2.98]];
+  const way2 = [[16.55, 3.0], [16.55, 4.98], [17.7, 4.98], [17.7, 5.3], [18.0, 5.45]];
+  for (const w of [way, way2]) {
+    const pts = w.map(p => P(...p).map(v => v.toFixed(1)).join(',')).join(' ');
+    M.el('polyline', { points: pts, fill: 'none', stroke: C.white, 'stroke-width': 4, 'stroke-dasharray': '10 7', 'stroke-linejoin': 'round' }, api.gRoute);
+  }
+  const stamp = (x, y, t, rot) => { const gg = M.el('g', { transform: `rotate(${rot} ${x} ${y})` }, g);
+    M.el('circle', { cx: x, cy: y, r: 29, fill: 'none', stroke: '#14306E', 'stroke-width': 3 }, gg);
+    M.el('circle', { cx: x, cy: y, r: 24, fill: '#FFFFFF', opacity: 0.88 }, gg);
+    M.el('circle', { cx: x, cy: y, r: 24, fill: 'none', stroke: '#14306E', 'stroke-width': 1.5 }, gg);
+    M.text(gg, x, y + 6, t, { 'text-anchor': 'middle', 'font-family': FONT, 'font-size': 18, fill: '#14306E' }); };
+  { const r = api.slotRect.jobs_due; stamp(r.x + r.w + 4, r.y + r.h - 18, '08:53', -12); }
+  { const r = api.slotRect.parts_low; stamp(r.x + r.w - 6, r.y + 24, '08:53', 9);
+    // the shortfall badge on the sticker
+    const bx = r.x + 4, by = r.y + 4; M.el('circle', { cx: bx, cy: by, r: 14, fill: C.yellow, stroke: C.ink, 'stroke-width': 2 }, g);
+    M.text(g, bx, by + 7, '!', { 'text-anchor': 'middle', 'font-family': "'Franklin Gothic Heavy'", 'font-size': 21, fill: C.ink }); }
+  { const p = P(15.35, 0); const x = p[0] - 4, y = 128;
+    M.el('circle', { cx: x + 10, cy: y - 7, r: 12, fill: C.yellow, stroke: C.ink, 'stroke-width': 2 }, g);
+    M.text(g, x + 10, y - 1, '!', { 'text-anchor': 'middle', 'font-family': "'Franklin Gothic Heavy'", 'font-size': 18, fill: C.ink });
+    T(x + 30, y, 'Pads: 1 pair on the shelf; Anika’s brakes need 2', { 'font-size': 21 }); }
+
+  /* the back door: slot 20 is empty, its sticker held above it, waiting for his yes */
+  const a20 = api.items.find(a => a.tool === 'create_purchase_order');
+  const r20 = api.slotRect.create_purchase_order;
+  M.el('rect', { x: r20.x - 4, y: r20.y - 4, width: r20.w + 8, height: r20.h + 8, rx: 8, fill: 'none', stroke: C.yellow, 'stroke-width': 3, 'stroke-dasharray': '8 6' }, g);
+  api.sticker(g, a20, r20.x + 10, r20.y - 36, { rot: -9, lift: true });
+  { // the key tab on the held sticker
+    const kx = r20.x + r20.w + 6, ky = r20.y - 36;
+    M.el('circle', { cx: kx, cy: ky, r: 17, fill: C.yellow, stroke: C.ink, 'stroke-width': 2 }, g);
+    const kg = M.el('g', { transform: `translate(${kx},${ky}) rotate(-35)` }, g);
+    M.el('circle', { cx: -6, cy: 0, r: 4.5, fill: 'none', stroke: C.ink, 'stroke-width': 2.6 }, kg);
+    M.el('path', { d: 'M-1.5,0 H10 M6,0 V4 M9.5,0 V3.5', fill: 'none', stroke: C.ink, 'stroke-width': 2.6 }, kg);
+  }
+  stamp(r20.x + r20.w + 36, r20.y + r20.h - 6, '08:55', -6);
+
+  /* counts */
+  const c = W.counts('martinKey');
+  document.getElementById('count').innerHTML = `<b>${c.lit}</b> stuck in &middot; <b>${c.key + c.asking}</b> he&rsquo;d ask you for &middot; <b>${c.shut}</b> kept shut`;
+
+  /* legend (left page) */
+  const lg = document.getElementById('legend');
+  const col1 = document.createElement('div'), col2 = document.createElement('div'); col2.className = 'walk';
+  lg.appendChild(col1); lg.appendChild(col2);
+  const mini = (kind) => { const sv = M.el('svg', { width: 56, height: 64, viewBox: '0 0 84 100' });
+    const fake = { tool: kind === 'lit' ? 'open_jobs' : kind === 'ghost' ? 'parts' : 'cancel_job', n: kind === 'lit' ? 10 : kind === 'ghost' ? 18 : 16, group: 'workshop' };
+    if (kind === 'lit') api.sticker(sv, fake, 0, 0); else api.slot(sv, fake, 0, 0, kind); return sv; };
+  const item = (node, html) => { const d = document.createElement('div'); d.className = 'it'; d.appendChild(node); const s = document.createElement('span'); s.innerHTML = html; d.appendChild(s); col1.appendChild(d); };
+  item(mini('lit'), '<b>Stuck in:</b> Barnaby can use it');
+  item(mini('ghost'), '<b>Empty:</b> needs your key. He asks you first');
+  item(mini('shut'), '<b>Kept shut,</b> whoever asks');
+  col2.innerHTML = '<h3>His walk this morning</h3>' + S.route.map(r => `<div class="st"><time>${r.time}</time><span>${r.did}: <span class="${r.short ? 'short' : ''}">${r.found}</span></span></div>`).join('');
+
+  /* the question (right page) */
+  const ask = document.getElementById('ask');
+  ask.innerHTML = `<h2>${S.card.title}</h2><div class="acts"><button class="yes">${S.card.yes}</button><button>${S.card.no}</button></div>
+    <p class="said">“${S.barnaby}”</p>
+    <dl>${S.card.lines.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
+
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script>
+</body>
+</html>

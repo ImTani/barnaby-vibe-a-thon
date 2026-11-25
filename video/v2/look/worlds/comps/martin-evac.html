@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Martin · The plan by the back door · the key (Mon 08:55)</title>
+<style>
+  @font-face { font-family: 'EvacNum'; src: local('Calibri'); font-weight: 400; unicode-range: U+0030-0039; }
+  @font-face { font-family: 'EvacNum'; src: local('Calibri Bold'); font-weight: 700; unicode-range: U+0030-0039; }
+  :root { --ink: #141414; --paper: #FFFFFF; --green: #00843D; --blue: #0057A0; --red: #C8102E; --yellow: #FFC20E; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); color: var(--ink);
+    font-family: 'EvacNum', 'Gill Sans MT', 'Gill Sans', Calibri, sans-serif; font-size: 19px; }
+  ::selection { background: var(--green); color: var(--paper); }
+  #plan { position: absolute; left: 0; top: 0; }
+  .band { position: absolute; left: 0; top: 0; width: 1920px; height: 104px; background: var(--green); color: var(--paper);
+    display: flex; align-items: center; padding: 0 60px; box-sizing: border-box; gap: 30px; }
+  .band h1 { margin: 0; font-size: 46px; font-weight: 700; letter-spacing: 0.005em; }
+  .band .sub { font-size: 26px; }
+  .band .when { margin-left: auto; font-size: 28px; font-variant-numeric: tabular-nums; }
+  .frame { position: absolute; left: 24px; top: 104px; width: 1872px; height: 952px; border: 4px solid var(--green); border-top: 0; box-sizing: border-box; pointer-events: none; }
+
+  .rooms { position: absolute; left: 60px; top: 716px; width: 1296px; display: grid; grid-template-columns: 1.15fr 0.9fr 1.35fr 1fr 1fr 0.9fr; gap: 0 20px; }
+  .rooms h2 { margin: 0 0 6px; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 3px solid var(--ink); padding-bottom: 4px; }
+  .rooms .r { display: grid; grid-template-columns: 36px 1fr; align-items: start; font-size: 18.5px; line-height: 1.12; margin: 5px 0; }
+  .rooms .r svg { margin-top: -2px; }
+  .rooms .r.shut span { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+  .rooms .r.asking span { font-weight: 700; color: var(--blue); }
+  .rooms .r.planned span { font-style: italic; }
+
+  .sign { position: absolute; left: 1388px; top: 136px; width: 484px; border: 6px solid var(--blue); background: var(--paper); box-sizing: border-box; }
+  .sign .top { background: var(--blue); color: var(--paper); display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 14px; padding: 14px 18px; }
+  .sign h2 { margin: 0; font-size: 29px; line-height: 1.08; font-weight: 700; }
+  .sign .body { padding: 14px 20px 18px; }
+  .sign .said { font-size: 22px; line-height: 1.3; margin: 0 0 12px; }
+  .sign dl { margin: 0 0 16px; display: grid; grid-template-columns: 1fr; gap: 8px; font-size: 19px; line-height: 1.25; }
+  .sign dt { font-weight: 700; }
+  .sign dd { margin: 0; }
+  .sign .acts { display: flex; gap: 14px; }
+  .sign button { font: 700 24px 'EvacNum', 'Gill Sans MT', Calibri, sans-serif; padding: 10px 30px; border: 3px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
+  .sign button.yes { background: var(--green); border-color: var(--green); color: var(--paper); }
+  .sign button:focus-visible { outline: 4px solid var(--yellow); outline-offset: 3px; }
+
+  .legend { position: absolute; left: 1388px; top: 760px; width: 484px; }
+  .legend h2 { margin: 0 0 8px; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 3px solid var(--ink); padding-bottom: 4px; }
+  .legend .it { display: grid; grid-template-columns: 52px 1fr; align-items: center; font-size: 19px; line-height: 1.2; margin: 6px 0; }
+</style>
+</head>
+<body>
+<svg id="plan" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+<div class="band"><h1>Spokes &amp; Sprockets</h1><span class="sub">Ground floor &middot; where Barnaby has been this morning</span><span class="when">Monday 23 November &middot; 08:55</span></div>
+<div class="frame"></div>
+<div class="rooms" id="rooms"></div>
+<div class="sign" id="sign"></div>
+<div class="legend" id="legend"><h2>What the signs mean</h2></div>
+
+<script src="../data/building.js"></script>
+<script src="../data/story.js"></script>
+<script src="lib/martin-plan.js"></script>
+<script src="lib/martin-evac.js"></script>
+<script>
+(function () {
+  const W = WORLDS, S = W.story.martinKey, M = MPLAN, C = EVAC.C, FONT = EVAC.FONT;
+  const svg = document.getElementById('plan');
+  const api = EVAC.draw(svg, { moment: 'martinKey', orient: 'land', s: 55, ox: 96, oy: 170, vanTo: 22.3 });
+  const { P, s } = api;
+  const gR = M.el('g', {}, svg), g = M.el('g', {}, svg);
+  const T = (x, y, str, a) => M.text(g, x, y, str, Object.assign({ 'font-family': FONT, fill: C.ink, stroke: '#fff', 'stroke-width': 5, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, a));
+  const lab = (x, y, str, extra) => { const p = P(x, y); return T(p[0], p[1], str, Object.assign({ 'font-size': 21, 'font-weight': 700, 'letter-spacing': '0.08em' }, extra)); };
+
+  lab(0.55, 6.6, 'SHOP & COUNTER');
+  lab(6.85, 3.15, 'BACK OFFICE', { 'font-size': 19 });
+  lab(9.6, 4.6, 'WORKSHOP');
+  lab(15.26, 4.66, 'STOCKROOM', { 'font-size': 18, 'letter-spacing': '0.03em' });
+  lab(15.26, 5.6, 'BACK DOOR', { 'font-size': 18, 'letter-spacing': '0.03em' });
+  { const p = P(10.05, 2.2); T(p[0], p[1], 'REPORTS', { 'font-size': 18, 'font-weight': 700, 'letter-spacing': '0.08em' }); T(p[0], p[1] + 22, 'planned 2011,', { 'font-size': 17 }); T(p[0], p[1] + 42, 'never built', { 'font-size': 17 }); }
+  { const p = P(-0.8, 4.5); T(p[0], p[1], 'MARKET PLACE', { 'font-size': 19, 'font-weight': 700, 'letter-spacing': '0.24em', 'text-anchor': 'middle', transform: `rotate(-90 ${p[0]} ${p[1]})` }); }
+  { const p = P(20.75, 2.6); T(p[0], p[1], 'BACK LANE', { 'font-size': 19, 'font-weight': 700, 'letter-spacing': '0.24em', 'text-anchor': 'middle', transform: `rotate(90 ${p[0]} ${p[1]})` }); }
+  { const p = P(21.05, 7.45); T(p[0], p[1], 'Madison’s', { 'font-size': 17 }); T(p[0], p[1] + 20, 'van', { 'font-size': 17 }); }
+  { const p = P(0.4, 7.55); T(p[0], p[1], 'Bikes for sale', { 'font-size': 17 }); }
+  { const p = P(3.82, 1.4); T(p[0] - 6, p[1], 'till', { 'font-size': 17, 'text-anchor': 'end' }); }
+  { const p = P(4.2, 4.45); T(p[0] + 12, p[1] + 26, 'bell', { 'font-size': 17 }); }
+  { const p = P(8.1, 1.15); T(p[0], p[1] + 2, 'the shop PC', { 'font-size': 16, 'text-anchor': 'middle' }); }
+  { const p = P(13.7, 1.35); T(p[0], p[1], 'wheel bench', { 'font-size': 16, 'text-anchor': 'middle' }); }
+  for (const st of W.building.fixtures.filter(f => f.stand)) { const p = P(st.stand[0], st.stand[1] + 0.95); T(p[0], p[1], st.who, { 'font-size': 18, 'font-weight': 700, 'text-anchor': 'middle' }); }
+
+  /* the route, with time stops; Barnaby is the YOU ARE HERE */
+  const way = [[7.45, 7.75], [7.45, 5.3], [13.8, 5.3], [13.8, 1.75], [15.55, 1.75], [15.55, 3.55], [17.7, 3.55], [17.7, 5.6], [18.72, 6.45]];
+  api.route(way, gR);
+  const stop = (x, y, t, dx, dy, anchor) => { const p = P(x, y);
+    M.el('circle', { cx: p[0], cy: p[1], r: 9, fill: '#fff', stroke: C.green, 'stroke-width': 4 }, g);
+    T(p[0] + dx, p[1] + dy, t, { 'font-size': 20, 'font-weight': 700, fill: C.green, 'text-anchor': anchor || 'start' }); };
+  stop(7.45, 7.75, '08:53', 14, 26);
+  stop(16.6, 3.55, '08:53', 0, 34, 'middle');
+
+  /* signs at every ability, at the object where it happens */
+  const st = M.numbered('martinKey');
+  for (const a of st) {
+    if (a.state === 'planned') continue;
+    const NUDGE = { purchase_orders: [17.2, 5.98] };   // display nudge, same wall, clear of the label
+    const p = P(...(NUDGE[a.tool] || a.anchor));
+    if (a.state === 'asking') continue;
+    api.sign(a.state, p[0], p[1], 30, null, g);
+  }
+  /* the back door: Barnaby here, and the key sign on the door itself */
+  const here = P(19.0, 6.66), door = P(19.98, 7.25);
+  api.here(here[0], here[1], 11, g);
+  { const e = P(18.56, 6.8); T(e[0], e[1], 'Barnaby is here', { 'font-size': 21, 'font-weight': 700, fill: C.red, 'text-anchor': 'end' });
+    T(e[0], e[1] + 22, '08:55', { 'font-size': 20, 'font-weight': 700, fill: C.green, 'text-anchor': 'end' }); }
+  // leader: up the gap between the back wall and the van, over the van, to the sign panel
+  { const lx = P(20.5, 0)[0], top = P(0, 5.05)[1];
+    M.el('polyline', { points: `${door[0] + 20},${door[1]} ${lx},${door[1]} ${lx},${top} 1388,${top}`, fill: 'none', stroke: C.blue, 'stroke-width': 4, 'stroke-linejoin': 'round' }, g); }
+  api.sign('asking', door[0], door[1], 46, null, g);
+
+  /* the shortfall: a warning triangle at the pads */
+  { const p = P(16.6, 2.45); api.warn(p[0], p[1], 30, g);
+    const y0 = 142;
+    M.el('polyline', { points: `${p[0]},${p[1] - 15} ${p[0]},${y0 - 6}`, fill: 'none', stroke: C.ink, 'stroke-width': 2.2 }, g);
+    M.el('line', { x1: p[0], y1: y0 - 6, x2: p[0] - 12, y2: y0 - 6, stroke: C.ink, 'stroke-width': 2.2 }, g);
+    T(p[0] - 18, y0, 'Pads: 1 pair on the shelf; Anika’s brakes need 2', { 'font-size': 21, 'font-weight': 700, 'text-anchor': 'end' }); }
+
+  /* rooms, under the plan: what can be done where */
+  const rooms = document.getElementById('rooms');
+  const mini = (state, n) => { const sv = M.el('svg', { width: 30, height: 30, viewBox: '0 0 30 30' }); api.sign(state === 'asking' ? 'asking' : state, 15, 15, 26, null, sv); return sv; };
+  for (const grp of W.building.groups) {
+    const col = document.createElement('div');
+    col.innerHTML = `<h2>${grp.name.replace(/^The /, '')}</h2>`;
+    for (const a of st.filter(a => a.group === grp.id && a.state !== 'planned')) {
+      const r = document.createElement('div'); r.className = 'r ' + a.state;
+      r.appendChild(mini(a.state, a.n));
+      const t = document.createElement('span'); t.textContent = a.say + (a.state === 'asking' ? ': asking now' : ''); r.appendChild(t);
+      col.appendChild(r);
+    }
+    if (grp.id === 'office') { const r = document.createElement('div'); r.className = 'r planned'; r.innerHTML = '<svg width="30" height="30"><rect x="3" y="3" width="24" height="24" fill="none" stroke="#141414" stroke-width="2" stroke-dasharray="5 3"/></svg><span>Reports: “coming soon!!” since 2011</span>'; col.appendChild(r); }
+    rooms.appendChild(col);
+  }
+
+  /* the sign panel: the question, at the back door */
+  const sg = document.getElementById('sign');
+  const top = document.createElement('div'); top.className = 'top';
+  const big = M.el('svg', { width: 96, height: 96, viewBox: '0 0 96 96' });
+  M.el('circle', { cx: 48, cy: 48, r: 45, fill: C.blue, stroke: '#fff', 'stroke-width': 4 }, big); api.keyPict(big, 48, 48, 34, '#fff');
+  top.appendChild(big);
+  const h2 = document.createElement('h2'); h2.textContent = S.card.title; top.appendChild(h2); sg.appendChild(top);
+  sg.insertAdjacentHTML('beforeend', `<div class="body"><p class="said">“${S.barnaby}”</p><dl>${S.card.lines.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl><div class="acts"><button class="yes">${S.card.yes}</button><button>${S.card.no}</button></div></div>`);
+
+  /* legend */
+  const lg = document.getElementById('legend');
+  const item = (node, words) => { const d = document.createElement('div'); d.className = 'it'; d.appendChild(node); const sp = document.createElement('span'); sp.innerHTML = words; d.appendChild(sp); lg.appendChild(d); };
+  const sv = () => M.el('svg', { width: 44, height: 36, viewBox: '0 0 44 36' });
+  { const v = sv(); api.sign('lit', 20, 18, 30, null, v); item(v, '<b>Barnaby can use it</b>'); }
+  { const v = sv(); api.sign('key', 20, 18, 30, null, v); item(v, '<b>Needs your key</b>: he asks you first'); }
+  { const v = sv(); api.sign('shut', 20, 18, 30, null, v); item(v, '<b>Kept shut</b>, whoever asks'); }
+  { const v = sv(); api.warn(20, 19, 30, v); item(v, '<b>Short</b>: not enough on the shelf'); }
+  { const v = sv(); M.el('line', { x1: 2, y1: 18, x2: 40, y2: 18, stroke: C.green, 'stroke-width': 12 }, v); M.el('path', { d: 'M17,12 L23,18 L17,24', fill: 'none', stroke: '#fff', 'stroke-width': 3 }, v); item(v, '<b>His route</b> this morning'); }
+  { const v = sv(); api.here(20, 18, 8, v); item(v, '<b>Barnaby is here</b>'); }
+
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Martin · manual plate · the Build (Mon 15:05)</title>
+<style>
+  :root { --ink: #111111; --paper: #FFFFFF; --spot: #1B4FD8; }
+  html, body { margin: 0; width: 640px; height: 1080px; overflow: hidden; background: var(--paper); color: var(--ink); font-family: Bahnschrift, sans-serif; }
+  #plate { position: absolute; left: 0; top: 0; }
+  .head { position: absolute; left: 28px; right: 28px; top: 18px; display: flex; align-items: baseline; border-bottom: 3px solid var(--ink); padding-bottom: 8px; }
+  .head b { font-size: 22px; font-stretch: 87.5%; }
+  .head span { margin-left: auto; font-size: 19px; font-variant-numeric: tabular-nums; }
+  .cap { position: absolute; left: 28px; top: 798px; width: 584px; font-size: 18px; font-stretch: 87.5%; margin: 0; }
+  .cap b { margin-right: 8px; }
+  .note { position: absolute; left: 28px; top: 836px; width: 584px; box-sizing: border-box; border: 2.5px solid var(--ink); padding: 12px 16px 14px; }
+  .note .hd { display: grid; grid-template-columns: 46px 1fr; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .note h3 { margin: 0; font-size: 24px; font-stretch: 87.5%; line-height: 1.1; }
+  .note dl { display: grid; grid-template-columns: 128px 1fr; gap: 5px 12px; margin: 0 0 12px; font-size: 18px; line-height: 1.25; }
+  .note dt { font-weight: 700; font-stretch: 87.5%; } .note dd { margin: 0; }
+  .note .acts { display: flex; gap: 12px; align-items: center; }
+  .note button { font: 700 21px Bahnschrift; font-stretch: 87.5%; padding: 8px 22px; border: 2.5px solid var(--ink); background: var(--paper); color: var(--ink); }
+  .note button.yes { background: var(--spot); border-color: var(--spot); color: var(--paper); }
+  .note a { margin-left: auto; font-size: 18px; color: var(--ink); text-underline-offset: 3px; }
+</style></head><body>
+<svg id="plate" width="640" height="1080" viewBox="0 0 640 1080"></svg>
+<div class="head"><b>Spokes &amp; Sprockets</b><span>Monday 23 November &middot; 15:05</span></div>
+<p class="cap"><b>Fig. 2</b>The room Theo never built, drawn in. New walls hatched.</p>
+<div class="note" id="note"></div>
+<script src="../../data/building.js"></script><script src="../../data/story.js"></script>
+<script src="../lib/martin-plan.js"></script><script src="../lib/martin-manual.js"></script>
+<script>
+(function () {
+  const W = WORLDS, S = W.story.build, M = MPLAN, INK = MANUAL.INK, SPOT = MANUAL.SPOT;
+  const svg = document.getElementById('plate');
+  const api = MANUAL.draw(svg, { moment: 'build', orient: 'port', s: 32, ox: 44, oy: 112, detail: 'low', callouts: false, bubbleR: 15, noVan: true });
+  const { P } = api, g = api.gOver;
+  const T = (x, y, str, a) => M.text(g, x, y, str, Object.assign({ 'font-family': 'Bahnschrift', fill: INK, stroke: '#fff', 'stroke-width': 5, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, a));
+  { const p = P(0, 4.5); T(p[0], p[1] + 26, 'MARKET PLACE', { 'font-size': 17, 'font-weight': 700, 'letter-spacing': '0.2em', 'text-anchor': 'middle', 'font-stretch': '75%' }); }
+  { const p = P(20.6, 2.2); T(p[0], p[1] - 14, 'BACK LANE', { 'font-size': 17, 'font-weight': 700, 'letter-spacing': '0.2em', 'text-anchor': 'middle', 'font-stretch': '75%' }); }
+  const lab = (x, y, str, a) => { const p = P(x, y); T(p[0], p[1], str, Object.assign({ 'font-size': 16, 'font-weight': 700, 'letter-spacing': '0.06em', 'font-stretch': '75%' }, a)); };
+  lab(3.0, 5.6, 'SHOP'); lab(8.0, 6.6, 'WORKSHOP'); lab(17.05, 5.35, 'BACK DOOR'); lab(17.9, 1.0, 'STOCKROOM'); lab(8.35, 0.45, 'OFFICE');
+  const rp = P(11.1, 3.0); const lx = P(11.6, 9.0)[0] + 22;
+  M.el('polyline', { points: `${P(11.1, 2.6)[0]},${rp[1]} ${lx - 6},${rp[1]}`, fill: 'none', stroke: SPOT, 'stroke-width': 2.4 }, g);
+  T(lx, rp[1] - 6, 'WORKLOAD', { 'font-size': 26, 'font-weight': 700, fill: SPOT, 'font-stretch': '75%', 'letter-spacing': '0.06em' });
+  T(lx, rp[1] + 18, 'New room, 15:05', { 'font-size': 18, 'font-weight': 700 });
+  T(lx, rp[1] + 38, 'It reads the job board', { 'font-size': 17 }); T(lx, rp[1] + 58, 'and changes nothing', { 'font-size': 17 });
+  const n = document.getElementById('note');
+  const glyph = M.el('svg', { width: 44, height: 44, viewBox: '0 0 44 44' }); M.el('circle', { cx: 22, cy: 22, r: 20, fill: SPOT }, glyph);
+  M.text(glyph, 22, 30, '24', { 'text-anchor': 'middle', 'font-family': 'Bahnschrift', 'font-weight': 700, 'font-size': 21, fill: '#fff' });
+  const hd = document.createElement('div'); hd.className = 'hd'; hd.appendChild(glyph); hd.insertAdjacentHTML('beforeend', `<h3>${S.card.title}</h3>`); n.appendChild(hd);
+  const pick = ['What it reads', 'Theo’s checks'];
+  n.insertAdjacentHTML('beforeend', '<dl>' + S.card.lines.filter(([k]) => pick.includes(k)).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('') + '</dl>');
+  n.insertAdjacentHTML('beforeend', `<div class="acts"><button class="yes">${S.card.yes}</button><button>${S.card.no}</button><a href="#">${S.card.see}</a></div>`);
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script></body></html>

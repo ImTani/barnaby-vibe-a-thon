@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Theo · console · the Build lands (panel)</title>
+<style>html, body { margin: 0; width: 640px; height: 1080px; overflow: hidden; background: #000; } svg { display: block; }</style></head>
+<body>
+<div id="stage"></div>
+<script src="../../data/building.js"></script>
+<script src="../../data/story.js"></script>
+<script src="../lib/theo-shared.js"></script>
+<script src="../lib/theo-diff.js"></script>
+<script src="../lib/theo-console.js"></script>
+<script>
+document.fonts.load("600 20px Bahnschrift").then(() => document.fonts.ready).then(() => {
+  /* Mon 23 Nov 15:05, Lisbon, his portrait monitor: the panel when the report lands. Gold once: the new endpoint. */
+  const T = THEO, K = CONSOLE, B = WORLDS.story.build, D = THEO_DIFF, W = 640, H = 1080, moment = 'build';
+  const svg = T.svgRoot(document.getElementById('stage'), W, H), g = T.el('g', {}, svg);
+  T.el('rect', { x: 0, y: 0, width: W, height: H, fill: '#000' }, g);
+  T.wmBar(svg, W, { title: 'barnaby · spokes-and-sprockets', ws: 2, when: `${B.when.replace(/ 2026/, '')}  ${B.time}`, accent: K.GOLD, bg: '#000' });
+  const c = WORLDS.counts(moment), X0 = 14, VW = 118, GAP = 7;
+
+  // UPPER FRAME
+  const up = { x: X0, y: 40, vw: VW, vh: 520, aw: W - X0 - VW - 14, ah: 24, corner: 'bl', R: 60, r: 26 };
+  K.elbow(g, Object.assign({ fill: '#8E9DEB' }, up));
+  K.cut(g, 380, up.y + up.vh - up.ah, GAP, up.ah);
+  T.el('rect', { x: 387, y: up.y + up.vh - up.ah, width: W - 14 - 387, height: up.ah, fill: '#BC9BD8' }, g);
+  const blocks = [['BARNABY', '#D97C80', 70], [String(D.files['routes_reports.py'].lines.length), '#BC9BD8', 60, 'ROUTES'], [String(D.files['services.py'].lines.length), '#A08BC9', 60, 'SERVICES'], [String(D.files['tests/test_workload.py'].lines.length), '#D9B98C', 60, 'TESTS']];
+  let by = up.y;
+  blocks.forEach(([n, col, h, lab]) => {
+    T.el('rect', { x: X0, y: by, width: VW, height: h, fill: col }, g);
+    if (lab) { K.t(g, X0 + 9, by + h - 12, '+' + n, { 'font-size': 21, w: 700 }); K.t(g, X0 + VW - 8, by + h - 12, lab, { 'text-anchor': 'end', 'font-size': 12.5 }); }
+    else K.t(g, X0 + VW - 10, by + h - 12, n, { 'text-anchor': 'end', 'font-size': 20, w: 700 });
+    by += h; K.cut(g, X0, by, VW, GAP); by += GAP;
+  });
+
+  // the new endpoint: the one thing running now
+  K.t(g, 150, 92, 'WRITTEN TODAY  ·  ADDED, MARTIN BY CLICK', { 'font-size': 16, fill: K.GOLD, w: 500, 'letter-spacing': '0.06em' });
+  K.pill(g, 150, 104, 40, '/api/reports/workload/{day}', 'GET', 'gold', K.GOLD);
+  // the diff, in the panel's black field
+  const r = D.files['routes_reports.py'];
+  K.t(g, 150, 182, 'routes_reports.py', { 'font-size': 17, fill: '#BC9BD8', w: 600 });
+  T.code(g, 150, 206, r.lines.filter(l => l.trim() !== '+'), { lh: 16.5, fs: 11, maxChars: 69, fill: '#E9E6F2', plus: true, plusFill: K.GOLD });
+  K.t(g, 150, 382, 'services.py', { 'font-size': 17, fill: '#A08BC9', w: 600 });
+  T.code(g, 150, 404, D.files['services.py'].lines.filter(l => l.trim() !== '+').slice(0, 6), { lh: 16.5, fs: 11, maxChars: 69, fill: '#E9E6F2', plus: true, plusFill: K.GOLD });
+
+  // LOWER FRAME
+  const lo = { x: X0, y: 574, vw: VW, vh: H - 574 - 14, aw: W - X0 - VW - 14, ah: 24, corner: 'tl', R: 60, r: 26 };
+  K.elbow(g, Object.assign({ fill: '#BC9BD8' }, lo));
+  K.cut(g, 300, lo.y, GAP, lo.ah); T.el('rect', { x: 307, y: lo.y, width: W - 14 - 307, height: lo.ah, fill: '#D9B98C' }, g);
+  const codes = [[c.found + 1, 'FOUND', '#8E9DEB'], [c.lit + c.new, 'OPEN', '#F0A37F'], [c.key, 'BY KEY', '#D9B98C'], [c.shut, 'DENIED', '#D97C80']];
+  codes.forEach(([n, lab, col], i) => {
+    const y = 664 + i * 66;
+    T.el('rect', { x: X0, y, width: VW, height: 59, fill: col }, g); K.cut(g, X0, y - GAP, VW, GAP);
+    K.t(g, X0 + 10, y + 46, String(n).padStart(2, '0'), { 'font-size': 28, w: 700 });
+    K.t(g, X0 + VW - 10, y + 46, lab, { 'text-anchor': 'end', 'font-size': 15 });
+  });
+
+  // the checks, as numbers
+  const [passed, warn, secs] = [22, 1, '1.55'];
+  K.t(g, 148, 712, String(passed), { 'font-size': 112, fill: '#F4F1EA', w: 600 });
+  K.t(g, 156, 742, 'PASSED  ·  19 THEO’S, 3 NEW', { 'font-size': 17, fill: '#F4F1EA', w: 500, 'letter-spacing': '0.05em' });
+  K.t(g, 300, 662, `${String(warn).padStart(2, '0')}  WARNING`, { 'font-size': 20, fill: '#D9B98C', w: 600 });
+  K.t(g, 300, 692, `${secs} S  PYTEST -Q`, { 'font-size': 20, fill: '#D9B98C', w: 600 });
+  ['test_workload_week_and_exclusions', 'test_workload_week_boundaries', 'test_workload_bad_date'].forEach((n, i) =>
+    T.code(g, 156, 776 + i * 19, ['✓ ' + n], { fs: 12.5, fill: '#BC9BD8' }));
+
+  // the deck: the planned room is now a room
+  K.deck(g, 150, 850, 15.8, moment);
+  T.el('polyline', { points: `${150 + 11.1 * 15.8},${850 + 1.3 * 15.8} ${150 + 11.1 * 15.8},${838} ${150 + 20 * 15.8 + 14},${838} ${150 + 20 * 15.8 + 14},${856}`, fill: 'none', stroke: '#A08BC9', 'stroke-width': 1.6 }, g);
+  K.t(g, 150 + 20 * 15.8 + 18, 878, 'WORKLOAD', { 'font-size': 22, fill: '#A08BC9', w: 700 });
+  K.t(g, 150 + 20 * 15.8 + 18, 902, 'BUILT WHERE', { 'font-size': 15, fill: '#A08BC9', w: 500 });
+  K.t(g, 150 + 20 * 15.8 + 18, 920, 'REPORTS WAS', { 'font-size': 15, fill: '#A08BC9', w: 500 });
+  K.t(g, 150 + 20 * 15.8 + 18, 938, 'PLANNED, 2011', { 'font-size': 15, fill: '#A08BC9', w: 500 });
+  K.t(g, 150, 1046, B.technical.rediscover.toUpperCase().replace('SYNAPSE BUILD --AUTO --LOCAL', 'RE-READ'), { 'font-size': 16, fill: '#8E9DEB', w: 500, 'letter-spacing': '0.05em' });
+
+  document.body.dataset.ready = '1';
+});
+</script>
+</body></html>

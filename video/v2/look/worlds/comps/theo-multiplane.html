@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Theo · the multiplane stand · handover</title>
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #140D09; }
+  svg { display: block; }
+</style></head>
+<body>
+<div id="stage"></div>
+<script src="../data/building.js"></script>
+<script src="../data/story.js"></script>
+<script src="lib/theo-shared.js"></script>
+<script src="lib/theo-multiplane.js"></script>
+<script>
+(function () {
+  const T = THEO, M = MULTI, S = WORLDS.story.handover, W = 1920, H = 1080, moment = 'handover';
+  const svg = T.svgRoot(document.getElementById('stage'), W, H);
+  M.defs(svg);
+  const P = T.projection({ cx: 900, cy: 790, s: 45, yaw: -0.14, pitch: 0.38 });
+  const Z = [0, 5, 10];
+  T.el('rect', { x: 0, y: 0, width: W, height: H, fill: M.UMBER }, svg);
+  T.el('rect', { x: 0, y: 0, width: W, height: H, fill: 'url(#keylight)' }, svg);
+  // the studio floor and the stand's base
+  T.el('polygon', { points: P.pts([[-4, -4, -1.2], [24, -4, -1.2], [24, 13, -1.2], [-4, 13, -1.2]]), fill: '#1C130D', stroke: '#3A2A1E', 'stroke-width': 1 }, svg);
+
+  // the camera above, looking straight down through every plane
+  const top = P(10, 4.5, 15), lensX = top[0];
+  T.el('rect', { x: lensX - 70, y: -20, width: 140, height: top[1] + 20, fill: '#1E1712', stroke: '#4A382A', 'stroke-width': 1.2 }, svg);
+  T.el('rect', { x: lensX - 92, y: 40, width: 184, height: 36, fill: '#2A2019', stroke: '#5A4532', 'stroke-width': 1 }, svg);
+  for (let ry = 92; ry < top[1] - 14; ry += 9) T.el('line', { x1: lensX - 70, y1: ry, x2: lensX + 70, y2: ry, stroke: '#3A2C21', 'stroke-width': 3 }, svg);
+  T.el('rect', { x: lensX - 78, y: top[1] - 40, width: 156, height: 26, fill: '#241B15', stroke: '#6E5440', 'stroke-width': 1 }, svg);
+  T.text(svg, lensX + 96, 64, 'ROSTRUM · LENS DOWN', { fill: 'rgba(244,235,216,.55)', 'font-family': 'Bahnschrift', 'font-size': 13, 'font-weight': 600, 'letter-spacing': '0.14em' });
+  T.el('ellipse', { cx: lensX, cy: top[1], rx: 70, ry: 15, fill: '#0B0806', stroke: '#8C6B4A', 'stroke-width': 1.6 }, svg);
+  T.el('ellipse', { cx: lensX, cy: top[1], rx: 34, ry: 7, fill: '#1D2A2E', stroke: '#C8B08A', 'stroke-width': 1 }, svg);
+  // the camera's sight line falls through the stack
+  T.el('line', { x1: lensX, y1: top[1] + 8, x2: P(10, 4.5, 0)[0], y2: P(10, 4.5, 0)[1], stroke: '#F4EBD8', 'stroke-opacity': .18, 'stroke-width': 1, 'stroke-dasharray': '4 6' }, svg);
+
+  M.stand(svg, P, 14, false);
+  // background: the building, painted
+  M.plate(svg, P, Z[0], { tint: .03 });
+  M.bg(svg, P, Z[0], moment);
+  // plane 2: what he'd need a key for, inked only; the one kept shut on frosted glass
+  M.plate(svg, P, Z[1], { tint: .05 });
+  const st = M.planes(svg, P, moment, Z);
+  // plane 1 drawn by planes(); its glass on top
+  M.plate(svg, P, Z[2], { tint: .06 });
+  // the camera's field on plane 1: the frame line it will expose
+  const fg = T.el('g', { transform: P.matrix(Z[2]) }, svg);
+  T.el('rect', { x: -.6, y: -.9, width: 21.2, height: 10.8, fill: 'none', stroke: '#F4EBD8', 'stroke-width': .05, 'stroke-dasharray': '.5 .3', 'stroke-opacity': .7 }, fg);
+  M.labels(svg, P, st, Z, { keys: false });
+  M.stand(svg, P, 14, true);
+
+  // plate captions, painted on the stand's rail beside each plate
+  const cap = (z, a, b, lit) => {
+    const p = P(-2, 11.2, z);
+    T.text(svg, p[0] - 26, p[1] - 22, a, { fill: lit ? '#F4EBD8' : 'rgba(244,235,216,.7)', 'font-family': 'Bahnschrift', 'font-size': 18, 'font-weight': 600, 'letter-spacing': '0.12em', 'text-anchor': 'end' });
+    T.text(svg, p[0] - 26, p[1] + 2, b, { fill: 'rgba(244,235,216,.6)', 'font-family': 'Cascadia Code', 'font-size': 14, 'text-anchor': 'end' });
+    T.el('line', { x1: p[0] - 18, y1: p[1] - 10, x2: p[0] - 2, y2: p[1] - 10, stroke: '#F4EBD8', 'stroke-opacity': .5 }, svg);
+  };
+  const c = WORLDS.counts(moment);
+  cap(Z[2], 'PLANE 1 · PAINTED', `${c.lit} read-only · exposed`, true);
+  cap(Z[1], 'PLANE 2 · INKED', `${c.key} not opened · by key`, false);
+  cap(Z[0], 'BACKGROUND', `spokes-and-sprockets · ${c.found} found`, false);
+  // the frosted patch's note
+  const shut = st.find(a => a.state === 'shut'), sp = P(shut.at[0] + 1.3, shut.at[1] + .9, Z[1]);
+  T.text(svg, sp[0] + 8, sp[1] + 18, 'DELETE /api/jobs/{job_id} · denied, frosted', { fill: 'rgba(244,235,216,.75)', 'font-family': 'Cascadia Code', 'font-size': 12.5 });
+
+  // the exposure: Synapse's read, timed the animator's way
+  const ex = T.el('g', { 'font-family': 'Cascadia Code' }, svg);
+  T.text(ex, 60, 74, `$ ${S.synapse.cmd}`, { fill: '#F4EBD8', 'font-size': 17, 'font-weight': 600 });
+  T.text(ex, 60, 102, `${S.synapse.seconds.toFixed(2)} s, under ${S.synapse.frames24} frames at 24 fps · 3 planes`, { fill: '#E7B46A', 'font-size': 15 });
+  T.text(ex, 60, 126, `${S.when} ${S.time} · ${S.synapse.repo}`, { fill: 'rgba(244,235,216,.5)', 'font-size': 14 });
+
+  // his words: the title card, set beside the stand
+  const tx = 1566, say = T.el('g', {}, svg);
+  T.text(say, tx, 560, 'THEO', { fill: '#E7B46A', 'font-family': 'Bahnschrift', 'font-size': 14, 'font-weight': 600, 'letter-spacing': '0.14em' });
+  ['“Barnaby, this is the shop’s', 'system. I wrote it when I was', 'fourteen, so be kind.”'].forEach((l, i) =>
+    T.text(say, tx, 588 + i * 24, l, { fill: 'rgba(244,235,216,.7)', 'font-family': 'Bahnschrift', 'font-size': 18, 'font-weight': 300 }));
+  ['Twenty-three', 'endpoints, sir.', 'I’ve taken the six', 'that only read;', 'nobody’s given me', 'any keys yet.'].forEach((l, i) =>
+    T.text(say, tx, 724 + i * 50, l, { fill: '#F4EBD8', 'font-family': 'Goudy Old Style', 'font-size': 44 }));
+  const bell = T.el('g', { transform: `translate(${tx + 18},652)`, fill: 'none', stroke: '#F4EBD8', 'stroke-width': 1.6 }, svg);
+  T.el('path', { d: 'M-16,14 A16,16 0 0 1 16,14 Z' }, bell); T.el('line', { x1: -21, y1: 14, x2: 21, y2: 14 }, bell); T.el('circle', { cx: 0, cy: -5, r: 2.2 }, bell);
+
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script>
+</body></html>

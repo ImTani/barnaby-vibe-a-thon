@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Theo · hologram · the Build lands (panel)</title>
+<style>html, body { margin: 0; width: 640px; height: 1080px; overflow: hidden; background: #05070A; } svg { display: block; }</style></head>
+<body>
+<div id="stage"></div>
+<script src="../../data/building.js"></script>
+<script src="../../data/story.js"></script>
+<script src="../lib/theo-shared.js"></script>
+<script src="../lib/theo-diff.js"></script>
+<script src="../lib/theo-hologram.js"></script>
+<script>
+(function () {
+  /* Mon 23 Nov 15:05, Theo's first afternoon in Lisbon: his portrait monitor, Barnaby's form fully itself.
+     The report lands: the diff, the checks passing, and the room where Reports was planned now built. */
+  const T = THEO, Hh = HOLO, C = Hh.C, B = WORLDS.story.build, D = THEO_DIFF, W = 640, H = 1080, moment = 'build';
+  const svg = T.svgRoot(document.getElementById('stage'), W, H);
+  T.el('rect', { x: 0, y: 0, width: W, height: H, fill: C.ground }, svg);
+  T.wmBar(svg, W, { title: 'barnaby · spokes-and-sprockets', ws: 2, when: `${B.when.replace(/ 2026/, '')}  ${B.time}`, accent: C.amber });
+
+  // the change, printed in the air above the house: Barnaby's lines in his own light
+  const r = D.files['routes_reports.py'];
+  T.text(svg, 28, 66, 'routes_reports.py', { fill: C.white, 'font-family': 'Cascadia Code', 'font-size': 15, 'font-weight': 600 });
+  T.text(svg, 612, 66, `+${r.lines.length} −0`, { fill: C.white, 'font-family': 'Cascadia Code', 'font-size': 14, 'text-anchor': 'end' });
+  T.code(svg, 28, 90, [r.hunk].concat(r.lines.filter(l => l.trim() !== '+')), { lh: 17, fs: 11.6, maxChars: 84, fill: C.white, plus: true, plusFill: C.amber });
+  T.code(svg, 28, 90, [r.hunk], { lh: 17, fs: 11.6, maxChars: 84, fill: C.amberLine });
+  const sum = T.el('g', { 'font-family': 'Cascadia Code', 'font-size': 13 }, svg);
+  [['services.py', `+${D.files['services.py'].lines.length}`], ['tests/test_workload.py', `+${D.files['tests/test_workload.py'].lines.length}`]].forEach(([f, n], i) => {
+    T.text(sum, 28, 278 + i * 20, f, { fill: C.amber }); T.text(sum, 612, 278 + i * 20, n, { fill: C.amber, 'text-anchor': 'end' });
+  });
+
+  // the house: the planned room is built, its brick written today; Synapse re-reads it (the accent, once)
+  const P = T.projection({ cx: 332, cy: 650, s: 37, yaw: -1.32, pitch: 0.72 });
+  Hh.model(svg, P, moment, {});
+  Hh.scan(svg, P, 11.1);
+  const nb = P(11.1, 1.4, 1.3);
+  T.el('polyline', { points: `${nb[0] - 8},${nb[1] - 6} 152,414 146,414`, fill: 'none', stroke: C.white, 'stroke-width': 1 }, svg);
+  T.text(svg, 28, 384, 'GET', { fill: C.white, 'font-family': 'Cascadia Code', 'font-size': 12, 'font-weight': 600 });
+  T.text(svg, 28, 402, '/api/reports/', { fill: C.white, 'font-family': 'Cascadia Code', 'font-size': 13.5, 'font-weight': 600 });
+  T.text(svg, 28, 419, 'workload/{day}', { fill: C.white, 'font-family': 'Cascadia Code', 'font-size': 13.5, 'font-weight': 600 });
+  T.text(svg, 28, 437, 'written today', { fill: C.amber, 'font-family': 'Cascadia Code', 'font-size': 12, 'font-style': 'italic' });
+  T.text(svg, 28, 942, B.technical.rediscover, { fill: C.accent, 'font-family': 'Cascadia Code', 'font-size': 12.5 });
+
+  // the checks: what Theo actually reads first
+  const ok = T.el('g', {}, svg);
+  T.el('path', { d: 'M30,968 l9,9 l17,-19', fill: 'none', stroke: C.white, 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, ok);
+  T.text(ok, 70, 978, D.tested, { fill: C.white, 'font-family': 'Cascadia Code', 'font-size': 23, 'font-weight': 600 });
+  T.text(ok, 70, 1006, 'pytest -q · Theo’s 19, and 3 new', { fill: C.amber, 'font-family': 'Cascadia Code', 'font-size': 13.5 });
+  T.text(ok, 70, 1028, `${B.technical.where} · ${B.technical.endToEnd} end to end`, { fill: C.amberDim, 'font-family': 'Cascadia Code', 'font-size': 12 });
+
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script>
+</body></html>

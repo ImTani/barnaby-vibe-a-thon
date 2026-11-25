@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Theo · the elbow console · handover</title>
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+  svg { display: block; }
+</style></head>
+<body>
+<div id="stage"></div>
+<script src="../data/building.js"></script>
+<script src="../data/story.js"></script>
+<script src="lib/theo-shared.js"></script>
+<script src="lib/theo-console.js"></script>
+<script>
+document.fonts.load("600 20px Bahnschrift").then(() => document.fonts.ready).then(() => {
+  const T = THEO, K = CONSOLE, S = WORLDS.story.handover, moment = 'handover', W = 1920, H = 1080;
+  const svg = T.svgRoot(document.getElementById('stage'), W, H), g = T.el('g', {}, svg);
+  T.el('rect', { x: 0, y: 0, width: W, height: H, fill: '#000' }, g);
+  const groups = T.groups(moment), c = WORLDS.counts(moment);
+  const X0 = 36, VW = 196, GAP = 8;
+
+  // UPPER FRAME: vertical bar down the left, elbow at the bottom sweeping right
+  const up = { x: X0, y: 28, vw: VW, vh: 606, aw: W - X0 - VW - 36, ah: 30, corner: 'bl' };
+  K.elbow(g, Object.assign({ fill: '#BC9BD8' }, up));
+  // segments of the arm
+  K.cut(g, 1060, up.y + up.vh - up.ah, GAP, up.ah); K.cut(g, 1380, up.y + up.vh - up.ah, GAP, up.ah); K.cut(g, 1620, up.y + up.vh - up.ah, GAP, up.ah);
+  T.el('rect', { x: 1068, y: up.y + up.vh - up.ah, width: 312, height: up.ah, fill: '#8E9DEB' }, g);
+  T.el('rect', { x: 1628, y: up.y + up.vh - up.ah, width: W - 36 - 1628, height: up.ah, fill: '#F0A37F' }, g);
+  // the left bar becomes the room banks, one block per row, each row's count as its code
+  const rowY0 = 138, rowH = 66;
+  T.el('rect', { x: X0, y: up.y, width: VW, height: rowY0 - up.y - GAP, fill: '#D97C80' }, g);
+  K.t(g, X0 + VW - 14, rowY0 - GAP - 14, 'BARNABY', { 'text-anchor': 'end', 'font-size': 26, w: 700 });
+  groups.forEach((grp, i) => {
+    const y = rowY0 + i * (rowH + GAP);
+    T.el('rect', { x: X0, y, width: VW, height: rowH, fill: K.BANK[grp.id] }, g);
+    K.cut(g, X0, y + rowH, VW, GAP);
+    K.t(g, X0 + 14, y + rowH - 14, String(grp.items.length).padStart(2, '0'), { 'font-size': 30, w: 700 });
+    K.t(g, X0 + VW - 14, y + rowH - 14, ({ workshop: 'WORKSHOP', office: 'OFFICE' })[grp.id] || grp.name.replace(/^The /, '').toUpperCase(), { 'text-anchor': 'end', 'font-size': 21 });
+  });
+
+  // title at the top right: what this panel is reading
+  K.t(g, W - 36, 84, 'SPOKES & SPROCKETS', { 'text-anchor': 'end', 'font-size': 66, fill: '#F0A37F', w: 600 });
+  K.t(g, 270, 62, `${S.synapse.cmd}`, { 'font-size': 22, fill: '#BC9BD8', w: 400 });
+  K.t(g, 270, 92, `${S.synapse.repo}  ·  ${S.when.toUpperCase()}  ${S.time}`, { 'font-size': 19, fill: '#8E9DEB', w: 400, 'letter-spacing': '0.04em' });
+
+  // the banks: each room's endpoints as pills on its row (two lines a row)
+  const ph = 30;
+  groups.forEach((grp, i) => {
+    const y = rowY0 + i * (rowH + GAP), placed = [];
+    let x = 266, line = 0;
+    grp.items.forEach(a => {
+      const [m, p] = T.splitKey(a.key);
+      const probe = T.el('g', {}, g), w = K.pill(probe, 0, 0, ph, p, m, a.state, K.BANK[grp.id]); probe.remove();
+      if (x + w > 1884 && line === 0) { x = 266; line = 1; }
+      placed.push([x, line, a, p, m]); x += w + 10;
+    });
+    const lines = placed.length && placed[placed.length - 1][1] === 1 ? 2 : 1;
+    const top = y + (rowH - (lines * ph + (lines - 1) * 6)) / 2;
+    placed.forEach(([px, ln, a, p, m]) => K.pill(g, px, top + ln * (ph + 6), ph, p, m, a.state, K.BANK[grp.id]));
+  });
+
+  // LOWER FRAME: elbow at the top-left, arm across the top, vertical bar down to the floor
+  const lo = { x: X0, y: 648, vw: VW, vh: H - 648 - 28, aw: W - X0 - VW - 36, ah: 30, corner: 'tl' };
+  K.elbow(g, Object.assign({ fill: '#8E9DEB' }, lo));
+  K.cut(g, 700, lo.y, GAP, lo.ah); K.cut(g, 1190, lo.y, GAP, lo.ah);
+  T.el('rect', { x: 708, y: lo.y, width: 482, height: lo.ah, fill: '#D9B98C' }, g);
+  T.el('rect', { x: 1198, y: lo.y, width: W - 36 - 1198, height: lo.ah, fill: '#BC9BD8' }, g);
+  // left bar blocks with real codes
+  const codes = [[c.found, 'FOUND', '#8E9DEB'], [c.lit, 'TAKEN', '#F0A37F'], [c.key, 'BY KEY', '#D9B98C'], [c.shut, 'DENIED', '#D97C80']];
+  codes.forEach(([n, lab, col], i) => {
+    const y = 748 + i * 70;
+    T.el('rect', { x: X0, y, width: VW, height: 62, fill: col }, g);
+    K.cut(g, X0, y - GAP, VW, GAP);
+    K.t(g, X0 + 14, y + 48, String(n).padStart(2, '0'), { 'font-size': 32, w: 700 });
+    K.t(g, X0 + VW - 14, y + 48, lab, { 'text-anchor': 'end', 'font-size': 21 });
+  });
+
+  // the readout: the read, timed
+  K.t(g, 270, 790, S.synapse.seconds.toFixed(2), { 'font-size': 108, fill: K.GOLD, w: 600 });
+  K.t(g, 276, 826, 'SECONDS TO READ THEO’S CODE', { 'font-size': 21, fill: K.GOLD, w: 500, 'letter-spacing': '0.06em' });
+  T.FILES.forEach(([f, n], i) => {
+    const fx = 276 + (i % 2) * 236, fy = 872 + Math.floor(i / 2) * 26;
+    K.t(g, fx, fy, f, { 'font-size': 19, fill: n ? '#BC9BD8' : '#8E9DEB', w: 400 });
+    if (n) K.t(g, fx + 210, fy, String(n), { 'font-size': 19, fill: '#BC9BD8', w: 700, 'text-anchor': 'end' });
+  });
+  K.t(g, 276, 1006, `NINE FILES  ·  ${c.found} ROUTES  ·  ${c.lit} READ-ONLY`, { 'font-size': 19, fill: '#8E9DEB', w: 500, 'letter-spacing': '0.06em' });
+
+  // his words, and Theo's
+  K.t(g, 760, 742, 'THEO', { 'font-size': 20, fill: '#F0A37F', w: 700, 'letter-spacing': '0.1em' });
+  K.t(g, 830, 742, '“Barnaby, this is the shop’s system. I wrote it', { 'font-size': 21, fill: '#F0A37F', w: 400 });
+  K.t(g, 830, 768, 'when I was fourteen, so be kind.”', { 'font-size': 21, fill: '#F0A37F', w: 400 });
+  K.t(g, 760, 826, 'BARNABY', { 'font-size': 20, fill: '#F4F1EA', w: 700, 'letter-spacing': '0.1em' });
+  ['Twenty-three endpoints, sir.', 'I’ve taken the six that only read;', 'nobody’s given me any keys yet.'].forEach((l, i) =>
+    K.t(g, 760, 884 + i * 52, l, { 'font-size': 44, fill: '#F4F1EA', w: 350 }));
+
+  // the deck plan of the house, in the panel's own grammar
+  K.deck(g, 1420, 722, 23, moment);
+  K.t(g, 1420 + 20 * 23, 960, 'GROUND FLOOR  ·  5 ROOMS, 1 PLANNED', { 'text-anchor': 'end', 'font-size': 19, fill: '#BC9BD8', w: 500, 'letter-spacing': '0.06em' });
+
+  document.body.dataset.ready = '1';
+});
+</script>
+</body></html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Theo · multiplane · the Build lands (panel)</title>
+<style>html, body { margin: 0; width: 640px; height: 1080px; overflow: hidden; background: #140D09; } svg { display: block; }</style></head>
+<body>
+<div id="stage"></div>
+<script src="../../data/building.js"></script>
+<script src="../../data/story.js"></script>
+<script src="../lib/theo-shared.js"></script>
+<script src="../lib/theo-diff.js"></script>
+<script src="../lib/theo-multiplane.js"></script>
+<script>
+(function () {
+  /* Mon 23 Nov 15:05, Lisbon, his portrait monitor: looking straight down the stand. The room planned in 2011 is
+     painted onto the background; its cel goes on plane 1, still wet; the diff and the checks sit beside the stand. */
+  const T = THEO, M = MULTI, B = WORLDS.story.build, D = THEO_DIFF, W = 640, H = 1080, moment = 'build';
+  const svg = T.svgRoot(document.getElementById('stage'), W, H);
+  M.defs(svg);
+  T.el('rect', { x: 0, y: 0, width: W, height: H, fill: M.UMBER }, svg);
+  T.el('rect', { x: 0, y: 0, width: W, height: H, fill: 'url(#keylight)' }, svg);
+  T.wmBar(svg, W, { title: 'barnaby · spokes-and-sprockets', ws: 2, when: `${B.when.replace(/ 2026/, '')}  ${B.time}`, accent: '#E7B46A' });
+
+  // the change, typed on the exposure sheet beside the stand
+  const r = D.files['routes_reports.py'];
+  T.text(svg, 28, 64, 'routes_reports.py', { fill: M.CREAM, 'font-family': 'Cascadia Code', 'font-size': 15, 'font-weight': 600 });
+  T.text(svg, 612, 64, `+${r.lines.length} −0`, { fill: M.CREAM, 'font-family': 'Cascadia Code', 'font-size': 14, 'text-anchor': 'end' });
+  T.code(svg, 28, 88, r.lines.filter(l => l.trim() !== '+'), { lh: 17, fs: 11.6, maxChars: 84, fill: M.CREAM, plus: true, plusFill: '#E7B46A' });
+  [['services.py', `+${D.files['services.py'].lines.length}`], ['tests/test_workload.py', `+${D.files['tests/test_workload.py'].lines.length}`]].forEach(([f, n], i) => {
+    T.text(svg, 28, 258 + i * 20, f, { fill: '#E7B46A', 'font-family': 'Cascadia Code', 'font-size': 13 });
+    T.text(svg, 612, 258 + i * 20, n, { fill: '#E7B46A', 'font-family': 'Cascadia Code', 'font-size': 13, 'text-anchor': 'end' });
+  });
+
+  // straight down the stand: the building runs up the monitor, planes a hand apart
+  const P = T.projection({ cx: 322, cy: 640, s: 24, yaw: -1.5708, pitch: 1.05 });
+  const Z = [0, 1.0, 2.0];
+  M.stand(svg, P, 3.4, false);
+  M.plate(svg, P, Z[0], { tint: .03 }); M.bg(svg, P, Z[0], moment);
+  M.plate(svg, P, Z[1], { tint: .05 });
+  const st = M.planes(svg, P, moment, Z);
+  M.plate(svg, P, Z[2], { tint: .06 });
+  // the new cel: wet paint catches the key light
+  const nw = st.find(a => a.tool === 'workload'), wg = T.el('g', { transform: P.matrix(Z[2]) }, svg);
+  T.el('rect', { x: nw.at[0] - .9, y: nw.at[1] - .62, width: 1.8, height: 1.24, rx: .2, fill: 'none', stroke: '#F7E3B8', 'stroke-width': .09 }, wg);
+  M.stand(svg, P, 3.4, true);
+  const np = P(nw.at[0], nw.at[1], Z[2]);
+  T.el('polyline', { points: `${np[0] - 22},${np[1]} 150,${np[1]}`, fill: 'none', stroke: M.CREAM, 'stroke-opacity': .7 }, svg);
+  ['Reports,', 'planned 2011,', 'painted in', 'today.'].forEach((l, i) => T.text(svg, 22, np[1] - 96 + i * 22, l, { fill: M.CREAM, 'font-family': 'Goudy Old Style', 'font-size': 19 }));
+  T.text(svg, 22, np[1] + 5, 'workload', { fill: M.CREAM, 'font-family': 'Cascadia Code', 'font-size': 14, 'font-weight': 600 });
+  T.text(svg, 22, np[1] + 23, 'plane 1, wet', { fill: '#E7B46A', 'font-family': 'Cascadia Code', 'font-size': 12 });
+  T.text(svg, 22, np[1] + 41, 'GET /api/reports/', { fill: 'rgba(244,235,216,.7)', 'font-family': 'Cascadia Code', 'font-size': 11 });
+  T.text(svg, 22, np[1] + 55, '  workload/{day}', { fill: 'rgba(244,235,216,.7)', 'font-family': 'Cascadia Code', 'font-size': 11, style: 'white-space:pre' });
+
+  // the checks
+  const ok = T.el('g', {}, svg);
+  T.el('path', { d: 'M30,968 l9,9 l17,-19', fill: 'none', stroke: M.CREAM, 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, ok);
+  T.text(ok, 70, 978, D.tested, { fill: M.CREAM, 'font-family': 'Cascadia Code', 'font-size': 23, 'font-weight': 600 });
+  T.text(ok, 70, 1006, 'pytest -q · Theo’s 19, and 3 new', { fill: '#E7B46A', 'font-family': 'Cascadia Code', 'font-size': 13.5 });
+  T.text(ok, 70, 1028, B.technical.rediscover, { fill: 'rgba(244,235,216,.55)', 'font-family': 'Cascadia Code', 'font-size': 12 });
+
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script>
+</body></html>

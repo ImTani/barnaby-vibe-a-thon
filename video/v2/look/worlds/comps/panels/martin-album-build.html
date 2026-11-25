@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Martin · sticker album · the Build (Mon 15:05)</title>
+<style>
+  :root { --page: #C8372D; --white: #FFFFFF; --ink: #1A1A1A; --cover: #2B1410; }
+  html, body { margin: 0; width: 640px; height: 1080px; overflow: hidden; background: var(--cover); color: var(--white); font-family: 'Franklin Gothic Medium Cond', 'Franklin Gothic Medium', sans-serif; }
+  .page { position: absolute; left: 12px; top: 12px; width: 616px; height: 1056px; background: var(--page); border-radius: 0 6px 6px 0; }
+  #art { position: absolute; left: 0; top: 0; }
+  .t { position: absolute; left: 32px; top: 24px; right: 32px; display: flex; align-items: baseline; }
+  .t b { font: 400 32px 'Franklin Gothic Heavy', sans-serif; } .t span { margin-left: auto; font: 400 22px 'Franklin Gothic Demi Cond', sans-serif; }
+  .ask { position: absolute; left: 30px; top: 836px; width: 580px; box-sizing: border-box; background: var(--white); color: var(--ink); border-radius: 8px; padding: 12px 18px 14px; }
+  .ask h3 { margin: 0 0 6px; font: 400 26px 'Franklin Gothic Demi Cond', sans-serif; color: var(--page); }
+  .ask p { margin: 0 0 4px; font-size: 18.5px; line-height: 1.2; } .ask p b { font-family: 'Franklin Gothic Demi Cond', sans-serif; font-weight: 400; }
+  .ask .acts { display: flex; gap: 12px; margin-top: 10px; align-items: center; }
+  .ask button { font: 400 22px 'Franklin Gothic Demi Cond', sans-serif; padding: 6px 22px; border: 3px solid var(--ink); background: var(--white); border-radius: 4px; }
+  .ask button.yes { background: var(--ink); color: var(--white); }
+  .ask a { margin-left: auto; font-size: 18px; color: var(--ink); }
+</style></head><body>
+<div class="page"></div>
+<svg id="art" width="640" height="1080" viewBox="0 0 640 1080"></svg>
+<div class="t"><b>Spokes &amp; Sprockets</b><span>Mon 23 Nov &middot; 15:05</span></div>
+<div class="ask" id="ask"></div>
+<script src="../../data/building.js"></script><script src="../../data/story.js"></script>
+<script src="../lib/martin-plan.js"></script><script src="../lib/martin-album.js"></script>
+<script>
+(function () {
+  const W = WORLDS, S = W.story.build, M = MPLAN, C = ALBUM.C, FONT = ALBUM.FONT;
+  const svg = document.getElementById('art');
+  const api = ALBUM.draw(svg, { moment: 'build', orient: 'port', s: 32, ox: 44, oy: 100, slotW: 22, slotH: 26, slotsFromAnchors: true, noCaptions: true, skipNew: true });
+  const { P } = api, g = api.gTop;
+  const T = (x, y, str, a) => M.text(g, x, y, str, Object.assign({ 'font-family': FONT, fill: C.white }, a));
+  { const p = P(0, 4.5); T(p[0], p[1] + 26, 'MARKET PLACE', { 'font-size': 17, 'letter-spacing': '0.2em', 'text-anchor': 'middle' }); }
+  { const p = P(20.6, 2.2); T(p[0], p[1] - 4, 'BACK LANE', { 'font-size': 17, 'letter-spacing': '0.2em', 'text-anchor': 'middle' }); }
+  const a24 = api.items.find(a => a.tool === 'workload');
+  const c = P(11.1, 1.5), x = c[0] - 42, y = c[1] - 50;
+  api.sticker(g, a24, x, y, { rot: -4, lift: true, w: 84, h: 100, foil: true });
+  const lx = P(11.6, 9.0)[0] + 18, ly = P(11.1, 3.0)[1];
+  T(lx, ly - 8, '24 · Workload', { 'font-size': 28, 'font-family': 'Franklin Gothic Heavy' });
+  T(lx, ly + 20, 'A new sticker for the slot', { 'font-size': 19 });
+  T(lx, ly + 42, 'printed “coming soon!!”', { 'font-size': 19 });
+  T(lx, ly + 64, 'since 2011', { 'font-size': 19 });
+  const L = Object.fromEntries(S.card.lines);
+  document.getElementById('ask').innerHTML = `<h3>${S.card.title}</h3><p><b>What it reads:</b> ${L['What it reads']}</p><p><b>Theo’s checks:</b> ${L['Theo’s checks']}</p><p><b>If you change your mind:</b> ${L['If you change your mind']}</p>
+    <div class="acts"><button class="yes">${S.card.yes}</button><button>${S.card.no}</button><a href="#">${S.card.see}</a></div>`;
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script></body></html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8"><title>Martin · plan by the back door · the Build (Mon 15:05)</title>
+<style>
+  @font-face { font-family: 'EvacNum'; src: local('Calibri'); font-weight: 400; unicode-range: U+0030-0039; }
+  @font-face { font-family: 'EvacNum'; src: local('Calibri Bold'); font-weight: 700; unicode-range: U+0030-0039; }
+  :root { --ink: #141414; --paper: #FFFFFF; --green: #00843D; --blue: #0057A0; --red: #C8102E; }
+  html, body { margin: 0; width: 640px; height: 1080px; overflow: hidden; background: var(--paper); color: var(--ink); font-family: 'EvacNum', 'Gill Sans MT', Calibri, sans-serif; }
+  #plan { position: absolute; left: 0; top: 0; }
+  .band { position: absolute; left: 0; top: 0; width: 640px; height: 74px; background: var(--green); color: var(--paper); display: flex; align-items: center; padding: 0 26px; box-sizing: border-box; }
+  .band b { font-size: 30px; } .band span { margin-left: auto; font-size: 22px; }
+  .sign { position: absolute; left: 24px; top: 832px; width: 592px; border: 5px solid var(--blue); box-sizing: border-box; }
+  .sign .top { background: var(--blue); color: var(--paper); display: grid; grid-template-columns: 54px 1fr; gap: 12px; align-items: center; padding: 8px 14px; }
+  .sign h3 { margin: 0; font-size: 25px; line-height: 1.05; }
+  .sign .body { padding: 8px 16px 12px; font-size: 18.5px; line-height: 1.22; }
+  .sign p { margin: 0 0 5px; } .sign p b { font-weight: 700; }
+  .sign .acts { display: flex; gap: 12px; margin-top: 8px; align-items: center; }
+  .sign button { font: 700 21px 'EvacNum', 'Gill Sans MT', Calibri, sans-serif; padding: 6px 24px; border: 3px solid var(--ink); background: var(--paper); }
+  .sign button.yes { background: var(--green); border-color: var(--green); color: var(--paper); }
+  .sign a { margin-left: auto; font-size: 18px; color: var(--ink); }
+</style></head><body>
+<svg id="plan" width="640" height="1080" viewBox="0 0 640 1080"></svg>
+<div class="band"><b>Spokes &amp; Sprockets</b><span>Monday 23 November &middot; 15:05</span></div>
+<div class="sign" id="sign"></div>
+<script src="../../data/building.js"></script><script src="../../data/story.js"></script>
+<script src="../lib/martin-plan.js"></script><script src="../lib/martin-evac.js"></script>
+<script>
+(function () {
+  const W = WORLDS, S = W.story.build, M = MPLAN, C = EVAC.C, FONT = EVAC.FONT;
+  const svg = document.getElementById('plan');
+  const api = EVAC.draw(svg, { moment: 'build', orient: 'port', s: 32, ox: 44, oy: 122, detail: 'low', vanTo: 21.6 });
+  const { P } = api, g = M.el('g', {}, svg);
+  const T = (x, y, str, a) => M.text(g, x, y, str, Object.assign({ 'font-family': FONT, fill: C.ink, stroke: '#fff', 'stroke-width': 5, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, a));
+  for (const a of M.numbered('build')) {
+    if (a.state === 'new' || a.state === 'planned') continue;
+    const p = P(...a.anchor); api.sign(a.state, p[0], p[1], 19, null, g);
+  }
+  { const p = P(0, 4.5); T(p[0], p[1] + 26, 'MARKET PLACE', { 'font-size': 17, 'font-weight': 700, 'letter-spacing': '0.2em', 'text-anchor': 'middle' }); }
+  { const p = P(20.6, 2.2); T(p[0], p[1] - 4, 'BACK LANE', { 'font-size': 17, 'font-weight': 700, 'letter-spacing': '0.2em', 'text-anchor': 'middle' }); }
+  const lab = (x, y, str) => { const p = P(x, y); T(p[0], p[1], str, { 'font-size': 16, 'font-weight': 700, 'letter-spacing': '0.05em' }); };
+  lab(2.2, 5.9, 'SHOP'); lab(8.6, 6.4, 'WORKSHOP'); lab(17.9, 1.0, 'STOCKROOM');
+  const c = P(11.1, 1.5); api.here(c[0], c[1] - 8, 8, g);
+  const ns = P(11.1, 2.35); api.sign('new', ns[0], ns[1] + 6, 22, null, g);
+  const lx = P(11.6, 9.0)[0] + 22, ly = P(11.1, 3.0)[1];
+  M.el('polyline', { points: `${ns[0] + 14},${ns[1] + 6} ${lx - 6},${ly}`, fill: 'none', stroke: C.green, 'stroke-width': 3 }, g);
+  T(lx, ly - 6, 'Workload: new', { 'font-size': 26, 'font-weight': 700, fill: C.green });
+  T(lx, ly + 18, 'Barnaby is here, 15:05', { 'font-size': 19, fill: C.red, 'font-weight': 700 });
+  T(lx, ly + 40, 'New walls hatched', { 'font-size': 18 });
+  const sg = document.getElementById('sign');
+  const big = M.el('svg', { width: 54, height: 54, viewBox: '0 0 54 54' }); M.el('circle', { cx: 27, cy: 27, r: 25, fill: C.blue, stroke: '#fff', 'stroke-width': 3 }, big);
+  M.el('path', { d: 'M15 31 V20 H39 V31 M12 31 H42 M27 20 V14', fill: 'none', stroke: '#fff', 'stroke-width': 3.4, 'stroke-linejoin': 'round' }, big);
+  sg.innerHTML = '<div class="top"></div><div class="body"></div>';
+  sg.firstChild.appendChild(big); sg.firstChild.insertAdjacentHTML('beforeend', `<h3>${S.card.title}</h3>`);
+  const L = Object.fromEntries(S.card.lines);
+  sg.lastChild.innerHTML = `<p><b>What it reads:</b> ${L['What it reads']}</p><p><b>Theo’s checks:</b> ${L['Theo’s checks']}</p><p><b>If you change your mind:</b> ${L['If you change your mind']}</p>
+    <div class="acts"><button class="yes">${S.card.yes}</button><button>${S.card.no}</button><a href="#">${S.card.see}</a></div>`;
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script></body></html>

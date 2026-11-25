@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<!--
+  Barnaby in the film: three worlds. A static decision page for the director (stands in for impeccable's live
+  decision page, which a subagent cannot serve). Data: data/derivation.js (steps 1-3, written before each roll),
+  data/roll-*.txt (the concept-seed output), data/hands.js (the weighing, verdicts and raises), data/recommend.js.
+  Frames: frames/*.png (1920x1080 heroes), frames/panels/*.png (640x1080 Build-moment panels). Open this file directly.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Barnaby in the film: three worlds</title>
+<style>
+  :root {
+    --ground: #16171a; --raise: #1f2125; --raise-2: #272a2f; --rule: #34383e;
+    --ink: #eceae4; --ink-2: #b9b6ad; --ink-3: #8f8c84; --mark: #f0b44c; --decline: #6d6a64;
+    --theo: #e8a64a; --martin: #e4e1d8; --priya: #d9694a;
+    --sans: "Segoe UI", system-ui, sans-serif; --cond: "Bahnschrift", "Segoe UI", sans-serif; --mono: "Cascadia Code", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  ::selection { background: var(--mark); color: #16171a; }
+  html { scrollbar-color: #3a3e45 var(--ground); }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 17px/1.55 var(--sans); }
+  a { color: var(--mark); text-underline-offset: 3px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--mark); outline-offset: 3px; border-radius: 2px; }
+  .wrap { max-width: 1480px; margin: 0 auto; padding: 56px 48px 96px; }
+  header.top h1 { font: 600 44px/1.1 var(--cond); letter-spacing: -0.01em; margin: 0 0 14px; }
+  header.top p { max-width: 74ch; color: var(--ink-2); margin: 0 0 10px; }
+  .brief { border: 1px solid var(--rule); border-radius: 6px; padding: 18px 22px; margin: 26px 0 8px; background: var(--raise); max-width: 1100px; }
+  .brief q { color: var(--ink); font-style: italic; quotes: "\201C" "\201D"; }
+  .brief p { margin: 0 0 8px; color: var(--ink-2); }
+  nav.jump { display: flex; gap: 22px; margin: 22px 0 0; font: 600 16px var(--cond); }
+  section.person { margin-top: 84px; padding-top: 34px; border-top: 1px solid var(--rule); }
+  section.person > h2 { font: 600 38px/1.1 var(--cond); margin: 0 0 10px; display: flex; align-items: baseline; gap: 16px; }
+  section.person > h2 .swatch { width: 14px; height: 14px; border-radius: 50%; display: inline-block; transform: translateY(-4px); }
+  .role { font-size: 19px; color: var(--ink); max-width: 80ch; margin: 0 0 6px; }
+  .moment { color: var(--ink-2); max-width: 90ch; margin: 0 0 6px; }
+  .pin { color: var(--ink-2); max-width: 90ch; margin: 0 0 6px; }
+  .roll { margin: 24px 0 28px; display: grid; grid-template-columns: 260px 1fr; gap: 6px 22px; background: var(--raise); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 22px; }
+  .roll dt { color: var(--ink-3); font: 600 14px var(--cond); letter-spacing: .02em; padding-top: 2px; }
+  .roll dd { margin: 0; color: var(--ink-2); }
+  .roll code, .mono { font: 14px var(--mono); color: var(--ink); }
+  .roll ol { margin: 0; padding-left: 20px; } .roll li { margin: 1px 0; }
+  .roll li.assigned { color: var(--ink); font-weight: 600; }
+  .roll li.pickd { color: var(--ink); }
+  .roll li .tag { font: 600 12px var(--cond); letter-spacing: .04em; color: #16171a; background: var(--mark); border-radius: 3px; padding: 1px 6px; margin-left: 8px; }
+  .roll li .tag.p { background: var(--ink-2); }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+  .card { background: var(--raise); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+  .card.lead { grid-column: 1 / -1; }
+  .card.lead .body { display: block; columns: 2; column-gap: 40px; padding: 24px 28px 28px; }
+  .card.lead .body > * { break-inside: avoid; margin-bottom: 12px; }
+  .card.lead .body > h3, .card.lead .body > .thesis:first-of-type { column-span: all; }
+  .card.lead .body > .thesis:first-of-type { font-size: 18.5px; max-width: 110ch; margin-bottom: 16px; }
+  .card.recommended { border-color: var(--mark); box-shadow: 0 0 0 1px var(--mark); }
+  .card .shot { display: block; background: #000; position: relative; align-self: start; }
+  .card .shot img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+  .card .shot .missing { aspect-ratio: 16/9; display: grid; place-items: center; color: var(--ink-3); font: 15px var(--mono); }
+  .card .body { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .card h3 { font: 600 28px/1.15 var(--cond); margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+  .kind { font: 600 13px var(--cond); letter-spacing: .05em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 3px; padding: 1px 7px; color: var(--ink-2); }
+  .kind.roll-k { color: var(--mark); }
+  .kind.rec { color: #16171a; background: var(--mark); border-color: var(--mark); }
+  .thesis { color: var(--ink); margin: 0; }
+  .facts { display: grid; grid-template-columns: 132px 1fr; gap: 4px 14px; margin: 4px 0 0; font-size: 15.5px; }
+  .facts dt { color: var(--ink-3); font: 600 14px var(--cond); padding-top: 2px; }
+  .facts dd { margin: 0; color: var(--ink-2); }
+  .raises { margin: 6px 0 0; padding: 0; list-style: none; font-size: 15.5px; }
+  .raises li { padding: 6px 0; border-top: 1px solid var(--rule); color: var(--ink-2); }
+  .raises li b { color: var(--ink); font-weight: 600; }
+  .raises-h { font: 600 15px var(--cond); color: var(--ink); margin: 8px 0 0; }
+  .risk { color: var(--ink-2); font-size: 15.5px; margin: 4px 0 0; padding: 10px 12px; border: 1px dashed #5a5e66; border-radius: 5px; }
+  .risk b { color: var(--ink); }
+  .reco { color: var(--ink); font-size: 16px; margin: 2px 0 0; padding: 10px 12px; border-radius: 5px; background: rgba(240,180,76,.12); }
+  .panel-row { display: flex; gap: 12px; align-items: flex-end; margin-top: 6px; }
+  .panel-row a img { width: 120px; height: 202px; object-fit: cover; display: block; border-radius: 3px; border: 1px solid var(--rule); }
+  .panel-row span { color: var(--ink-3); font-size: 14.5px; max-width: 34ch; }
+  .declined { margin-top: 22px; border: 1px solid var(--rule); border-radius: 6px; background: #1a1b1e; }
+  .declined > h4 { font: 600 16px var(--cond); color: var(--ink-2); margin: 0; padding: 12px 18px; border-bottom: 1px solid var(--rule); }
+  .declined ul { list-style: none; margin: 0; padding: 4px 18px 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+  .declined li { padding: 8px 0; border-bottom: 1px solid #26282c; font-size: 15px; color: var(--decline); }
+  .declined li b { color: var(--ink-3); font-weight: 600; } .declined li i { color: var(--ink-3); font-style: normal; }
+  .declined .cid { font: 12.5px var(--mono); color: #5c5a55; }
+  .smaller { color: var(--ink-2); font-size: 15.5px; margin: 14px 0 0; }
+  details.grounded { margin-top: 16px; }
+  details.grounded summary { cursor: pointer; font: 600 16px var(--cond); color: var(--ink-2); }
+  details.grounded ol { color: var(--ink-2); font-size: 15px; margin: 10px 0 0; }
+  details.grounded li { margin: 6px 0; } details.grounded li b { color: var(--ink); }
+  details.grounded .rut { color: var(--ink-3); font-size: 15px; margin: 10px 0 0; }
+  .exit { margin-top: 16px; color: var(--ink-3); font-size: 15px; }
+  .exit b { color: var(--ink-2); font-weight: 600; }
+  section.same { margin-top: 90px; padding-top: 34px; border-top: 1px solid var(--rule); }
+  section.same h2 { font: 600 38px/1.1 var(--cond); margin: 0 0 10px; }
+  section.same p { color: var(--ink-2); max-width: 86ch; }
+  section.same img { width: 100%; display: block; border-radius: 6px; border: 1px solid var(--rule); margin-top: 14px; }
+  section.notes { margin-top: 80px; padding-top: 28px; border-top: 1px solid var(--rule); color: var(--ink-2); }
+  section.notes h2 { font: 600 28px var(--cond); color: var(--ink); margin: 0 0 10px; }
+  section.notes li { margin: 6px 0; max-width: 100ch; }
+  @media (max-width: 1100px) { .cards { grid-template-columns: 1fr; } .card.lead .body { columns: 1; } .declined ul { grid-template-columns: 1fr; } .roll { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Barnaby in the film: three worlds</h1>
+    <p>One butler, three people, three worlds. Under the hood it is one building, one set of 24 abilities and one story (the same data files feed every frame); on screen each person gets the world they already understand.</p>
+    <div class="brief">
+      <p><q>Barnaby is three different things to three different people, and we are trying to give them all the exact same look. &hellip; Impeccable lets you roll a dice and select a world and really leans into that world as a medium of design.</q></p>
+      <p>How each round ran: seven grounded worlds from that person&rsquo;s own culture, written down before the dice; <code class="mono">impeccable concept-seed --scope direction --mode experience</code> picked which one gets built and dealt catalogue challengers; every challenger was fused with the story and weighed against the dealt world on audience identification and product clarity. Losers donate one discipline each, shown as named raises on the dealt world. Pick a card per person, or ask for a re-roll.</p>
+    </div>
+    <nav class="jump"><a href="#theo">Theo</a><a href="#martin">Martin</a><a href="#priya">Priya</a><a href="#same">Same butler, three worlds</a><a href="#notes">What was substituted</a></nav>
+  </header>
+  <main id="people"></main>
+  <section class="same" id="same">
+    <h2>Same butler, three worlds</h2>
+    <p id="same-text">Scene 6, the moment the report lands (Mon 23 Nov, 15:05). Theo sees the change and the tests passing, Martin a new room in his building, Priya two new jobs on her bench. One build, one result, three worlds.</p>
+    <a href="frames/same-butler.png"><img src="frames/same-butler.png" alt="The Build moment in Theo's, Martin's and Priya's recommended worlds, side by side"></a>
+  </section>
+  <section class="notes" id="notes">
+    <h2>What was substituted</h2>
+    <ul id="subs"></ul>
+  </section>
+</div>
+<script src="data/derivation.js"></script>
+<script src="data/hands.js"></script>
+<script src="data/recommend.js"></script>
+<script>
+(function () {
+  const D = window.DERIVATION, H = window.HANDS, R = window.RECOMMEND || {};
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const colour = { theo: 'var(--theo)', martin: 'var(--martin)', priya: 'var(--priya)' };
+  const kindLabel = c => c.kind === 'assigned' ? '<span class="kind roll-k">The roll</span>'
+    : c.kind === 'pick' ? '<span class="kind">Impeccable&rsquo;s pick</span>'
+    : `<span class="kind">Challenger &middot; ${esc(c.verdict)}</span>`;
+  const people = ['theo', 'martin', 'priya'];
+  const canon = {
+    theo: 'The developer console: a dark editor-style panel with the endpoint table, the call trace and the git log, done properly (what the last round’s Theo view was).',
+    martin: 'The clean app floor plan: a light product-UI plan with rounded rooms, icons and status chips, the way smart-home apps draw a house.',
+    priya: 'The assistant home screen: a greeting, her two jobs as cards and a row of suggested questions.',
+  };
+  let html = '';
+  for (const p of people) {
+    const h = H[p], d = D[p], rec = R[p] || {};
+    const dealtIdx = h.roll.assigned - 1;
+    const pickId = (h.cards.find(c => c.kind === 'pick') || {}).id;
+    html += `<section class="person" id="${p}"><h2><span class="swatch" style="background:${colour[p]}"></span>${esc(h.person)}</h2>
+      <p class="role">${esc(h.role)}</p><p class="moment">${esc(h.moment)}</p>${h.pin ? `<p class="pin">${esc(h.pin)}</p>` : ''}${h.machines ? `<p class="pin">${esc(h.machines)}</p>` : ''}
+      <dl class="roll"><dt>The roll</dt><dd><code>${esc(h.roll.seed)}</code> dealt my candidate <b>${h.roll.assigned} of ${h.roll.of}</b>: <b>${esc(d.candidates[dealtIdx].name)}</b>. Full output: <a href="${esc(h.roll.file)}">${esc(h.roll.file)}</a></dd>
+        <dt>My seven, before the dice</dt><dd><ol>${d.candidates.map((c, i) => `<li class="${i === dealtIdx ? 'assigned' : c.id && h.cards.some(k => k.kind === 'pick' && k.name === c.name) ? 'pickd' : ''}">${esc(c.name)}${i === dealtIdx ? '<span class="tag">dealt</span>' : ''}${h.cards.some(k => k.kind === 'pick' && k.name === c.name) ? '<span class="tag p">my pick</span>' : ''}</li>`).join('')}</ol></dd>
+        <dt>Challengers dealt</dt><dd>${[...h.cards.filter(c => c.kind === 'challenger'), ...h.declined].map(c => esc(c.name)).join(' &middot; ')}</dd></dl>
+      <div class="cards">`;
+    h.cards.forEach((c, i) => {
+      const isRec = rec.card === c.id;
+      const panel = `frames/panels/${c.id}-build.png`;
+      html += `<article class="card${i === 0 ? ' lead' : ''}${isRec ? ' recommended' : ''}" id="${c.id}">
+        <a class="shot" href="${esc(c.frame)}"><img src="${esc(c.frame)}" alt="${esc(c.name)}: hero frame" onerror="this.outerHTML='<div class=missing>frame not rendered yet</div>'"></a>
+        <div class="body"><h3>${esc(c.name)} ${kindLabel(c)}${isRec ? '<span class="kind rec">Recommended</span>' : ''}</h3>
+        <p class="thesis">${esc(c.thesis)}</p>
+        <dl class="facts"><dt>Palette</dt><dd>${esc(c.palette)}</dd><dt>Materials</dt><dd>${esc(c.materials)}</dd><dt>First viewport</dt><dd>${esc(c.firstViewport)}</dd>${c.machinesLine ? `<dt>Two machines</dt><dd>${esc(c.machinesLine)}</dd>` : ''}${c.catalogId ? `<dt>Catalogue world</dt><dd class="mono">${esc(c.catalogId)}</dd>` : ''}</dl>
+        ${c.raises ? `<p class="raises-h">Raised by the hand it beat</p><ul class="raises">${c.raises.map(r => `<li><b>${esc(r[0])}:</b> ${esc(r[1])}</li>`).join('')}</ul>` : ''}
+        ${c.case ? `<p class="thesis" style="color:var(--ink-2)">${esc(c.case)}</p>` : ''}
+        <p class="risk"><b>Honest risk.</b> ${esc(c.risk)}</p>
+        ${isRec && rec.why ? `<p class="reco"><b>Why I recommend it.</b> ${esc(rec.why)}</p>` : ''}
+        <div class="panel-row"><a href="${panel}"><img src="${panel}" alt="${esc(c.name)} at the Build moment" onerror="this.parentNode.parentNode.style.display='none'"></a><span>The same Build moment (scene 6) in this world.</span></div>
+        ${rec.lisbon && rec.lisbonCard === c.id ? `<div class="panel-row"><a href="${esc(rec.lisbon)}"><img src="${esc(rec.lisbon)}" alt="In Lisbon" style="width:360px;height:202px"></a><span>${esc(rec.lisbonText || 'Fully himself on the Lisbon desk.')}</span></div>` : ''}
+        </div></article>`;
+    });
+    html += `</div>
+      <div class="declined"><h4>Declined challengers (kept one discipline each, still adoptable on request)</h4><ul>${h.declined.map(x => `<li><b>${esc(x.name)}</b> &middot; ${esc(x.why)} <i>Kept: ${esc(x.kept)}</i><br><span class="cid">${esc(x.catalogId)}</span></li>`).join('')}</ul></div>
+      ${h.smaller ? `<p class="smaller">${esc(h.smaller)}</p>` : ''}
+      <details class="grounded"><summary>The grounded derivation (steps 1 to 3)</summary>
+        <p class="rut"><b>Scene.</b> ${esc(d.scene)}</p><p class="rut"><b>Cultural home.</b> ${esc(d.home)}</p><p class="rut"><b>Must prove.</b> ${esc(d.prove)}</p>
+        <p class="rut"><b>The rut, kept out:</b> ${d.rut.map(esc).join(' ')}</p>
+        <ol>${d.candidates.map(c => `<li><b>${esc(c.name)}.</b> ${esc(c.why)} <i>Looks like:</i> ${esc(c.look)} <i>The moment:</i> ${esc(c.moment)}</li>`).join('')}</ol></details>
+      <p class="exit"><b>Or:</b> re-roll this person (plain, safer or bolder), steer it in a line, or take the standing exit, the category standard played straight: ${esc(canon[p])}</p>
+    </section>`;
+  }
+  document.getElementById('people').innerHTML = html;
+  const subs = (window.RECOMMEND && window.RECOMMEND.substitutions) || [];
+  document.getElementById('subs').innerHTML = subs.map(s => `<li>${esc(s)}</li>`).join('');
+  if (R.sameText) document.getElementById('same-text').textContent = R.sameText;
+})();
+</script>
+</body>
+</html>

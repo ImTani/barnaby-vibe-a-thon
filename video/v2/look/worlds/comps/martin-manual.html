@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Martin · The dealer manual plate · the key (Mon 08:55)</title>
+<style>
+  :root { --ink: #111111; --paper: #FFFFFF; --spot: #1B4FD8; --red: #D32212; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); color: var(--ink);
+    font-family: Bahnschrift, 'Segoe UI', sans-serif; font-size: 18px; }
+  ::selection { background: var(--spot); color: var(--paper); }
+  #plate { position: absolute; left: 0; top: 0; }
+  .head { position: absolute; left: 60px; right: 60px; top: 26px; display: flex; align-items: baseline; gap: 28px;
+    border-bottom: 3px solid var(--ink); padding-bottom: 10px; }
+  .head .doc { font-weight: 700; font-size: 26px; font-stretch: 87.5%; letter-spacing: 0.02em; }
+  .head .sub { font-size: 20px; font-stretch: 87.5%; }
+  .head .when { margin-left: auto; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .head .count { font-size: 20px; font-stretch: 87.5%; }
+  .head .count b { font-weight: 700; }
+
+  .index { position: absolute; left: 1452px; top: 96px; width: 420px; }
+  .index h2 { font-size: 26px; font-weight: 700; font-stretch: 87.5%; margin: 0 0 6px; }
+  .index .grp { margin: 12px 0 2px; font-size: 18px; font-weight: 700; font-stretch: 75%; letter-spacing: 0.08em; text-transform: uppercase;
+    border-bottom: 1.5px solid var(--ink); padding-bottom: 2px; display: flex; justify-content: space-between; }
+  .index .grp span { font-weight: 400; letter-spacing: 0.02em; text-transform: none; font-stretch: 87.5%; }
+  .index .row { display: grid; grid-template-columns: 46px 1fr; align-items: center; height: 27px; font-size: 18.5px; }
+  .index .row svg { display: block; }
+  .index .row.asking { color: var(--spot); font-weight: 700; }
+  .index .row.shut .t { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+  .index .row .t small { font-size: 16px; font-weight: 400; }
+
+  .lower { position: absolute; left: 60px; top: 712px; width: 720px; }
+  .cap { font-size: 22px; font-stretch: 87.5%; margin: 0 0 14px; }
+  .cap b { font-weight: 700; margin-right: 10px; }
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; margin-bottom: 18px; }
+  .legend div { display: grid; grid-template-columns: 50px 1fr; align-items: center; font-size: 18px; line-height: 1.2; }
+  .route { border-top: 1.5px solid var(--ink); padding-top: 8px; }
+  .route .step { display: grid; grid-template-columns: 64px 1fr; gap: 8px; font-size: 19px; line-height: 1.3; margin: 5px 0; }
+  .route .step time { font-weight: 700; color: var(--spot); font-variant-numeric: tabular-nums; }
+  .route .step .found { display: block; font-size: 18px; }
+  .route .step.short .found { color: var(--red); font-weight: 700; }
+
+  .note { position: absolute; left: 828px; top: 700px; width: 572px; border: 2.5px solid var(--ink); padding: 16px 20px 18px; background: var(--paper); }
+  .note .hd { display: grid; grid-template-columns: 70px 1fr; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .note h3 { margin: 0; font-size: 25px; line-height: 1.12; font-weight: 700; font-stretch: 87.5%; }
+  .note .said { font-size: 20px; line-height: 1.35; margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1.5px solid var(--ink); }
+  .note dl { display: grid; grid-template-columns: 150px 1fr; gap: 6px 14px; margin: 0 0 14px; font-size: 18px; line-height: 1.3; }
+  .note dt { font-weight: 700; font-stretch: 87.5%; }
+  .note dd { margin: 0; }
+  .note .acts { display: flex; gap: 14px; align-items: center; }
+  .note button { font: 700 22px Bahnschrift; font-stretch: 87.5%; padding: 10px 26px; border: 2.5px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
+  .note button.yes { background: var(--spot); border-color: var(--spot); color: var(--paper); }
+  .note button:focus-visible { outline: 3px solid var(--spot); outline-offset: 3px; }
+</style>
+</head>
+<body>
+<svg id="plate" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+<div class="head">
+  <span class="doc">Spokes &amp; Sprockets</span><span class="sub">Ground floor, as Barnaby walks it</span>
+  <span class="count" id="count"></span>
+  <span class="when">Monday 23 November &middot; 08:55</span>
+</div>
+<div class="index" id="index"><h2>Index</h2></div>
+<div class="lower">
+  <p class="cap"><b>Fig. 1</b>Cut at waist height. Every number is something Theo&rsquo;s system can do, on the thing it happens at.</p>
+  <div class="legend" id="legend"></div>
+  <div class="route" id="route"></div>
+</div>
+<div class="note" id="note"></div>
+
+<script src="../data/building.js"></script>
+<script src="../data/story.js"></script>
+<script src="lib/martin-plan.js"></script>
+<script src="lib/martin-manual.js"></script>
+<script>
+(function () {
+  const W = WORLDS, S = W.story.martinKey, M = MPLAN;
+  const svg = document.getElementById('plate');
+  const api = MANUAL.draw(svg, { moment: 'martinKey', orient: 'land', s: 56, ox: 158, oy: 176, vanTo: 22.4 });
+  const { P } = api, INK = MANUAL.INK, SPOT = MANUAL.SPOT, RED = MANUAL.RED;
+  const g = api.gOver;
+  const T = (x, y, str, a) => M.text(g, x, y, str, Object.assign({ 'font-family': 'Bahnschrift', fill: INK, stroke: '#fff', 'stroke-width': 5, 'paint-order': 'stroke', 'stroke-linejoin': 'round' }, a));
+
+  /* room names on the floor (condensed caps), the street and the lane */
+  const lab = (x, y, str, extra) => { const p = P(x, y); return T(p[0], p[1], str, Object.assign({ 'font-size': 19, 'font-weight': 700, 'letter-spacing': '0.1em', 'font-stretch': '75%' }, extra)); };
+  lab(0.55, 0.65, 'SHOP & COUNTER');
+  lab(7.0, 2.88, 'BACK OFFICE');
+  lab(9.95, 4.75, 'WORKSHOP');
+  lab(15.45, 4.66, 'STOCKROOM');
+  lab(15.45, 5.78, 'BACK DOOR');
+  { const p = P(10.5, 1.05); T(p[0], p[1] + 2, 'REPORTS', { 'font-size': 17, 'font-weight': 700, 'letter-spacing': '0.1em', 'font-stretch': '75%' });
+    T(p[0], p[1] + 22, 'planned 2011,', { 'font-size': 16 }); T(p[0], p[1] + 40, 'never built', { 'font-size': 16 }); }
+  { const p = P(-0.75, 4.5); T(p[0], p[1], 'MARKET PLACE', { 'font-size': 18, 'font-weight': 700, 'letter-spacing': '0.22em', 'font-stretch': '75%', 'text-anchor': 'middle', transform: `rotate(-90 ${p[0]} ${p[1]})` }); }
+  { const p = P(20.95, 2.4); T(p[0], p[1], 'BACK LANE', { 'font-size': 18, 'font-weight': 700, 'letter-spacing': '0.22em', 'font-stretch': '75%', 'text-anchor': 'middle', transform: `rotate(90 ${p[0]} ${p[1]})` }); }
+  { const p = P(20.92, 6.75, 1.1); T(p[0] - 4, p[1], 'Madison’s', { 'font-size': 17 }); T(p[0], p[1] + 20, 'van', { 'font-size': 17 }); }
+  // the van's break line (it continues out of the drawing)
+  { const a = P(22.4, 5.5, 1.1), b = P(22.4, 8.4, 0); const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    M.el('path', { d: `M${a[0]},${a[1] - 6} L${m[0] - 8},${m[1] - 10} L${m[0] + 8},${m[1] + 2} L${b[0]},${b[1] + 6}`, fill: 'none', stroke: INK, 'stroke-width': 2.2 }, g); }
+  // the bell, the till, the PC
+  { const p = P(4.2, 4.45, 0.95); T(p[0] + 12, p[1] + 26, 'bell', { 'font-size': 16 }); }
+  { const p = P(3.9, 1.05, 1.18); T(p[0] - 6, p[1] - 6, 'till', { 'font-size': 16, 'text-anchor': 'end' }); }
+  // the stands' owners
+  for (const st of W.building.fixtures.filter(f => f.stand)) { const p = P(st.stand[0] + 0.1, st.stand[1] + 0.62); T(p[0], p[1], st.who, { 'font-size': 17, 'font-weight': 700, 'text-anchor': 'middle' }); }
+
+  /* the shortfall, in red, at the pads */
+  { const p = P(16.6, 2.45, 1.06);
+    M.el('polyline', { points: `${p[0]},${p[1] - 8} ${p[0] - 40},${p[1] - 150} ${p[0] - 60},${p[1] - 150}`, fill: 'none', stroke: RED, 'stroke-width': 2.2 }, g);
+    T(p[0] - 66, p[1] - 166, 'Pads: 1 pair on the shelf', { 'font-size': 19, 'font-weight': 700, fill: RED, 'text-anchor': 'end' });
+    T(p[0] - 66, p[1] - 144, 'Anika’s brakes need 2', { 'font-size': 19, fill: RED, 'text-anchor': 'end' }); }
+
+  /* time stamps on the route (the raise from the rain-night city) */
+  const stamp = (x, y, t, dx, dy) => { const p = P(x, y); const gg = M.el('g', {}, g);
+    M.el('rect', { x: p[0] + dx - 4, y: p[1] + dy - 18, width: 58, height: 25, fill: SPOT }, gg);
+    M.text(gg, p[0] + dx + 25, p[1] + dy, t, { 'text-anchor': 'middle', 'font-family': 'Bahnschrift', 'font-size': 18, 'font-weight': 700, fill: '#fff' }); };
+  stamp(7.25, 8.1, '08:53', -74, 40);
+  stamp(15.6, 3.3, '08:53', -76, 6);
+  stamp(18.9, 6.6, '08:55', 44, -22);
+
+  /* leader from callout 20 to the NOTE */
+  const b20 = api.bubble.create_purchase_order;
+  M.el('polyline', { points: `${b20.x},${b20.y + b20.r} ${b20.x},${b20.y + 62} 1338,${b20.y + 62} 1338,700`, fill: 'none', stroke: SPOT, 'stroke-width': 2.4 }, g);
+
+  /* counts, from the state */
+  const c = W.counts('martinKey');
+  document.getElementById('count').innerHTML = `<b>${c.lit}</b> he can use &middot; <b>${c.key + c.asking}</b> need your key &middot; <b>${c.shut}</b> kept shut`;
+
+  /* small state glyphs for index and legend, drawn the same way as the plate's bubbles */
+  function glyph(state, n, size = 26) {
+    const s = M.el('svg', { width: size + 18, height: size + 4, viewBox: `0 0 ${size + 18} ${size + 4}` });
+    const fake = { state, n };
+    const r = size / 2 - 1, x = r + 2, y = size / 2 + 2;
+    const gg = M.el('g', {}, s);
+    if (state === 'lit') M.el('circle', { cx: x, cy: y, r, fill: INK }, gg);
+    else if (state === 'asking') M.el('circle', { cx: x, cy: y, r, fill: SPOT }, gg);
+    else M.el('circle', { cx: x, cy: y, r: r - 1, fill: '#fff', stroke: INK, 'stroke-width': 2.2 }, gg);
+    if (n != null) M.text(gg, x, y + r * 0.38, String(n), { 'text-anchor': 'middle', 'font-family': 'Bahnschrift', 'font-weight': 700, 'font-size': r * 1.06, fill: state === 'lit' || state === 'asking' ? '#fff' : INK });
+    if (state === 'shut') M.el('line', { x1: x - r, y1: y + r, x2: x + r, y2: y - r, stroke: INK, 'stroke-width': 2.4 }, gg);
+    if (state === 'key' || state === 'asking') api.keyGlyph(gg, x + r * 1.0, y + r * 0.5, r * 0.5, state === 'asking' ? SPOT : INK);
+    return s;
+  }
+
+  /* index, grouped by where it happens */
+  const idx = document.getElementById('index');
+  const st = M.numbered('martinKey').filter(a => a.state !== 'planned');
+  for (const grp of W.building.groups) {
+    const rows = st.filter(a => a.group === grp.id);
+    const h = document.createElement('div'); h.className = 'grp';
+    h.innerHTML = `${grp.name.replace(/^The /, '')}<span>${rows.filter(a => a.state === 'lit').length} of ${rows.length} open</span>`;
+    idx.appendChild(h);
+    for (const a of rows) {
+      const r = document.createElement('div'); r.className = 'row ' + a.state;
+      r.appendChild(glyph(a.state, a.n, 24));
+      const t = document.createElement('span'); t.className = 't';
+      t.innerHTML = a.say + (a.state === 'asking' ? ' <small>&middot; asking now</small>' : '');
+      r.appendChild(t); idx.appendChild(r);
+    }
+  }
+  { const h = document.createElement('div'); h.className = 'grp'; h.innerHTML = 'Reports<span>planned 2011</span>'; idx.appendChild(h);
+    const r = document.createElement('div'); r.className = 'row'; r.innerHTML = '<span></span><span class="t">Never built: “coming soon!!”</span>'; idx.appendChild(r); }
+
+  /* legend */
+  const leg = document.getElementById('legend');
+  const L = (node, words) => { const d = document.createElement('div'); d.appendChild(node); const s = document.createElement('span'); s.innerHTML = words; d.appendChild(s); leg.appendChild(d); };
+  L(glyph('lit', null, 24), '<b>He can use it</b>');
+  L(glyph('key', null, 24), '<b>Needs your key</b>: he asks first');
+  L(glyph('shut', null, 24), '<b>Kept shut</b>, whoever asks');
+  { const s = M.el('svg', { width: 36, height: 16 }); M.el('line', { x1: 2, y1: 8, x2: 34, y2: 8, stroke: SPOT, 'stroke-width': 4, 'stroke-dasharray': '9 4' }, s); L(s, '<b>His route</b> this morning'); }
+
+  /* the route log */
+  const ro = document.getElementById('route');
+  for (const r of S.route) {
+    const d = document.createElement('div'); d.className = 'step' + (r.short ? ' short' : '');
+    d.innerHTML = `<time>${r.time}</time><span>${r.did}<span class="found">${r.found}</span></span>`;
+    ro.appendChild(d);
+  }
+
+  /* the NOTE: the question, in his words, at the back door */
+  const n = document.getElementById('note');
+  const hd = document.createElement('div'); hd.className = 'hd';
+  hd.appendChild(glyph('asking', 20, 44));
+  const h3 = document.createElement('h3'); h3.textContent = S.card.title; hd.appendChild(h3); n.appendChild(hd);
+  n.insertAdjacentHTML('beforeend', `<p class="said">“${S.barnaby}”</p>`);
+  n.insertAdjacentHTML('beforeend', '<dl>' + S.card.lines.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('') + '</dl>');
+  n.insertAdjacentHTML('beforeend', `<div class="acts"><button class="yes">${S.card.yes}</button><button>${S.card.no}</button></div>`);
+
+  document.fonts.ready.then(() => { document.body.dataset.ready = '1'; });
+})();
+</script>
+</body>
+</html>

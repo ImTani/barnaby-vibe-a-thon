@@ -1,0 +1,65 @@
+{
+ "_about": "Barnaby for ElevenLabs v4, performed as passages (one request per scene, split by the alignment) so his voice stays one voice. Sparse direction: punctuation carries the rhythm; a tag only where it changes the read. Same words as cues.json.",
+ "_passages": [
+  [
+   "06",
+   "08"
+  ],
+  [
+   "10",
+   "12",
+   "14",
+   "16"
+  ],
+  [
+   "19",
+   "23",
+   "25",
+   "27"
+  ],
+  [
+   "29",
+   "30",
+   "32",
+   "33",
+   "35",
+   "37"
+  ],
+  [
+   "40",
+   "42"
+  ],
+  [
+   "45",
+   "47",
+   "49"
+  ],
+  [
+   "52",
+   "54"
+  ]
+ ],
+ "06": "Twenty-three endpoints, sir. I've taken the six that only read — nobody's given me any keys yet.",
+ "08": "[dryly] Noted.",
+ "10": "Good morning, Martin.",
+ "12": "Five bikes due tomorrow. Only Anika's is a problem — her brakes need two pairs of pads, and we've one left.",
+ "14": "I can't order parts myself yet — but Theo built the system a way to. Shall I take that on?",
+ "16": "Ten pairs from Madison, at six pounds fifty a pair. Shall I?",
+ "19": "I'll need to text her and mark it ready... May I?",
+ "23": "That's three bikes handed back, and the same four steps each time. Shall I make it one?",
+ "25": "[calmly, unhurried] Give me a moment.",
+ "27": "Tom's been texted, and it's marked ready.",
+ "29": "The system can't tell me — there's no report for it. Theo always meant to write one.",
+ "30": "[gently] I could write it... if you like.",
+ "32": "With your say-so. I'll work on a copy — nothing changes until you've seen it.",
+ "33": "Done. It adds up each mechanic's hours, the way Theo's notes count them. It only reads, and all of Theo's checks still pass. Shall I add it?",
+ "35": "That one needs your click, Martin... I don't change the system on a word.",
+ "37": "Dev's carrying thirty-one hours against his twenty. Priya starts tomorrow — shall I give her the two wheel builds?",
+ "40": "[dryly] Guilty. Dev had thirty-one hours booked. You had none.",
+ "42": "Your jobs, the parts they need, who's collecting what. And Theo left you a note: [amused] never trust the stock count on a Friday.",
+ "45": "Thirteen endpoints, sir — and two deadlines in dispute. Shall I flag them?",
+ "47": "[dryly] Theo.",
+ "49": "Twenty-eight endpoints. It's on the big card, and three jobs are queued.",
+ "52": "[softly] Goodnight, Martin.",
+ "54": "[softly] Goodnight, Theo."
+}

@@ -80,30 +80,30 @@
   "sps": 3.34
  },
  {
-  "t": 56.79,
+  "t": 56.81,
   "scene": 2,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "Twenty-three endpoints, sir. I've taken the six that only read \u2014 nobody's given me any keys yet.",
   "speech": [
    56.84,
-   62.53
+   62.52
   ],
   "file": "voice/06_Barnaby.wav",
-  "dur": 5.75,
+  "dur": 5.99,
   "src": "take",
-  "wpm": 179,
-  "sps": 4.39
+  "wpm": 180,
+  "sps": 4.4
  },
  {
-  "t": 62.94,
+  "t": 62.93,
   "scene": 2,
   "who": "Theo",
   "pace": "dry",
   "text": "It's Theo. And don't call my uncle sir \u2014 he'll unplug you.",
   "speech": [
-   62.98,
-   66.96
+   62.97,
+   66.95
   ],
   "file": "voice/07_Theo.wav",
   "dur": 4.11,
@@ -112,30 +112,30 @@
   "sps": 3.27
  },
  {
-  "t": 67.31,
+  "t": 67.4,
   "scene": 2,
   "who": "Barnaby",
   "pace": "dry",
   "text": "Noted.",
   "speech": [
-   67.56,
-   68.22
+   67.55,
+   68.66
   ],
   "file": "voice/08_Barnaby.wav",
-  "dur": 1.6,
+  "dur": 1.26,
   "src": "take",
-  "wpm": 91,
-  "sps": 3.03
+  "wpm": 54,
+  "sps": 1.8
  },
  {
-  "t": 79.59,
+  "t": 80.03,
   "scene": 3,
   "who": "Martin",
   "pace": "tired",
   "text": "Right. Barnaby, is it?",
   "speech": [
-   79.62,
-   81.69
+   80.06,
+   82.13
   ],
   "file": "voice/09_Martin.wav",
   "dur": 2.19,
@@ -144,30 +144,30 @@
   "sps": 2.9
  },
  {
-  "t": 81.98,
+  "t": 82.53,
   "scene": 3,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "Good morning, Martin.",
   "speech": [
-   82.14,
-   83.07
+   82.58,
+   83.58
   ],
   "file": "voice/10_Barnaby.wav",
-  "dur": 1.52,
+  "dur": 1.16,
   "src": "take",
-  "wpm": 194,
-  "sps": 5.38
+  "wpm": 180,
+  "sps": 5.0
  },
  {
-  "t": 83.63,
+  "t": 84.14,
   "scene": 3,
   "who": "Martin",
   "pace": "brisk",
   "text": "What's due tomorrow \u2014 and are we short on anything?",
   "speech": [
-   83.67,
-   87.32
+   84.18,
+   87.83
   ],
   "file": "voice/11_Martin.wav",
   "dur": 3.75,
@@ -176,30 +176,30 @@
   "sps": 3.56
  },
  {
-  "t": 88.21,
+  "t": 88.59,
   "scene": 3,
   "who": "Barnaby",
   "pace": "explain",
   "text": "Five bikes due tomorrow. Only Anika's is a problem \u2014 her brakes need two pairs of pads, and we've one left.",
   "speech": [
-   88.22,
-   95.55
+   88.73,
+   95.42
   ],
   "file": "voice/12_Barnaby.wav",
-  "dur": 7.35,
+  "dur": 7.28,
   "src": "take",
-  "wpm": 164,
-  "sps": 3.82
+  "wpm": 179,
+  "sps": 4.19
  },
  {
-  "t": 97.3,
+  "t": 97.17,
   "scene": 4,
   "who": "Martin",
   "pace": "brisk",
   "text": "Order ten from Madison, then.",
   "speech": [
-   97.35,
-   99.47
+   97.22,
+   99.34
   ],
   "file": "voice/13_Martin.wav",
   "dur": 2.24,
@@ -208,30 +208,30 @@
   "sps": 3.77
  },
  {
-  "t": 99.87,
+  "t": 99.78,
   "scene": 4,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "I can't order parts myself yet \u2014 but Theo built the system a way to. Shall I take that on?",
   "speech": [
-   99.92,
-   105.95
+   99.79,
+   105.66
   ],
   "file": "voice/14_Barnaby.wav",
-  "dur": 6.08,
+  "dur": 6.16,
   "src": "take",
-  "wpm": 189,
-  "sps": 3.65
+  "wpm": 194,
+  "sps": 3.75
  },
  {
-  "t": 106.72,
+  "t": 106.43,
   "scene": 4,
   "who": "Martin",
   "pace": "neutral",
   "text": "Go on, then.",
   "speech": [
-   106.75,
-   108.0
+   106.46,
+   107.71
   ],
   "file": "voice/15_Martin.wav",
   "dur": 1.39,
@@ -240,30 +240,30 @@
   "sps": 2.4
  },
  {
-  "t": 111.15,
+  "t": 110.64,
   "scene": 4,
   "who": "Barnaby",
   "pace": "explain",
   "text": "Ten pairs from Madison, at six pounds fifty a pair. Shall I?",
   "speech": [
-   111.2,
-   115.29
+   110.91,
+   114.78
   ],
   "file": "voice/16_Barnaby.wav",
-  "dur": 4.15,
+  "dur": 4.28,
   "src": "take",
-  "wpm": 176,
-  "sps": 3.67
+  "wpm": 186,
+  "sps": 3.88
  },
  {
-  "t": 115.66,
+  "t": 115.15,
   "scene": 4,
   "who": "Martin",
   "pace": "neutral",
   "text": "Yes.",
   "speech": [
-   115.69,
-   116.22
+   115.18,
+   115.71
   ],
   "file": "voice/17_Martin.wav",
   "dur": 0.57,
@@ -272,14 +272,14 @@
   "sps": 1.89
  },
  {
-  "t": 121.79,
+  "t": 121.28,
   "scene": 5,
   "who": "Martin",
   "pace": "brisk",
   "text": "Barnaby \u2014 Sofia's bike's done.",
   "speech": [
-   121.82,
-   123.72
+   121.31,
+   123.21
   ],
   "file": "voice/18_Martin.wav",
   "dur": 2.01,
@@ -288,30 +288,30 @@
   "sps": 4.21
  },
  {
-  "t": 124.13,
+  "t": 123.61,
   "scene": 5,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "I'll need to text her and mark it ready. May I?",
   "speech": [
-   124.17,
-   127.49
+   123.66,
+   127.08
   ],
   "file": "voice/19_Barnaby.wav",
-  "dur": 3.36,
+  "dur": 3.99,
   "src": "take",
-  "wpm": 199,
-  "sps": 3.61
+  "wpm": 193,
+  "sps": 3.51
  },
  {
-  "t": 127.96,
+  "t": 127.55,
   "scene": 5,
   "who": "Martin",
   "pace": "brisk",
   "text": "Go on.",
   "speech": [
-   127.99,
-   128.88
+   127.58,
+   128.47
   ],
   "file": "voice/20_Martin.wav",
   "dur": 0.96,
@@ -320,14 +320,14 @@
   "sps": 2.25
  },
  {
-  "t": 132.18,
+  "t": 131.77,
   "scene": 5,
   "who": "Martin",
   "pace": "brisk",
   "text": "Kwame's.",
   "speech": [
-   132.23,
-   132.75
+   131.82,
+   132.34
   ],
   "file": "voice/21_Martin.wav",
   "dur": 0.59,
@@ -336,14 +336,14 @@
   "sps": 3.85
  },
  {
-  "t": 134.82,
+  "t": 134.41,
   "scene": 5,
   "who": "Martin",
   "pace": "brisk",
   "text": "And Jana's.",
   "speech": [
-   134.85,
-   135.95
+   134.44,
+   135.54
   ],
   "file": "voice/22_Martin.wav",
   "dur": 1.19,
@@ -352,30 +352,30 @@
   "sps": 2.73
  },
  {
-  "t": 136.77,
+  "t": 136.26,
   "scene": 5,
   "who": "Barnaby",
   "pace": "dry",
   "text": "That's three bikes handed back, and the same four steps each time. Shall I make it one?",
   "speech": [
-   136.85,
-   142.55
+   136.44,
+   141.83
   ],
   "file": "voice/23_Barnaby.wav",
-  "dur": 5.82,
+  "dur": 5.94,
   "src": "take",
-  "wpm": 179,
-  "sps": 3.33
+  "wpm": 189,
+  "sps": 3.53
  },
  {
-  "t": 142.9,
+  "t": 142.18,
   "scene": 5,
   "who": "Martin",
   "pace": "surprised",
   "text": "Can you?",
   "speech": [
-   142.95,
-   143.82
+   142.23,
+   143.1
   ],
   "file": "voice/24_Martin.wav",
   "dur": 0.96,
@@ -384,30 +384,30 @@
   "sps": 2.3
  },
  {
-  "t": 144.21,
+  "t": 143.34,
   "scene": 5,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "Give me a moment.",
   "speech": [
-   144.27,
-   145.05
+   143.55,
+   144.71
   ],
   "file": "voice/25_Barnaby.wav",
-  "dur": 1.82,
+  "dur": 1.55,
   "src": "take",
-  "wpm": 308,
-  "sps": 6.41
+  "wpm": 207,
+  "sps": 4.31
  },
  {
-  "t": 147.97,
+  "t": 147.63,
   "scene": 5,
   "who": "Martin",
   "pace": "neutral",
   "text": "Tom's Brompton.",
   "speech": [
-   148.0,
-   149.14
+   147.66,
+   148.8
   ],
   "file": "voice/26_Martin.wav",
   "dur": 1.26,
@@ -416,30 +416,30 @@
   "sps": 2.63
  },
  {
-  "t": 149.67,
+  "t": 149.27,
   "scene": 5,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "Tom's been texted, and it's marked ready.",
   "speech": [
-   149.74,
-   152.07
+   149.4,
+   151.69
   ],
   "file": "voice/27_Barnaby.wav",
-  "dur": 2.41,
+  "dur": 2.54,
   "src": "take",
-  "wpm": 180,
-  "sps": 4.29
+  "wpm": 183,
+  "sps": 4.37
  },
  {
-  "t": 155.23,
+  "t": 154.85,
   "scene": 6,
   "who": "Martin",
   "pace": "neutral",
   "text": "Who's got too much on this week?",
   "speech": [
-   155.27,
-   157.76
+   154.89,
+   157.38
   ],
   "file": "voice/28_Martin.wav",
   "dur": 2.6,
@@ -448,46 +448,46 @@
   "sps": 2.81
  },
  {
-  "t": 158.28,
+  "t": 157.92,
   "scene": 6,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "The system can't tell me \u2014 there's no report for it. Theo always meant to write one.",
   "speech": [
-   158.36,
-   163.66
+   157.98,
+   163.34
   ],
   "file": "voice/29_Barnaby.wav",
-  "dur": 5.84,
+  "dur": 5.7,
   "src": "take",
-  "wpm": 181,
-  "sps": 3.77
+  "wpm": 179,
+  "sps": 3.73
  },
  {
-  "t": 164.25,
+  "t": 163.81,
   "scene": 6,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "I could write it, if you like.",
   "speech": [
-   164.36,
-   166.73
+   164.04,
+   165.96
   ],
   "file": "voice/30_Barnaby.wav",
-  "dur": 2.48,
+  "dur": 2.54,
   "src": "take",
-  "wpm": 177,
-  "sps": 2.95
+  "wpm": 219,
+  "sps": 3.65
  },
  {
-  "t": 167.15,
+  "t": 166.38,
   "scene": 6,
   "who": "Martin",
   "pace": "surprised",
   "text": "You can do that?",
   "speech": [
-   167.18,
-   168.58
+   166.41,
+   167.81
   ],
   "file": "voice/31_Martin.wav",
   "dur": 1.58,
@@ -496,46 +496,46 @@
   "sps": 2.86
  },
  {
-  "t": 168.96,
+  "t": 168.13,
   "scene": 6,
   "who": "Barnaby",
   "pace": "explain",
   "text": "With your say-so. I'll work on a copy \u2014 nothing changes until you've seen it.",
   "speech": [
-   169.03,
-   174.05
+   168.26,
+   172.95
   ],
   "file": "voice/32_Barnaby.wav",
-  "dur": 5.12,
+  "dur": 5.18,
   "src": "take",
-  "wpm": 179,
-  "sps": 3.78
+  "wpm": 192,
+  "sps": 4.05
  },
  {
-  "t": 181.02,
+  "t": 179.83,
   "scene": 6,
   "who": "Barnaby",
   "pace": "explain",
   "text": "Done. It adds up each mechanic's hours, the way Theo's notes count them. It only reads, and all of Theo's checks still pass. Shall I add it?",
   "speech": [
-   181.05,
-   190.77
+   179.95,
+   188.95
   ],
   "file": "voice/33_Barnaby.wav",
-  "dur": 9.76,
+  "dur": 9.35,
   "src": "take",
-  "wpm": 167,
-  "sps": 3.19
+  "wpm": 180,
+  "sps": 3.44
  },
  {
-  "t": 191.18,
+  "t": 189.36,
   "scene": 6,
   "who": "Martin",
   "pace": "neutral",
   "text": "Add it.",
   "speech": [
-   191.22,
-   192.15
+   189.4,
+   190.33
   ],
   "file": "voice/34_Martin.wav",
   "dur": 1.02,
@@ -544,30 +544,30 @@
   "sps": 2.15
  },
  {
-  "t": 192.52,
+  "t": 190.57,
   "scene": 6,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "That one needs your click, Martin. I don't change the system on a word.",
   "speech": [
-   192.6,
-   197.24
+   190.78,
+   195.14
   ],
   "file": "voice/35_Barnaby.wav",
-  "dur": 4.72,
+  "dur": 4.86,
   "src": "take",
-  "wpm": 181,
-  "sps": 3.45
+  "wpm": 193,
+  "sps": 3.67
  },
  {
-  "t": 197.81,
+  "t": 195.71,
   "scene": 6,
   "who": "Martin",
   "pace": "dry",
   "text": "Fussy.",
   "speech": [
-   197.84,
-   198.63
+   195.74,
+   196.53
   ],
   "file": "voice/36_Martin.wav",
   "dur": 0.85,
@@ -576,30 +576,30 @@
   "sps": 2.53
  },
  {
-  "t": 203.09,
+  "t": 200.79,
   "scene": 6,
   "who": "Barnaby",
   "pace": "explain",
   "text": "Dev's carrying thirty-one hours against his twenty. Priya starts tomorrow \u2014 shall I give her the two wheel builds?",
   "speech": [
-   203.14,
-   209.79
+   201.04,
+   207.38
   ],
   "file": "voice/37_Barnaby.wav",
-  "dur": 6.71,
+  "dur": 6.74,
   "src": "take",
-  "wpm": 171,
-  "sps": 3.76
+  "wpm": 180,
+  "sps": 3.94
  },
  {
-  "t": 210.35,
+  "t": 207.94,
   "scene": 6,
   "who": "Martin",
   "pace": "neutral",
   "text": "Good idea.",
   "speech": [
-   210.39,
-   211.56
+   207.98,
+   209.15
   ],
   "file": "voice/38_Martin.wav",
   "dur": 1.26,
@@ -608,14 +608,14 @@
   "sps": 2.56
  },
  {
-  "t": 217.33,
+  "t": 214.92,
   "scene": 7,
   "who": "Priya",
   "pace": "dry",
   "text": "So you're why I've got two wheel builds on my first day?",
   "speech": [
-   217.36,
-   221.38
+   214.95,
+   218.97
   ],
   "file": "voice/39_Priya.wav",
   "dur": 4.37,
@@ -624,30 +624,30 @@
   "sps": 2.99
  },
  {
-  "t": 221.9,
+  "t": 219.38,
   "scene": 7,
   "who": "Barnaby",
   "pace": "dry",
   "text": "Guilty. Dev had thirty-one hours booked. You had none.",
   "speech": [
-   221.98,
-   225.76
+   219.57,
+   223.74
   ],
   "file": "voice/40_Barnaby.wav",
-  "dur": 3.87,
+  "dur": 4.68,
   "src": "take",
-  "wpm": 159,
-  "sps": 3.44
+  "wpm": 144,
+  "sps": 3.12
  },
  {
-  "t": 226.33,
+  "t": 224.31,
   "scene": 7,
   "who": "Priya",
   "pace": "dry",
   "text": "Fair. What else can this thing do?",
   "speech": [
-   226.36,
-   228.7
+   224.34,
+   226.68
   ],
   "file": "voice/41_Priya.wav",
   "dur": 2.65,
@@ -656,30 +656,30 @@
   "sps": 2.99
  },
  {
-  "t": 229.06,
+  "t": 227.02,
   "scene": 7,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "Your jobs, the parts they need, who's collecting what. And Theo left you a note: never trust the stock count on a Friday.",
   "speech": [
-   229.15,
-   237.14
+   227.13,
+   234.71
   ],
   "file": "voice/42_Barnaby.wav",
-  "dur": 8.08,
+  "dur": 7.82,
   "src": "take",
-  "wpm": 173,
-  "sps": 3.38
+  "wpm": 182,
+  "sps": 3.56
  },
  {
-  "t": 237.91,
+  "t": 235.48,
   "scene": 7,
   "who": "Priya",
   "pace": "dry",
   "text": "Noted.",
   "speech": [
-   237.94,
-   238.64
+   235.51,
+   236.21
   ],
   "file": "voice/43_Priya.wav",
   "dur": 0.85,
@@ -688,14 +688,14 @@
   "sps": 2.86
  },
  {
-  "t": 252.1,
+  "t": 249.67,
   "scene": 8,
   "who": "Theo",
   "pace": "neutral",
   "text": "Barnaby \u2014 new job. This is the crew's memory.",
   "speech": [
-   252.14,
-   255.18
+   249.71,
+   252.75
   ],
   "file": "voice/44_Theo.wav",
   "dur": 3.14,
@@ -704,30 +704,30 @@
   "sps": 3.95
  },
  {
-  "t": 256.31,
+  "t": 253.93,
   "scene": 8,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "Thirteen endpoints, sir \u2014 and two deadlines in dispute. Shall I flag them?",
   "speech": [
-   256.38,
-   260.53
+   253.95,
+   258.49
   ],
   "file": "voice/45_Barnaby.wav",
-  "dur": 4.22,
+  "dur": 4.89,
   "src": "take",
-  "wpm": 173,
-  "sps": 4.1
+  "wpm": 159,
+  "sps": 3.74
  },
  {
-  "t": 261.11,
+  "t": 259.07,
   "scene": 8,
   "who": "Theo",
   "pace": "dry",
   "text": "Still Theo.",
   "speech": [
-   261.13,
-   262.16
+   259.09,
+   260.12
   ],
   "file": "voice/46_Theo.wav",
   "dur": 1.13,
@@ -736,30 +736,30 @@
   "sps": 1.94
  },
  {
-  "t": 262.59,
+  "t": 260.45,
   "scene": 8,
   "who": "Barnaby",
   "pace": "dry",
   "text": "Theo.",
   "speech": [
-   262.66,
-   263.23
+   260.62,
+   261.16
   ],
   "file": "voice/47_Barnaby.wav",
-  "dur": 1.6,
+  "dur": 0.94,
   "src": "take",
-  "wpm": 105,
-  "sps": 1.75
+  "wpm": 111,
+  "sps": 1.85
  },
  {
-  "t": 264.11,
+  "t": 262.04,
   "scene": 8,
   "who": "Theo",
   "pace": "neutral",
   "text": "And the render box?",
   "speech": [
-   264.13,
-   265.63
+   262.06,
+   263.56
   ],
   "file": "voice/48_Theo.wav",
   "dur": 1.58,
@@ -768,30 +768,30 @@
   "sps": 3.33
  },
  {
-  "t": 266.0,
+  "t": 263.79,
   "scene": 8,
   "who": "Barnaby",
   "pace": "neutral",
   "text": "Twenty-eight endpoints. It's on the big card, and three jobs are queued.",
   "speech": [
-   266.08,
-   270.4
+   264.01,
+   268.36
   ],
   "file": "voice/49_Barnaby.wav",
-  "dur": 4.4,
+  "dur": 4.74,
   "src": "take",
-  "wpm": 181,
-  "sps": 3.47
+  "wpm": 179,
+  "sps": 3.45
  },
  {
-  "t": 271.08,
+  "t": 269.04,
   "scene": 8,
   "who": "Theo",
   "pace": "dry",
   "text": "Show-off.",
   "speech": [
-   271.1,
-   271.97
+   269.06,
+   269.93
   ],
   "file": "voice/50_Theo.wav",
   "dur": 0.98,
@@ -800,14 +800,14 @@
   "sps": 2.3
  },
  {
-  "t": 275.93,
+  "t": 273.89,
   "scene": 9,
   "who": "Martin",
   "pace": "closing",
   "text": "Night, Barnaby.",
   "speech": [
-   275.97,
-   277.46
+   273.93,
+   275.42
   ],
   "file": "voice/51_Martin.wav",
   "dur": 1.6,
@@ -816,30 +816,30 @@
   "sps": 2.68
  },
  {
-  "t": 277.99,
+  "t": 275.8,
   "scene": 9,
   "who": "Barnaby",
   "pace": "closing",
   "text": "Goodnight, Martin.",
   "speech": [
-   278.06,
-   278.87
+   276.02,
+   276.97
   ],
   "file": "voice/52_Barnaby.wav",
-  "dur": 2.16,
+  "dur": 1.46,
   "src": "take",
-  "wpm": 148,
-  "sps": 4.94
+  "wpm": 126,
+  "sps": 4.21
  },
  {
-  "t": 282.44,
+  "t": 280.54,
   "scene": 9,
   "who": "Theo",
   "pace": "closing",
   "text": "Night, Barnaby.",
   "speech": [
-   282.47,
-   283.73
+   280.57,
+   281.83
   ],
   "file": "voice/53_Theo.wav",
   "dur": 1.37,
@@ -848,19 +848,19 @@
   "sps": 3.17
  },
  {
-  "t": 284.25,
+  "t": 282.14,
   "scene": 9,
   "who": "Barnaby",
   "pace": "closing",
   "text": "Goodnight, Theo.",
   "speech": [
-   284.33,
-   285.39
+   282.43,
+   283.32
   ],
   "file": "voice/54_Barnaby.wav",
-  "dur": 1.52,
+  "dur": 1.26,
   "src": "take",
-  "wpm": 113,
-  "sps": 2.83
+  "wpm": 135,
+  "sps": 3.37
  }
 ]

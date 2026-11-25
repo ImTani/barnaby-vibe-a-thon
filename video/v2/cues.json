@@ -1,6 +1,6 @@
 {
  "version": "2.2 (paced for picture; timed from the rendered voices by video/v2/audio/layout.py)",
- "duration": 302.69,
+ "duration": 300.62,
  "fps": 15,
  "voices": {
   "Barnaby": "bm_george+bm_fable (75/25)",
@@ -31,7 +31,7 @@
    "title": "The handover",
    "where": "Shop, Thu 19 Nov night",
    "start": 30.18,
-   "end": 74.02,
+   "end": 74.46,
    "script": [
     12,
     40
@@ -41,8 +41,8 @@
    "id": 3,
    "title": "Monday",
    "where": "Shop, Mon 23 Nov 08:52",
-   "start": 74.02,
-   "end": 96.75,
+   "start": 74.46,
+   "end": 96.62,
    "script": [
     40,
     56
@@ -52,8 +52,8 @@
    "id": 4,
    "title": "A key",
    "where": "Shop, Mon 23 Nov",
-   "start": 96.75,
-   "end": 119.72,
+   "start": 96.62,
+   "end": 119.21,
    "script": [
     56,
     73
@@ -63,8 +63,8 @@
    "id": 5,
    "title": "The same four steps",
    "where": "Shop, Mon 23 Nov afternoon",
-   "start": 119.72,
-   "end": 153.37,
+   "start": 119.21,
+   "end": 152.99,
    "script": [
     73,
     95
@@ -74,8 +74,8 @@
    "id": 6,
    "title": "A room Theo never built",
    "where": "Shop, Mon 23 Nov 16:08-16:21",
-   "start": 153.37,
-   "end": 214.96,
+   "start": 152.99,
+   "end": 212.55,
    "script": [
     95,
     128
@@ -85,8 +85,8 @@
    "id": 7,
    "title": "Priya, day one",
    "where": "Shop, Tue 24 Nov 08:34",
-   "start": 214.96,
-   "end": 240.24,
+   "start": 212.55,
+   "end": 237.81,
    "script": [
     128,
     144
@@ -96,8 +96,8 @@
    "id": 8,
    "title": "Any house",
    "where": "Lisbon, Tue 24 Nov 09:39",
-   "start": 240.24,
-   "end": 273.57,
+   "start": 237.81,
+   "end": 271.53,
    "script": [
     144,
     165
@@ -107,8 +107,8 @@
    "id": 9,
    "title": "Goodnight",
    "where": "Shop 18:40 / Lisbon 20:07, Tue 24 Nov",
-   "start": 273.57,
-   "end": 302.69,
+   "start": 271.53,
+   "end": 300.62,
    "script": [
     165,
     180
@@ -172,542 +172,542 @@
    ]
   },
   {
-   "t": 56.79,
+   "t": 56.81,
    "scene": 2,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "Twenty-three endpoints, sir. I've taken the six that only read — nobody's given me any keys yet.",
    "speech": [
     56.84,
-    62.53
+    62.52
    ]
   },
   {
-   "t": 62.94,
+   "t": 62.93,
    "scene": 2,
    "who": "Theo",
    "pace": "dry",
    "text": "It's Theo. And don't call my uncle sir — he'll unplug you.",
    "speech": [
-    62.98,
-    66.96
+    62.97,
+    66.95
    ]
   },
   {
-   "t": 67.31,
+   "t": 67.4,
    "scene": 2,
    "who": "Barnaby",
    "pace": "dry",
    "text": "Noted.",
    "speech": [
-    67.56,
-    68.22
+    67.55,
+    68.66
    ]
   },
   {
-   "t": 79.59,
+   "t": 80.03,
    "scene": 3,
    "who": "Martin",
    "pace": "tired",
    "text": "Right. Barnaby, is it?",
    "speech": [
-    79.62,
-    81.69
+    80.06,
+    82.13
    ]
   },
   {
-   "t": 81.98,
+   "t": 82.53,
    "scene": 3,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "Good morning, Martin.",
    "speech": [
-    82.14,
-    83.07
+    82.58,
+    83.58
    ]
   },
   {
-   "t": 83.63,
+   "t": 84.14,
    "scene": 3,
    "who": "Martin",
    "pace": "brisk",
    "text": "What's due tomorrow — and are we short on anything?",
    "speech": [
-    83.67,
-    87.32
+    84.18,
+    87.83
    ]
   },
   {
-   "t": 88.21,
+   "t": 88.59,
    "scene": 3,
    "who": "Barnaby",
    "pace": "explain",
    "text": "Five bikes due tomorrow. Only Anika's is a problem — her brakes need two pairs of pads, and we've one left.",
    "speech": [
-    88.22,
-    95.55
+    88.73,
+    95.42
    ]
   },
   {
-   "t": 97.3,
+   "t": 97.17,
    "scene": 4,
    "who": "Martin",
    "pace": "brisk",
    "text": "Order ten from Madison, then.",
    "speech": [
-    97.35,
-    99.47
+    97.22,
+    99.34
    ]
   },
   {
-   "t": 99.87,
+   "t": 99.78,
    "scene": 4,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "I can't order parts myself yet — but Theo built the system a way to. Shall I take that on?",
    "speech": [
-    99.92,
-    105.95
+    99.79,
+    105.66
    ]
   },
   {
-   "t": 106.72,
+   "t": 106.43,
    "scene": 4,
    "who": "Martin",
    "pace": "neutral",
    "text": "Go on, then.",
    "speech": [
-    106.75,
-    108.0
+    106.46,
+    107.71
    ]
   },
   {
-   "t": 111.15,
+   "t": 110.64,
    "scene": 4,
    "who": "Barnaby",
    "pace": "explain",
    "text": "Ten pairs from Madison, at six pounds fifty a pair. Shall I?",
    "speech": [
-    111.2,
-    115.29
+    110.91,
+    114.78
    ]
   },
   {
-   "t": 115.66,
+   "t": 115.15,
    "scene": 4,
    "who": "Martin",
    "pace": "neutral",
    "text": "Yes.",
    "speech": [
-    115.69,
-    116.22
+    115.18,
+    115.71
    ]
   },
   {
-   "t": 121.79,
+   "t": 121.28,
    "scene": 5,
    "who": "Martin",
    "pace": "brisk",
    "text": "Barnaby — Sofia's bike's done.",
    "speech": [
-    121.82,
-    123.72
+    121.31,
+    123.21
    ]
   },
   {
-   "t": 124.13,
+   "t": 123.61,
    "scene": 5,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "I'll need to text her and mark it ready. May I?",
    "speech": [
-    124.17,
-    127.49
+    123.66,
+    127.08
    ]
   },
   {
-   "t": 127.96,
+   "t": 127.55,
    "scene": 5,
    "who": "Martin",
    "pace": "brisk",
    "text": "Go on.",
    "speech": [
-    127.99,
-    128.88
+    127.58,
+    128.47
    ]
   },
   {
-   "t": 132.18,
+   "t": 131.77,
    "scene": 5,
    "who": "Martin",
    "pace": "brisk",
    "text": "Kwame's.",
    "speech": [
-    132.23,
-    132.75
+    131.82,
+    132.34
    ]
   },
   {
-   "t": 134.82,
+   "t": 134.41,
    "scene": 5,
    "who": "Martin",
    "pace": "brisk",
    "text": "And Jana's.",
    "speech": [
-    134.85,
-    135.95
+    134.44,
+    135.54
    ]
   },
   {
-   "t": 136.77,
+   "t": 136.26,
    "scene": 5,
    "who": "Barnaby",
    "pace": "dry",
    "text": "That's three bikes handed back, and the same four steps each time. Shall I make it one?",
    "speech": [
-    136.85,
-    142.55
+    136.44,
+    141.83
    ]
   },
   {
-   "t": 142.9,
+   "t": 142.18,
    "scene": 5,
    "who": "Martin",
    "pace": "surprised",
    "text": "Can you?",
    "speech": [
-    142.95,
-    143.82
+    142.23,
+    143.1
    ]
   },
   {
-   "t": 144.21,
+   "t": 143.34,
    "scene": 5,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "Give me a moment.",
    "speech": [
-    144.27,
-    145.05
+    143.55,
+    144.71
    ]
   },
   {
-   "t": 147.97,
+   "t": 147.63,
    "scene": 5,
    "who": "Martin",
    "pace": "neutral",
    "text": "Tom's Brompton.",
    "speech": [
-    148.0,
-    149.14
+    147.66,
+    148.8
    ]
   },
   {
-   "t": 149.67,
+   "t": 149.27,
    "scene": 5,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "Tom's been texted, and it's marked ready.",
    "speech": [
-    149.74,
-    152.07
+    149.4,
+    151.69
    ]
   },
   {
-   "t": 155.23,
+   "t": 154.85,
    "scene": 6,
    "who": "Martin",
    "pace": "neutral",
    "text": "Who's got too much on this week?",
    "speech": [
-    155.27,
-    157.76
+    154.89,
+    157.38
    ]
   },
   {
-   "t": 158.28,
+   "t": 157.92,
    "scene": 6,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "The system can't tell me — there's no report for it. Theo always meant to write one.",
    "speech": [
-    158.36,
-    163.66
+    157.98,
+    163.34
    ]
   },
   {
-   "t": 164.25,
+   "t": 163.81,
    "scene": 6,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "I could write it, if you like.",
    "speech": [
-    164.36,
-    166.73
+    164.04,
+    165.96
    ]
   },
   {
-   "t": 167.15,
+   "t": 166.38,
    "scene": 6,
    "who": "Martin",
    "pace": "surprised",
    "text": "You can do that?",
    "speech": [
-    167.18,
-    168.58
+    166.41,
+    167.81
    ]
   },
   {
-   "t": 168.96,
+   "t": 168.13,
    "scene": 6,
    "who": "Barnaby",
    "pace": "explain",
    "text": "With your say-so. I'll work on a copy — nothing changes until you've seen it.",
    "speech": [
-    169.03,
-    174.05
+    168.26,
+    172.95
    ]
   },
   {
-   "t": 181.02,
+   "t": 179.83,
    "scene": 6,
    "who": "Barnaby",
    "pace": "explain",
    "text": "Done. It adds up each mechanic's hours, the way Theo's notes count them. It only reads, and all of Theo's checks still pass. Shall I add it?",
    "speech": [
-    181.05,
-    190.77
+    179.95,
+    188.95
    ]
   },
   {
-   "t": 191.18,
+   "t": 189.36,
    "scene": 6,
    "who": "Martin",
    "pace": "neutral",
    "text": "Add it.",
    "speech": [
-    191.22,
-    192.15
+    189.4,
+    190.33
    ]
   },
   {
-   "t": 192.52,
+   "t": 190.57,
    "scene": 6,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "That one needs your click, Martin. I don't change the system on a word.",
    "speech": [
-    192.6,
-    197.24
+    190.78,
+    195.14
    ]
   },
   {
-   "t": 197.81,
+   "t": 195.71,
    "scene": 6,
    "who": "Martin",
    "pace": "dry",
    "text": "Fussy.",
    "speech": [
-    197.84,
-    198.63
+    195.74,
+    196.53
    ]
   },
   {
-   "t": 203.09,
+   "t": 200.79,
    "scene": 6,
    "who": "Barnaby",
    "pace": "explain",
    "text": "Dev's carrying thirty-one hours against his twenty. Priya starts tomorrow — shall I give her the two wheel builds?",
    "speech": [
-    203.14,
-    209.79
+    201.04,
+    207.38
    ]
   },
   {
-   "t": 210.35,
+   "t": 207.94,
    "scene": 6,
    "who": "Martin",
    "pace": "neutral",
    "text": "Good idea.",
    "speech": [
-    210.39,
-    211.56
+    207.98,
+    209.15
    ]
   },
   {
-   "t": 217.33,
+   "t": 214.92,
    "scene": 7,
    "who": "Priya",
    "pace": "dry",
    "text": "So you're why I've got two wheel builds on my first day?",
    "speech": [
-    217.36,
-    221.38
+    214.95,
+    218.97
    ]
   },
   {
-   "t": 221.9,
+   "t": 219.38,
    "scene": 7,
    "who": "Barnaby",
    "pace": "dry",
    "text": "Guilty. Dev had thirty-one hours booked. You had none.",
    "speech": [
-    221.98,
-    225.76
+    219.57,
+    223.74
    ]
   },
   {
-   "t": 226.33,
+   "t": 224.31,
    "scene": 7,
    "who": "Priya",
    "pace": "dry",
    "text": "Fair. What else can this thing do?",
    "speech": [
-    226.36,
-    228.7
+    224.34,
+    226.68
    ]
   },
   {
-   "t": 229.06,
+   "t": 227.02,
    "scene": 7,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "Your jobs, the parts they need, who's collecting what. And Theo left you a note: never trust the stock count on a Friday.",
    "speech": [
-    229.15,
-    237.14
+    227.13,
+    234.71
    ]
   },
   {
-   "t": 237.91,
+   "t": 235.48,
    "scene": 7,
    "who": "Priya",
    "pace": "dry",
    "text": "Noted.",
    "speech": [
-    237.94,
-    238.64
+    235.51,
+    236.21
    ]
   },
   {
-   "t": 252.1,
+   "t": 249.67,
    "scene": 8,
    "who": "Theo",
    "pace": "neutral",
    "text": "Barnaby — new job. This is the crew's memory.",
    "speech": [
-    252.14,
-    255.18
+    249.71,
+    252.75
    ]
   },
   {
-   "t": 256.31,
+   "t": 253.93,
    "scene": 8,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "Thirteen endpoints, sir — and two deadlines in dispute. Shall I flag them?",
    "speech": [
-    256.38,
-    260.53
+    253.95,
+    258.49
    ]
   },
   {
-   "t": 261.11,
+   "t": 259.07,
    "scene": 8,
    "who": "Theo",
    "pace": "dry",
    "text": "Still Theo.",
    "speech": [
-    261.13,
-    262.16
+    259.09,
+    260.12
    ]
   },
   {
-   "t": 262.59,
+   "t": 260.45,
    "scene": 8,
    "who": "Barnaby",
    "pace": "dry",
    "text": "Theo.",
    "speech": [
-    262.66,
-    263.23
+    260.62,
+    261.16
    ]
   },
   {
-   "t": 264.11,
+   "t": 262.04,
    "scene": 8,
    "who": "Theo",
    "pace": "neutral",
    "text": "And the render box?",
    "speech": [
-    264.13,
-    265.63
+    262.06,
+    263.56
    ]
   },
   {
-   "t": 266.0,
+   "t": 263.79,
    "scene": 8,
    "who": "Barnaby",
    "pace": "neutral",
    "text": "Twenty-eight endpoints. It's on the big card, and three jobs are queued.",
    "speech": [
-    266.08,
-    270.4
+    264.01,
+    268.36
    ]
   },
   {
-   "t": 271.08,
+   "t": 269.04,
    "scene": 8,
    "who": "Theo",
    "pace": "dry",
    "text": "Show-off.",
    "speech": [
-    271.1,
-    271.97
+    269.06,
+    269.93
    ]
   },
   {
-   "t": 275.93,
+   "t": 273.89,
    "scene": 9,
    "who": "Martin",
    "pace": "closing",
    "text": "Night, Barnaby.",
    "speech": [
-    275.97,
-    277.46
+    273.93,
+    275.42
    ]
   },
   {
-   "t": 277.99,
+   "t": 275.8,
    "scene": 9,
    "who": "Barnaby",
    "pace": "closing",
    "text": "Goodnight, Martin.",
    "speech": [
-    278.06,
-    278.87
+    276.02,
+    276.97
    ]
   },
   {
-   "t": 282.44,
+   "t": 280.54,
    "scene": 9,
    "who": "Theo",
    "pace": "closing",
    "text": "Night, Barnaby.",
    "speech": [
-    282.47,
-    283.73
+    280.57,
+    281.83
    ]
   },
   {
-   "t": 284.25,
+   "t": 282.14,
    "scene": 9,
    "who": "Barnaby",
    "pace": "closing",
    "text": "Goodnight, Theo.",
    "speech": [
-    284.33,
-    285.39
+    282.43,
+    283.32
    ]
   }
  ],
@@ -718,21 +718,21 @@
    "fade_in": 3.0,
    "level": 1.0,
    "label": "rain on the window (bed)",
-   "until": 75.62
+   "until": 76.06
   },
   {
    "t": 0.4,
    "type": "radio",
    "level": 0.55,
    "label": "a radio far off in the workshop (bed)",
-   "until": 74.62
+   "until": 75.06
   },
   {
    "t": 0.6,
    "type": "fan",
    "level": 1.0,
    "label": "PC fan spins up, then hums (bed)",
-   "until": 75.22
+   "until": 75.66
   },
   {
    "t": 4.2,
@@ -881,271 +881,271 @@
    "label": "six light up"
   },
   {
-   "t": 70.07,
+   "t": 70.51,
    "type": "key_tap",
    "gain": 0.6,
    "label": "the key on the keyboard: a small clean metal tap"
   },
   {
-   "t": 72.42,
+   "t": 72.86,
    "type": "lamp_click",
    "gain": 0.55,
    "label": "the lamp clicks off"
   },
   {
-   "t": 74.02,
+   "t": 74.46,
    "type": "timelapse",
    "dur": 3.0,
    "gain": 0.35,
    "label": "time passes: a soft swell"
   },
   {
-   "t": 76.02,
+   "t": 76.46,
    "type": "workshop",
    "level": 1.0,
    "label": "workshop morning bed: room, radio, tools",
-   "until": 215.76
+   "until": 213.35
   },
   {
-   "t": 78.22,
+   "t": 78.66,
    "type": "freewheel",
    "gain": 0.3
   },
   {
-   "t": 78.62,
+   "t": 79.06,
    "type": "chair",
    "gain": 0.4,
    "label": "a chair creaks: Martin sits, a breath out"
   },
   {
-   "t": 86.12,
+   "t": 86.63,
    "type": "compressor",
    "gain": 0.22
   },
   {
-   "t": 108.82,
+   "t": 108.53,
    "type": "mouse_click",
    "gain": 0.6
   },
   {
-   "t": 109.3,
+   "t": 109.01,
    "type": "key_turn",
    "gain": 0.65,
    "label": "a real key turning in a lock"
   },
   {
-   "t": 110.2,
+   "t": 109.91,
    "type": "bell_soft",
    "gain": 0.32,
    "label": "the bell's soft confirm"
   },
   {
-   "t": 116.52,
+   "t": 116.01,
    "type": "mouse_click",
    "gain": 0.55
   },
   {
-   "t": 117.32,
+   "t": 116.81,
    "type": "pop",
    "gain": 0.2,
    "label": "order 3 lands"
   },
   {
-   "t": 121.12,
+   "t": 120.61,
    "type": "clunk",
    "gain": 0.55,
    "label": "repair stand clamp releases: Sofia's"
   },
   {
-   "t": 128.09,
+   "t": 127.68,
    "type": "mouse_click",
    "gain": 0.5
   },
   {
-   "t": 128.84,
+   "t": 128.43,
    "type": "mouse_click",
    "gain": 0.5
   },
   {
-   "t": 129.48,
+   "t": 129.07,
    "type": "step",
    "gain": 0.16
   },
   {
-   "t": 129.93,
+   "t": 129.52,
    "type": "step",
    "gain": 0.16
   },
   {
-   "t": 130.38,
+   "t": 129.97,
    "type": "step",
    "gain": 0.16
   },
   {
-   "t": 130.83,
+   "t": 130.42,
    "type": "step",
    "gain": 0.16
   },
   {
-   "t": 131.78,
+   "t": 131.37,
    "type": "clunk",
    "gain": 0.5,
    "label": "Kwame's"
   },
   {
-   "t": 132.97,
+   "t": 132.56,
    "type": "step",
    "gain": 0.15
   },
   {
-   "t": 133.23,
+   "t": 132.82,
    "type": "step",
    "gain": 0.15
   },
   {
-   "t": 133.49,
+   "t": 133.08,
    "type": "step",
    "gain": 0.15
   },
   {
-   "t": 133.75,
+   "t": 133.34,
    "type": "step",
    "gain": 0.15
   },
   {
-   "t": 134.45,
+   "t": 134.04,
    "type": "clunk",
    "gain": 0.5,
    "label": "Jana's"
   },
   {
-   "t": 145.95,
+   "t": 145.61,
    "type": "bell_soft",
    "gain": 0.28,
    "label": "the passage opens"
   },
   {
-   "t": 147.55,
+   "t": 147.21,
    "type": "clunk",
    "gain": 0.5,
    "label": "Tom's Brompton"
   },
   {
-   "t": 153.87,
+   "t": 153.49,
    "type": "lamp_on",
    "gain": 0.55,
    "label": "the desk lamp clicks on: dusk, Martin at Theo's desk"
   },
   {
-   "t": 174.45,
+   "t": 173.35,
    "type": "typing",
    "dur": 5.4,
    "gain": 0.55,
    "label": "keyboard foley under the code"
   },
   {
-   "t": 180.25,
+   "t": 179.15,
    "type": "ding",
    "gain": 0.25,
    "label": "checks pass"
   },
   {
-   "t": 198.24,
+   "t": 196.14,
    "type": "mouse_click",
    "gain": 0.62
   },
   {
-   "t": 198.64,
+   "t": 196.54,
    "type": "reload",
    "gain": 0.25,
    "label": "the page reloads"
   },
   {
-   "t": 201.64,
+   "t": 199.54,
    "type": "bell_soft",
    "gain": 0.3,
    "label": "a new room"
   },
   {
-   "t": 212.56,
+   "t": 210.15,
    "type": "pop",
    "gain": 0.18,
    "label": "two rows change"
   },
   {
-   "t": 214.16,
+   "t": 211.75,
    "type": "bustle",
    "level": 1.0,
    "label": "Tuesday workshop bustle (bed; leads the cut)",
-   "until": 240.54
+   "until": 238.11
   },
   {
-   "t": 239.24,
+   "t": 236.81,
    "type": "street",
    "level": 1.0,
    "label": "Lisbon: street below the window (bed; leads the cut)",
-   "until": 274.17
+   "until": 272.13
   },
   {
-   "t": 243.64,
+   "t": 241.21,
    "type": "cup",
    "gain": 0.35,
    "label": "an espresso cup set down on its saucer"
   },
   {
-   "t": 246.04,
+   "t": 243.61,
    "type": "keys_modern",
    "dur": 4.3,
    "gain": 0.4,
    "label": "Theo types the name, pastes the repo path, types the URL"
   },
   {
-   "t": 251.54,
+   "t": 249.11,
    "type": "mouse_click",
    "gain": 0.5,
    "label": "Connect"
   },
   {
-   "t": 272.57,
+   "t": 270.53,
    "type": "rain",
    "fade_in": 1.6,
    "level": 0.8,
    "label": "rain returns over the shop (bed; leads the cut)",
-   "until": 302.69
+   "until": 300.62
   },
   {
-   "t": 274.57,
+   "t": 272.53,
    "type": "coat",
    "gain": 0.3,
    "label": "Martin's coat on"
   },
   {
-   "t": 275.37,
+   "t": 273.33,
    "type": "keys_jingle",
    "gain": 0.3,
    "label": "Martin's keys"
   },
   {
-   "t": 279.37,
+   "t": 277.47,
    "type": "door_shop",
    "gain": 0.35,
    "label": "the back-office door, then the shop door (o.s.)"
   },
   {
-   "t": 280.07,
+   "t": 278.17,
    "type": "street_night",
    "level": 1.0,
    "label": "a quieter street outside in Lisbon (bed)",
-   "until": 302.69
+   "until": 300.62
   },
   {
-   "t": 285.84,
+   "t": 283.77,
    "type": "door_lisbon",
    "gain": 0.3,
    "label": "the studio door (o.s.)"
   },
   {
-   "t": 287.99,
+   "t": 285.92,
    "type": "bell",
    "gain": 0.42,
    "label": "the real bell, once"
@@ -1158,37 +1158,37 @@
    "mood": "sparse, warm acoustic guitar enters after the bell"
   },
   {
-   "t": 77.02,
+   "t": 77.46,
    "section": "work",
    "mood": "light, walking pace"
   },
   {
-   "t": 153.37,
+   "t": 152.99,
    "section": "before_build",
    "mood": "quieter, the walking figure thins out under the question"
   },
   {
-   "t": 174.45,
+   "t": 173.35,
    "section": "build",
    "mood": "rising, focused: builds to the click"
   },
   {
-   "t": 199.74,
+   "t": 197.64,
    "section": "lift",
    "mood": "release on the click and the tab change"
   },
   {
-   "t": 214.96,
+   "t": 212.55,
    "section": "tuesday",
    "mood": "settles: soft picking"
   },
   {
-   "t": 240.24,
+   "t": 237.81,
    "section": "lisbon",
    "mood": "brighter, fuller: the new desk"
   },
   {
-   "t": 273.57,
+   "t": 271.53,
    "section": "close",
    "mood": "resolve: a held chord, the bell, a last roll"
   }
@@ -1218,77 +1218,77 @@
   "bell_arrive": 45.85,
   "reading": 47.9,
   "six_lit": 55.64,
-  "old_pc": 59.215,
-  "desk_detail": 62.78,
-  "key": 69.52,
-  "key_land": 70.07,
-  "lamp_off": 72.42,
-  "timelapse": 74.02,
-  "monday": 76.22,
-  "clock": 78.42,
-  "martin_world": 82.04,
-  "walk": 87.52,
-  "pads_callout": 90.755,
-  "shelf": 93.65,
-  "card": 102.576,
-  "click_unlock": 108.7,
-  "unlock": 109.3,
-  "engine_unlock": 109.9,
-  "click_order": 116.52,
-  "po": 116.72,
-  "afternoon": 119.72,
-  "clunk1": 121.12,
-  "cards2": 125.37,
-  "click_text": 128.09,
-  "click_ready": 128.84,
-  "walk1": 129.28,
-  "clunk2": 131.78,
-  "walk2": 132.85,
-  "clunk3": 134.45,
-  "walk3": 136.0,
-  "passage": 145.55,
-  "engine_compose": 146.25,
-  "clunk4": 147.55,
-  "walk4": 149.24,
-  "late": 153.37,
-  "lamp_on": 153.87,
-  "sticky": 158.66,
-  "soon_tab": 161.36,
-  "code": 174.45,
-  "checks": 179.05,
-  "glasses": 185.05,
-  "click_build": 198.24,
-  "reload": 198.64,
-  "tab_change": 199.74,
-  "new_room": 201.54,
-  "same_butler": 203.54,
-  "reassign": 211.96,
-  "priya_world": 221.88,
-  "readme_note": 233.75,
-  "lisbon_wide": 240.24,
-  "nata": 243.34,
-  "realapp": 245.04,
-  "realapp_full": 245.74,
-  "typing": 246.04,
-  "connect": 251.54,
-  "synapse_log": 253.04,
-  "theo_world": 256.58,
-  "still_theo": 261.03,
-  "render_box": 263.98,
-  "queue": 267.68,
-  "shop_night": 273.57,
-  "shop_sleep": 279.27,
-  "lisbon_night": 280.07,
-  "dim": 280.97,
-  "two_desks": 286.79,
-  "bell_final": 287.99,
-  "title": 288.79,
-  "new_desk_fades": 291.99,
-  "old_ones": 292.89,
-  "end_card": 295.69,
-  "credit": 296.09,
-  "small_print": 296.39,
-  "fade_out": 301.69,
-  "end": 302.69
+  "old_pc": 59.284,
+  "desk_detail": 62.77,
+  "key": 69.96,
+  "key_land": 70.51,
+  "lamp_off": 72.86,
+  "timelapse": 74.46,
+  "monday": 76.66,
+  "clock": 78.86,
+  "martin_world": 82.48,
+  "walk": 88.03,
+  "pads_callout": 90.901,
+  "shelf": 93.52,
+  "card": 102.258,
+  "click_unlock": 108.41,
+  "unlock": 109.01,
+  "engine_unlock": 109.61,
+  "click_order": 116.01,
+  "po": 116.21,
+  "afternoon": 119.21,
+  "clunk1": 120.61,
+  "cards2": 124.86,
+  "click_text": 127.68,
+  "click_ready": 128.43,
+  "walk1": 128.87,
+  "clunk2": 131.37,
+  "walk2": 132.44,
+  "clunk3": 134.04,
+  "walk3": 135.59,
+  "passage": 145.21,
+  "engine_compose": 145.91,
+  "clunk4": 147.21,
+  "walk4": 148.9,
+  "late": 152.99,
+  "lamp_on": 153.49,
+  "sticky": 158.28,
+  "soon_tab": 160.98,
+  "code": 173.35,
+  "checks": 177.95,
+  "glasses": 183.95,
+  "click_build": 196.14,
+  "reload": 196.54,
+  "tab_change": 197.64,
+  "new_room": 199.44,
+  "same_butler": 201.44,
+  "reassign": 209.55,
+  "priya_world": 219.47,
+  "readme_note": 231.73,
+  "lisbon_wide": 237.81,
+  "nata": 240.91,
+  "realapp": 242.61,
+  "realapp_full": 243.31,
+  "typing": 243.61,
+  "connect": 249.11,
+  "synapse_log": 250.61,
+  "theo_world": 254.15,
+  "still_theo": 258.99,
+  "render_box": 261.91,
+  "queue": 265.61,
+  "shop_night": 271.53,
+  "shop_sleep": 277.37,
+  "lisbon_night": 278.17,
+  "dim": 279.07,
+  "two_desks": 284.72,
+  "bell_final": 285.92,
+  "title": 286.72,
+  "new_desk_fades": 289.92,
+  "old_ones": 290.82,
+  "end_card": 293.62,
+  "credit": 294.02,
+  "small_print": 294.32,
+  "fade_out": 299.62,
+  "end": 300.62
  }
 }

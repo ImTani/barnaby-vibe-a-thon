@@ -84,7 +84,7 @@
   const max = 31, pct = h => (h / max * 100).toFixed(2) + '%';
   document.getElementById('mres').innerHTML = '<h3>Booked this week</h3>' + S.build.result.map(([n, b, c]) => {
     const over = Math.max(0, b - c);
-    return `<div class="r"><b>${n}</b><span>${b} of ${c}${over ? ` · <span class="over">${over} over</span>` : ''}</span>
+    return `<div class="r"><b>${n}</b><span>${String(b).replace(".5", "½")} of ${c}${over ? ` · <span class="over">${over} over</span>` : ''}</span>
       <div class="bar"><i style="width:${pct(Math.min(b, c))}"></i>${over ? `<i class="over" style="left:${pct(c)};width:${pct(over)}"></i>` : ''}<u style="left:calc(${pct(c)} - 1px)"></u></div></div>`;
   }).join('');
   // Priya
